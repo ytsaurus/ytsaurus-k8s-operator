@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -60,6 +61,9 @@ type APIProxy interface {
 
 	// Returns true if condition has met and controller object is not changed since then.
 	IsStatusConditionTrueAndObservedGeneration(conditionType string) bool
+
+	// Returns aggregate conditions which is true when all requirements are true.
+	AggregateStatusConditions(condition metav1.Condition, requirements ...string) metav1.Condition
 
 	UpdateStatus(ctx context.Context) error
 }
@@ -266,6 +270,25 @@ func (c *apiProxy) IsStatusConditionFalse(conditionType string) bool {
 func (c *apiProxy) IsStatusConditionTrueAndObservedGeneration(conditionType string) bool {
 	cond := c.GetStatusCondition(conditionType)
 	return cond != nil && cond.Status == metav1.ConditionTrue && cond.ObservedGeneration == c.object.GetGeneration()
+}
+
+func (c *apiProxy) AggregateStatusConditions(condition metav1.Condition, requirements ...string) metav1.Condition {
+	for _, cond := range requirements {
+		c := ptr.Deref(c.GetStatusCondition(cond), metav1.Condition{
+			Type:    cond,
+			Status:  metav1.ConditionUnknown,
+			Reason:  "Unknown",
+			Message: "Status not found",
+		})
+		if c.Status != metav1.ConditionTrue {
+			if condition.Status == metav1.ConditionTrue || c.Status == metav1.ConditionUnknown {
+				condition.Status = c.Status
+				condition.Reason = c.Reason
+			}
+			condition.Message += fmt.Sprintf("%v: %v\n", c.Type, c.Message)
+		}
+	}
+	return condition
 }
 
 func (c *apiProxy) updateOperatorVersion() bool {

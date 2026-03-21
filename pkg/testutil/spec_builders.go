@@ -204,7 +204,7 @@ type YtsaurusBuilder struct {
 	Spyt         *ytv1.Spyt
 
 	// Set MinReadyInstanceCount for all components
-	MinReadyInstanceCount *int
+	MinReadyInstanceCount *int32
 
 	WithHTTPSProxy     bool
 	WithHTTPSOnlyProxy bool
@@ -263,7 +263,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 				},
 			},
 			PrimaryMasters: ytv1.MastersSpec{
-				MasterConnectionSpec: ytv1.MasterConnectionSpec{
+				MasterCellSpec: ytv1.MasterCellSpec{
 					CellTag: CellTag,
 				},
 				InstanceSpec: ytv1.InstanceSpec{
@@ -297,6 +297,14 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 			},
 		},
 	}
+}
+
+func (b *YtsaurusBuilder) WithSecondaryMaster() *ytv1.MastersSpec {
+	b.Ytsaurus.Spec.SecondaryMasters = append(b.Ytsaurus.Spec.SecondaryMasters, b.Ytsaurus.Spec.PrimaryMasters)
+	count := len(b.Ytsaurus.Spec.SecondaryMasters)
+	spec := &b.Ytsaurus.Spec.SecondaryMasters[count-1]
+	spec.CellTag += uint16(count) //nolint:gosec //no overflow
+	return spec
 }
 
 func (b *YtsaurusBuilder) WithHydraPersistenceUploader() {
@@ -760,7 +768,7 @@ func (b *YtsaurusBuilder) CreateRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 			Namespace: b.Namespace,
 		},
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterConnectionSpec: ytv1.MasterConnectionSpec{
+			PrimaryMaster: &ytv1.MasterCellSpec{
 				CellTag: CellTag,
 				HostAddresses: []string{
 					fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", b.Namespace),

@@ -841,7 +841,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -985,6 +988,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -2064,6 +2070,17 @@ spec:
                       for cluster connections.
                     type: boolean
                 type: object
+              clusterMaintenance:
+                description: Controls cluster maintenance.
+                properties:
+                  mode:
+                    enum:
+                    - MasterCells
+                    - Shutdown
+                    type: string
+                required:
+                - mode
+                type: object
               configOverrides:
                 description: LocalObjectReference contains enough information to let
                   you locate the...
@@ -2819,7 +2836,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -2963,6 +2983,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -4688,7 +4711,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -4832,6 +4858,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -6563,7 +6592,10 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     locations:
                       items:
@@ -6707,6 +6739,10 @@ spec:
                           type: object
                       type: object
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -8445,7 +8481,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -8589,6 +8628,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -10375,7 +10417,10 @@ spec:
                         type: string
                       type: array
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     jobEnvironment:
                       properties:
@@ -10728,6 +10773,10 @@ spec:
                           type: object
                       type: object
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -12525,7 +12574,10 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     locations:
                       items:
@@ -12669,6 +12721,10 @@ spec:
                           type: object
                       type: object
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -14448,7 +14504,10 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     locations:
                       items:
@@ -14592,6 +14651,10 @@ spec:
                           type: object
                       type: object
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -16335,7 +16398,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -16479,6 +16545,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -18242,6 +18311,10 @@ spec:
                         type: object
                     type: object
                   cellTag:
+                    description: Cell tag is an immutable identifier for particular
+                      cell of YTsaurus cluster.
+                    maximum: 61440
+                    minimum: 1
                     type: integer
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings.
@@ -18305,7 +18378,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -18453,6 +18529,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -18571,6 +18650,13 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  roles:
+                    description: Roles assigned to this master cell.
+                    items:
+                      pattern: ^[a-z_]+$
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
                   runtimeClassName:
                     description: Runtime class for instance pods.
                     type: string
@@ -20188,7 +20274,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -20332,6 +20421,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -22053,7 +22145,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -22197,6 +22292,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -23932,7 +24030,10 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     locations:
                       items:
@@ -24076,6 +24177,10 @@ spec:
                           type: object
                       type: object
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -25850,7 +25955,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -25994,6 +26102,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -27674,6 +27785,10 @@ spec:
                           type: object
                       type: object
                     cellTag:
+                      description: Cell tag is an immutable identifier for particular
+                        cell of YTsaurus cluster.
+                      maximum: 61440
+                      minimum: 1
                       type: integer
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
@@ -27738,7 +27853,10 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     locations:
                       items:
@@ -27886,6 +28004,10 @@ spec:
                           type: object
                       type: object
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -28004,6 +28126,13 @@ spec:
                             resources required.
                           type: object
                       type: object
+                    roles:
+                      description: Roles assigned to this master cell.
+                      items:
+                        pattern: ^[a-z_]+$
+                        type: string
+                      type: array
+                      x-kubernetes-list-type: set
                     runtimeClassName:
                       description: Runtime class for instance pods.
                       type: string
@@ -28879,6 +29008,7 @@ spec:
                   required:
                   - cellTag
                   type: object
+                maxItems: 48
                 type: array
               setHostnameAsFqdn:
                 default: true
@@ -29795,7 +29925,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -29939,6 +30072,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32
@@ -31670,7 +31806,10 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     locations:
                       items:
@@ -31814,6 +31953,10 @@ spec:
                           type: object
                       type: object
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -33561,7 +33704,10 @@ spec:
                       description: Overrides coreImage for component.
                       type: string
                     instanceCount:
+                      default: 0
+                      description: 'Desired count of replicas. Default: 0.'
                       format: int32
+                      minimum: 0
                       type: integer
                     locations:
                       items:
@@ -33709,6 +33855,10 @@ spec:
                       format: int32
                       type: integer
                     minReadyInstanceCount:
+                      description: 'Required count of replicas. Default: equal to
+                        instanceCount.'
+                      format: int32
+                      minimum: 0
                       type: integer
                     monitoringPort:
                       format: int32
@@ -35845,7 +35995,10 @@ spec:
                     description: Overrides coreImage for component.
                     type: string
                   instanceCount:
+                    default: 0
+                    description: 'Desired count of replicas. Default: 0.'
                     format: int32
+                    minimum: 0
                     type: integer
                   locations:
                     items:
@@ -35989,6 +36142,9 @@ spec:
                         type: object
                     type: object
                   minReadyInstanceCount:
+                    description: 'Required count of replicas. Default: equal to instanceCount.'
+                    format: int32
+                    minimum: 0
                     type: integer
                   monitoringPort:
                     format: int32

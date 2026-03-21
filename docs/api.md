@@ -125,8 +125,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -356,6 +356,45 @@ _Appears in:_
 | `enableAnchorProfilingByDefault` _boolean_ | Enable logging anchor profiling by default for loggers that don't explicitly disable it. |  |  |
 
 
+#### ClusterMaintenance
+
+
+
+
+
+
+
+_Appears in:_
+- [CommonSpec](#commonspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `mode` _[ClusterMaintenanceMode](#clustermaintenancemode)_ |  |  | Enum: [MasterCells Shutdown] <br /> |
+
+
+#### ClusterMaintenanceMode
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ClusterMaintenance](#clustermaintenance)
+
+| Field | Description |
+| --- | --- |
+| `` |  |
+| `MasterCells` | Prepare for master cells reconfiguration.<br /> |
+| `Shutdown` | Shutdown everything.<br /> |
+
+
 #### ClusterNodesSpec
 
 
@@ -396,6 +435,7 @@ _Appears in:_
 | `Preparing` |  |
 | `Running` |  |
 | `Reconfiguration` |  |
+| `Maintenance` |  |
 | `Updating` |  |
 | `UpdateCanceled` |  |
 | `UpdateBlocked` |  |
@@ -444,6 +484,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -635,8 +676,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -677,8 +718,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -721,8 +762,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -783,8 +824,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -887,8 +928,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -998,8 +1039,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1148,8 +1189,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1228,8 +1269,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1458,8 +1499,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1475,7 +1516,27 @@ _Appears in:_
 | `hostAddressesLabel` _string_ |  |  |  |
 
 
-#### MasterConnectionSpec
+#### MasterCellRole
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Pattern: `^[a-z_]+$`
+
+_Appears in:_
+- [MasterCellSpec](#mastercellspec)
+- [MastersSpec](#mastersspec)
+
+| Field | Description |
+| --- | --- |
+| `cypress_node_host` |  |
+| `transaction_coordinator` |  |
+| `chunk_host` |  |
+
+
+#### MasterCellSpec
 
 
 
@@ -1489,8 +1550,9 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `cellTag` _integer_ |  |  |  |
+| `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
 | `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole) array_ | Roles assigned to this master cell. |  | Pattern: `^[a-z_]+$` <br /> |
 
 
 #### MastersSpec
@@ -1521,8 +1583,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1533,8 +1595,9 @@ _Appears in:_
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `cellTag` _integer_ |  |  |  |
+| `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
 | `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole) array_ | Roles assigned to this master cell. |  | Pattern: `^[a-z_]+$` <br /> |
 | `hostAddressLabel` _string_ |  |  |  |
 | `maxSnapshotCountToKeep` _integer_ |  |  |  |
 | `maxChangelogCountToKeep` _integer_ |  |  |  |
@@ -1700,8 +1763,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1770,6 +1833,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -1799,8 +1863,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1910,8 +1974,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1952,8 +2016,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -1994,8 +2058,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2112,6 +2176,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -2141,8 +2206,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2211,6 +2276,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -2240,8 +2306,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2357,6 +2423,7 @@ _Appears in:_
 | `remoteClusterSpec` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -2386,8 +2453,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2453,8 +2520,6 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `cellTag` _integer_ |  |  |  |
-| `hostAddresses` _string array_ |  |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2470,8 +2535,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2485,6 +2550,10 @@ _Appears in:_
 | `cellTagMasterCaches` _integer_ |  |  |  |
 | `hostAddressesMasterCaches` _string array_ |  |  |  |
 | `hostAddressesLabel` _string_ |  |  |  |
+| `primaryMaster` _[MasterCellSpec](#mastercellspec)_ |  |  |  |
+| `secondaryMasters` _[MasterCellSpec](#mastercellspec) array_ |  |  | MaxItems: 48 <br /> |
+| `cellTag` _integer_ | Deprecated: use primaryMaster.cellTag instead. |  |  |
+| `hostAddresses` _string array_ | Deprecated: use primaryMaster.hostAddresses instead. |  |  |
 
 
 #### RemoteYtsaurusStatus
@@ -2528,8 +2597,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2722,8 +2791,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2768,8 +2837,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -2828,8 +2897,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -3166,8 +3235,8 @@ _Appears in:_
 | `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
 | `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ |  |  |  |
-| `minReadyInstanceCount` _integer_ |  |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Default: equal to instanceCount. |  | Minimum: 0 <br /> |
 | `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
 | `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
 | `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
@@ -3214,6 +3283,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `coreImage` _string_ |  |  |  |
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
+| `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
@@ -3248,7 +3318,7 @@ _Appears in:_
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |
-| `secondaryMasters` _[MastersSpec](#mastersspec) array_ |  |  |  |
+| `secondaryMasters` _[MastersSpec](#mastersspec) array_ |  |  | MaxItems: 48 <br /> |
 | `masterCaches` _[MasterCachesSpec](#mastercachesspec)_ |  |  |  |
 | `httpProxies` _[HTTPProxiesSpec](#httpproxiesspec) array_ |  |  | MinItems: 1 <br /> |
 | `rpcProxies` _[RPCProxiesSpec](#rpcproxiesspec) array_ |  |  |  |

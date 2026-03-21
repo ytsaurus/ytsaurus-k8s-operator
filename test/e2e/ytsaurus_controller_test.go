@@ -1127,16 +1127,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
 
 					By("Waiting for condition NoPossibility")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(WithInvariant(
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue()),
-					))
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+						HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusFalse()))
 
 					By("Check consistent NoPossibility")
 					ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
 						HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck),
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue())),
+						HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusFalse())),
 					)
 				} else {
 					By("Checking that pods are not changed")
@@ -1927,6 +1924,27 @@ exec "$@"`
 			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
 		) // integration tls
 
+		DescribeTableSubtree("With secondary cells", Label("multicell"), func(epoch string) {
+			images := testutil.Images[epoch]
+			if epoch == "" || images.Core == "" {
+				return
+			}
+
+			BeforeEach(func() {
+				By("Adding secondary master")
+				ytBuilder.Ytsaurus.Spec.CoreImage = images.Core
+				ytBuilder.WithSecondaryMaster()
+			})
+
+			It("Verifies secondary cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+			})
+
+		},
+			// Entry("YTsaurus curr", testutil.YtsaurusCurrVersion),
+			// Entry("YTsaurus next", testutil.YtsaurusNextVersion),
+			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
+		) // integration multicell
+
 	}) // integration
 
 	// FIXME(khlebnikov): Refactor this - update just one component.
@@ -2152,7 +2170,7 @@ exec "$@"`
 		)
 
 		DescribeTableSubtree("rolling-update strategy", Label("rollingupdate"),
-			func(componentType consts.ComponentType, stsName string, minReady int) {
+			func(componentType consts.ComponentType, stsName string, minReady int32) {
 				BeforeEach(func() {
 					switch componentType {
 					case consts.HttpProxyType:
@@ -2197,8 +2215,8 @@ exec "$@"`
 
 							// If present, verify it matches controller formula.
 							if rolling.MaxUnavailable != nil {
-								expectedMaxUnavailable := int(*current.Spec.Replicas) - minReady
-								return rolling.MaxUnavailable.IntValue() == expectedMaxUnavailable
+								expectedMaxUnavailable := *current.Spec.Replicas - minReady
+								return rolling.MaxUnavailable.IntVal == expectedMaxUnavailable
 							}
 
 							return true

@@ -721,6 +721,7 @@ spec:
                     type: object
                 type: object
               cellTag:
+                description: 'Deprecated: use primaryMaster.cellTag instead.'
                 type: integer
               cellTagMasterCaches:
                 type: integer
@@ -769,6 +770,7 @@ spec:
                   type: string
                 type: array
               hostAddresses:
+                description: 'Deprecated: use primaryMaster.hostAddresses instead.'
                 items:
                   type: string
                 type: array
@@ -785,7 +787,10 @@ spec:
                 description: Overrides coreImage for component.
                 type: string
               instanceCount:
+                default: 0
+                description: 'Desired count of replicas. Default: 0.'
                 format: int32
+                minimum: 0
                 type: integer
               locations:
                 items:
@@ -928,6 +933,9 @@ spec:
                     type: object
                 type: object
               minReadyInstanceCount:
+                description: 'Required count of replicas. Default: equal to instanceCount.'
+                format: int32
+                minimum: 0
                 type: integer
               monitoringPort:
                 format: int32
@@ -981,6 +989,28 @@ spec:
                 additionalProperties:
                   type: string
                 description: Labels for instance pods.
+                type: object
+              primaryMaster:
+                properties:
+                  cellTag:
+                    description: Cell tag is an immutable identifier for particular
+                      cell of YTsaurus cluster.
+                    maximum: 61440
+                    minimum: 1
+                    type: integer
+                  hostAddresses:
+                    items:
+                      type: string
+                    type: array
+                  roles:
+                    description: Roles assigned to this master cell.
+                    items:
+                      pattern: ^[a-z_]+$
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
+                required:
+                - cellTag
                 type: object
               readinessProbeParams:
                 properties:
@@ -1046,6 +1076,31 @@ spec:
               runtimeClassName:
                 description: Runtime class for instance pods.
                 type: string
+              secondaryMasters:
+                items:
+                  properties:
+                    cellTag:
+                      description: Cell tag is an immutable identifier for particular
+                        cell of YTsaurus cluster.
+                      maximum: 61440
+                      minimum: 1
+                      type: integer
+                    hostAddresses:
+                      items:
+                        type: string
+                      type: array
+                    roles:
+                      description: Roles assigned to this master cell.
+                      items:
+                        pattern: ^[a-z_]+$
+                        type: string
+                      type: array
+                      x-kubernetes-list-type: set
+                  required:
+                  - cellTag
+                  type: object
+                maxItems: 48
+                type: array
               setHostnameAsFqdn:
                 default: true
                 description: SetHostnameAsFQDN indicates whether to set the hostname
@@ -1890,7 +1945,6 @@ spec:
                   type: object
                 type: array
             required:
-            - cellTag
             - cellTagMasterCaches
             type: object
           status:
