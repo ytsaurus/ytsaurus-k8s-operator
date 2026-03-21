@@ -446,8 +446,7 @@ func (qt *QueryTracker) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	ytClient := qt.ytsaurusClient.GetYtClient()
 
 	// Check that the number of instances in YT matches the expected instanceCount
-	expectedCount := int(qt.ytsaurus.GetResource().Spec.QueryTrackers.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueryTrackerType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueryTrackerType, qt.server.getInstanceCount()); err != nil {
 		return ComponentStatusBlocked("Error: %v", err)
 	}
 

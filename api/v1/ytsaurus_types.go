@@ -416,9 +416,14 @@ type InstanceSpec struct {
 	//+optional
 	ReadinessProbeParams *HealthcheckProbeParams `json:"readinessProbeParams,omitempty"`
 	// Resources dedicated for component. Capacity is defined by requests, or limits for zero requests.
-	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
-	InstanceCount         int32                           `json:"instanceCount,omitempty"`
-	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// Desired count of replicas. Default: 0.
+	//+kubebuilder:default:=0
+	//+kubebuilder:validation:Minimum:=0
+	InstanceCount int32 `json:"instanceCount,omitempty"`
+	// Required count of replicas. Defaulted and bounded by instanceCount.
+	//+kubebuilder:validation:Minimum:=0
+	MinReadyInstanceCount *int32                          `json:"minReadyInstanceCount,omitempty"`
 	Locations             []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	// Deprecated: use Affinity.PodAntiAffinity instead.
@@ -1065,7 +1070,7 @@ const (
 
 // ComponentRollingUpdateMode configures the rolling update strategy.
 // The maxUnavailable budget is derived from the component's minReadyInstanceCount:
-// maxUnavailable = instanceCount - minReadyInstanceCount.
+// maxUnavailable = max(1, instanceCount - minReadyInstanceCount).
 type ComponentRollingUpdateMode struct {
 }
 
