@@ -116,19 +116,14 @@ func checkReadinessByContainers(pod corev1.Pod, byContainerNames []string) bool 
 	return found == len(byContainerNames)
 }
 
-func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minReadyInstanceCount *int, byContainerNames []string) bool {
+func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount, minReadyInstanceCount int32, byContainerNames []string) bool {
 	logger := log.FromContext(ctx)
 	podList := s.getPods(ctx)
 	if podList == nil {
 		return false
 	}
 
-	effectiveMinReadyInstanceCount := instanceCount
-	if minReadyInstanceCount != nil && *minReadyInstanceCount < instanceCount {
-		effectiveMinReadyInstanceCount = *minReadyInstanceCount
-	}
-
-	readyInstanceCount := 0
+	var readyInstanceCount int32
 	for _, pod := range podList.Items {
 		var ready bool
 		if len(byContainerNames) > 0 {
@@ -143,12 +138,12 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 		}
 	}
 
-	if readyInstanceCount < effectiveMinReadyInstanceCount {
+	if readyInstanceCount < minReadyInstanceCount {
 		logger.Info(
 			"not enough pods are running",
 			"component", s.labeller.GetFullComponentName(),
 			"readyInstanceCount", readyInstanceCount,
-			"minReadyInstanceCount", effectiveMinReadyInstanceCount,
+			"minReadyInstanceCount", minReadyInstanceCount,
 			"totalInstanceCount", len(podList.Items))
 		return false
 	}
@@ -156,7 +151,7 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount int, minRe
 		"pods are ready",
 		"component", s.labeller.GetFullComponentName(),
 		"readyInstanceCount", readyInstanceCount,
-		"minReadyInstanceCount", effectiveMinReadyInstanceCount,
+		"minReadyInstanceCount", minReadyInstanceCount,
 		"totalInstanceCount", len(podList.Items))
 	return true
 }

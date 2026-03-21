@@ -984,7 +984,7 @@ func (in *InstanceSpec) DeepCopyInto(out *InstanceSpec) {
 	in.Resources.DeepCopyInto(&out.Resources)
 	if in.MinReadyInstanceCount != nil {
 		in, out := &in.MinReadyInstanceCount, &out.MinReadyInstanceCount
-		*out = new(int)
+		*out = new(int32)
 		**out = **in
 	}
 	if in.Locations != nil {

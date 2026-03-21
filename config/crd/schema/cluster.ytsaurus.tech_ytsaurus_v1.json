@@ -898,8 +898,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -1104,7 +1107,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -3216,8 +3222,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -3422,7 +3431,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -5401,8 +5413,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -5607,7 +5622,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -7583,8 +7601,11 @@
                 "type": "string"
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "locations": {
                 "type": "array",
@@ -7789,7 +7810,10 @@
                 }
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -9779,8 +9803,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -9985,7 +10012,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -12031,8 +12061,11 @@
                 }
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "jobEnvironment": {
                 "type": "object",
@@ -12512,7 +12545,10 @@
                 }
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -14571,8 +14607,11 @@
                 "type": "string"
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "locations": {
                 "type": "array",
@@ -14777,7 +14816,10 @@
                 }
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -16807,8 +16849,11 @@
                 "type": "string"
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "locations": {
                 "type": "array",
@@ -17013,7 +17058,10 @@
                 }
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -19014,8 +19062,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -19220,7 +19271,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -21332,8 +21386,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -21544,7 +21601,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -23535,8 +23595,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -23741,7 +23804,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -25714,8 +25780,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -25920,7 +25989,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -27899,8 +27971,11 @@
                 "type": "string"
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "locations": {
                 "type": "array",
@@ -28105,7 +28180,10 @@
                 }
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -30137,8 +30215,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -30343,7 +30424,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -32341,8 +32425,11 @@
                 "type": "string"
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "locations": {
                 "type": "array",
@@ -32553,7 +32640,10 @@
                 }
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -34760,8 +34850,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -34966,7 +35059,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
@@ -36941,8 +37037,11 @@
                 "type": "string"
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "locations": {
                 "type": "array",
@@ -37147,7 +37246,10 @@
                 }
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -39143,8 +39245,11 @@
                 "type": "string"
               },
               "instanceCount": {
+                "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
-                "format": "int32"
+                "format": "int32",
+                "default": 0,
+                "minimum": 0
               },
               "locations": {
                 "type": "array",
@@ -39354,7 +39459,10 @@
                 "default": 32000
               },
               "minReadyInstanceCount": {
-                "type": "integer"
+                "description": "Required count of replicas. Default: equal to instanceCount.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
               },
               "monitoringPort": {
                 "type": "integer",
@@ -41830,8 +41938,11 @@
               "type": "string"
             },
             "instanceCount": {
+              "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
-              "format": "int32"
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
             },
             "locations": {
               "type": "array",
@@ -42036,7 +42147,10 @@
               }
             },
             "minReadyInstanceCount": {
-              "type": "integer"
+              "description": "Required count of replicas. Default: equal to instanceCount.",
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
             },
             "monitoringPort": {
               "type": "integer",
