@@ -165,7 +165,7 @@ func (n *ExecNode) enableSchedulerJobs(ctx context.Context) {
 		return
 	}
 
-	totalCount := int(n.server.getReplicaCount())
+	totalCount := int(n.server.getInstanceCount())
 	for i := range totalCount {
 		if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, i, false); err != nil {
 			return

@@ -374,11 +374,8 @@ func handleRollingUpdatingClusterState(
 		return nil, nil
 	}
 
-	minReady := server.getMinReadyInstanceCount()
-	if minReady == nil {
-		minReady = ptr.To(1)
-	}
-	maxUnavailable := int(server.getReplicaCount()) - *minReady
+	// NOTE: Force margin for rolling at least by one instance at once.
+	maxUnavailable := server.getInstanceCount() - server.getMinReadyInstanceCount(1)
 	if maxUnavailable <= 0 {
 		return ptr.To(ComponentStatusBlocked("instanceCount - minReadyInstanceCount must be positive for rolling update on %s", cmp.GetFullName())), nil
 	}
@@ -420,14 +417,14 @@ func handleRollingUpdatingClusterState(
 	// effective: take the larger of actual unavailability and in-progress count to avoid
 	// double-counting pods that are both in-progress and already unavailable.
 	effective := max(totalCount-sts.availableReplicas, inProgress)
-	budget := maxUnavailable - int(effective)
+	budget := maxUnavailable - effective
 
 	if partition == 0 {
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 	}
 
 	if budget <= 0 {
-		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, int(effective), partition)
+		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, effective, partition)
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 	}
 
@@ -448,8 +445,8 @@ func setRollingBudgetExhaustedCondition(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
 	cmp Component,
-	maxUnavailable int,
-	effectiveUnavailable int,
+	maxUnavailable int32,
+	effectiveUnavailable int32,
 	partition int32,
 ) {
 	message := fmt.Sprintf(

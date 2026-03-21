@@ -225,7 +225,6 @@ var _ = Describe("OffshoreDataGateways Controller", func() {
 
 				offshoreDataGateways := buildOffshoreDataGateways(h, remoteYtsaurusName, offshoreDataGatewaysName)
 				offshoreDataGateways.Spec.InstanceSpec.InstanceCount = 1
-				offshoreDataGateways.Spec.InstanceSpec.MinReadyInstanceCount = ptr.To(1)
 				testutil.DeployObject(h, &offshoreDataGateways)
 				waitOffshoreDataGatewaysDeployed(h, offshoreDataGatewaysName)
 

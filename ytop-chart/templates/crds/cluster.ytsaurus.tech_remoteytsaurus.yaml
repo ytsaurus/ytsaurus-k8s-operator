@@ -790,7 +790,10 @@ spec:
                 description: Overrides coreImage for component.
                 type: string
               instanceCount:
+                default: 0
+                description: 'Desired count of replicas. Default: 0.'
                 format: int32
+                minimum: 0
                 type: integer
               locations:
                 items:
@@ -933,6 +936,10 @@ spec:
                     type: object
                 type: object
               minReadyInstanceCount:
+                description: Required count of replicas. Defaulted and bounded by
+                  instanceCount.
+                format: int32
+                minimum: 0
                 type: integer
               monitoringPort:
                 format: int32
