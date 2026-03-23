@@ -888,7 +888,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -1108,7 +1107,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -1167,7 +1165,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -1315,7 +1312,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -1468,8 +1464,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `cellTagMasterCaches` _integer_ |  |  |  |
-| `hostAddressesMasterCaches` _string array_ |  |  |  |
+| `hostAddresses` _string array_ |  |  |  |
 
 
 #### MasterCachesSpec
@@ -1481,7 +1476,6 @@ _Appears in:_
 
 
 _Appears in:_
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -1513,9 +1507,10 @@ _Appears in:_
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `cellTagMasterCaches` _integer_ |  |  |  |
-| `hostAddressesMasterCaches` _string array_ |  |  |  |
+| `hostAddresses` _string array_ |  |  |  |
 | `hostAddressesLabel` _string_ |  |  |  |
+| `cellTagMasterCaches` _integer_ | Deprecated: have no effect. |  |  |
+| `hostAddressesMasterCaches` _string array_ | Deprecated: use hostAddresses instead. |  |  |
 
 
 #### MasterConnectionSpec
@@ -1614,7 +1609,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -1903,7 +1897,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [StrawberryControllerSpec](#strawberrycontrollerspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
@@ -2085,7 +2078,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -2500,40 +2492,13 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
-| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
-| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
-| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
-| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
-| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
-| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
-| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
-| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
-| `image` _string_ | Overrides coreImage for component. |  |  |
-| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
-| `volumes` _[Volume](#volume) array_ |  |  |  |
-| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
-| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
-| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
-| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
-| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
-| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
-| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
-| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
-| `monitoringPort` _integer_ |  |  |  |
-| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
-| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
-| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
-| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
-| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
-| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
-| `cellTagMasterCaches` _integer_ |  |  |  |
-| `hostAddressesMasterCaches` _string array_ |  |  |  |
-| `hostAddressesLabel` _string_ |  |  |  |
 | `primaryMaster` _[MasterConnectionSpec](#masterconnectionspec)_ |  |  |  |
 | `secondaryMasters` _[MasterConnectionSpec](#masterconnectionspec) array_ |  |  | MaxItems: 48 <br /> |
+| `masterCaches` _[MasterCachesConnectionSpec](#mastercachesconnectionspec)_ |  |  |  |
 | `cellTag` _integer_ | Deprecated: use primaryMaster.cellTag instead. |  | Maximum: 61440 <br />Minimum: 1 <br /> |
 | `hostAddresses` _string array_ | Deprecated: use primaryMaster.hostAddresses instead. |  |  |
+| `cellTagMasterCaches` _integer_ | Deprecated: have no effect. |  |  |
+| `hostAddressesMasterCaches` _string array_ | Deprecated: use masterCaches.hostAddresses instead. |  |  |
 
 
 #### RemoteYtsaurusStatus
@@ -2724,7 +2689,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -2922,7 +2886,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -3110,7 +3073,6 @@ _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
-- [RemoteYtsaurusSpec](#remoteytsaurusspec)
 - [SchedulersSpec](#schedulersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)

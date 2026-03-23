@@ -21,7 +21,6 @@ spec:
     resources: {}
   keepSocket: true
   masterCaches:
-    cellTagMasterCaches: 0
     instanceCount: 3
     resources: {}
   oauthService:
