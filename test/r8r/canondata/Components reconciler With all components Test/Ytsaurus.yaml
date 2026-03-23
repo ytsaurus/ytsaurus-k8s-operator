@@ -161,7 +161,6 @@ spec:
   - name: global-image-pull-secrets
   jobImage: mirror.gcr.io/library/python:3.12-slim
   masterCaches:
-    cellTagMasterCaches: 0
     instanceCount: 1
     loggers:
     - minLogLevel: info

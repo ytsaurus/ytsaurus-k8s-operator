@@ -771,6 +771,14 @@ func (b *YtsaurusBuilder) CreateSpyt() *ytv1.Spyt {
 }
 
 func (b *YtsaurusBuilder) CreateRemoteYtsaurus() *ytv1.RemoteYtsaurus {
+	var masterCaches *ytv1.MasterCachesConnectionSpec
+	if b.Ytsaurus.Spec.MasterCaches != nil {
+		masterCaches = &ytv1.MasterCachesConnectionSpec{
+			HostAddresses: []string{
+				fmt.Sprintf("msc-0.masters.%s.svc.cluster.local", b.Namespace),
+			},
+		}
+	}
 	return &ytv1.RemoteYtsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      RemoteResourceName,
@@ -783,6 +791,7 @@ func (b *YtsaurusBuilder) CreateRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 					fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", b.Namespace),
 				},
 			},
+			MasterCaches: masterCaches,
 		},
 	}
 }
