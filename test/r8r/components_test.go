@@ -768,6 +768,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		BeforeEach(func(ctx context.Context) {
 			ytsaurus = nil
 
+			ytBuilder.WithMasterCaches()
 			remoteYtsaurus := ytBuilder.CreateRemoteYtsaurus()
 			Expect(k8sClient.Create(ctx, remoteYtsaurus)).To(Succeed())
 		})

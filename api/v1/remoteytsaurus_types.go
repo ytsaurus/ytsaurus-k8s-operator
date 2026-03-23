@@ -24,12 +24,12 @@ import (
 //+kubebuilder:validation:XValidation:rule="has(self.cellTag) || (has(self.primaryMaster) && has(self.primaryMaster.cellTag))",message="either cellTag or primaryMaster.cellTag must be set"
 //+kubebuilder:validation:XValidation:rule="!(has(self.cellTag) && has(self.primaryMaster) && has(self.primaryMaster.cellTag)) || self.cellTag == self.primaryMaster.cellTag",message="cellTag and primaryMaster.cellTag must match when both are set"
 type RemoteYtsaurusSpec struct {
-	MasterCachesSpec `json:",inline"`
-
 	//+optional
 	PrimaryMaster *MasterConnectionSpec `json:"primaryMaster,omitempty"`
 	//+kubebuilder:validation:MaxItems:=48
 	SecondaryMasters []MasterConnectionSpec `json:"secondaryMasters,omitempty"`
+	//+optional
+	MasterCaches *MasterCachesConnectionSpec `json:"masterCaches,omitempty"`
 
 	// Deprecated: use primaryMaster.cellTag instead.
 	//+kubebuilder:validation:Minimum:=1
@@ -37,6 +37,10 @@ type RemoteYtsaurusSpec struct {
 	CellTag uint16 `json:"cellTag,omitempty"`
 	// Deprecated: use primaryMaster.hostAddresses instead.
 	HostAddresses []string `json:"hostAddresses,omitempty"`
+	// Deprecated: have no effect.
+	CellTagMasterCaches uint16 `json:"cellTagMasterCaches,omitempty"`
+	// Deprecated: use masterCaches.hostAddresses instead.
+	HostAddressesMasterCaches []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 
 // RemoteYtsaurusStatus defines the observed state of RemoteYtsaurus
