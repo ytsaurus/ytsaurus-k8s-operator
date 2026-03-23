@@ -547,6 +547,20 @@ func (m *Master) GetCypressPatch() ypatch.PatchSet {
 	return ypatch.PatchSet{"//sys/@cluster_connection": patch}
 }
 
+func (m *Master) GetMasterCellsConfigurationPatch() ypatch.Patch {
+	var patch ypatch.Patch
+	if len(m.mastersSpec.Roles) > 0 {
+		descriptorPath := ypath.Path(consts.MasterCellDescriptorsPath).Child(fmt.Sprintf("%d", m.mastersSpec.CellTag))
+		patch = append(patch, ypatch.Replace(descriptorPath, &ytconfig.MasterCellDescriptor{
+			Roles: m.mastersSpec.Roles,
+		}))
+	}
+	for _, cell := range m.secondaryMasters {
+		patch = append(patch, cell.GetMasterCellsConfigurationPatch()...)
+	}
+	return patch
+}
+
 func (m *Master) getHostAddressLabel() string {
 	if m.mastersSpec.HostAddressLabel != "" {
 		return m.mastersSpec.HostAddressLabel

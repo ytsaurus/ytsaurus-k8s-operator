@@ -278,6 +278,9 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updDataNodes || updMaster,
 		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
 	).chainIf(
+		updMaster && componentManager.status.clusterMaintenance,
+		st(ytv1.UpdateStateWaitingForMasterCellsReconfiguration),
+	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSnapshots),
 	).chain(

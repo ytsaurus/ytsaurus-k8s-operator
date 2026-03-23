@@ -16,6 +16,8 @@ const (
 	ClusterMastersPath = "//sys/cluster_masters"
 
 	MasterHydraPath = "orchid/monitoring/hydra"
+
+	MasterCellDescriptorsPath = "//sys/@config/multicell_manager/cell_descriptors"
 )
 
 func ComponentCypressPath(component ComponentType) string {

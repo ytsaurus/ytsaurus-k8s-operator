@@ -268,6 +268,20 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentSta
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 
+	case ytv1.UpdateStateWaitingForMasterCellsReconfiguration:
+		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterCellsReconfigured) {
+			if err := yc.MasterCellsReconfiguration(ctx); err != nil {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
+			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+				Type:    consts.ConditionMasterCellsReconfigured,
+				Status:  metav1.ConditionTrue,
+				Reason:  "Maintenance",
+				Message: "Master cells reconfiguration is complete",
+			})
+			return SimpleStatus(SyncStatusUpdating), nil
+		}
+
 	case ytv1.UpdateStateWaitingForSnapshots:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
 			dnds, err := yc.getDataNodesInfo(ctx)
@@ -878,6 +892,14 @@ func (yc *YtsaurusClient) ensureRealChunkLocationsEnabled(ctx context.Context) e
 	}
 	logger.Info("enable_real_chunk_locations is set to true")
 	return nil
+}
+
+func (yc *YtsaurusClient) MasterCellsReconfiguration(ctx context.Context) error {
+	patch := yc.master.GetMasterCellsConfigurationPatch()
+	cypressPatchTarget := ypatch.CypressPatchTarget{
+		Client: yc.ytClient,
+	}
+	return cypressPatchTarget.ApplyPatch(ctx, "", patch)
 }
 
 // Data node actions.

@@ -45,6 +45,7 @@ const (
 	ConditionTabletCellsSaved                = "TabletCellsSaved"
 	ConditionTabletCellsRemovingStarted      = "TabletCellsRemovingStarted"
 	ConditionTabletCellsRemoved              = "TabletCellsRemoved"
+	ConditionMasterCellsReconfigured         = "MasterCellsReconfigured"
 	ConditionSnaphotsSaved                   = "SnaphotsSaved"
 	ConditionTabletCellsRecovered            = "TabletCellsRecovered"
 	ConditionOpArchiveUpdated                = "OpArchiveUpdated"
