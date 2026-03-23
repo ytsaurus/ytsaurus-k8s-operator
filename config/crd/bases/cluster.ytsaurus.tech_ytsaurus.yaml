@@ -16344,6 +16344,7 @@ spec:
                         type: object
                     type: object
                   cellTagMasterCaches:
+                    description: 'Deprecated: have no effect.'
                     type: integer
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings.
@@ -16389,9 +16390,15 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostAddresses:
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
                   hostAddressesLabel:
                     type: string
                   hostAddressesMasterCaches:
+                    description: 'Deprecated: use hostAddresses instead.'
                     items:
                       type: string
                     type: array
@@ -17528,8 +17535,6 @@ spec:
                       - name
                       type: object
                     type: array
-                required:
-                - cellTagMasterCaches
                 type: object
               nativeTransport:
                 description: Common config for native RPC bus transport.
