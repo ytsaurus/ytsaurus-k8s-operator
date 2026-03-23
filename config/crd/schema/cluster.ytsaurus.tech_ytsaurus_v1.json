@@ -18242,9 +18242,6 @@
         },
         "masterCaches": {
           "type": "object",
-          "required": [
-            "cellTagMasterCaches"
-          ],
           "properties": {
             "affinity": {
               "description": "Affinity is a group of affinity scheduling rules.",
@@ -19002,6 +18999,7 @@
               }
             },
             "cellTagMasterCaches": {
+              "description": "Deprecated: have no effect.",
               "type": "integer"
             },
             "dnsConfig": {
@@ -19060,10 +19058,18 @@
                 "type": "string"
               }
             },
+            "hostAddresses": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "x-kubernetes-list-type": "set"
+            },
             "hostAddressesLabel": {
               "type": "string"
             },
             "hostAddressesMasterCaches": {
+              "description": "Deprecated: use hostAddresses instead.",
               "type": "array",
               "items": {
                 "type": "string"

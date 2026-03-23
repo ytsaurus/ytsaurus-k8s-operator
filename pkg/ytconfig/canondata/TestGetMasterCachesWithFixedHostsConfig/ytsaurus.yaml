@@ -19,8 +19,7 @@ spec:
   - instanceCount: 3
     resources: {}
   masterCaches:
-    cellTagMasterCaches: 0
-    hostAddressesMasterCaches:
+    hostAddresses:
     - host1.external.address
     - host2.external.address
     - host3.external.address

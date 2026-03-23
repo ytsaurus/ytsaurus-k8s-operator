@@ -10,3 +10,8 @@ type MasterConnectionSpec struct {
 	//+listType=set
 	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
+
+type MasterCachesConnectionSpec struct {
+	//+listType=set
+	HostAddresses []string `json:"hostAddresses,omitempty"`
+}
