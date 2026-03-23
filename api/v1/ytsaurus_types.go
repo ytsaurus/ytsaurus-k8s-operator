@@ -795,15 +795,15 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
-type MasterCachesConnectionSpec struct {
-	CellTag       uint16   `json:"cellTagMasterCaches"`
-	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
-}
-
 type MasterCachesSpec struct {
 	InstanceSpec               `json:",inline"`
 	MasterCachesConnectionSpec `json:",inline"`
 	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
+
+	// Deprecated: have no effect.
+	CellTagMasterCaches uint16 `json:"cellTagMasterCaches,omitempty"`
+	// Deprecated: use hostAddresses instead.
+	HostAddressesMasterCaches []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 
 type CypressProxiesSpec struct {
