@@ -66,6 +66,9 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    roles:
+    - cypress_node_host
+    - transaction_coordinator
     volumeClaimTemplates:
     - metadata:
         name: master-data
@@ -99,6 +102,9 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    roles:
+    - cypress_node_host
+    - chunk_host
     volumeClaimTemplates:
     - metadata:
         name: master-data

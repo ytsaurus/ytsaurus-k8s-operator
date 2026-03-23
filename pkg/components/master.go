@@ -355,9 +355,33 @@ func (m *Master) initSchemaACLs() (string, error) {
 	return strings.Join(commands, "\n"), nil
 }
 
+func (m *Master) initMasterCellDescriptors() ([]string, error) {
+	cellDescriptors := ytconfig.GetMasterCellDescriptors(m.mastersSpec, m.ytsaurus.GetResource().Spec.SecondaryMasters)
+	config, err := yson.MarshalFormat(cellDescriptors, yson.FormatPretty)
+	if err != nil {
+		return nil, err
+	}
+	return []string{
+		fmt.Sprintf("/usr/bin/yt set '%s' '%s'", consts.MasterCellDescriptorsPath, string(config)),
+	}, nil
+}
+
+func (m *Master) scriptMasterCellsReconfiguration() ([]string, error) {
+	commands, err := m.initMasterCellDescriptors()
+	if err != nil {
+		return nil, err
+	}
+	return append([]string{initJobWithNativeDriverPrologue()}, commands...), nil
+}
+
 func (m *Master) scriptInitialization() ([]string, error) {
 	clusterConn := m.cfgen.GetClusterConnection()
 	connConfig, err := yson.MarshalFormat(clusterConn, yson.FormatPretty)
+	if err != nil {
+		return nil, err
+	}
+
+	initMasterCellsCommands, err := m.initMasterCellDescriptors()
 	if err != nil {
 		return nil, err
 	}
@@ -373,6 +397,7 @@ func (m *Master) scriptInitialization() ([]string, error) {
 	}
 
 	initCommands := []string{
+		RunIfExists("//sys/@provision_lock", initMasterCellsCommands...),
 		m.initGroups(),
 		RunIfExists("//sys/@provision_lock", initSchemaACLsCommands),
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
@@ -425,6 +450,8 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if m.IsPrimary() {
 			switch m.ytsaurus.GetUpdateState() {
+			case ytv1.UpdateStateWaitingForMasterCellsReconfiguration:
+				return m.reconfigureMasterCells(ctx, dry)
 			case ytv1.UpdateStateWaitingForMasterEnterReadOnly:
 				return m.enterReadOnly(ctx, dry)
 			case ytv1.UpdateStateWaitingForMasterExitReadOnly:
@@ -553,6 +580,17 @@ func (m *Master) getHostAddressLabel() string {
 
 func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return m.initJob.RunScript(ctx, dry, "ClusterInitialization", m.scriptInitialization, func() {})
+}
+
+func (m *Master) reconfigureMasterCells(ctx context.Context, dry bool) (ComponentStatus, error) {
+	return m.initJob.RunScript(ctx, dry, "ReconfiguringMasterCells", m.scriptMasterCellsReconfiguration, func() {
+		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionMasterCellsReconfigured,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Maintenance",
+			Message: "Master cells reconfiguration is complete",
+		})
+	})
 }
 
 func (m *Master) sidecarsInit(ctx context.Context, dry bool) (ComponentStatus, error) {

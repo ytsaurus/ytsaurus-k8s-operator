@@ -63,6 +63,22 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     if [ 'true' = 'true' ]; then
+    if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
+    /usr/bin/yt set '//sys/@config/multicell_manager/cell_descriptors' '{
+        "1"={
+            roles=[
+                "cypress_node_host";
+                "transaction_coordinator";
+            ];
+        };
+        "2"={
+            roles=[
+                "cypress_node_host";
+                "chunk_host";
+            ];
+        };
+    }'
+    fi
     /usr/bin/yt create group --attr '{name=admins}' --ignore-existing
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     /usr/bin/yt set //sys/schemas/tablet_cell/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'

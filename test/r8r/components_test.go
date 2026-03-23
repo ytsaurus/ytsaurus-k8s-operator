@@ -697,6 +697,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Shutdown: ytv1.ClusterShutdownExceptMasters,
 			}
 			ytBuilder.WithSecondaryMaster()
+			ytsaurus.Spec.PrimaryMasters.Roles = ytv1.GetMasterCellRoles(nil, true, true)
+			ytsaurus.Spec.SecondaryMasters[0].Roles = ytv1.GetMasterCellRoles(nil, false, true)
 		})
 		It("Test", func(ctx context.Context) {
 			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))

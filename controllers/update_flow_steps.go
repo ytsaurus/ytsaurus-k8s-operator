@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -64,6 +66,11 @@ func newConditionalForkStep(updateState ytv1.UpdateState, unhappyNext *flowStep)
 
 func (s *flowStep) checkCondition(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 	condition := flowConditions[s.updateState]
+	if condition == nil {
+		logger := log.FromContext(ctx)
+		logger.Error(nil, "Update flow state conditions are not defined", "updateState", s.updateState)
+		return stepResultMarkUnsatisfied
+	}
 	return condition(ctx, ytsaurus, componentManager)
 }
 
@@ -206,6 +213,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForTabletCellsRemovingStart:    flowCheckStatusCondition(consts.ConditionTabletCellsRemovingStarted),
 	ytv1.UpdateStateWaitingForTabletCellsRemoved:          flowCheckStatusCondition(consts.ConditionTabletCellsRemoved),
 	ytv1.UpdateStateWaitingForImaginaryChunksAbsence:      flowCheckStatusCondition(consts.ConditionDataNodesWithImaginaryChunksAbsent),
+	ytv1.UpdateStateWaitingForMasterCellsReconfiguration:  flowCheckStatusCondition(consts.ConditionMasterCellsReconfigured),
 	ytv1.UpdateStateWaitingForSnapshots:                   flowCheckStatusCondition(consts.ConditionSnaphotsSaved),
 	ytv1.UpdateStateWaitingForTabletCellsRecovery:         flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
 	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:    flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
@@ -280,6 +288,9 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	).chainIf(
 		(updDataNodes || updMaster) && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
+	).chainIf(
+		updMaster && componentManager.status.mastersMaintenance,
+		st(ytv1.UpdateStateWaitingForMasterCellsReconfiguration),
 	).chainIf(
 		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSnapshots),

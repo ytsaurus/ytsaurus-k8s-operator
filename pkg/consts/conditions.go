@@ -58,6 +58,7 @@ const (
 	ConditionQAStatePreparedForUpdating      = "QAStatePreparedForUpdating"
 	ConditionYqlaUpdated                     = "YqlaUpdated"
 	ConditionYqlaPreparedForUpdating         = "YqlaPreparedForUpdating"
+	ConditionMasterCellsReconfigured         = "MasterCellsReconfigured"
 	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
 	ConditionMasterEnteredReadOnly           = "MasterEnteredReadOnly"
 	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"

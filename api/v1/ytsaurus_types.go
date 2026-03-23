@@ -1033,6 +1033,7 @@ const (
 	UpdateStateWaitingForTabletCellsRemovingStart    UpdateState = "WaitingForTabletCellsRemovingStart"
 	UpdateStateWaitingForTabletCellsRemoved          UpdateState = "WaitingForTabletCellsRemoved"
 	UpdateStateWaitingForImaginaryChunksAbsence      UpdateState = "WaitingForImaginaryChunksAbsence"
+	UpdateStateWaitingForMasterCellsReconfiguration  UpdateState = "WaitingForMasterCellsReconfiguration"
 	UpdateStateWaitingForSnapshots                   UpdateState = "WaitingForSnapshots"
 	UpdateStateWaitingForPodsRemoval                 UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation                UpdateState = "WaitingForPodsCreation"

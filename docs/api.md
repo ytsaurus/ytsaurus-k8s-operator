@@ -3046,6 +3046,7 @@ _Appears in:_
 | `WaitingForTabletCellsRemovingStart` |  |
 | `WaitingForTabletCellsRemoved` |  |
 | `WaitingForImaginaryChunksAbsence` |  |
+| `WaitingForMasterCellsReconfiguration` |  |
 | `WaitingForSnapshots` |  |
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
