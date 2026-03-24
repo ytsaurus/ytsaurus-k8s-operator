@@ -74,7 +74,7 @@ func NewStrawberryController(
 	image := ptr.Deref(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage)
 
 	instanceCount := int32(1)
-	if maintenance := resource.Spec.ClusterMaintenance; maintenance != nil && maintenance.Mode != ytv1.ClusterMaintenanceNone {
+	if ytsaurus.GetClusterMaintenance().Mode != ytv1.ClusterMaintenanceNone {
 		instanceCount = 0
 	}
 

@@ -416,9 +416,14 @@ type InstanceSpec struct {
 	//+optional
 	ReadinessProbeParams *HealthcheckProbeParams `json:"readinessProbeParams,omitempty"`
 	// Resources dedicated for component. Capacity is defined by requests, or limits for zero requests.
-	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
-	InstanceCount         int32                           `json:"instanceCount,omitempty"`
-	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// Desired count of replicas. Default: 0.
+	//+kubebuilder:default:=0
+	//+kubebuilder:validation:Minimum:=0
+	InstanceCount int32 `json:"instanceCount,omitempty"`
+	// Required count of replicas. Default: equal to instanceCount. Effective requirement is limited by instanceCount.
+	//+kubebuilder:validation:Minimum:=0
+	MinReadyInstanceCount *int32                          `json:"minReadyInstanceCount,omitempty"`
 	Locations             []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	// Deprecated: use Affinity.PodAntiAffinity instead.
@@ -447,8 +452,12 @@ type TimbertruckSpec struct {
 }
 
 type MastersSpec struct {
-	InstanceSpec   `json:",inline"`
-	MasterCellSpec `json:",inline"`
+	InstanceSpec         `json:",inline"`
+	MasterConnectionSpec `json:",inline"`
+
+	// Roles assigned to this master cell. Assigned or default roles cannot be removed after cell creation.
+	//+listType=set
+	Roles []MasterCellRole `json:"roles,omitempty"`
 
 	HostAddressLabel string `json:"hostAddressLabel,omitempty"`
 
@@ -790,15 +799,15 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
-type MasterCachesConnectionSpec struct {
-	CellTag       uint16   `json:"cellTagMasterCaches"`
-	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
-}
-
 type MasterCachesSpec struct {
 	InstanceSpec               `json:",inline"`
 	MasterCachesConnectionSpec `json:",inline"`
 	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
+
+	// Deprecated: have no effect.
+	CellTagMasterCaches uint16 `json:"cellTagMasterCaches,omitempty"`
+	// Deprecated: use hostAddresses instead.
+	HostAddressesMasterCaches []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 
 type CypressProxiesSpec struct {
@@ -837,7 +846,7 @@ type CommonSpec struct {
 
 	ClusterFeatures *ClusterFeatures `json:"clusterFeatures,omitempty"`
 
-	// Activate cluster maintenance modes.
+	// Controls cluster maintenance.
 	ClusterMaintenance *ClusterMaintenance `json:"clusterMaintenance,omitempty"`
 
 	// Default docker image for user jobs.
@@ -945,17 +954,18 @@ type YtsaurusSpec struct {
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
-	Discovery        DiscoverySpec `json:"discovery,omitempty"`
-	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`
+	Discovery      DiscoverySpec `json:"discovery,omitempty"`
+	PrimaryMasters MastersSpec   `json:"primaryMasters,omitempty"`
+	//+kubebuilder:validation:MaxItems:=48
 	SecondaryMasters []MastersSpec `json:"secondaryMasters,omitempty"`
 	//+optional
 	MasterCaches *MasterCachesSpec `json:"masterCaches,omitempty"`
-	// +kubebuilder:validation:MinItems:=1
+	//+kubebuilder:validation:MinItems:=1
 	HTTPProxies  []HTTPProxiesSpec  `json:"httpProxies,omitempty"`
 	RPCProxies   []RPCProxiesSpec   `json:"rpcProxies,omitempty"`
 	TCPProxies   []TCPProxiesSpec   `json:"tcpProxies,omitempty"`
 	KafkaProxies []KafkaProxiesSpec `json:"kafkaProxies,omitempty"`
-	// +kubebuilder:validation:MinItems:=1
+	//+kubebuilder:validation:MinItems:=1
 	DataNodes        []DataNodesSpec       `json:"dataNodes,omitempty"`
 	ExecNodes        []ExecNodesSpec       `json:"execNodes,omitempty"`
 	Schedulers       *SchedulersSpec       `json:"schedulers,omitempty"`
@@ -982,6 +992,7 @@ const (
 	ClusterMaintenanceMasterCells ClusterMaintenanceMode = "MasterCells"
 	// Shutdown everything.
 	ClusterMaintenanceShutdown ClusterMaintenanceMode = "Shutdown"
+	// TODO: Add read-only
 )
 
 type ClusterMaintenance struct {
@@ -997,6 +1008,7 @@ const (
 	ClusterStatePreparing       ClusterState = "Preparing"
 	ClusterStateRunning         ClusterState = "Running"
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
+	ClusterStateMaintenance     ClusterState = "Maintenance"
 	ClusterStateUpdating        ClusterState = "Updating"
 	ClusterStateUpdateCanceled  ClusterState = "UpdateCanceled"
 	ClusterStateUpdateBlocked   ClusterState = "UpdateBlocked"
@@ -1016,6 +1028,7 @@ const (
 	UpdateStateWaitingForTabletCellsRemovingStart    UpdateState = "WaitingForTabletCellsRemovingStart"
 	UpdateStateWaitingForTabletCellsRemoved          UpdateState = "WaitingForTabletCellsRemoved"
 	UpdateStateWaitingForImaginaryChunksAbsence      UpdateState = "WaitingForImaginaryChunksAbsence"
+	UpdateStateWaitingForMasterCellsReconfiguration  UpdateState = "WaitingForMasterCellsReconfiguration"
 	UpdateStateWaitingForSnapshots                   UpdateState = "WaitingForSnapshots"
 	UpdateStateWaitingForPodsRemoval                 UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation                UpdateState = "WaitingForPodsCreation"

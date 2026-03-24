@@ -11,7 +11,7 @@ import (
 
 // IsInstanceCountEqualYTSpec checks if the number of instances registered in YTsaurus
 // matches the expected instanceCount from the spec.
-func IsInstanceCountEqualYTSpec(ctx context.Context, ytClient yt.Client, componentType consts.ComponentType, expectedCount int) error {
+func IsInstanceCountEqualYTSpec(ctx context.Context, ytClient yt.Client, componentType consts.ComponentType, expectedCount int32) error {
 	if ytClient == nil {
 		return fmt.Errorf("YT client is not available")
 	}
@@ -24,7 +24,7 @@ func IsInstanceCountEqualYTSpec(ctx context.Context, ytClient yt.Client, compone
 	}
 
 	actualCount := len(instances)
-	if actualCount != expectedCount {
+	if actualCount != int(expectedCount) {
 		return fmt.Errorf("%s instance count mismatch: expected %d, got %d instances in %s", componentType, expectedCount, actualCount, cypressPath)
 	}
 

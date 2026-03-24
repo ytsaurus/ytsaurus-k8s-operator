@@ -95,7 +95,7 @@ var _ = Describe("RemoteTabletNodes Controller", func() {
 				Expect(ysonNodeConfig).To(ContainSubstring(remoteYtsaurusHostname))
 
 				hostnameChanged := remoteYtsaurusHostname + "-changed"
-				remoteYtsaurus.Spec.HostAddresses = []string{hostnameChanged}
+				remoteYtsaurus.Spec.PrimaryMaster.HostAddresses = []string{hostnameChanged}
 				testutil.UpdateObject(h, &ytv1.RemoteYtsaurus{}, &remoteYtsaurus)
 				waitRemoteYtsaurusDeployed(h, remoteYtsaurusName)
 
@@ -225,7 +225,6 @@ var _ = Describe("RemoteTabletNodes Controller", func() {
 
 				nodes := buildRemoteTabletNodes(h, remoteYtsaurusName, remoteTabletNodesName)
 				nodes.Spec.InstanceSpec.InstanceCount = 1
-				nodes.Spec.InstanceSpec.MinReadyInstanceCount = ptr.To(1)
 				testutil.DeployObject(h, &nodes)
 				waitRemoteTabletNodesDeployed(h, remoteTabletNodesName)
 

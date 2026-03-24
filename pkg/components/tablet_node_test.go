@@ -68,7 +68,7 @@ var _ = Describe("Tablet node test", func() {
 					},
 				},
 				PrimaryMasters: ytv1.MastersSpec{
-					MasterCellSpec: ytv1.MasterCellSpec{
+					MasterConnectionSpec: ytv1.MasterConnectionSpec{
 						CellTag: 1,
 					},
 					InstanceSpec: ytv1.InstanceSpec{

@@ -82,10 +82,10 @@ var _ = Describe("Ytsaurus Controller", func() {
 				ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 				// FIXME(khlebnikov): This test is broken by design.
 				ytsaurusResource.Spec.EphemeralCluster = true
-				ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(0)
+				ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(int32(0))
 				testutil.DeployObject(h, &ytsaurusResource)
 
 				for _, compName := range []string{
@@ -144,10 +144,10 @@ var _ = Describe("Ytsaurus Controller", func() {
 				ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 				// FIXME(khlebnikov): This test is broken by design.
 				ytsaurusResource.Spec.EphemeralCluster = true
-				ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(0)
+				ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(int32(0))
 				testutil.DeployObject(h, &ytsaurusResource)
 
 				waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
@@ -176,10 +176,10 @@ var _ = Describe("Ytsaurus Controller", func() {
 				ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
 				// FIXME(khlebnikov): This test is broken by design.
 				ytsaurusResource.Spec.EphemeralCluster = true
-				ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(0)
-				ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(0)
+				ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(int32(0))
 				testutil.DeployObject(h, &ytsaurusResource)
 
 				waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)

@@ -31,6 +31,12 @@ type CypressManager struct {
 	DefaultJournalWriteQuorum       int `yson:"default_journal_write_quorum,omitempty"`
 }
 
+// NYT::NCellMaster::TMasterCellDescriptor
+type MasterCellDescriptor struct {
+	Name  string                `yson:"name,omitempty"`
+	Roles []ytv1.MasterCellRole `yson:"roles,omitempty"`
+}
+
 type MasterServer struct {
 	CommonServer
 	BusClient        *Bus                 `yson:"bus_client,omitempty"`
