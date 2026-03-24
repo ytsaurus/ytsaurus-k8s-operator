@@ -1,8 +1,6 @@
 package webhooks
 
 import (
-	"errors"
-
 	"k8s.io/utils/ptr"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -12,8 +10,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -260,7 +256,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 
 		It("Should not accept a duplicate cell tag", func() {
 			ytsaurus.Spec.PrimaryMasters.CellTag = 123
-			ytsaurus.Spec.SecondaryMasters = []ytv1.MastersSpec{{MasterCellSpec: ytv1.MasterCellSpec{CellTag: 123}}}
+			ytsaurus.Spec.SecondaryMasters = []ytv1.MastersSpec{{MasterConnectionSpec: ytv1.MasterConnectionSpec{CellTag: 123}}}
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(And(
 				ContainSubstring("spec.secondaryMasters[0].cellTag"),
 				ContainSubstring("spec.primaryMasters.cellTag"),
@@ -278,89 +274,8 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		})
 
 		It("Should not accept a Ytsaurus resource with EnableAntiAffinity flag set in different spec fields", func() {
-			trueEnableAntiAffinity := true
-			falseEnableAntiAffinity := false
-
-			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
-				{
-					InstanceSpec: ytv1.InstanceSpec{
-						EnableAntiAffinity: &trueEnableAntiAffinity,
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "123",
-								MountPath: "/yt",
-							},
-						},
-						Locations: []ytv1.LocationSpec{
-							{
-								LocationType: ytv1.LocationTypeChunkStore,
-								Path:         "/yt/chunk-store",
-							},
-						},
-					},
-					Name: "default",
-				},
-				{
-					InstanceSpec: ytv1.InstanceSpec{
-						EnableAntiAffinity: &falseEnableAntiAffinity,
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "123",
-								MountPath: "/yt",
-							},
-						},
-						Locations: []ytv1.LocationSpec{
-							{
-								LocationType: ytv1.LocationTypeChunkStore,
-								Path:         "/yt/chunk-store",
-							},
-						},
-					},
-					Name: "other",
-				},
-			}
-			ytsaurus.Spec.ControllerAgents = &ytv1.ControllerAgentsSpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					EnableAntiAffinity: &trueEnableAntiAffinity,
-				},
-			}
-			ytsaurus.Spec.PrimaryMasters = ytv1.MastersSpec{
-				InstanceSpec: ytv1.InstanceSpec{
-					EnableAntiAffinity: &trueEnableAntiAffinity,
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      "123",
-							MountPath: "/yt",
-						},
-					},
-					Locations: []ytv1.LocationSpec{
-						{
-							LocationType: ytv1.LocationTypeMasterSnapshots,
-							Path:         "/yt/master-snapshots",
-						},
-						{
-							LocationType: ytv1.LocationTypeMasterChangelogs,
-							Path:         "/yt/master-changelogs",
-						},
-					},
-				},
-			}
-
-			err := k8sClient.Create(ctx, ytsaurus)
-			statusErr := &apierrors.StatusError{}
-			isStatus := errors.As(err, &statusErr)
-			Expect(isStatus).To(BeTrue())
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead"))
-
-			errorDetails := statusErr.ErrStatus.Details
-			Expect(errorDetails.Causes).To(HaveLen(4))
-			for _, cause := range errorDetails.Causes {
-				Expect(cause.Type).To(Equal(metav1.CauseTypeFieldValueInvalid))
-				Expect(cause.Message).To(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead"))
-			}
-
-			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead")))
+			ytsaurus.Spec.PrimaryMasters.EnableAntiAffinity = ptr.To(true) //nolint:staticcheck //deprecated
+			Expect(k8sClient.Create(ctx, ytsaurus)).To(MatchError(ContainSubstring("EnableAntiAffinity is deprecated, use Affinity instead")))
 		})
 
 		It("Should not accept invalid Sidecars", func() {

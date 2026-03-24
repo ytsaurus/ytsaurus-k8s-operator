@@ -41,7 +41,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 	}
 
 	instanceCount := resource.Spec.UI.InstanceCount
-	if maintenance := resource.Spec.ClusterMaintenance; maintenance != nil && maintenance.Mode == ytv1.ClusterMaintenanceShutdown {
+	if ytsaurus.GetClusterMaintenance().Mode == ytv1.ClusterMaintenanceShutdown {
 		instanceCount = 0
 	}
 

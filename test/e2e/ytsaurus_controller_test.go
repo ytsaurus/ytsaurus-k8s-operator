@@ -1127,16 +1127,13 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
 
 					By("Waiting for condition NoPossibility")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(WithInvariant(
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue()),
-					))
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(
+						HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusFalse()))
 
 					By("Check consistent NoPossibility")
 					ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
 						HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck),
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue())),
+						HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusFalse())),
 					)
 				} else {
 					By("Checking that pods are not changed")
@@ -2227,7 +2224,7 @@ exec "$@"`
 		)
 
 		DescribeTableSubtree("rolling-update strategy", Label("rollingupdate"),
-			func(componentType consts.ComponentType, stsName string, minReady int) {
+			func(componentType consts.ComponentType, stsName string, minReady int32) {
 				BeforeEach(func() {
 					switch componentType {
 					case consts.HttpProxyType:
@@ -2272,8 +2269,8 @@ exec "$@"`
 
 							// If present, verify it matches controller formula.
 							if rolling.MaxUnavailable != nil {
-								expectedMaxUnavailable := int(*current.Spec.Replicas) - minReady
-								return rolling.MaxUnavailable.IntValue() == expectedMaxUnavailable
+								expectedMaxUnavailable := *current.Spec.Replicas - minReady
+								return rolling.MaxUnavailable.IntVal == expectedMaxUnavailable
 							}
 
 							return true
@@ -2328,7 +2325,7 @@ exec "$@"`
 					Expect(pods.Updated).To(ConsistOf(expectedUpdated), "updated")
 				})
 			},
-			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), 2),
+			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), int32(2)),
 		)
 		Context("concurrent rolling update for multiple data-node groups", Label("rollingupdate-dnd"), func() {
 			const (

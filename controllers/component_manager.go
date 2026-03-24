@@ -29,6 +29,7 @@ type ComponentManagerStatus struct {
 	allReady           bool // All components are Ready - no reconciliations required
 	allRunning         bool // All components are Ready or NeedUpdate - can start updates
 	allReadyOrUpdating bool // All components are Ready or Updating - no new updates
+	clusterMaintenance bool
 
 	needUpdate   []ytv1.Component // Components in state NeedUpdate
 	canUpdate    []ytv1.Component // Components with update allowed
@@ -82,7 +83,7 @@ func NewComponentManager(
 	}
 	allComponents = append(allComponents, hps...)
 
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, m, hps[0], getAllComponents)
 	allComponents = append(allComponents, yc)
 
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
@@ -220,6 +221,7 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 		allReady:           true,
 		allRunning:         true,
 		allReadyOrUpdating: true,
+		clusterMaintenance: cm.ytsaurus.GetClusterMaintenance().Mode != ytv1.ClusterMaintenanceNone,
 		needUpdate:         nil,
 	}
 

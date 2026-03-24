@@ -184,7 +184,9 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStatePossibilityCheck: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) {
 			return stepResultMarkHappy
-		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		} else if componentManager.status.clusterMaintenance && ytsaurus.IsStatusConditionTrue(consts.ConditionMastersQuorumCheck) {
+			return stepResultMarkHappy
+		} else if ytsaurus.IsUpdateStatusConditionFalse(consts.ConditionHasPossibility) {
 			return stepResultMarkUnhappy
 		}
 		return stepResultMarkUnsatisfied
@@ -244,6 +246,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 
 	updMaster := hasComponent(updatingComponents, consts.MasterType)
 	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
+	removeAndRecoverTabletCells := updTablet && !componentManager.status.clusterMaintenance
 	updMasterOrTablet := updMaster || updTablet
 	updDataNodes := hasComponent(updatingComponents, consts.DataNodeType)
 	updScheduler := hasComponent(updatingComponents, consts.SchedulerType)
@@ -267,13 +270,16 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
-		updTablet,
+		removeAndRecoverTabletCells,
 		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
 	).chainIf(
 		updDataNodes || updMaster,
 		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
+	).chainIf(
+		updMaster && componentManager.status.clusterMaintenance,
+		st(ytv1.UpdateStateWaitingForMasterCellsReconfiguration),
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSnapshots),
@@ -290,7 +296,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),
 	).chainIf(
-		updTablet,
+		removeAndRecoverTabletCells,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
 		updScheduler,

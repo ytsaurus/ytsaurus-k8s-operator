@@ -103,7 +103,6 @@ spec:
   - instanceCount: 3
     resources: {}
   masterCaches:
-    cellTagMasterCaches: 0
     instanceCount: 3
     resources: {}
   nativeTransport:

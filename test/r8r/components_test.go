@@ -281,7 +281,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 		By("Creating minimal Ytsaurus spec", func() {
 			ytBuilder = &testutil.YtsaurusBuilder{
-				MinReadyInstanceCount: ptr.To(0), // Do not wait any pods.
+				MinReadyInstanceCount: ptr.To(int32(0)), // Do not wait any pods.
 				Images:                testutil.TestImages,
 				Namespace:             namespace,
 			}
@@ -749,6 +749,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		BeforeEach(func(ctx context.Context) {
 			ytsaurus = nil
 
+			ytBuilder.WithMasterCaches()
 			remoteYtsaurus := ytBuilder.CreateRemoteYtsaurus()
 			Expect(k8sClient.Create(ctx, remoteYtsaurus)).To(Succeed())
 		})

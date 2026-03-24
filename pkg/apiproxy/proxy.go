@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -297,4 +298,52 @@ func (c *apiProxy) SyncObservedGeneration() bool {
 		updated = true
 	}
 	return updated
+}
+
+func ReportCondition(
+	setter func(metav1.Condition),
+	conditionType string,
+	ok bool,
+	msg string,
+	err error,
+) error {
+	condition := metav1.Condition{
+		Type:    conditionType,
+		Status:  metav1.ConditionTrue,
+		Reason:  "OK",
+		Message: msg,
+	}
+	if err != nil {
+		condition.Status = metav1.ConditionUnknown
+		condition.Reason = "Error"
+		condition.Message += err.Error()
+	} else if !ok {
+		condition.Status = metav1.ConditionFalse
+		condition.Reason = "Failure"
+	}
+	setter(condition)
+	return err
+}
+
+func MergeConditions(
+	output metav1.Condition,
+	getter func(contitionType string) *metav1.Condition,
+	inputs ...string,
+) metav1.Condition {
+	for _, input := range inputs {
+		cond := ptr.Deref(getter(input), metav1.Condition{
+			Type:    input,
+			Status:  metav1.ConditionUnknown,
+			Reason:  "Unknown",
+			Message: "Status not found",
+		})
+		if cond.Status != metav1.ConditionTrue {
+			if output.Status == metav1.ConditionTrue || cond.Status == metav1.ConditionUnknown {
+				output.Status = cond.Status
+				output.Reason = cond.Reason
+			}
+			output.Message += fmt.Sprintf("%v %v: %v\n", cond.Type, cond.Reason, cond.Message)
+		}
+	}
+	return output
 }

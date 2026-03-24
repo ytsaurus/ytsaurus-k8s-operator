@@ -722,7 +722,7 @@ func getYtsaurus() *ytv1.Ytsaurus {
 			CommonSpec: *getCommonSpec(),
 
 			PrimaryMasters: ytv1.MastersSpec{
-				MasterCellSpec:         getMasterCellSpec(),
+				MasterConnectionSpec:   getMasterConnectionSpec(),
 				MaxSnapshotCountToKeep: ptr.To(1543),
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount: 1,
@@ -813,8 +813,10 @@ func getRemoteYtsaurus() *ytv1.RemoteYtsaurus {
 	return &ytv1.RemoteYtsaurus{
 		ObjectMeta: testObjectMeta,
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterCellSpec:   getMasterCellSpecWithFixedMasterHosts(),
-			MasterCachesSpec: getMasterCachesSpecWithFixedHosts(),
+			PrimaryMaster: ptr.To(getMasterConnectionSpecWithFixedMasterHosts()),
+			MasterCaches: &ytv1.MasterCachesConnectionSpec{
+				HostAddresses: testMasterCachesExternalHosts,
+			},
 		},
 	}
 }
@@ -996,7 +998,7 @@ func withYQLAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 }
 
 func withFixedMasterCachesHosts(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
-	ytsaurus.Spec.MasterCaches.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
+	ytsaurus.Spec.MasterCaches.HostAddresses = testMasterCachesExternalHosts
 	return ytsaurus
 }
 
@@ -1148,30 +1150,15 @@ func getCommonSpec() *ytv1.CommonSpec {
 	}
 }
 
-func getMasterCellSpec() ytv1.MasterCellSpec {
-	return ytv1.MasterCellSpec{
+func getMasterConnectionSpec() ytv1.MasterConnectionSpec {
+	return ytv1.MasterConnectionSpec{
 		CellTag: 1,
 	}
 }
 
-func getMasterCellSpecWithFixedMasterHosts() ytv1.MasterCellSpec {
-	spec := getMasterCellSpec()
+func getMasterConnectionSpecWithFixedMasterHosts() ytv1.MasterConnectionSpec {
+	spec := getMasterConnectionSpec()
 	spec.HostAddresses = testMasterExternalHosts
 	spec.CellTag = 1000
-	return spec
-}
-
-func getMasterCachesSpec() ytv1.MasterCachesSpec {
-	return ytv1.MasterCachesSpec{
-		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount: 3,
-		},
-		HostAddressLabel: "",
-	}
-}
-
-func getMasterCachesSpecWithFixedHosts() ytv1.MasterCachesSpec {
-	spec := getMasterCachesSpec()
-	spec.MasterCachesConnectionSpec.HostAddresses = testMasterCachesExternalHosts
 	return spec
 }

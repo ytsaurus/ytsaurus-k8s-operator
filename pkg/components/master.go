@@ -428,11 +428,13 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if m.IsPrimary() && m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
-			return m.exitReadOnly(ctx, dry)
-		}
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitializingPrepare || m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitialize {
-			return m.sidecarsInit(ctx, dry)
+		if m.IsPrimary() {
+			switch m.ytsaurus.GetUpdateState() {
+			case ytv1.UpdateStateWaitingForMasterExitReadOnly:
+				return m.exitReadOnly(ctx, dry)
+			case ytv1.UpdateStateWaitingForSidecarsInitializingPrepare, ytv1.UpdateStateWaitingForSidecarsInitialize:
+				return m.sidecarsInit(ctx, dry)
+			}
 		}
 		if IsUpdatingComponent(m.ytsaurus, m) {
 			switch getComponentUpdateStrategy(m.ytsaurus, consts.MasterType, m.GetShortName()) {
@@ -543,6 +545,20 @@ func (m *Master) GetCypressPatch() ypatch.PatchSet {
 	}
 
 	return ypatch.PatchSet{"//sys/@cluster_connection": patch}
+}
+
+func (m *Master) GetMasterCellsConfigurationPatch() ypatch.Patch {
+	var patch ypatch.Patch
+	if len(m.mastersSpec.Roles) > 0 {
+		descriptorPath := ypath.Path(consts.MasterCellDescriptorsPath).Child(fmt.Sprintf("%d", m.mastersSpec.CellTag))
+		patch = append(patch, ypatch.Replace(descriptorPath, &ytconfig.MasterCellDescriptor{
+			Roles: m.mastersSpec.Roles,
+		}))
+	}
+	for _, cell := range m.secondaryMasters {
+		patch = append(patch, cell.GetMasterCellsConfigurationPatch()...)
+	}
+	return patch
 }
 
 func (m *Master) getHostAddressLabel() string {
@@ -713,4 +729,103 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 			},
 		},
 	)
+}
+
+// NYT::NHydra::EPeerState
+type MasterState string
+
+const (
+	MasterStateLeading   MasterState = "leading"
+	MasterStateFollowing MasterState = "following"
+)
+
+// See: https://github.com/ytsaurus/ytsaurus/blob/main/yt/yt/server/lib/hydra/distributed_hydra_manager.cpp
+type MasterHydra struct {
+	State                MasterState `yson:"state"`
+	SelfID               int32       `yson:"self_id"`
+	LeaderID             int32       `yson:"leader_id"`
+	Voting               bool        `yson:"voting"`
+	Active               bool        `yson:"active"`
+	ActiveLeader         bool        `yson:"active_leader"`
+	ActiveFollower       bool        `yson:"active_follower"`
+	BuildingSnapshot     bool        `yson:"building_snapshot"`
+	EnteringReadOnlyMode bool        `yson:"entering_read_only_mode"`
+	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only"`
+	ReadOnly             bool        `yson:"read_only"`
+}
+
+type MasterAddressWithAttributes struct {
+	Address     string `yson:",value"`
+	Maintenance bool   `yson:"maintenance,attr"`
+}
+
+func (m *Master) CheckQuorumHealth(ctx context.Context, ytClient yt.Client) (ok bool, msg string, err error) {
+	mastersPath := ypath.Path(consts.PrimaryMastersPath)
+
+	totalCount := m.server.getInstanceCount()
+	requiredCount := m.server.getMinReadyInstanceCount()
+
+	masters := make([]MasterAddressWithAttributes, 0, totalCount)
+	err = ytClient.ListNode(ctx, mastersPath, &masters, &yt.ListNodeOptions{
+		Attributes: []string{"maintenance"},
+	})
+	if err != nil {
+		return false, "", err
+	}
+
+	leaders := make([]string, 0, 1)
+	followers := make([]string, 0, totalCount)
+	var inactive, maintenance []string
+	for _, master := range masters {
+		var hydra MasterHydra
+		hydraPath := mastersPath.Child(master.Address).Child(consts.MasterHydraPath)
+		if err := ytClient.GetNode(ctx, hydraPath, &hydra, nil); err != nil {
+			return false, "", err
+		}
+		name := fmt.Sprintf("[%d] %s", hydra.SelfID, master.Address)
+		if !hydra.Active {
+			inactive = append(inactive, name)
+		}
+		if master.Maintenance {
+			maintenance = append(maintenance, name)
+		}
+		switch hydra.State {
+		case MasterStateLeading:
+			leaders = append(leaders, name)
+		case MasterStateFollowing:
+			followers = append(followers, name)
+		}
+	}
+
+	var note string
+	switch {
+	case len(maintenance) != 0:
+		note = "There is a master in maintenance"
+	case len(inactive) != 0:
+		note = "There is a non-active master"
+	case len(leaders) != 1:
+		note = "There is no single leader"
+	case len(followers)+1 < int(requiredCount):
+		note = "Not enough followers"
+	default:
+		note = "Quorum is OK"
+		ok = true
+	}
+
+	var buf strings.Builder
+	fmt.Fprintf(&buf, "Cell %v %v: leaders/followers/required/total=%d/%d/%d/%d, leaders=%v, followers=%v, inactive=%v, maintenance=%v",
+		m.mastersSpec.CellTag, note,
+		len(leaders), len(followers), requiredCount, totalCount,
+		leaders, followers, inactive, maintenance)
+
+	for _, secondary := range m.secondaryMasters {
+		ok2, msg2, err := secondary.CheckQuorumHealth(ctx, ytClient)
+		if err != nil {
+			return false, "", err
+		}
+		ok = ok && ok2
+		fmt.Fprintf(&buf, "\n%s", msg2)
+	}
+
+	return ok, buf.String(), nil
 }

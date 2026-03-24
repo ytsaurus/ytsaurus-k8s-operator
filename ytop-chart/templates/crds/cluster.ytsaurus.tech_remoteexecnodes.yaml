@@ -834,7 +834,7 @@ spec:
                     type: boolean
                 type: object
               clusterMaintenance:
-                description: Activate cluster maintenance modes.
+                description: Controls cluster maintenance.
                 properties:
                   mode:
                     enum:
@@ -942,7 +942,10 @@ spec:
                   type: string
                 type: array
               instanceCount:
+                default: 0
+                description: 'Desired count of replicas. Default: 0.'
                 format: int32
+                minimum: 0
                 type: integer
               jobEnvironment:
                 properties:
@@ -1296,6 +1299,9 @@ spec:
                     type: object
                 type: object
               minReadyInstanceCount:
+                description: 'Required count of replicas. Default: equal to instanceCount.'
+                format: int32
+                minimum: 0
                 type: integer
               monitoringPort:
                 format: int32
