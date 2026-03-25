@@ -287,6 +287,32 @@ func (c *component) IsUpdatingResources() bool {
 		c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
 }
 
+// TODO: Eventually pod removing must be done as syncing into state with zero replicas.
+func (c *component) RemovePods(ctx context.Context, manager podsManager) error {
+	removingStarted := c.labeller.GetPodsRemovingStartedCondition()
+	if !c.ytsaurus.IsUpdateStatusConditionTrue(removingStarted) {
+		if err := manager.removePods(ctx); err != nil {
+			return err
+		}
+		c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    removingStarted,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: "Pods removing was started",
+		})
+		return nil
+	}
+	if manager.arePodsRemoved(ctx) {
+		c.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    c.labeller.GetPodsRemovedCondition(),
+			Status:  metav1.ConditionTrue,
+			Reason:  "Update",
+			Message: "Pods removed",
+		})
+	}
+	return nil
+}
+
 func (c *serverComponent) Exists() bool {
 	return c.server.Exists()
 }

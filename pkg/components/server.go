@@ -3,17 +3,18 @@ package components
 import (
 	"context"
 	"fmt"
-	"log"
 	"maps"
 	"path"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -255,12 +256,102 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	)
 }
 
+func (s *serverImpl) arePodsReady(ctx context.Context) bool {
+	logger := log.FromContext(ctx)
+	if !resources.Exists(s.statefulSet) {
+		return false
+	}
+
+	pods, err := s.statefulSet.ListPods(ctx)
+	if err != nil {
+		logger.Error(err, "Cannot list pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+		)
+		return false
+	}
+
+	var readyCount int32
+	for _, pod := range pods {
+		ready := true
+		if len(s.readinessByContainers) > 0 {
+			for _, ct := range pod.Status.ContainerStatuses {
+				if slices.Contains(s.readinessByContainers, ct.Name) {
+					if ready = ct.Ready; !ready {
+						break
+					}
+				}
+			}
+		} else if pod.Status.Phase != corev1.PodRunning {
+			ready = false
+		}
+		if ready {
+			readyCount += 1
+		} else {
+			logger.Info("Instance pod is not ready",
+				"component", s.labeller.GetFullComponentName(),
+				"pod", pod.Name,
+				"phase", pod.Status.Phase,
+				"reason", pod.Status.Reason,
+				"message", pod.Status.Message,
+			)
+		}
+	}
+
+	instanceCount := s.getInstanceCount()
+	minReadyCount := s.getMinReadyInstanceCount(0)
+
+	if readyCount < minReadyCount {
+		logger.Info("Not enough ready instances",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+			"readyCount", readyCount,
+			"minReadyCount", minReadyCount,
+			"podsCount", len(pods),
+			"instanceCount", instanceCount,
+		)
+		return false
+	}
+
+	if len(pods) > int(instanceCount) {
+		logger.Info("Too many instance pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+			"readyCount", readyCount,
+			"minReadyCount", minReadyCount,
+			"podsCount", len(pods),
+			"instanceCount", instanceCount,
+		)
+		return false
+	}
+
+	return true
+}
+
 func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {
+	logger := log.FromContext(ctx)
 	if !resources.Exists(s.statefulSet) {
 		return true
 	}
-
-	return s.statefulSet.ArePodsRemoved(ctx)
+	if pods, err := s.statefulSet.ListPods(ctx); err != nil {
+		logger.Error(err, "Cannot list removed pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+		)
+		return false
+	} else if len(pods) > 0 {
+		podNames := make([]string, len(pods))
+		for i := range pods {
+			podNames[i] = pods[i].Name
+		}
+		logger.Info("There are not removed pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+			"podNames", podNames,
+		)
+		return false
+	}
+	return true
 }
 
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {
@@ -301,10 +392,6 @@ func (s *serverImpl) needUpdate() ComponentStatus {
 	return ComponentStatusReady()
 }
 
-func (s *serverImpl) arePodsReady(ctx context.Context) bool {
-	return s.statefulSet.ArePodsReady(ctx, s.getInstanceCount(), s.getMinReadyInstanceCount(0), s.readinessByContainers)
-}
-
 func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 	images := map[string]string{"image": s.image}
 	maps.Insert(images, maps.All(s.sidecarImages))
@@ -327,7 +414,7 @@ func (s *serverImpl) getMinReadyInstanceCount(margin int32) int32 {
 }
 
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
-	logger := ctrllog.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	sts, ok := s.fetchAndValidateStatefulSet(ctx)
 	if !ok {
@@ -454,7 +541,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 
 	if len(s.configs.generators) < 1 {
-		log.Panicf("expected at least one config file")
+		panic("expected at least one config file")
 	}
 	filename := s.configs.generators[0].FileName
 
@@ -648,7 +735,7 @@ func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
 }
 
 func (s *serverImpl) fetchAndValidateStatefulSet(ctx context.Context) (*appsv1.StatefulSet, bool) {
-	logger := ctrllog.FromContext(ctx)
+	logger := log.FromContext(ctx)
 	if !resources.Exists(s.statefulSet) {
 		return nil, false
 	}
