@@ -137,6 +137,10 @@ func (m *microserviceImpl) getMinReadyInstanceCount(margin int32) int32 {
 	return max(m.getInstanceCount()-margin, 0)
 }
 
+func (m *microserviceImpl) listPods(ctx context.Context) ([]corev1.Pod, error) {
+	return m.deployment.ListPods(ctx)
+}
+
 func (m *microserviceImpl) needSync() bool {
 	configStatus, err := m.configs.needReload()
 	return !m.Exists() ||
@@ -191,17 +195,6 @@ func (m *microserviceImpl) buildService() *corev1.Service {
 		m.builtService = m.service.Build()
 	}
 	return m.builtService
-}
-
-func (m *microserviceImpl) arePodsReady(ctx context.Context) bool {
-	return m.deployment.ArePodsReady(ctx)
-}
-
-func (m *microserviceImpl) arePodsRemoved(ctx context.Context) bool {
-	if !m.deployment.Exists() {
-		return true
-	}
-	return m.deployment.ArePodsRemoved(ctx)
 }
 
 func (m *microserviceImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {

@@ -31,7 +31,6 @@ type Scheduler struct {
 
 	cfgen            *ytconfig.Generator
 	master           Component
-	execNodes        []Component
 	tabletNodes      []Component
 	ytsaurusClient   internalYtsaurusClient
 	initUserJob      *InitJob
@@ -44,7 +43,7 @@ func NewScheduler(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	yc internalYtsaurusClient,
-	execNodes, tabletNodes []Component,
+	tabletNodes []Component,
 ) *Scheduler {
 	l := cfgen.GetComponentLabeller(consts.SchedulerType, "")
 
@@ -72,7 +71,6 @@ func NewScheduler(
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		master:          master,
-		execNodes:       execNodes,
 		tabletNodes:     tabletNodes,
 		ytsaurusClient:  yc,
 		initUserJob: NewInitJobForYtsaurus(
@@ -129,13 +127,6 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		return masterStatus.Blocker(), nil
 	}
 
-	for _, end := range s.execNodes {
-		if endStatus := end.GetStatus(); !endStatus.IsRunning() {
-			// It makes no sense to start scheduler without exec nodes.
-			return endStatus.Blocker(), err
-		}
-	}
-
 	if s.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
 			secretSpec := s.secret.Build()
@@ -154,8 +145,13 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !s.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
+	if status, err := s.ArePodsReady(ctx); !status.IsReady() || err != nil {
+		return status, err
+	}
+
+	// FIXME: Refactor this mess. During update flow sync must do only actions for current update phase.
+	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+		return ComponentStatusReady(), nil
 	}
 
 	if !s.needOpArchiveInit() {

@@ -66,11 +66,7 @@ func (cyp *CypressProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, e
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !cyp.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return cyp.ArePodsReady(ctx)
 }
 
 func (cyp *CypressProxy) doServerSync(ctx context.Context) error {

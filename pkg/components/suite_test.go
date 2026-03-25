@@ -55,6 +55,10 @@ func (fc *FakeComponent) Exists() bool {
 	return true
 }
 
+func (fc *FakeComponent) ArePodsReady(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatusReady(), nil
+}
+
 func (fc *FakeComponent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	return fc.status, nil
 }
@@ -117,13 +121,13 @@ func (fc *FakeComponent) GetReadyCondition() ComponentStatus {
 func (fc *FakeComponent) SetReadyCondition(status ComponentStatus) {}
 
 type FakeServer struct {
-	podsReady bool
+	instanceCount int32
 }
 
 var _ server = (*FakeServer)(nil)
 
 func NewFakeServer() *FakeServer {
-	return &FakeServer{podsReady: true}
+	return &FakeServer{}
 }
 
 func (fs *FakeServer) Fetch(ctx context.Context) error {
@@ -150,14 +154,6 @@ func (fs *FakeServer) getImageHeaterTarget() *ImageHeaterTarget {
 	return nil
 }
 
-func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {
-	return true
-}
-
-func (fs *FakeServer) arePodsReady(ctx context.Context) bool {
-	return fs.podsReady
-}
-
 func (fs *FakeServer) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	return true
 }
@@ -167,14 +163,19 @@ func (fs *FakeServer) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrateg
 }
 
 func (fs *FakeServer) getInstanceCount() int32 {
-	return 0
+	return fs.instanceCount
 }
 
-func (fs *FakeServer) setInstanceCount(int32) {
+func (fs *FakeServer) setInstanceCount(instanceCount int32) {
+	fs.instanceCount = instanceCount
 }
 
 func (fs *FakeServer) getMinReadyInstanceCount(margin int32) int32 {
-	return 0
+	return fs.instanceCount
+}
+
+func (fs *FakeServer) listPods(ctx context.Context) ([]corev1.Pod, error) {
+	return nil, nil
 }
 
 func (fs *FakeServer) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool) {

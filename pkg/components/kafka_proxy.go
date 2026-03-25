@@ -113,9 +113,5 @@ func (kp *KafkaProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor(kp.balancingService.Name()), err
 	}
 
-	if !kp.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return kp.ArePodsReady(ctx)
 }

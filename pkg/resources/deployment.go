@@ -8,7 +8,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	labeller2 "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -73,36 +72,10 @@ func (d *Deployment) GetReplicas() int32 {
 	return ptr.Deref(d.oldObject.Spec.Replicas, 1)
 }
 
-func (d *Deployment) ArePodsRemoved(ctx context.Context) bool {
-	return d.oldObject.Status.AvailableReplicas == 0 && d.oldObject.Status.Replicas == 0
-}
-
-func (d *Deployment) ArePodsReady(ctx context.Context) bool {
-	logger := log.FromContext(ctx)
-
-	if d.oldObject.Spec.Replicas == nil {
-		logger.Error(nil,
-			"desired number of pods is not specified", "deployment", d.name)
-		return false
+func (d *Deployment) ListPods(ctx context.Context) ([]corev1.Pod, error) {
+	var podList corev1.PodList
+	if err := d.proxy.ListObjects(ctx, &podList, d.labeller.GetListOptions()...); err != nil {
+		return nil, err
 	}
-
-	if *d.oldObject.Spec.Replicas != d.oldObject.Status.Replicas {
-		logger.Info("desired number of pods is not equal to actual yet",
-			"deployment", d.name,
-			"desiredNumberOfPods", *d.oldObject.Spec.Replicas,
-			"actualNumberOfPods", d.oldObject.Status.Replicas,
-		)
-		return false
-	}
-
-	if d.oldObject.Status.AvailableReplicas != d.oldObject.Status.Replicas {
-		logger.Info("total number of pods is not equal to number of running ones yet",
-			"deployment", d.name,
-			"totalNumberOfPods", d.oldObject.Status.Replicas,
-			"numberOfRunningPods", d.oldObject.Status.AvailableReplicas,
-		)
-		return false
-	}
-
-	return true
+	return podList.Items, nil
 }

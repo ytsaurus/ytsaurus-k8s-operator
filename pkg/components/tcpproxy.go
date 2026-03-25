@@ -97,9 +97,5 @@ func (tp *TcpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		return ComponentStatusWaitingFor(tp.balancingService.Name()), err
 	}
 
-	if !tp.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return tp.ArePodsReady(ctx)
 }

@@ -92,11 +92,7 @@ func (n *DataNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !n.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return n.ArePodsReady(ctx)
 }
 
 func (n *DataNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
@@ -148,11 +144,7 @@ func (n *DataNode) handleImaginaryChunksMigration(ctx context.Context, dry bool)
 	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
 	var err error
 	if !dry {
-		err = removePods(
-			ctx,
-			n.server,
-			&n.component,
-		)
+		err = removePods(ctx, n.server, &n.component)
 	}
 	return ptr.To(ComponentStatusUpdateStep("pods removal for imaginary chunks migration")), err
 }

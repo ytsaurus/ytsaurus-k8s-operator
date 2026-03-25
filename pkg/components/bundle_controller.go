@@ -72,11 +72,7 @@ func (bc *BundleController) Sync(ctx context.Context, dry bool) (ComponentStatus
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !bc.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return SimpleStatus(SyncStatusReady), err
+	return bc.ArePodsReady(ctx)
 }
 
 func (bc *BundleController) doServerSync(ctx context.Context) error {

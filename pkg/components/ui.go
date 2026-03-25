@@ -321,9 +321,5 @@ func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !u.microservice.arePodsReady(ctx) {
-		return ComponentStatusWaitingFor("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return u.ArePodsReady(ctx)
 }

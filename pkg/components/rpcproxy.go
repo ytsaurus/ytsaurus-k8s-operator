@@ -157,9 +157,5 @@ func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		return ComponentStatusWaitingFor(rp.balancingService.Name()), err
 	}
 
-	if !rp.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return rp.ArePodsReady(ctx)
 }

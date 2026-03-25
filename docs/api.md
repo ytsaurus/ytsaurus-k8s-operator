@@ -3017,6 +3017,7 @@ _Appears in:_
 | `WaitingForSnapshots` |  |
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
+| `WaitingForMasterReady` |  |
 | `WaitingForMasterExitReadOnly` |  |
 | `WaitingForCypressPatch` |  |
 | `WaitingForTabletCellsRecovery` |  |

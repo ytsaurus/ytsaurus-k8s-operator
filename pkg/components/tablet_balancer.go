@@ -69,11 +69,7 @@ func (tb *TabletBalancer) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !tb.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return SimpleStatus(SyncStatusReady), err
+	return tb.ArePodsReady(ctx)
 }
 
 func (tb *TabletBalancer) doServerSync(ctx context.Context) error {

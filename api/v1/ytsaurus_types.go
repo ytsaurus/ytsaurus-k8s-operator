@@ -1011,6 +1011,7 @@ const (
 	UpdateStateWaitingForSnapshots                   UpdateState = "WaitingForSnapshots"
 	UpdateStateWaitingForPodsRemoval                 UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation                UpdateState = "WaitingForPodsCreation"
+	UpdateStateWaitingForMasterReady                 UpdateState = "WaitingForMasterReady"
 	UpdateStateWaitingForMasterExitReadOnly          UpdateState = "WaitingForMasterExitReadOnly"
 	UpdateStateWaitingForCypressPatch                UpdateState = "WaitingForCypressPatch"
 	UpdateStateWaitingForTabletCellsRecovery         UpdateState = "WaitingForTabletCellsRecovery"

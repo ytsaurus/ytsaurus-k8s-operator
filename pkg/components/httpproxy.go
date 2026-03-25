@@ -165,9 +165,5 @@ func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error
 		return ComponentStatusWaitingFor(hp.balancingService.Name()), err
 	}
 
-	if !hp.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return hp.ArePodsReady(ctx)
 }

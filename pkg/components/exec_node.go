@@ -82,8 +82,6 @@ func NewExecNode(
 }
 
 func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if status, err := dispatchComponentUpdate(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
 			return *status, err
@@ -102,11 +100,7 @@ func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		return n.doSyncBase(ctx, dry)
 	}
 
-	if !n.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return n.ArePodsReady(ctx)
 }
 
 func (n *ExecNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
