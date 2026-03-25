@@ -73,8 +73,12 @@ func (d *Deployment) GetReplicas() int32 {
 	return ptr.Deref(d.oldObject.Spec.Replicas, 1)
 }
 
-func (d *Deployment) ArePodsRemoved(ctx context.Context) bool {
-	return d.oldObject.Status.AvailableReplicas == 0 && d.oldObject.Status.Replicas == 0
+func (d *Deployment) ListPods(ctx context.Context) ([]corev1.Pod, error) {
+	var podList corev1.PodList
+	if err := d.proxy.ListObjects(ctx, &podList, d.labeller.GetListOptions()...); err != nil {
+		return nil, err
+	}
+	return podList.Items, nil
 }
 
 func (d *Deployment) ArePodsReady(ctx context.Context) bool {
