@@ -71,11 +71,7 @@ func (mc *MasterCache) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !mc.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return mc.ArePodsReady(ctx)
 }
 
 func (mc *MasterCache) doServerSync(ctx context.Context) error {

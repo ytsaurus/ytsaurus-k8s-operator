@@ -197,7 +197,17 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			}
 
 		case !cm.status.allRunning:
-			logger.Info("Ytsaurus needs reconfiguration for some components")
+			logger.Info("Ytsaurus needs reconfiguration for some components",
+				"pending", cm.status.pending,
+				"blocked", cm.status.blocked,
+				"started", cm.status.started,
+			)
+			ytsaurus.RecordNormal("Reconfiguration", fmt.Sprintf("Components pending: %v, blocked: %v, started: %v",
+				apiproxy.BuildComponentsSummary(cm.status.pending),
+				apiproxy.BuildComponentsSummary(cm.status.blocked),
+				apiproxy.BuildComponentsSummary(cm.status.started),
+			))
+
 			if ytsaurus.SetClusterState(ytv1.ClusterStateReconfiguration) {
 				needStatusUpdate = true
 			}
@@ -251,7 +261,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			"updateState", ytsaurus.GetUpdateState(),
 			"updatingComponents", cm.status.nowUpdating,
 		)
-		ytsaurus.RecordNormal("Update", fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), cm.status.nowUpdating))
+		ytsaurus.RecordNormal("Update", fmt.Sprintf("Update flow starting with %s, for updating components: %v, pending: %v, blocked: %v, started: %v",
+			ytsaurus.GetUpdateState(),
+			apiproxy.BuildComponentsSummary(cm.status.nowUpdating),
+			apiproxy.BuildComponentsSummary(cm.status.pending),
+			apiproxy.BuildComponentsSummary(cm.status.blocked),
+			apiproxy.BuildComponentsSummary(cm.status.started),
+		))
 
 		updateFlow := buildFlowTree(cm)
 		if progressed, err := updateFlow.execute(ctx, ytsaurus, cm); err != nil {

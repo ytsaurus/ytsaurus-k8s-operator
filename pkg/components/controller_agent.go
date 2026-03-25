@@ -80,11 +80,7 @@ func (ca *ControllerAgent) Sync(ctx context.Context, dry bool) (ComponentStatus,
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !ca.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return ca.ArePodsReady(ctx)
 }
 
 type ControllerAgentsWithMaintenance struct {

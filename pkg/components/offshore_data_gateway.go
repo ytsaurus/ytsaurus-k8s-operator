@@ -64,11 +64,7 @@ func (p *OffshoreDataGateway) Sync(ctx context.Context, dry bool) (ComponentStat
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !p.server.arePodsReady(ctx) {
-		return ComponentStatusWaitingFor("pods"), err
-	}
-
-	return SimpleStatus(SyncStatusReady), err
+	return p.ArePodsReady(ctx)
 }
 
 func (p *OffshoreDataGateway) Fetch(ctx context.Context) error {

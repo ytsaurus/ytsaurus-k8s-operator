@@ -73,11 +73,7 @@ func (d *Discovery) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !d.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return d.ArePodsReady(ctx)
 }
 
 func (d *Discovery) UpdatePreCheck(ctx context.Context) ComponentStatus {

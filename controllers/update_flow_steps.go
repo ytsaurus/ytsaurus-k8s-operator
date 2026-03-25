@@ -213,8 +213,14 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQAStateUpdate:               flowCheckStatusCondition(consts.ConditionQAStateUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:            flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
-	ytv1.UpdateStateWaitingForMasterExitReadOnly:          flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
-	ytv1.UpdateStateWaitingForCypressPatch:                flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
+	ytv1.UpdateStateWaitingForMasterReady: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
+		if componentManager.status.masterReady {
+			return stepResultMarkHappy
+		}
+		return stepResultMarkUnsatisfied
+	},
+	ytv1.UpdateStateWaitingForMasterExitReadOnly: flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
+	ytv1.UpdateStateWaitingForCypressPatch:       flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.GetResource().Spec.PrimaryMasters.Timbertruck == nil || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
 			return stepResultMarkHappy
@@ -228,7 +234,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateWaitingForPodsCreation: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.status.allReadyOrUpdating {
+		if componentManager.status.allStarted {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied
@@ -282,6 +288,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForPodsCreation),
 	).chainIf(
 		updMaster,
+		st(ytv1.UpdateStateWaitingForMasterReady),
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
 	).chainIf(
 		updMaster,

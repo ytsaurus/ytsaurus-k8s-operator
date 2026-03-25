@@ -65,11 +65,7 @@ func (n *RemoteTabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus,
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !n.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return n.ArePodsReady(ctx)
 }
 
 func (n *RemoteTabletNode) Fetch(ctx context.Context) error {

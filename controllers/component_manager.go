@@ -26,9 +26,14 @@ type ComponentManager struct {
 }
 
 type ComponentManagerStatus struct {
-	allReady           bool // All components are Ready - no reconciliations required
-	allRunning         bool // All components are Ready or NeedUpdate - can start updates
-	allReadyOrUpdating bool // All components are Ready or Updating - no new updates
+	masterReady bool // All masters are Ready - quorum may enter/exit read-only state
+	allStarted  bool // All components are Started or Running - no reconciliations required
+	allRunning  bool // All components are Ready or NeedUpdate - can start updates
+	allReady    bool // All components are Ready - no reconciliations required
+
+	pending []ytv1.Component // Components in state Pending or Updating
+	blocked []ytv1.Component // Components in state Blocked
+	started []ytv1.Component // Components in state Started
 
 	needUpdate   []ytv1.Component // Components in state NeedUpdate
 	canUpdate    []ytv1.Component // Components with update allowed
@@ -117,13 +122,9 @@ func NewComponentManager(
 		allComponents = append(allComponents, kps...)
 	}
 
-	var ends []components.Component
-	if len(resource.Spec.ExecNodes) > 0 {
-		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
-			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec, yc))
-		}
+	for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
+		allComponents = append(allComponents, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec, yc))
 	}
-	allComponents = append(allComponents, ends...)
 
 	var tnds []components.Component
 	if len(resource.Spec.TabletNodes) > 0 {
@@ -135,7 +136,7 @@ func NewComponentManager(
 
 	var sch components.Component
 	if resource.Spec.Schedulers != nil {
-		sch = components.NewScheduler(cfgen, ytsaurus, m, yc, ends, tnds)
+		sch = components.NewScheduler(cfgen, ytsaurus, m, yc, tnds)
 		allComponents = append(allComponents, sch)
 	}
 
@@ -203,16 +204,13 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 	resource := cm.ytsaurus.GetResource()
 
 	// Fetch component status.
-	var readyComponents []string
-	var needUpdateComponents []string
-	var updatingComponents []string
-	var notReadyComponents []string
+	var readyComponents []ytv1.Component
 
 	cm.status = ComponentManagerStatus{
-		allReady:           true,
-		allRunning:         true,
-		allReadyOrUpdating: true,
-		needUpdate:         nil,
+		masterReady: true,
+		allStarted:  true,
+		allRunning:  true,
+		allReady:    true,
 	}
 
 	for _, component := range cm.allComponents {
@@ -241,42 +239,46 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			"message", status.Message,
 		)
 
+		if component.GetType() == consts.MasterType && !status.IsReady() {
+			cm.status.masterReady = false
+		}
+
 		switch status.SyncStatus {
 		case components.SyncStatusReady:
-			readyComponents = append(readyComponents, component.GetFullName())
+			readyComponents = append(readyComponents, component.GetComponent())
 		case components.SyncStatusNeedUpdate:
-			needUpdateComponents = append(needUpdateComponents, component.GetFullName())
 			cm.status.needUpdate = append(cm.status.needUpdate, component.GetComponent())
 			cm.status.allReady = false
-			cm.status.allReadyOrUpdating = false
-		case components.SyncStatusUpdating:
-			updatingComponents = append(updatingComponents, component.GetFullName())
+		case components.SyncStatusStarted:
+			cm.status.started = append(cm.status.started, component.GetComponent())
 			cm.status.allReady = false
 			cm.status.allRunning = false
+		case components.SyncStatusPending, components.SyncStatusUpdating:
+			cm.status.pending = append(cm.status.pending, component.GetComponent())
+			cm.status.allReady = false
+			cm.status.allRunning = false
+			cm.status.allStarted = false
+		case components.SyncStatusBlocked:
+			cm.status.blocked = append(cm.status.blocked, component.GetComponent())
+			cm.status.allReady = false
+			cm.status.allRunning = false
+			cm.status.allStarted = false
 		default:
-			notReadyComponents = append(notReadyComponents, component.GetFullName())
-			cm.status.allReady = false
-			cm.status.allRunning = false
-			cm.status.allReadyOrUpdating = false
-			if cm.ytsaurus.IsReadyToUpdate() {
-				logger.Info("Cluster needs reconfiguration because component is not running",
-					"component", component.GetFullName(),
-					"status", status.SyncStatus,
-					"message", status.Message,
-				)
-			}
+			return fmt.Errorf("component %v has unknown sync status: %v", component.GetFullName(), status.SyncStatus)
 		}
 	}
 
 	logger.Info("Ytsaurus sync status",
 		"clusterState", resource.Status.State,
 		"updateState", resource.Status.UpdateStatus.State,
-		"allReady", cm.status.allReady,
+		"masterReady", cm.status.masterReady,
+		"allStarted", cm.status.allStarted,
 		"allRunning", cm.status.allRunning,
-		"allReadyOrUpdating", cm.status.allReadyOrUpdating,
-		"needUpdateComponents", needUpdateComponents,
-		"updatingComponents", updatingComponents,
-		"notReadyComponents", notReadyComponents,
+		"allReady", cm.status.allReady,
+		"needUpdate", cm.status.needUpdate,
+		"pending", cm.status.pending,
+		"blocked", cm.status.blocked,
+		"started", cm.status.started,
 		"readyComponents", readyComponents,
 	)
 

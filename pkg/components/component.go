@@ -22,10 +22,12 @@ type SyncStatus string
 const (
 	SyncStatusUndefined  SyncStatus = ""           // Status is unknown
 	SyncStatusReady      SyncStatus = "Ready"      // Running, reconciliation is not required
+	SyncStatusStarted    SyncStatus = "Started"    // Reconciliation is complete, is not ready yet
 	SyncStatusBlocked    SyncStatus = "Blocked"    // Reconciliation is impossible
 	SyncStatusPending    SyncStatus = "Pending"    // Reconciliation is possible
 	SyncStatusNeedUpdate SyncStatus = "NeedUpdate" // Running, update is required
-	SyncStatusUpdating   SyncStatus = "Updating"   // Update in progress
+	// FIXME: Remove, replace with pending.
+	SyncStatusUpdating SyncStatus = "Updating" // Update in progress
 )
 
 type ComponentStatus struct {
@@ -66,6 +68,10 @@ func ComponentStatusReadyAfter(format string, a ...any) ComponentStatus {
 	return ComponentStatusSprintf(SyncStatusReady, format, a...)
 }
 
+func ComponentStatusStarted(format string, a ...any) ComponentStatus {
+	return ComponentStatusSprintf(SyncStatusStarted, format, a...)
+}
+
 func ComponentStatusBlocked(format string, a ...any) ComponentStatus {
 	return ComponentStatusSprintf(SyncStatusBlocked, format, a...)
 }
@@ -100,6 +106,7 @@ func SimpleStatus(status SyncStatus) ComponentStatus {
 	return ComponentStatusSprintf(status, "%v at %v:%v", status, file, line)
 }
 
+//nolint:interfacebloat //this is ok
 type Component interface {
 	resources.Fetchable
 
@@ -111,6 +118,12 @@ type Component interface {
 
 	// NeedUpdate returns SyncStatusNeedUpdate when component needs instance update.
 	NeedUpdate() ComponentStatus
+
+	// ArePodsReady returns:
+	// - SyncStatusBlocked when component have not enough running pods, or too many pods
+	// - SyncStatusStarted when component have enough running pods, but not enough ready pods
+	// - SyncStatusReady when component have enough ready pods
+	ArePodsReady(ctx context.Context) (ComponentStatus, error)
 
 	Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 
@@ -146,6 +159,10 @@ type component struct {
 
 	// TODO: Remove, owner must provide all required interfaces.
 	ytsaurus *apiproxy.Ytsaurus
+}
+
+type virtualComponent struct {
+	component
 }
 
 type serverComponent struct {
@@ -287,6 +304,10 @@ func (c *component) IsUpdatingResources() bool {
 		c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
 }
 
+func (c *virtualComponent) ArePodsReady(ctx context.Context) (ComponentStatus, error) {
+	return ComponentStatusReady(), nil
+}
+
 func (c *serverComponent) Exists() bool {
 	return c.server.Exists()
 }
@@ -299,6 +320,10 @@ func (c *serverComponent) NeedUpdate() ComponentStatus {
 	return c.server.needUpdate()
 }
 
+func (c *serverComponent) ArePodsReady(ctx context.Context) (ComponentStatus, error) {
+	return arePodsReady(ctx, c.server, c.labeller, nil)
+}
+
 func (c *serverComponent) GetImageHeaterTarget() *ImageHeaterTarget {
 	return c.server.getImageHeaterTarget()
 }
@@ -309,6 +334,10 @@ func (c *microserviceComponent) NeedSync() bool {
 
 func (c *microserviceComponent) NeedUpdate() ComponentStatus {
 	return c.microservice.needUpdate()
+}
+
+func (c *microserviceComponent) ArePodsReady(ctx context.Context) (ComponentStatus, error) {
+	return arePodsReady(ctx, c.microservice, c.labeller, nil)
 }
 
 func (c *microserviceComponent) GetImageHeaterTarget() *ImageHeaterTarget {

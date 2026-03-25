@@ -91,8 +91,8 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !tn.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
+	if status, err := tn.ArePodsReady(ctx); !status.IsReady() || err != nil {
+		return status, err
 	}
 
 	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) {

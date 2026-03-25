@@ -26,7 +26,7 @@ import (
 )
 
 type ImageHeater struct {
-	component
+	virtualComponent
 
 	cfgen            *ytconfig.Generator
 	getAllComponents func() []Component
@@ -38,7 +38,9 @@ type ImageHeater struct {
 func NewImageHeater(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, getAllComponents func() []Component) *ImageHeater {
 	l := cfgen.GetComponentLabeller(consts.ImageHeaterType, "")
 	return &ImageHeater{
-		component:        newComponent(l, ytsaurus),
+		virtualComponent: virtualComponent{
+			component: newComponent(l, ytsaurus),
+		},
 		cfgen:            cfgen,
 		getAllComponents: getAllComponents,
 	}

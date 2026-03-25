@@ -134,7 +134,7 @@ func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav
 
 func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = canUpdate
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = buildComponentsSummary(canUpdate)
+	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = BuildComponentsSummary(canUpdate)
 }
 
 // ShouldRunPreChecks is status-based and can flip to false after successful execution.
@@ -169,7 +169,7 @@ func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentT
 }
 
 func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
-	summary := buildComponentsSummary(components)
+	summary := BuildComponentsSummary(components)
 	if c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary == summary {
 		return false
 	}
@@ -211,7 +211,7 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 	return nil
 }
 
-func buildComponentsSummary(components []ytv1.Component) string {
+func BuildComponentsSummary(components []ytv1.Component) string {
 	if len(components) == 0 {
 		return ""
 	}

@@ -75,15 +75,9 @@ func NewRemoteExecNodes(
 }
 
 func (n *RemoteExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
-	var err error
-
 	if n.NeedSync() {
 		return n.doSyncBase(ctx, dry)
 	}
 
-	if !n.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
-	}
-
-	return ComponentStatusReady(), err
+	return n.ArePodsReady(ctx)
 }

@@ -214,8 +214,13 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !yqla.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
+	if status, err := yqla.ArePodsReady(ctx); !status.IsReady() || err != nil {
+		return status, err
+	}
+
+	// FIXME: Refactor this mess. During update flow sync must do only actions for current update phase.
+	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+		return ComponentStatusReady(), nil
 	}
 
 	return ComponentStatusReady(), nil

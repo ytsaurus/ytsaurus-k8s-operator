@@ -34,6 +34,8 @@ func HaveSyncStatus(status SyncStatus) otypes.GomegaMatcher {
 	return Or(HaveField("SyncStatus", Equal(status)))
 }
 
+// FIXME: These tests are pretty much useless. Replace with e2e.
+
 var _ = Describe("Tablet node test", func() {
 	var ytsaurusSpec *ytv1.Ytsaurus
 	ytsaurusName := "ytsaurus"
@@ -202,14 +204,14 @@ var _ = Describe("Tablet node test", func() {
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, ytsaurusSpec.Spec.TabletNodes[0], true)
 			fakeServer := NewFakeServer()
-			fakeServer.podsReady = false
+			fakeServer.instanceCount = 1
 			tabletNode.server = fakeServer
 
 			status, err := tabletNode.Sync(ctx, true)
 			Expect(err).Should(Succeed())
 			Expect(status).Should(HaveSyncStatus(SyncStatusBlocked))
 
-			fakeServer.podsReady = true
+			fakeServer.instanceCount = 0
 
 			status, err = tabletNode.Sync(ctx, true)
 			Expect(err).Should(Succeed())

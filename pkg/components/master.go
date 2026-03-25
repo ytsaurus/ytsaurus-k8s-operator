@@ -42,7 +42,6 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 			ContainerPort: consts.MasterRPCPort,
 			Protocol:      corev1.ProtocolTCP,
 		}),
-		WithReadinessByContainer(consts.YTServerContainerName),
 	}
 
 	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil && resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image != nil {
@@ -136,6 +135,10 @@ func (m *Master) Fetch(ctx context.Context) error {
 		m.exitReadOnlyJob,
 		m.uploaderSecret,
 	)
+}
+
+func (m *Master) ArePodsReady(ctx context.Context) (ComponentStatus, error) {
+	return arePodsReady(ctx, m.server, m.labeller, []string{consts.YTServerContainerName})
 }
 
 func (m *Master) getAdminCredentials() (adminLogin string, adminPassword string, adminToken string) {
@@ -452,8 +455,8 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !m.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
+	if status, err := m.ArePodsReady(ctx); !status.IsReady() || err != nil {
+		return status, err
 	}
 
 	return m.runInitPhaseJobs(ctx, dry)

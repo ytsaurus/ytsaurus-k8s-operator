@@ -134,8 +134,13 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusWaitingFor("components"), err
 	}
 
-	if !qt.server.arePodsReady(ctx) {
-		return ComponentStatusBlockedBy("pods"), err
+	if status, err := qt.ArePodsReady(ctx); !status.IsReady() || err != nil {
+		return status, err
+	}
+
+	// FIXME: Refactor this mess. During update flow sync must do only actions for current update phase.
+	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+		return ComponentStatusReady(), nil
 	}
 
 	return ComponentStatusReady(), nil
