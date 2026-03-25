@@ -169,7 +169,7 @@ func handleUpdatingClusterState(
 	if IsUpdatingComponent(ytsaurus, cmp) {
 		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
-				err = removePods(ctx, server, cmpBase)
+				err = cmpBase.RemovePods(ctx, server)
 			}
 			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 		}
@@ -199,7 +199,7 @@ func handleBulkUpdatingClusterState(
 		// Check if this component is using the new update mode
 		if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetFullName()) {
 			if !dry {
-				err = removePods(ctx, server, cmpBase)
+				err = cmpBase.RemovePods(ctx, server)
 			}
 			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 		}
@@ -225,7 +225,7 @@ func handleBulkUpdatingClusterState(
 				Reason:  "RemovingPods",
 				Message: "removing pods",
 			})
-			err = removePods(ctx, server, cmpBase)
+			err = cmpBase.RemovePods(ctx, server)
 		}
 		return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 
