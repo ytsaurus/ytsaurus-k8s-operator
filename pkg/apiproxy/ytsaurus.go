@@ -211,6 +211,10 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 	return nil
 }
 
+func (c *Ytsaurus) GetUpdateStateCompleteCondition(updateState ytv1.UpdateState) string {
+	return string(updateState) + consts.ConditionUpdateStateComplete
+}
+
 func buildComponentsSummary(components []ytv1.Component) string {
 	if len(components) == 0 {
 		return ""
