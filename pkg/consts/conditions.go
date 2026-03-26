@@ -2,11 +2,16 @@ package consts
 
 // Status conditions
 const (
-	ConditionOperatorVersion            = "OperatorVersion"
-	ConditionReadyToWork                = "ReadyToWork"
-	ConditionImageHeaterReady           = "ImageHeaterReady"
-	ConditionImageHeaterComplete        = "ImageHeaterComplete"
-	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
+	ConditionOperatorVersion              = "OperatorVersion"
+	ConditionClusterMaintenance           = "ClusterMaintenance"
+	ConditionMastersQuorumCheck           = "MastersQuorumCheck"
+	ConditionLostVitalChunksCheck         = "LostVitalChunksCheck"
+	ConditionQuorumMissingChunksCheck     = "QuorumMissingChunksCheck"
+	ConditionTabletCellBundlesHealthCheck = "TabletCellBundlesHealthCheck"
+	ConditionReadyToWork                  = "ReadyToWork"
+	ConditionImageHeaterReady             = "ImageHeaterReady"
+	ConditionImageHeaterComplete          = "ImageHeaterComplete"
+	ConditionTimbertruckUserInitialized   = "TimbertruckUserInitialized"
 )
 
 // Both status and update conditions
@@ -36,27 +41,25 @@ const (
 
 // Update conditions
 const (
-	ConditionHasPossibility                  = "HasPossibility"
-	ConditionNoPossibility                   = "NoPossibility"
-	ConditionSafeModeEnabled                 = "SafeModeEnabled"
-	ConditionTabletCellsSaved                = "TabletCellsSaved"
-	ConditionTabletCellsRemovingStarted      = "TabletCellsRemovingStarted"
-	ConditionTabletCellsRemoved              = "TabletCellsRemoved"
-	ConditionSnaphotsSaved                   = "SnaphotsSaved"
-	ConditionTabletCellsRecovered            = "TabletCellsRecovered"
-	ConditionOpArchiveUpdated                = "OpArchiveUpdated"
-	ConditionOpArchivePreparedForUpdating    = "OpArchivePreparedForUpdating"
-	ConditionSidecarsInitialized             = "SidecarsInitialized"
-	ConditionSidecarsPreparedForInitializing = "SidecarsPreparedForInitializing"
-	ConditionQTStateUpdated                  = "QTStateUpdated"
-	ConditionQTStatePreparedForUpdating      = "QTStatePreparedForUpdating"
-	ConditionQAStateUpdated                  = "QAStateUpdated"
-	ConditionQAStatePreparedForUpdating      = "QAStatePreparedForUpdating"
-	ConditionYqlaUpdated                     = "YqlaUpdated"
-	ConditionYqlaPreparedForUpdating         = "YqlaPreparedForUpdating"
-	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
-	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"
-	ConditionSafeModeDisabled                = "SafeModeDisabled"
+	ConditionHasPossibility               = "HasPossibility"
+	ConditionSafeModeEnabled              = "SafeModeEnabled"
+	ConditionTabletCellsSaved             = "TabletCellsSaved"
+	ConditionTabletCellsRemovingStarted   = "TabletCellsRemovingStarted"
+	ConditionTabletCellsRemoved           = "TabletCellsRemoved"
+	ConditionSnaphotsSaved                = "SnaphotsSaved"
+	ConditionTabletCellsRecovered         = "TabletCellsRecovered"
+	ConditionOpArchiveUpdated             = "OpArchiveUpdated"
+	ConditionOpArchivePreparedForUpdating = "OpArchivePreparedForUpdating"
+	ConditionSidecarsInitialized          = "SidecarsInitialized"
+	ConditionQTStateUpdated               = "QTStateUpdated"
+	ConditionQTStatePreparedForUpdating   = "QTStatePreparedForUpdating"
+	ConditionQAStateUpdated               = "QAStateUpdated"
+	ConditionQAStatePreparedForUpdating   = "QAStatePreparedForUpdating"
+	ConditionYqlaUpdated                  = "YqlaUpdated"
+	ConditionYqlaPreparedForUpdating      = "YqlaPreparedForUpdating"
+	ConditionMasterEnteredReadOnly        = "MasterEnteredReadOnly"
+	ConditionMasterExitedReadOnly         = "MasterExitedReadOnly"
+	ConditionSafeModeDisabled             = "SafeModeDisabled"
 )
 
 // Conditions below are for migration from imaginary chunks to real chunks for 24.2

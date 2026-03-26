@@ -902,6 +902,25 @@
             }
           }
         },
+        "clusterMaintenance": {
+          "description": "Controls cluster maintenance.",
+          "type": "object",
+          "required": [
+            "shutdown"
+          ],
+          "properties": {
+            "shutdown": {
+              "description": "Shutdown defines which components are scaled down to zero replicas during...",
+              "type": "string",
+              "enum": [
+                "Compute",
+                "Everything",
+                "ExceptMasters",
+                "Tablets"
+              ]
+            }
+          }
+        },
         "configOverrides": {
           "description": "LocalObjectReference contains enough information to let you locate the...",
           "type": "object",
@@ -1028,8 +1047,11 @@
           }
         },
         "instanceCount": {
+          "description": "Desired count of replicas. Default: 0.",
           "type": "integer",
-          "format": "int32"
+          "format": "int32",
+          "default": 0,
+          "minimum": 0
         },
         "jobEnvironment": {
           "type": "object",
@@ -1516,7 +1538,10 @@
           }
         },
         "minReadyInstanceCount": {
-          "type": "integer"
+          "description": "Required count of replicas. Defaulted and bounded by instanceCount.",
+          "type": "integer",
+          "format": "int32",
+          "minimum": 0
         },
         "monitoringPort": {
           "type": "integer",

@@ -148,11 +148,7 @@ func (n *DataNode) handleImaginaryChunksMigration(ctx context.Context, dry bool)
 	// https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/396
 	var err error
 	if !dry {
-		err = removePods(
-			ctx,
-			n.server,
-			&n.component,
-		)
+		err = n.RemovePods(ctx, n.server)
 	}
 	return ptr.To(ComponentStatusUpdateStep("pods removal for imaginary chunks migration")), err
 }
