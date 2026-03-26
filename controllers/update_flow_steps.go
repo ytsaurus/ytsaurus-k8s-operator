@@ -255,7 +255,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		componentManager.getHeaterStatus != nil,
 		st(ytv1.UpdateStateWaitingForImageHeater),
 	).chainIf(
-		updMaster || updTablet,
+		(updMaster || updTablet) && !componentManager.status.shutdownControl,
 		newConditionalForkStep(
 			ytv1.UpdateStatePossibilityCheck,
 			// This is the unhappy path.
@@ -263,7 +263,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 			// Happy path will be chained automatically.
 		),
 	).chainIf(
-		updMaster,
+		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
 		updTablet,
@@ -295,23 +295,23 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updTablet,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
-		updScheduler,
+		updScheduler && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdate),
 	).chainIf(
-		updQueryTracker,
+		updQueryTracker && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForQTStateUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForQTStateUpdate),
 	).chainIf(
-		updYqlAgent,
+		updYqlAgent && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForYqlaUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForYqlaUpdate),
 	).chainIf(
-		updQueueAgent,
+		updQueueAgent && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForQAStateUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForQAStateUpdate),
 	).chainIf(
-		updMaster,
+		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSafeModeDisabled),
 	).chain(
 		st(ytv1.UpdateStateWaitingForTimbertruckPrepared),
