@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -34,6 +36,15 @@ func flowCheckStatusCondition(conditionName string) flowCondition {
 	}
 }
 
+func flowUpdateStateCondition(updateState ytv1.UpdateState) flowCondition {
+	return func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
+		if ytsaurus.IsUpdateStatusConditionTrue(ytsaurus.GetUpdateStateCompleteCondition(updateState)) {
+			return stepResultMarkHappy
+		}
+		return stepResultMarkUnsatisfied
+	}
+}
+
 type flowStep struct {
 	updateState ytv1.UpdateState
 	// For most of the steps, there will be only one next step,
@@ -58,6 +69,11 @@ func newConditionalForkStep(updateState ytv1.UpdateState, unhappyNext *flowStep)
 
 func (s *flowStep) checkCondition(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 	condition := flowConditions[s.updateState]
+	if condition == nil {
+		logger := log.FromContext(ctx)
+		logger.Error(nil, "Update flow state conditions are not defined", "updateState", s.updateState)
+		return stepResultMarkUnsatisfied
+	}
 	return condition(ctx, ytsaurus, componentManager)
 }
 
@@ -204,8 +220,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForTabletCellsRecovery:         flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
 	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:    flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
 	ytv1.UpdateStateWaitingForOpArchiveUpdate:             flowCheckStatusCondition(consts.ConditionOpArchiveUpdated),
-	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: flowCheckStatusCondition(consts.ConditionSidecarsPreparedForInitializing),
-	ytv1.UpdateStateWaitingForSidecarsInitialize:          flowCheckStatusCondition(consts.ConditionSidecarsInitialized),
+	ytv1.UpdateStateWaitingForSidecarsInitialize:          flowUpdateStateCondition(ytv1.UpdateStateWaitingForSidecarsInitialize),
 	ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQTStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQTStateUpdate:               flowCheckStatusCondition(consts.ConditionQTStateUpdated),
 	ytv1.UpdateStateWaitingForYqlaUpdatingPrepare:         flowCheckStatusCondition(consts.ConditionYqlaPreparedForUpdating),
@@ -213,7 +228,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQAStateUpdate:               flowCheckStatusCondition(consts.ConditionQAStateUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:            flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
-	ytv1.UpdateStateWaitingForMasterExitReadOnly:          flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
+	ytv1.UpdateStateWaitingForMasterExitReadOnly:          flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterExitReadOnly),
 	ytv1.UpdateStateWaitingForCypressPatch:                flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.GetResource().Spec.PrimaryMasters.Timbertruck == nil || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
@@ -285,7 +300,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
 	).chainIf(
 		updMaster,
-		st(ytv1.UpdateStateWaitingForSidecarsInitializingPrepare),
 		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),

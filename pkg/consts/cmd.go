@@ -38,7 +38,7 @@ const (
 	PendingCypressPatchFileName  = "pending-cypress-patch.yson"
 	PreviousCypressPatchFileName = "previous-cypress-patch.yson"
 
-	InitClusterScriptFileName       = "init-cluster.sh"
+	InitJobScriptFilename           = "init-job-script.sh"
 	PostprocessConfigScriptFileName = "postprocess-config.sh"
 
 	UIClusterConfigFileName = "clusters-config.json"

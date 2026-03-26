@@ -42,11 +42,12 @@ data:
             };
         };
     }
-  init-cluster.sh: /setup_cluster_for_chyt.sh --make-default
+  init-job-script.sh: /setup_cluster_for_chyt.sh --make-default
 kind: ConfigMap
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1

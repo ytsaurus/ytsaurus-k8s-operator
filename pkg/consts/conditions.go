@@ -32,6 +32,9 @@ const (
 	ConditionPodsUpdated            = "PodsUpdated"
 	ConditionPodsRemoved            = "PodsRemoved"
 	ConditionPodsRemovingStarted    = "PodsRemovingStarted"
+
+	// Suffix for update state itself
+	ConditionUpdateStateComplete = "Complete"
 )
 
 // Update conditions
@@ -46,7 +49,6 @@ const (
 	ConditionTabletCellsRecovered            = "TabletCellsRecovered"
 	ConditionOpArchiveUpdated                = "OpArchiveUpdated"
 	ConditionOpArchivePreparedForUpdating    = "OpArchivePreparedForUpdating"
-	ConditionSidecarsInitialized             = "SidecarsInitialized"
 	ConditionSidecarsPreparedForInitializing = "SidecarsPreparedForInitializing"
 	ConditionQTStateUpdated                  = "QTStateUpdated"
 	ConditionQTStatePreparedForUpdating      = "QTStatePreparedForUpdating"
@@ -54,8 +56,6 @@ const (
 	ConditionQAStatePreparedForUpdating      = "QAStatePreparedForUpdating"
 	ConditionYqlaUpdated                     = "YqlaUpdated"
 	ConditionYqlaPreparedForUpdating         = "YqlaPreparedForUpdating"
-	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
-	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
 )
 
