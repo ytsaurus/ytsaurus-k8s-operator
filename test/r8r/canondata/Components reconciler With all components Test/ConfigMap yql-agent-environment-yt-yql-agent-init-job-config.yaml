@@ -57,10 +57,9 @@ data:
             };
         };
     }
-  init-cluster.sh: |2-
-
-    set -e
-    set -x
+  init-job-script.sh: |-
+    #!/bin/bash
+    set -eux -o pipefail
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"

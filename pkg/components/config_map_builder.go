@@ -27,10 +27,11 @@ const (
 type ConfigFormat string
 
 const (
-	ConfigFormatYson               = "yson"
-	ConfigFormatJson               = "json"
-	ConfigFormatJsonWithJsPrologue = "json_with_js_prologue"
-	ConfigFormatToml               = "toml"
+	ConfigFormatText               ConfigFormat = "text"
+	ConfigFormatYson               ConfigFormat = "yson"
+	ConfigFormatJson               ConfigFormat = "json"
+	ConfigFormatJsonWithJsPrologue ConfigFormat = "json_with_js_prologue"
+	ConfigFormatToml               ConfigFormat = "toml"
 )
 
 type ConfigGeneratorFunc func() ([]byte, error)

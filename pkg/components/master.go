@@ -28,8 +28,8 @@ type Master struct {
 
 	cfgen *ytconfig.Generator
 
-	initJob          *InitJob
-	exitReadOnlyJob  *InitJob
+	initJob *InitJob
+
 	adminCredentials corev1.Secret
 
 	uploaderSecret *resources.StringSecret
@@ -96,15 +96,6 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		&resource.Spec.PrimaryMasters.InstanceSpec,
 	)
 
-	exitReadOnlyJob := NewInitJobForYtsaurus(
-		l,
-		ytsaurus,
-		"exit-read-only",
-		consts.ClientConfigFileName,
-		cfgen.GetNativeClientConfig,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
-	)
-
 	var uploaderSecret *resources.StringSecret
 	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
 		uploaderSecret = resources.NewStringSecret(buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName), l, ytsaurus)
@@ -114,7 +105,6 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		initJob:         initJob,
-		exitReadOnlyJob: exitReadOnlyJob,
 		uploaderSecret:  uploaderSecret,
 	}
 }
@@ -133,7 +123,6 @@ func (m *Master) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		m.server,
 		m.initJob,
-		m.exitReadOnlyJob,
 		m.uploaderSecret,
 	)
 }
@@ -345,21 +334,21 @@ func (m *Master) initSchemaACLs() (string, error) {
 	return strings.Join(commands, "\n"), nil
 }
 
-func (m *Master) createInitScript() (string, error) {
+func (m *Master) scriptInitialization() ([]string, error) {
 	clusterConn := m.cfgen.GetClusterConnection()
 	connConfig, err := yson.MarshalFormat(clusterConn, yson.FormatPretty)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	initSchemaACLsCommands, err := m.initSchemaACLs()
 	if err != nil {
-		return "", fmt.Errorf("failed to create init schema ACLs commands: %w", err)
+		return nil, fmt.Errorf("failed to create init schema ACLs commands: %w", err)
 	}
 
 	initHydraPersistenceUploaderUserCommands, err := m.initUploaderUser()
 	if err != nil {
-		return "", fmt.Errorf("failed to create init hydra persistence uploader user commands: %w", err)
+		return nil, fmt.Errorf("failed to create init hydra persistence uploader user commands: %w", err)
 	}
 
 	initCommands := []string{
@@ -388,29 +377,27 @@ func (m *Master) createInitScript() (string, error) {
 		"/usr/bin/yt remove //sys/@provision_lock -f",
 	}
 
-	return strings.Join(script, "\n"), nil
+	return script, nil
 }
 
-func (m *Master) createExitReadOnlyScript() string {
-	script := []string{
+func (m *Master) scriptExitReadOnly() ([]string, error) {
+	return []string{
 		initJobWithNativeDriverPrologue(),
 		"export YT_LOG_LEVEL=DEBUG",
 		// COMPAT(l0kix2): remove || part when the compatibility with 23.1 and older is dropped.
 		`[[ "$YTSAURUS_VERSION" < "23.2" ]] && echo "master_exit_read_only is supported since 23.2, nothing to do" && exit 0`,
 		"/usr/bin/yt execute master_exit_read_only '{}'",
-	}
-
-	return strings.Join(script, "\n")
+	}, nil
 }
 
 func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
+		switch m.ytsaurus.GetUpdateState() {
+		case ytv1.UpdateStateWaitingForMasterExitReadOnly:
 			return m.exitReadOnly(ctx, dry)
-		}
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitializingPrepare || m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitialize {
+		case ytv1.UpdateStateWaitingForSidecarsInitialize:
 			return m.sidecarsInit(ctx, dry)
 		}
 		if IsUpdatingComponent(m.ytsaurus, m) {
@@ -456,7 +443,11 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusBlockedBy("pods"), err
 	}
 
-	return m.runInitPhaseJobs(ctx, dry)
+	if m.ytsaurus.IsInitializing() {
+		return m.runInitPhaseJobs(ctx, dry)
+	}
+
+	return ComponentStatusReady(), nil
 }
 
 func (m *Master) doServerSync(ctx context.Context) error {
@@ -506,111 +497,30 @@ func (m *Master) getHostAddressLabel() string {
 	return defaultHostAddressLabel
 }
 
-func (m *Master) setSidecarsInitializingPrepared(ctx context.Context, status metav1.ConditionStatus) {
-	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionSidecarsPreparedForInitializing,
-		Status:  status,
-		Reason:  "SidecarsPreparedForInitializing",
-		Message: "Sidecars are prepared for initializing",
-	})
+func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatus, error) {
+	return m.initJob.RunScript(ctx, dry, "ClusterInitialization", m.scriptInitialization, func() {})
 }
 
 func (m *Master) sidecarsInit(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSidecarsPreparedForInitializing) {
-		if !m.initJob.isRestartPrepared() {
-			if err := m.initJob.prepareRestart(ctx, dry); err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-		}
-		if !dry {
-			m.setSidecarsInitializingPrepared(ctx, metav1.ConditionTrue)
-		}
-		return SimpleStatus(SyncStatusUpdating), nil
-	}
-
-	if !m.initJob.IsCompleted() {
-		if !dry {
-			initScript, err := m.createInitScript()
-			if err != nil {
-				return ComponentStatus{}, fmt.Errorf("failed to create init script: %w", err)
-			}
-			m.initJob.SetInitScript(initScript)
-		}
-		return m.initJob.Sync(ctx, dry)
-	}
-
-	if !dry {
+	return m.initJob.RunScript(ctx, dry, "SidecarInitialization", m.scriptInitialization, func() {
 		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    consts.ConditionSidecarsInitialized,
 			Status:  metav1.ConditionTrue,
 			Reason:  "SidecarsInitialized",
 			Message: "Sidecars are initialized",
 		})
-		m.setSidecarsInitializingPrepared(ctx, metav1.ConditionFalse)
-	}
-	return SimpleStatus(SyncStatusUpdating), nil
+	})
 }
 
 func (m *Master) exitReadOnly(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
-		if !m.exitReadOnlyJob.isRestartPrepared() {
-			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-		}
-
-		if !dry {
-			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
-		}
-		return SimpleStatus(SyncStatusUpdating), nil
-	}
-
-	if !m.exitReadOnlyJob.IsCompleted() {
-		if !dry {
-			m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
-		}
-		return m.exitReadOnlyJob.Sync(ctx, dry)
-	}
-
-	if !dry {
+	return m.initJob.RunScript(ctx, dry, "ExitingReadOnly", m.scriptExitReadOnly, func() {
 		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 			Type:    consts.ConditionMasterExitedReadOnly,
 			Status:  metav1.ConditionTrue,
 			Reason:  "MasterExitedReadOnly",
 			Message: "Masters exited read-only state",
 		})
-		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
-	}
-	return SimpleStatus(SyncStatusUpdating), nil
-}
-
-func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
-	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionMasterExitReadOnlyPrepared,
-		Status:  status,
-		Reason:  "MasterExitReadOnlyPrepared",
-		Message: "Masters are ready to exit read-only state",
 	})
-}
-
-func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatus, error) {
-	st, err := m.runMasterInitJob(ctx, dry)
-	if err != nil {
-		return ComponentStatus{}, err
-	}
-	return st, nil
-}
-
-// runMasterInitJob launches job only once in an Initialization phase.
-func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatus, error) {
-	initScript, err := m.createInitScript()
-	if err != nil {
-		return ComponentStatus{}, fmt.Errorf("failed to create init script: %w", err)
-	}
-	if !dry {
-		m.initJob.SetInitScript(initScript)
-	}
-	return m.initJob.Sync(ctx, dry)
 }
 
 func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string) {

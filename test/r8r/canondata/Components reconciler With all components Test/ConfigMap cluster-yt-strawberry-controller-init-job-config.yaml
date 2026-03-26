@@ -9,10 +9,9 @@ data:
             jupyt;
         ];
     }
-  init-cluster.sh: |2-
-
-    set -e
-    set -x
+  init-job-script.sh: |-
+    #!/bin/bash
+    set -eux -o pipefail
 
     /usr/bin/chyt-controller init-cluster --config-path /config/chyt-init-cluster.yson
 kind: ConfigMap

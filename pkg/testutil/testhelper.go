@@ -229,17 +229,15 @@ func MarkAllJobsCompleted(h *TestHelper) {
 		}
 		if !job.DeletionTimestamp.IsZero() {
 			h.t.Logf(
-				"found job %s, with deletion ts %s and finalizers: %s. Deleting as gc would do in real cluster.",
+				"found job %s, with deletion ts %s and finalizers: %s. Cleanup finalizers as controllers would do in real cluster.",
 				job.Name,
 				job.DeletionTimestamp,
 				job.Finalizers,
 			)
-			job.Finalizers = []string{}
+			job.Finalizers = nil
 			UpdateObject(h, &batchv1.Job{}, job)
 			err = h.client.Delete(context.Background(), job)
-			if err != nil && !apierrors.IsNotFound(err) {
-				Expect(err).NotTo(HaveOccurred())
-			}
+			Expect(err).To(Or(Succeed(), Satisfy(apierrors.IsNotFound)))
 		}
 	}
 }

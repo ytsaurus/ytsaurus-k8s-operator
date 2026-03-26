@@ -39,9 +39,9 @@ spec:
     spec:
       containers:
       - command:
-        - bash
-        - -c
-        - /config/init-cluster.sh
+        - /bin/bash
+        - -eux
+        - /config/init-job-script.sh
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -61,14 +61,15 @@ spec:
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /config
-          name: config
+          name: init-script
+          readOnly: true
       restartPolicy: OnFailure
       setHostnameAsFQDN: true
       volumes:
       - configMap:
           defaultMode: 320
           name: user-yt-chyt-test-ytsaurus-init-job-config
-        name: config
+        name: init-script
   ttlSecondsAfterFinished: 600
 status:
   succeeded: 1

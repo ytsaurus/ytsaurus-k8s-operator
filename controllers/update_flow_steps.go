@@ -34,6 +34,12 @@ func flowCheckStatusCondition(conditionName string) flowCondition {
 	}
 }
 
+func flowInstantSuccess(conditionName string) flowCondition {
+	return func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
+		return stepResultMarkHappy
+	}
+}
+
 type flowStep struct {
 	updateState ytv1.UpdateState
 	// For most of the steps, there will be only one next step,
@@ -204,7 +210,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForTabletCellsRecovery:         flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
 	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:    flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
 	ytv1.UpdateStateWaitingForOpArchiveUpdate:             flowCheckStatusCondition(consts.ConditionOpArchiveUpdated),
-	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: flowCheckStatusCondition(consts.ConditionSidecarsPreparedForInitializing),
+	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: flowInstantSuccess(consts.ConditionSidecarsPreparedForInitializing), // TODO: Remove.
 	ytv1.UpdateStateWaitingForSidecarsInitialize:          flowCheckStatusCondition(consts.ConditionSidecarsInitialized),
 	ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQTStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQTStateUpdate:               flowCheckStatusCondition(consts.ConditionQTStateUpdated),
@@ -285,7 +291,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
 	).chainIf(
 		updMaster,
-		st(ytv1.UpdateStateWaitingForSidecarsInitializingPrepare),
 		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),

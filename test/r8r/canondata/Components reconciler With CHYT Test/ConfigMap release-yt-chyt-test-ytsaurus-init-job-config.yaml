@@ -42,7 +42,7 @@ data:
             };
         };
     }
-  init-cluster.sh: /setup_cluster_for_chyt.sh --make-default
+  init-job-script.sh: /setup_cluster_for_chyt.sh --make-default
 kind: ConfigMap
 metadata:
   annotations:

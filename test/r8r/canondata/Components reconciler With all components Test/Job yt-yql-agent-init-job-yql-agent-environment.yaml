@@ -42,9 +42,9 @@ spec:
     spec:
       containers:
       - command:
-        - bash
-        - -c
-        - /config/init-cluster.sh
+        - /bin/bash
+        - -eux
+        - /config/init-job-script.sh
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -70,7 +70,8 @@ spec:
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /config
-          name: config
+          name: init-script
+          readOnly: true
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
@@ -97,7 +98,7 @@ spec:
       - configMap:
           defaultMode: 320
           name: yql-agent-environment-yt-yql-agent-init-job-config
-        name: config
+        name: init-script
       - configMap:
           items:
           - key: ca-certificates.crt
