@@ -32,6 +32,9 @@ const (
 	ConditionPodsUpdated            = "PodsUpdated"
 	ConditionPodsRemoved            = "PodsRemoved"
 	ConditionPodsRemovingStarted    = "PodsRemovingStarted"
+
+	// Suffix for update state itself
+	ConditionUpdateStateComplete = "Complete"
 )
 
 // Update conditions
@@ -44,18 +47,11 @@ const (
 	ConditionTabletCellsRemoved              = "TabletCellsRemoved"
 	ConditionSnaphotsSaved                   = "SnaphotsSaved"
 	ConditionTabletCellsRecovered            = "TabletCellsRecovered"
-	ConditionOpArchiveUpdated                = "OpArchiveUpdated"
-	ConditionOpArchivePreparedForUpdating    = "OpArchivePreparedForUpdating"
-	ConditionSidecarsInitialized             = "SidecarsInitialized"
-	ConditionSidecarsPreparedForInitializing = "SidecarsPreparedForInitializing"
+	ConditionSidecarsPreparedForInitializing = "SidecarsPreparedForInitializing" // TODO: Remove, it holds alignment.
 	ConditionQTStateUpdated                  = "QTStateUpdated"
 	ConditionQTStatePreparedForUpdating      = "QTStatePreparedForUpdating"
 	ConditionQAStateUpdated                  = "QAStateUpdated"
 	ConditionQAStatePreparedForUpdating      = "QAStatePreparedForUpdating"
-	ConditionYqlaUpdated                     = "YqlaUpdated"
-	ConditionYqlaPreparedForUpdating         = "YqlaPreparedForUpdating"
-	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
-	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
 )
 

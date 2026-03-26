@@ -159,7 +159,7 @@ func (c *apiProxy) SyncObject(ctx context.Context, oldObj, newObj client.Object)
 func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
 	logger := log.FromContext(ctx)
 
-	if err := c.client.Delete(ctx, obj, opts...); err != nil {
+	if err := c.client.Delete(ctx, obj, opts...); err != nil && !apierrors.IsNotFound(err) {
 		// ToDo(psushin): take to the status.
 		c.RecordWarning(
 			"Reconciliation",

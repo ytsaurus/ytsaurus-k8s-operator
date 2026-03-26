@@ -3,7 +3,6 @@ package labeller
 import (
 	"fmt"
 	"maps"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -179,11 +178,11 @@ func (l *Labeller) GetSidecarConfigMapName(name string) string {
 }
 
 func (l *Labeller) GetInitJobName(name string) string {
-	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), strings.ToLower(name))
+	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), name)
 }
 
 func (l *Labeller) GetInitJobConfigMapName(name string) string {
-	return fmt.Sprintf("%s-%s-init-job-config", strings.ToLower(name), l.GetFullComponentLabel())
+	return fmt.Sprintf("%s-init-job-%s-config", l.GetFullComponentLabel(), name)
 }
 
 func (l *Labeller) GetCondition(suffix string) string {

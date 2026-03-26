@@ -369,7 +369,7 @@
     namespace: ytsaurus-components
     resourceVersion: "4"
   lastTimestamp: null
-  message: Created YT object default-yt-master-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-master-init-job-default-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -569,7 +569,7 @@
     namespace: ytsaurus-components
     resourceVersion: "9"
   lastTimestamp: null
-  message: Created YT object user-yt-client-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-client-init-job-user-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
