@@ -3021,7 +3021,6 @@ _Appears in:_
 | `WaitingForMasterExitReadOnly` |  |
 | `WaitingForCypressPatch` |  |
 | `WaitingForTabletCellsRecovery` |  |
-| `WaitingForOpArchiveUpdatingPrepare` |  |
 | `WaitingForOpArchiveUpdate` |  |
 | `WaitingForSidecarsInitializingPrepare` |  |
 | `WaitingForSidecarsInitialize` |  |
@@ -3029,7 +3028,6 @@ _Appears in:_
 | `WaitingForQTStateUpdate` |  |
 | `WaitingForQAStateUpdatingPrepare` |  |
 | `WaitingForQAStateUpdate` |  |
-| `WaitingForYqlaUpdatingPrepare` |  |
 | `WaitingForYqlaUpdate` |  |
 | `WaitingForSafeModeDisabled` |  |
 | `WaitingForTimbertruckPrepared` |  |

@@ -104,6 +104,10 @@ func CompleteOneJob(ctx context.Context, k8sClient client.WithWatch, namespace s
 		}
 		log.Info("Complete job", "name", job.Name)
 		job.Status.Succeeded = 1
+		job.Status.Conditions = append(job.Status.Conditions, batchv1.JobCondition{
+			Type:   batchv1.JobComplete,
+			Status: corev1.ConditionTrue,
+		})
 		Expect(k8sClient.Status().Update(ctx, &job)).To(Succeed())
 		return &job
 	}

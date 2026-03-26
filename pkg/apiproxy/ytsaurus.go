@@ -125,6 +125,10 @@ func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 
+func (c *Ytsaurus) GetUpdateStatusCondition(condition string) *metav1.Condition {
+	return meta.FindStatusCondition(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+}
+
 func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) {
 	logger := log.FromContext(ctx)
 	logger.Info("Setting update status condition", "condition", condition)
@@ -209,6 +213,10 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 		return err
 	}
 	return nil
+}
+
+func (c *Ytsaurus) GetUpdateStateCompleteCondition(updateState ytv1.UpdateState) string {
+	return string(updateState) + consts.ConditionUpdateStateComplete
 }
 
 func BuildComponentsSummary(components []ytv1.Component) string {

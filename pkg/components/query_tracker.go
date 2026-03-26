@@ -416,15 +416,13 @@ func (qt *QueryTracker) updateQTState(ctx context.Context, dry bool) (*Component
 	var err error
 	switch qt.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:
-		if !qt.initQTState.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), qt.initQTState.prepareRestart(ctx, dry)
-		}
 		if !dry {
+			qt.initQTState.Restart()
 			qt.setConditionQTStatePreparedForUpdating(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 	case ytv1.UpdateStateWaitingForQTStateUpdate:
-		if !qt.initQTState.isRestartCompleted() {
+		if !qt.initQTState.IsCompleted() {
 			return nil, nil
 		}
 		if !dry {

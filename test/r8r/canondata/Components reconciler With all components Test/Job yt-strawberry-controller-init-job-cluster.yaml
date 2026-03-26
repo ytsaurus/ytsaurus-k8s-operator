@@ -24,7 +24,8 @@ metadata:
     uid: ""
   resourceVersion: "2"
 spec:
-  backoffLimit: 15
+  activeDeadlineSeconds: 3600
+  backoffLimit: 3
   template:
     metadata:
       annotations:
@@ -42,9 +43,9 @@ spec:
     spec:
       containers:
       - command:
-        - bash
-        - -c
-        - /config/init-cluster.sh
+        - /bin/bash
+        - -eux
+        - /config/init-job-script.sh
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -73,7 +74,8 @@ spec:
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /config
-          name: config
+          name: init-script
+          readOnly: true
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
@@ -99,8 +101,8 @@ spec:
       volumes:
       - configMap:
           defaultMode: 320
-          name: cluster-yt-strawberry-controller-init-job-config
-        name: config
+          name: yt-strawberry-controller-init-job-cluster-config
+        name: init-script
       - configMap:
           items:
           - key: ca-certificates.crt
@@ -115,6 +117,11 @@ spec:
       - name: bus-client-secret
         secret:
           secretName: native-client-cert
-  ttlSecondsAfterFinished: 600
+  ttlSecondsAfterFinished: 3600
 status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: null
+    status: "True"
+    type: Complete
   succeeded: 1
