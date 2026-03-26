@@ -59,6 +59,7 @@ const (
 	ConditionYqlaUpdated                     = "YqlaUpdated"
 	ConditionYqlaPreparedForUpdating         = "YqlaPreparedForUpdating"
 	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
+	ConditionMasterEnteredReadOnly           = "MasterEnteredReadOnly"
 	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
 )
