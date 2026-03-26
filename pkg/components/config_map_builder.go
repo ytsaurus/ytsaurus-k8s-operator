@@ -27,11 +27,14 @@ const (
 type ConfigFormat string
 
 const (
-	ConfigFormatYson               = "yson"
-	ConfigFormatJson               = "json"
-	ConfigFormatJsonWithJsPrologue = "json_with_js_prologue"
-	ConfigFormatToml               = "toml"
+	ConfigFormatText               ConfigFormat = "text"
+	ConfigFormatYson               ConfigFormat = "yson"
+	ConfigFormatJson               ConfigFormat = "json"
+	ConfigFormatJsonWithJsPrologue ConfigFormat = "json_with_js_prologue"
+	ConfigFormatToml               ConfigFormat = "toml"
 )
+
+type TextGeneratorFunc func() ([]string, error)
 
 type ConfigGeneratorFunc func() ([]byte, error)
 
@@ -202,6 +205,14 @@ func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
 	return []byte(data)
 }
 
+func (h *ConfigMapBuilder) getAnnotation(ann string) string {
+	return h.configMap.OldObject().Annotations[ann]
+}
+
+func (h *ConfigMapBuilder) setAnnotation(ann, value string) {
+	metav1.SetMetaDataAnnotation(&h.configMap.NewObject().ObjectMeta, ann, value)
+}
+
 func (h *ConfigMapBuilder) needReload() (ComponentStatus, error) {
 	for _, descriptor := range h.generators {
 		newConfig, err := h.getConfig(descriptor)
@@ -277,15 +288,4 @@ func (h *ConfigMapBuilder) Fetch(ctx context.Context) error {
 
 func (h *ConfigMapBuilder) Exists() bool {
 	return h.configMap.Exists()
-}
-
-func (h *ConfigMapBuilder) RemoveIfExists(ctx context.Context) error {
-	if !h.configMap.Exists() {
-		return nil
-	}
-
-	return h.apiProxy.DeleteObject(
-		ctx,
-		h.configMap.OldObject(),
-	)
 }

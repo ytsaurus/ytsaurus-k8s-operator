@@ -378,13 +378,13 @@ status:
     status: "True"
     type: MasterCacheReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Job yt-master-init-job-default completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: ClusterInitialization
     status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
-    message: yt-master-init-job-default completed
+    message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -426,15 +426,15 @@ status:
     status: "True"
     type: SchedulerReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Job yt-ui-init-job-default completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: defaultUIInitJobCompleted
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Job yt-yql-agent-init-job-yql-agent-environment completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: yql-agent-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
@@ -444,15 +444,15 @@ status:
     status: "True"
     type: UIReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Job yt-client-init-job-user completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: userYtsaurusClientInitJobCompleted
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Job yt-strawberry-controller-init-job-user completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: userStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
@@ -468,15 +468,15 @@ status:
     status: "True"
     type: TimbertruckReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Job yt-yql-agent-init-job-yql-agent-update-environment completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: YQLAgentSetup
     status: "True"
     type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Job yt-strawberry-controller-init-job-cluster completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: clusterStrawberryControllerInitJobCompleted
   - lastTransitionTime: null

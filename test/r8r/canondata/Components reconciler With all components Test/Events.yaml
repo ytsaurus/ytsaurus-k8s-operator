@@ -600,7 +600,7 @@
     namespace: ytsaurus-components
     resourceVersion: "5"
   lastTimestamp: null
-  message: Created YT object default-yt-master-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-master-init-job-default-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1280,7 +1280,7 @@
     namespace: ytsaurus-components
     resourceVersion: "8"
   lastTimestamp: null
-  message: Created YT object default-yt-ui-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-ui-init-job-default-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1460,7 +1460,7 @@
     namespace: ytsaurus-components
     resourceVersion: "8"
   lastTimestamp: null
-  message: Created YT object yql-agent-environment-yt-yql-agent-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-yql-agent-init-job-yql-agent-environment-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1580,7 +1580,7 @@
     namespace: ytsaurus-components
     resourceVersion: "10"
   lastTimestamp: null
-  message: Created YT object user-yt-client-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-client-init-job-user-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1760,7 +1760,7 @@
     namespace: ytsaurus-components
     resourceVersion: "10"
   lastTimestamp: null
-  message: Created YT object user-yt-strawberry-controller-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-strawberry-controller-init-job-user-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
@@ -1820,7 +1820,7 @@
     namespace: ytsaurus-components
     resourceVersion: "11"
   lastTimestamp: null
-  message: Created YT object yql-agent-update-environment-yt-yql-agent-init-job-config
+  message: Created YT object yt-yql-agent-init-job-yql-agent-update-environment-config
     (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
@@ -1921,7 +1921,7 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
-  message: Created YT object cluster-yt-strawberry-controller-init-job-config (*v1.ConfigMap)
+  message: Created YT object yt-strawberry-controller-init-job-cluster-config (*v1.ConfigMap)
   metadata:
     creationTimestamp: null
     namespace: ytsaurus-components
