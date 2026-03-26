@@ -50,7 +50,8 @@ type InitJob struct {
 	caBundle        *resources.CABundle
 	busClientSecret *resources.TLSSecret
 
-	initCompletedCondition string
+	condition string
+	reason    string
 
 	builtJob *batchv1.Job
 }
@@ -58,7 +59,8 @@ type InitJob struct {
 func NewInitJob(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
-	name, configFileName string,
+	name string,
+	configFileName string,
 	generator ConfigGeneratorFunc,
 	commonSpec *ytv1.CommonSpec,
 	commonPodSpec *ytv1.PodSpec,
@@ -83,10 +85,11 @@ func NewInitJob(
 			labeller: labeller,
 			owner:    apiProxy,
 		},
-		commonSpec:             commonSpec,
-		commonPodSpec:          commonPodSpec,
-		instanceSpec:           instanceSpec,
-		initCompletedCondition: labeller.GetInitJobCompletedCondition(name),
+		commonSpec:    commonSpec,
+		commonPodSpec: commonPodSpec,
+		instanceSpec:  instanceSpec,
+		condition:     labeller.GetInitJobCompletedCondition(name),
+		reason:        "InitJobCompleted",
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
@@ -119,13 +122,36 @@ func NewInitJobForYtsaurus(
 }
 
 func (j *InitJob) IsCompleted() bool {
-	return j.owner.IsStatusConditionTrue(j.initCompletedCondition)
+	condition := j.owner.GetStatusCondition(j.condition)
+	return condition != nil && condition.Status == metav1.ConditionTrue && condition.Reason == j.reason
 }
 
 func (j *InitJob) SetInitScript(script string) {
 	if cm, err := j.configs.Build(); err == nil {
 		cm.Data[consts.InitClusterScriptFileName] = script
 	}
+}
+
+func (j *InitJob) RunScript(
+	ctx context.Context,
+	dry bool,
+	reason string,
+	script func() ([]string, error),
+	complete func(),
+) (ComponentStatus, error) {
+	j.reason = reason
+	if j.IsCompleted() {
+		complete()
+		return ComponentStatusReadyAfter("Job %v %v completed", j.initJob.Name(), reason), nil
+	}
+	if !dry {
+		lines, err := script()
+		if err != nil {
+			return SimpleStatus(SyncStatusPending), err
+		}
+		j.SetInitScript(strings.Join(lines, "\n"))
+	}
+	return j.Sync(ctx, dry)
 }
 
 func (j *InitJob) Build() *batchv1.Job {
@@ -194,76 +220,90 @@ func (j *InitJob) Exists() bool {
 func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if j.owner.IsStatusConditionTrue(j.initCompletedCondition) {
+	condition := j.owner.GetStatusCondition(j.condition)
+	if condition != nil && condition.Status == metav1.ConditionTrue && condition.Reason == j.reason {
 		return ComponentStatusReadyAfter("%s completed", j.initJob.Name()), err
 	}
 
-	// Deal with init job.
-	if !j.initJob.Exists() {
+	if !j.initJob.Exists() || condition == nil || condition.Reason != j.reason {
 		if !dry {
-			_ = j.Build()
-			err = resources.Sync(ctx, j.configs, j.initJob)
-		}
+			if err = j.removeIfExists(ctx); err == nil {
+				err = j.configs.RemoveIfExists(ctx)
+			}
+			if err != nil {
+				return ComponentStatusWaitingFor("job %s start", j.initJob.Name()), err
+			}
+			j.owner.SetStatusCondition(metav1.Condition{
+				Type:    j.condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  j.reason,
+				Message: "Init job removed",
+			})
 
-		return ComponentStatusWaitingFor("job %s creation", j.initJob.Name()), err
+			_ = j.Build()
+			if err := resources.Sync(ctx, j.configs, j.initJob); err != nil {
+				return ComponentStatusWaitingFor("job %s start", j.initJob.Name()), err
+			}
+			j.owner.SetStatusCondition(metav1.Condition{
+				Type:    j.condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  j.reason,
+				Message: "Init job created",
+			})
+		}
+		return ComponentStatusWaitingFor("job %s start", j.initJob.Name()), nil
 	}
 
 	if status := j.initJob.Status(); status.Succeeded <= 0 {
-		return ComponentStatusWaitingFor("job %s completion, active: %v, failed: %v", j.initJob.Name(), status.Active, status.Failed), err
+		status := ComponentStatusWaitingFor("job %s completion, active: %v, failed: %v", j.initJob.Name(), status.Active, status.Failed)
+		if !dry {
+			j.owner.SetStatusCondition(metav1.Condition{
+				Type:    j.condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  j.reason,
+				Message: status.Message,
+			})
+		}
+		return status, err
 	}
 
 	if !dry {
 		j.owner.SetStatusCondition(metav1.Condition{
-			Type:    j.initCompletedCondition,
+			Type:    j.condition,
 			Status:  metav1.ConditionTrue,
-			Reason:  "InitJobCompleted",
+			Reason:  j.reason,
 			Message: "Init job successfully completed",
 		})
 	}
 
-	return ComponentStatusWaitingFor("setting %s condition", j.initCompletedCondition), err
+	return ComponentStatusWaitingFor("setting %s condition", j.condition), err
 }
 
 func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
-	if dry {
-		return nil
+	if !dry {
+		j.owner.SetStatusCondition(metav1.Condition{
+			Type:    j.condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  "InitJobNeedRestart",
+			Message: "Init job needs restart",
+		})
 	}
-
-	if err := j.configs.RemoveIfExists(ctx); err != nil {
-		return err
-	}
-
-	if err := j.removeIfExists(ctx); err != nil {
-		return err
-	}
-	j.owner.SetStatusCondition(metav1.Condition{
-		Type:    j.initCompletedCondition,
-		Status:  metav1.ConditionFalse,
-		Reason:  "InitJobNeedRestart",
-		Message: "Init job needs restart",
-	})
 	return nil
 }
 
 func (j *InitJob) isRestartPrepared() bool {
-	jobExists := resources.Exists(j.initJob)
-	configExists := j.configs.Exists()
-	conditionIsFalse := j.owner.IsStatusConditionFalse(j.initCompletedCondition)
-	return !jobExists && !configExists && conditionIsFalse
+	return j.owner.IsStatusConditionFalse(j.condition)
 }
 
 func (j *InitJob) isRestartCompleted() bool {
-	return j.owner.IsStatusConditionTrue(j.initCompletedCondition)
+	return j.IsCompleted()
 }
 
 func (j *InitJob) removeIfExists(ctx context.Context) error {
 	if !j.initJob.Exists() {
 		return nil
 	}
-	propagation := metav1.DeletePropagationForeground
-	return j.owner.DeleteObject(
-		ctx,
-		j.initJob.OldObject(),
-		&client.DeleteOptions{PropagationPolicy: &propagation},
-	)
+	return j.owner.DeleteObject(ctx, j.initJob.OldObject(), &client.DeleteOptions{
+		PropagationPolicy: ptr.To(metav1.DeletePropagationForeground),
+	})
 }
