@@ -91,8 +91,7 @@ func (d *Discovery) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	}
 
 	// Check that the number of instances in YT matches the expected instanceCount
-	expectedCount := int(d.ytsaurus.GetResource().Spec.Discovery.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.DiscoveryType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.DiscoveryType, d.server.getInstanceCount()); err != nil {
 		return ComponentStatusBlocked("Error: %v", err)
 	}
 
