@@ -381,6 +381,14 @@ func (m *Master) createInitScript() ([]string, error) {
 	return script, nil
 }
 
+func (m *Master) createEnterReadOnlyScript() ([]string, error) {
+	return []string{
+		initJobWithNativeDriverPrologue(),
+		"export YT_LOG_LEVEL=DEBUG",
+		"/usr/bin/yt execute build_master_snapshots '{ set_read_only=%true; wait_for_snapshot_completion=%true; retry=%true; }'",
+	}, nil
+}
+
 func (m *Master) createExitReadOnlyScript() ([]string, error) {
 	return []string{
 		initJobWithNativeDriverPrologue(),
@@ -395,10 +403,12 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
+		switch m.ytsaurus.GetUpdateState() {
+		case ytv1.UpdateStateWaitingForMasterEnterReadOnly:
+			return m.enterReadOnly(ctx, dry)
+		case ytv1.UpdateStateWaitingForMasterExitReadOnly:
 			return m.exitReadOnly(ctx, dry)
-		}
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitializingPrepare || m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitialize {
+		case ytv1.UpdateStateWaitingForSidecarsInitializingPrepare, ytv1.UpdateStateWaitingForSidecarsInitialize:
 			return m.sidecarsInit(ctx, dry)
 		}
 		if IsUpdatingComponent(m.ytsaurus, m) {
@@ -509,6 +519,17 @@ func (m *Master) sidecarsInit(ctx context.Context, dry bool) (ComponentStatus, e
 			Status:  metav1.ConditionTrue,
 			Reason:  "SidecarsInitialized",
 			Message: "Sidecars are initialized",
+		})
+	})
+}
+
+func (m *Master) enterReadOnly(ctx context.Context, dry bool) (ComponentStatus, error) {
+	return m.initJob.RunScript(ctx, dry, "EnterReadOnly", m.createEnterReadOnlyScript, func() {
+		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+			Type:    consts.ConditionMasterEnteredReadOnly,
+			Status:  metav1.ConditionTrue,
+			Reason:  "MasterEnteredReadOnly",
+			Message: "Masters entered read-only state",
 		})
 	})
 }

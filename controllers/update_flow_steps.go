@@ -212,6 +212,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:   flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQAStateUpdate:            flowCheckStatusCondition(consts.ConditionQAStateUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:         flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
+	ytv1.UpdateStateWaitingForMasterEnterReadOnly:      flowCheckStatusCondition(consts.ConditionMasterEnteredReadOnly),
 	ytv1.UpdateStateWaitingForMasterExitReadOnly:       flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
 	ytv1.UpdateStateWaitingForCypressPatch:             flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
@@ -273,8 +274,11 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updDataNodes || updMaster,
 		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
 	).chainIf(
-		updMaster,
+		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSnapshots),
+	).chainIf(
+		updMaster && componentManager.status.shutdownControl,
+		st(ytv1.UpdateStateWaitingForMasterEnterReadOnly),
 	).chain(
 		st(ytv1.UpdateStateWaitingForPodsRemoval),
 		st(ytv1.UpdateStateWaitingForPodsCreation),
