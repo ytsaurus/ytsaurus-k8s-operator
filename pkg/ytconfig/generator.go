@@ -20,16 +20,27 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
 
+type masterCellInfo struct {
+	ytv1.MasterConnectionSpec
+
+	InstanceCount int32
+}
+
+type masterCacheInfo struct {
+	InstanceCount int32
+	HostAddresses []string
+}
+
 type NodeGenerator struct {
 	baseLabeller *labeller.Labeller
 
-	commonSpec           *ytv1.CommonSpec
-	clusterFeatures      ytv1.ClusterFeatures
-	masterConnectionSpec *ytv1.MasterConnectionSpec
-	masterCachesSpec     *ytv1.MasterCachesSpec
-	cypressProxiesSpec   *ytv1.CypressProxiesSpec
+	commonSpec         *ytv1.CommonSpec
+	clusterFeatures    ytv1.ClusterFeatures
+	primaryMaster      masterCellInfo
+	secondaryMasters   []masterCellInfo
+	masterCache        *masterCacheInfo
+	cypressProxiesSpec *ytv1.CypressProxiesSpec
 
-	masterInstanceCount    int32
 	discoveryInstanceCount int32
 	dataNodesInstanceCount int32
 }
@@ -47,10 +58,39 @@ func NewGenerator(ytsaurus *ytv1.Ytsaurus, clusterDomain string) *Generator {
 	}
 }
 
-func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, clusterDomain string) *NodeGenerator {
+func NewLocalNodeGenerator(
+	ytsaurus *ytv1.Ytsaurus,
+	resourceName string,
+	clusterDomain string,
+) *NodeGenerator {
 	var dataNodesInstanceCount int32
 	for _, dataNodes := range ytsaurus.Spec.DataNodes {
 		dataNodesInstanceCount += dataNodes.InstanceCount
+	}
+
+	primaryMaster := masterCellInfo{
+		MasterConnectionSpec: ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
+		InstanceCount:        ytsaurus.Spec.PrimaryMasters.InstanceCount,
+	}
+
+	secondaryMasters := make([]masterCellInfo, len(ytsaurus.Spec.SecondaryMasters))
+	for i, spec := range ytsaurus.Spec.SecondaryMasters {
+		secondaryMasters[i] = masterCellInfo{
+			MasterConnectionSpec: spec.MasterConnectionSpec,
+			InstanceCount:        spec.InstanceCount,
+		}
+	}
+
+	var masterCache *masterCacheInfo
+	if spec := ytsaurus.Spec.MasterCaches; spec != nil {
+		hostAddresses := spec.HostAddresses
+		if len(hostAddresses) == 0 {
+			hostAddresses = spec.HostAddressesMasterCaches //nolint:staticcheck // Deprecated.
+		}
+		masterCache = &masterCacheInfo{
+			InstanceCount: spec.InstanceCount,
+			HostAddresses: hostAddresses,
+		}
 	}
 
 	return &NodeGenerator{
@@ -64,16 +104,49 @@ func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, cluster
 		},
 		commonSpec:             &ytsaurus.Spec.CommonSpec,
 		clusterFeatures:        ptr.Deref(ytsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{}),
-		masterConnectionSpec:   &ytsaurus.Spec.PrimaryMasters.MasterConnectionSpec,
-		masterInstanceCount:    ytsaurus.Spec.PrimaryMasters.InstanceCount,
+		primaryMaster:          primaryMaster,
+		secondaryMasters:       secondaryMasters,
+		masterCache:            masterCache,
 		discoveryInstanceCount: ytsaurus.Spec.Discovery.InstanceCount,
-		masterCachesSpec:       ytsaurus.Spec.MasterCaches,
 		cypressProxiesSpec:     ytsaurus.Spec.CypressProxies,
 		dataNodesInstanceCount: dataNodesInstanceCount,
 	}
 }
 
-func NewRemoteNodeGenerator(ytsaurus *ytv1.RemoteYtsaurus, resourceName string, clusterDomain string, commonSpec *ytv1.CommonSpec) *NodeGenerator {
+func NewRemoteNodeGenerator(
+	ytsaurus *ytv1.RemoteYtsaurus,
+	resourceName string,
+	clusterDomain string,
+	commonSpec *ytv1.CommonSpec,
+) *NodeGenerator {
+	primaryMaster := masterCellInfo{
+		// NOTE: Fallback to deprecated inline fields.
+		MasterConnectionSpec: ptr.Deref(ytsaurus.Spec.PrimaryMaster, ytv1.MasterConnectionSpec{
+			CellTag:       ytsaurus.Spec.CellTag,       //nolint:staticcheck // Deprecated.
+			HostAddresses: ytsaurus.Spec.HostAddresses, //nolint:staticcheck // Deprecated.
+		}),
+	}
+	primaryMaster.InstanceCount = int32(len(primaryMaster.HostAddresses)) //nolint:gosec //no overflow
+
+	secondaryMasters := make([]masterCellInfo, len(ytsaurus.Spec.SecondaryMasters))
+	for i, spec := range ytsaurus.Spec.SecondaryMasters {
+		secondaryMasters[i] = masterCellInfo{
+			MasterConnectionSpec: spec,
+			InstanceCount:        int32(len(spec.HostAddresses)), //nolint:gosec //no overflow
+		}
+	}
+
+	var masterCache *masterCacheInfo
+	masterCacheHostAddresses := ptr.Deref(ytsaurus.Spec.MasterCaches, ytv1.MasterCachesConnectionSpec{
+		HostAddresses: ytsaurus.Spec.HostAddressesMasterCaches, //nolint:staticcheck // Deprecated.
+	}).HostAddresses
+	if len(masterCacheHostAddresses) > 0 {
+		masterCache = &masterCacheInfo{
+			InstanceCount: int32(len(masterCacheHostAddresses)), //nolint:gosec //No overflow.
+			HostAddresses: masterCacheHostAddresses,
+		}
+	}
+
 	return &NodeGenerator{
 		baseLabeller: &labeller.Labeller{
 			Namespace:     ytsaurus.GetNamespace(),
@@ -83,11 +156,16 @@ func NewRemoteNodeGenerator(ytsaurus *ytv1.RemoteYtsaurus, resourceName string, 
 			Annotations:   commonSpec.ExtraPodAnnotations,
 			UseShortNames: commonSpec.UseShortNames,
 		},
-		commonSpec:           commonSpec,
-		clusterFeatures:      ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
-		masterConnectionSpec: &ytsaurus.Spec.MasterConnectionSpec,
-		masterCachesSpec:     &ytsaurus.Spec.MasterCachesSpec,
+		commonSpec:       commonSpec,
+		clusterFeatures:  ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{}),
+		primaryMaster:    primaryMaster,
+		secondaryMasters: secondaryMasters,
+		masterCache:      masterCache,
 	}
+}
+
+func (g *NodeGenerator) GetCellID(cellTag uint16) string {
+	return generateCellID(cellTag)
 }
 
 func (g *NodeGenerator) GetClusterFeatures() ytv1.ClusterFeatures {
@@ -99,48 +177,41 @@ func (g *NodeGenerator) GetComponentLabeller(component consts.ComponentType, ins
 }
 
 func (g *NodeGenerator) getComponentAddresses(ct consts.ComponentType, instanceCount int32, port int) []string {
-	labeller := g.GetComponentLabeller(ct, "")
-	addresses := make([]string, instanceCount)
-	for i := range int(instanceCount) {
-		addresses[i] = labeller.GetInstanceAddressPort(i, port)
-	}
-	return addresses
+	return g.GetComponentLabeller(ct, "").GetInstanceAddresses(instanceCount, port)
 }
 
-func (g *NodeGenerator) getMasterAddresses() []string {
-	if hosts := g.masterConnectionSpec.HostAddresses; len(hosts) != 0 {
+func (g *NodeGenerator) GetMasterLabeller(cellTag uint16) *labeller.Labeller {
+	instanceGroup := ""
+	if cellTag != g.primaryMaster.CellTag {
+		instanceGroup = g.baseLabeller.GetCellName(cellTag)
+	}
+	return g.GetComponentLabeller(consts.MasterType, instanceGroup)
+}
+
+func (g *NodeGenerator) getMasterAddresses(masterCell *masterCellInfo) []string {
+	if hosts := masterCell.HostAddresses; len(hosts) != 0 {
 		addresses := make([]string, len(hosts))
 		for idx, host := range hosts {
 			addresses[idx] = fmt.Sprintf("%s:%d", host, consts.MasterRPCPort)
 		}
 		return addresses
 	}
-	return g.getComponentAddresses(consts.MasterType, g.masterInstanceCount, consts.MasterRPCPort)
+	masterLabeller := g.GetMasterLabeller(masterCell.CellTag)
+	return masterLabeller.GetInstanceAddresses(masterCell.InstanceCount, consts.MasterRPCPort)
 }
 
 func (g *NodeGenerator) getMasterCachesAddresses() []string {
-	if g.masterCachesSpec == nil {
+	if g.masterCache == nil {
 		return nil
 	}
-	if hosts := g.masterCachesSpec.HostAddresses; len(hosts) != 0 {
+	if hosts := g.masterCache.HostAddresses; len(hosts) != 0 {
 		addresses := make([]string, len(hosts))
 		for idx, host := range hosts {
 			addresses[idx] = fmt.Sprintf("%s:%d", host, consts.MasterCachesRPCPort)
 		}
 		return addresses
 	}
-	return g.getComponentAddresses(consts.MasterCacheType, g.masterCachesSpec.InstanceCount, consts.MasterCachesRPCPort)
-}
-
-func (g *NodeGenerator) getMasterHydraPeers() []HydraPeer {
-	peers := make([]HydraPeer, 0, g.masterInstanceCount)
-	for _, address := range g.getMasterAddresses() {
-		peers = append(peers, HydraPeer{
-			Address: address,
-			Voting:  true,
-		})
-	}
-	return peers
+	return g.getComponentAddresses(consts.MasterCacheType, g.masterCache.InstanceCount, consts.MasterCachesRPCPort)
 }
 
 func (g *NodeGenerator) getDiscoveryAddresses() []string {
@@ -314,14 +385,24 @@ func (g *NodeGenerator) fillSolomonExporter(s *SolomonExporter, m *ytv1.MetricEx
 	}
 }
 
-func (g *NodeGenerator) fillPrimaryMaster(c *MasterCell) {
-	c.Addresses = g.getMasterAddresses()
-	c.Peers = g.getMasterHydraPeers()
-	c.CellID = generateCellID(g.masterConnectionSpec.CellTag)
+func (g *NodeGenerator) fillMasterCell(c *MasterCell, s *masterCellInfo) {
+	c.CellID = generateCellID(s.CellTag)
+	c.Addresses = g.getMasterAddresses(s)
+	c.Peers = make([]MasterCellPeer, len(c.Addresses))
+	for i, address := range c.Addresses {
+		c.Peers[i] = MasterCellPeer{
+			Address: address,
+			Voting:  true,
+		}
+	}
 }
 
 func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
-	g.fillPrimaryMaster(&c.PrimaryMaster)
+	g.fillMasterCell(&c.PrimaryMaster, &g.primaryMaster)
+	c.SecondaryMasters = make([]MasterCell, len(g.secondaryMasters))
+	for i := range g.secondaryMasters {
+		g.fillMasterCell(&c.SecondaryMasters[i], &g.secondaryMasters[i])
+	}
 	c.ClusterName = g.baseLabeller.GetClusterName()
 	c.DiscoveryConnection.Addresses = g.getDiscoveryAddresses()
 	g.fillClusterConnectionEncryption(c, s, keyring)
@@ -329,7 +410,7 @@ func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	if len(c.MasterCache.Addresses) == 0 {
 		c.MasterCache.Addresses = c.PrimaryMaster.Addresses
 	}
-	c.MasterCache.CellID = generateCellID(g.masterConnectionSpec.CellTag)
+	c.MasterCache.CellID = c.PrimaryMaster.CellID
 	cpAddresses := g.getCypressProxiesAddresses()
 	if cpAddresses != nil {
 		c.CypressProxy = &CypressProxy{
@@ -363,7 +444,7 @@ func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec)
 	keyring := getMountKeyring(g.commonSpec, s.NativeTransport)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)
-	c.TimestampProviders.Addresses = g.getMasterAddresses()
+	c.TimestampProviders.Addresses = g.getMasterAddresses(&g.primaryMaster)
 }
 
 func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
@@ -535,7 +616,11 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	g.fillIOEngine(&c.Changelogs.IOEngine)
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
-	g.fillPrimaryMaster(&c.PrimaryMaster)
+	g.fillMasterCell(&c.PrimaryMaster, &g.primaryMaster)
+	c.SecondaryMasters = make([]MasterCell, len(g.secondaryMasters))
+	for i := range g.secondaryMasters {
+		g.fillMasterCell(&c.SecondaryMasters[i], &g.secondaryMasters[i])
+	}
 	configureMasterServerCypressManager(g.GetMaxReplicationFactor(), &c.CypressManager)
 
 	c.BusClient = c.ClusterConnection.BusClient
@@ -557,7 +642,7 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 
 		// POD_NAME is set to pod name through downward API env var and substituted during
 		// config postprocessing.
-		l := g.GetComponentLabeller(consts.MasterType, "")
+		l := g.GetMasterLabeller(spec.CellTag)
 		c.AddressResolver.LocalhostNameOverride = ptr.To(
 			fmt.Sprintf("{%s}.%s.%s.svc.%s",
 				consts.ENV_K8S_POD_NAME,
@@ -1278,6 +1363,9 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		}
 	case consts.MasterType:
 		names = append(names, "")
+		for _, spec := range g.ytsaurus.Spec.SecondaryMasters {
+			names = append(names, g.baseLabeller.GetCellName(spec.CellTag))
+		}
 	case consts.QueryTrackerType:
 		if g.ytsaurus.Spec.QueryTrackers != nil {
 			names = append(names, "")
@@ -1379,6 +1467,11 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.MasterType:
 		if name == "" {
 			return g.GetMasterConfig(&g.ytsaurus.Spec.PrimaryMasters)
+		}
+		for _, spec := range g.ytsaurus.Spec.SecondaryMasters {
+			if name == g.baseLabeller.GetCellName(spec.CellTag) {
+				return g.GetMasterConfig(&spec)
+			}
 		}
 	case consts.QueryTrackerType:
 		if name == "" {

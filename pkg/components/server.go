@@ -3,17 +3,18 @@ package components
 import (
 	"context"
 	"fmt"
-	"log"
 	"maps"
 	"path"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -36,9 +37,9 @@ type server interface {
 	getImageHeaterTarget() *ImageHeaterTarget
 	buildStatefulSet() *appsv1.StatefulSet
 	rebuildStatefulSet() *appsv1.StatefulSet
-	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int)
-	getReplicaCount() int32
-	getMinReadyInstanceCount() *int
+	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32)
+	getInstanceCount() int32
+	getMinReadyInstanceCount(margin int32) int32
 	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool)
 	addCARootBundle(c *corev1.Container)
 	addTlsSecretMount(c *corev1.Container)
@@ -227,7 +228,7 @@ func (s *serverImpl) needSync(updating bool) bool {
 		}
 	}
 	return !s.Exists() ||
-		s.statefulSet.GetReplicas() != s.instanceSpec.InstanceCount
+		s.statefulSet.GetReplicas() != s.getInstanceCount()
 }
 
 func (s *serverImpl) Sync(ctx context.Context) error {
@@ -255,12 +256,102 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	)
 }
 
+func (s *serverImpl) arePodsReady(ctx context.Context) bool {
+	logger := log.FromContext(ctx)
+	if !resources.Exists(s.statefulSet) {
+		return false
+	}
+
+	pods, err := s.statefulSet.ListPods(ctx)
+	if err != nil {
+		logger.Error(err, "Cannot list pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+		)
+		return false
+	}
+
+	var readyCount int32
+	for _, pod := range pods {
+		ready := true
+		if len(s.readinessByContainers) > 0 {
+			for _, ct := range pod.Status.ContainerStatuses {
+				if slices.Contains(s.readinessByContainers, ct.Name) {
+					if ready = ct.Ready; !ready {
+						break
+					}
+				}
+			}
+		} else if pod.Status.Phase != corev1.PodRunning {
+			ready = false
+		}
+		if ready {
+			readyCount += 1
+		} else {
+			logger.Info("Instance pod is not ready",
+				"component", s.labeller.GetFullComponentName(),
+				"pod", pod.Name,
+				"phase", pod.Status.Phase,
+				"reason", pod.Status.Reason,
+				"message", pod.Status.Message,
+			)
+		}
+	}
+
+	instanceCount := s.getInstanceCount()
+	minReadyCount := s.getMinReadyInstanceCount(0)
+
+	if readyCount < minReadyCount {
+		logger.Info("Not enough ready instances",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+			"readyCount", readyCount,
+			"minReadyCount", minReadyCount,
+			"podsCount", len(pods),
+			"instanceCount", instanceCount,
+		)
+		return false
+	}
+
+	if len(pods) > int(instanceCount) {
+		logger.Info("Too many instance pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+			"readyCount", readyCount,
+			"minReadyCount", minReadyCount,
+			"podsCount", len(pods),
+			"instanceCount", instanceCount,
+		)
+		return false
+	}
+
+	return true
+}
+
 func (s *serverImpl) arePodsRemoved(ctx context.Context) bool {
+	logger := log.FromContext(ctx)
 	if !resources.Exists(s.statefulSet) {
 		return true
 	}
-
-	return s.statefulSet.ArePodsRemoved(ctx)
+	if pods, err := s.statefulSet.ListPods(ctx); err != nil {
+		logger.Error(err, "Cannot list removed pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+		)
+		return false
+	} else if len(pods) > 0 {
+		podNames := make([]string, len(pods))
+		for i := range pods {
+			podNames[i] = pods[i].Name
+		}
+		logger.Info("There are not removed pods",
+			"component", s.labeller.GetFullComponentName(),
+			"statefulSet", s.statefulSet.Name(),
+			"podNames", podNames,
+		)
+		return false
+	}
+	return true
 }
 
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {
@@ -301,10 +392,6 @@ func (s *serverImpl) needUpdate() ComponentStatus {
 	return ComponentStatusReady()
 }
 
-func (s *serverImpl) arePodsReady(ctx context.Context) bool {
-	return s.statefulSet.ArePodsReady(ctx, int(s.instanceSpec.InstanceCount), s.instanceSpec.MinReadyInstanceCount, s.readinessByContainers)
-}
-
 func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 	images := map[string]string{"image": s.image}
 	maps.Insert(images, maps.All(s.sidecarImages))
@@ -317,16 +404,36 @@ func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 	}
 }
 
-func (s *serverImpl) getReplicaCount() int32 {
-	return s.instanceSpec.InstanceCount
+func (s *serverImpl) getInstanceCount() int32 {
+	if maintenance := s.commonSpec.ClusterMaintenance; maintenance != nil {
+		switch maintenance.Shutdown {
+		case ytv1.ClusterShutdownCompute:
+			switch s.labeller.ComponentType {
+			case ytv1.ExecNodeType, ytv1.YqlAgentType:
+				return 0
+			}
+		case ytv1.ClusterShutdownEverything:
+			return 0
+		case ytv1.ClusterShutdownExceptMasters:
+			if s.labeller.ComponentType != ytv1.MasterType {
+				return 0
+			}
+		case ytv1.ClusterShutdownTablets:
+			if s.labeller.ComponentType == ytv1.TabletNodeType {
+				return 0
+			}
+		}
+	}
+	return max(s.instanceSpec.InstanceCount, 0)
 }
 
-func (s *serverImpl) getMinReadyInstanceCount() *int {
-	return s.instanceSpec.MinReadyInstanceCount
+func (s *serverImpl) getMinReadyInstanceCount(margin int32) int32 {
+	bound := max(s.getInstanceCount()-margin, 0)
+	return min(ptr.Deref(s.instanceSpec.MinReadyInstanceCount, bound), bound)
 }
 
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
-	logger := ctrllog.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	sts, ok := s.fetchAndValidateStatefulSet(ctx)
 	if !ok {
@@ -444,7 +551,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		metav1.SetMetaDataAnnotation(&statefulSet.Spec.Template.ObjectMeta, key, value)
 	}
 
-	statefulSet.Spec.Replicas = &s.instanceSpec.InstanceCount
+	statefulSet.Spec.Replicas = ptr.To(s.getInstanceCount())
 	statefulSet.Spec.ServiceName = s.headlessService.Name()
 	statefulSet.Spec.VolumeClaimTemplates = createVolumeClaims(s.instanceSpec.VolumeClaimTemplates)
 
@@ -453,7 +560,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 
 	if len(s.configs.generators) < 1 {
-		log.Panicf("expected at least one config file")
+		panic("expected at least one config file")
 	}
 	filename := s.configs.generators[0].FileName
 
@@ -593,15 +700,14 @@ func (s *serverImpl) addTlsSecretMount(c *corev1.Container) {
 }
 
 // setUpdateStrategy sets the desired StatefulSet update strategy
-func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition int32, maxUnavailable int) {
+func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32) {
 	s.updateStrategy = &appsv1.StatefulSetUpdateStrategy{
 		Type: strategy,
 	}
 	if strategy == appsv1.RollingUpdateStatefulSetStrategyType {
-		maxUnavailableValue := intstr.FromInt(maxUnavailable)
 		s.updateStrategy.RollingUpdate = &appsv1.RollingUpdateStatefulSetStrategy{
 			Partition:      ptr.To(partition),
-			MaxUnavailable: &maxUnavailableValue,
+			MaxUnavailable: ptr.To(intstr.FromInt32(maxUnavailable)),
 		}
 	}
 	// Clear the built StatefulSet so it will be rebuilt with the new strategy
@@ -648,7 +754,7 @@ func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
 }
 
 func (s *serverImpl) fetchAndValidateStatefulSet(ctx context.Context) (*appsv1.StatefulSet, bool) {
-	logger := ctrllog.FromContext(ctx)
+	logger := log.FromContext(ctx)
 	if !resources.Exists(s.statefulSet) {
 		return nil, false
 	}

@@ -61,7 +61,7 @@
                     voting=%true;
                 };
             ];
-            "cell_id"="65726e65-ad6b7562-259-79747361";
+            "cell_id"="65726e65-ad6b7562-10259-79747361";
         };
         "discovery_connection"={
             addresses=[
@@ -71,7 +71,7 @@
             addresses=[
                 "ms-test-0.masters-test.fake.svc.fake.zone:9010";
             ];
-            "cell_id"="65726e65-ad6b7562-259-79747361";
+            "cell_id"="65726e65-ad6b7562-10259-79747361";
             "enable_master_cache_discovery"=%false;
         };
     };

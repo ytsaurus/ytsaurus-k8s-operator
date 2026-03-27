@@ -397,8 +397,7 @@ func (qa *QueueAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	ytClient := qa.ytsaurusClient.GetYtClient()
 
 	// Check that the number of instances in YT matches the expected instanceCount
-	expectedCount := int(qa.ytsaurus.GetResource().Spec.QueueAgents.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueueAgentType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.QueueAgentType, qa.server.getInstanceCount()); err != nil {
 		return ComponentStatusBlocked("Error: %v", err)
 	}
 

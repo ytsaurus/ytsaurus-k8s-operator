@@ -8,8 +8,6 @@ import (
 
 	"k8s.io/utils/ptr"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,9 +20,8 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 )
 
-const initJobPrologue = `
-set -e
-set -x
+const initJobPrologue = `#!/bin/bash
+set -eux -o pipefail
 `
 
 func initJobWithNativeDriverPrologue() string {
@@ -45,12 +42,14 @@ type InitJob struct {
 
 	initJob *resources.Job
 	configs *ConfigMapBuilder
+	script  func() ([]string, error)
 
 	caRootBundle    *resources.CABundle
 	caBundle        *resources.CABundle
 	busClientSecret *resources.TLSSecret
 
-	initCompletedCondition string
+	condition string
+	reason    string
 
 	builtJob *batchv1.Job
 }
@@ -58,7 +57,8 @@ type InitJob struct {
 func NewInitJob(
 	labeller *labeller.Labeller,
 	apiProxy apiproxy.APIProxy,
-	name, configFileName string,
+	name string,
+	configFileName string,
 	generator ConfigGeneratorFunc,
 	commonSpec *ytv1.CommonSpec,
 	commonPodSpec *ytv1.PodSpec,
@@ -75,18 +75,16 @@ func NewInitJob(
 		}
 	}
 
-	configs := NewConfigMapBuilder(labeller, apiProxy, labeller.GetInitJobConfigMapName(name), nil)
-	configs.AddGenerator(configFileName, ConfigFormatYson, generator)
-
-	return &InitJob{
+	initJob := &InitJob{
 		component: component{
 			labeller: labeller,
 			owner:    apiProxy,
 		},
-		commonSpec:             commonSpec,
-		commonPodSpec:          commonPodSpec,
-		instanceSpec:           instanceSpec,
-		initCompletedCondition: labeller.GetInitJobCompletedCondition(name),
+		commonSpec:    commonSpec,
+		commonPodSpec: commonPodSpec,
+		instanceSpec:  instanceSpec,
+		condition:     labeller.GetInitJobCompletedCondition(name),
+		reason:        "InitJobCompleted",
 		initJob: resources.NewJob(
 			labeller.GetInitJobName(name),
 			labeller,
@@ -95,8 +93,24 @@ func NewInitJob(
 		caRootBundle:    resources.NewCARootBundle(commonSpec.CARootBundle),
 		caBundle:        resources.NewCABundle(commonSpec.CABundle),
 		busClientSecret: busClientSecret,
-		configs:         configs,
+		configs:         NewConfigMapBuilder(labeller, apiProxy, labeller.GetInitJobConfigMapName(name), nil),
+		script:          func() ([]string, error) { return nil, fmt.Errorf("script undefined") },
 	}
+
+	initJob.configs.AddGenerator(configFileName, ConfigFormatYson, generator)
+	initJob.configs.AddGenerator(
+		consts.InitJobScriptFilename,
+		ConfigFormatText,
+		func() ([]byte, error) {
+			if lines, err := initJob.script(); err != nil {
+				return nil, err
+			} else {
+				return []byte(strings.Join(lines, "\n")), nil
+			}
+		},
+	)
+
+	return initJob
 }
 
 func NewInitJobForYtsaurus(
@@ -119,20 +133,36 @@ func NewInitJobForYtsaurus(
 }
 
 func (j *InitJob) IsCompleted() bool {
-	return j.owner.IsStatusConditionTrue(j.initCompletedCondition)
+	condition := j.owner.GetStatusCondition(j.condition)
+	return condition != nil && condition.Status == metav1.ConditionTrue && condition.Reason == j.reason
 }
 
 func (j *InitJob) SetInitScript(script string) {
-	if cm, err := j.configs.Build(); err == nil {
-		cm.Data[consts.InitClusterScriptFileName] = script
+	j.script = func() ([]string, error) {
+		return []string{script}, nil
 	}
+}
+
+func (j *InitJob) RunScript(
+	ctx context.Context,
+	dry bool,
+	reason string,
+	script func() ([]string, error),
+	complete func(),
+) (ComponentStatus, error) {
+	j.reason = reason
+	j.script = script
+	if j.IsCompleted() {
+		complete()
+		return ComponentStatusReadyAfter("Job %v %v completed", j.initJob.Name(), reason), nil
+	}
+	return j.Sync(ctx, dry)
 }
 
 func (j *InitJob) Build() *batchv1.Job {
 	if j.builtJob != nil {
 		return j.builtJob
 	}
-	var defaultMode int32 = 0o500
 	job := j.initJob.Build()
 	job.Spec.Template = corev1.PodTemplateSpec{
 		ObjectMeta: j.component.labeller.GetInitJobObjectMeta(),
@@ -140,19 +170,33 @@ func (j *InitJob) Build() *batchv1.Job {
 			ImagePullSecrets: j.commonSpec.ImagePullSecrets,
 			Containers: []corev1.Container{
 				{
-					Image:   ptr.Deref(j.instanceSpec.Image, j.commonSpec.CoreImage),
-					Name:    "ytsaurus-init",
-					Command: []string{"bash", "-c", path.Join(consts.ConfigMountPoint, consts.InitClusterScriptFileName)},
-					Env:     getDefaultEnv(),
-					VolumeMounts: []corev1.VolumeMount{
-						createConfigVolumeMount(),
+					Image: ptr.Deref(j.instanceSpec.Image, j.commonSpec.CoreImage),
+					Name:  "ytsaurus-init",
+					Command: []string{
+						"/bin/bash",
+						"-eux",
+						path.Join(consts.ConfigMountPoint, consts.InitJobScriptFilename),
 					},
+					Env: getDefaultEnv(),
+					VolumeMounts: []corev1.VolumeMount{{
+						Name:      consts.InitScriptVolumeName,
+						MountPath: consts.ConfigMountPoint,
+						ReadOnly:  true,
+					}},
 					TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 				},
 			},
-			Volumes: []corev1.Volume{
-				createConfigVolume(consts.ConfigVolumeName, j.configs.GetConfigMapName(), &defaultMode),
-			},
+			Volumes: []corev1.Volume{{
+				Name: consts.InitScriptVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: j.configs.GetConfigMapName(),
+						},
+						DefaultMode: ptr.To(int32(0o500)),
+					},
+				},
+			}},
 			RestartPolicy:     corev1.RestartPolicyOnFailure,
 			Tolerations:       getTolerationsWithDefault(j.instanceSpec.Tolerations, j.commonPodSpec.Tolerations),
 			NodeSelector:      getNodeSelectorWithDefault(j.instanceSpec.NodeSelector, j.commonPodSpec.NodeSelector),
@@ -194,76 +238,75 @@ func (j *InitJob) Exists() bool {
 func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if j.owner.IsStatusConditionTrue(j.initCompletedCondition) {
+	condition := j.owner.GetStatusCondition(j.condition)
+	if condition != nil && condition.Status == metav1.ConditionTrue && condition.Reason == j.reason {
 		return ComponentStatusReadyAfter("%s completed", j.initJob.Name()), err
 	}
 
-	// Deal with init job.
-	if !j.initJob.Exists() {
+	if !j.Exists() || condition == nil || condition.Reason != j.reason {
 		if !dry {
+			for j.initJob.Exists() {
+				err := j.initJob.DeleteForeground(ctx)
+				return ComponentStatusWaitingFor("job %s deleting", j.initJob.Name()), err
+			}
+			if _, err = j.configs.Build(); err != nil {
+				return ComponentStatusWaitingFor("job %s start", j.initJob.Name()), err
+			}
 			_ = j.Build()
-			err = resources.Sync(ctx, j.configs, j.initJob)
+			if err := resources.Sync(ctx, j.configs, j.initJob); err != nil {
+				return ComponentStatusWaitingFor("job %s start", j.initJob.Name()), err
+			}
+			j.owner.SetStatusCondition(metav1.Condition{
+				Type:    j.condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  j.reason,
+				Message: "Init job created",
+			})
 		}
-
-		return ComponentStatusWaitingFor("job %s creation", j.initJob.Name()), err
+		return ComponentStatusWaitingFor("job %s start", j.initJob.Name()), nil
 	}
 
 	if status := j.initJob.Status(); status.Succeeded <= 0 {
-		return ComponentStatusWaitingFor("job %s completion, active: %v, failed: %v", j.initJob.Name(), status.Active, status.Failed), err
+		status := ComponentStatusWaitingFor("job %s completion, active: %v, failed: %v", j.initJob.Name(), status.Active, status.Failed)
+		if !dry {
+			j.owner.SetStatusCondition(metav1.Condition{
+				Type:    j.condition,
+				Status:  metav1.ConditionFalse,
+				Reason:  j.reason,
+				Message: status.Message,
+			})
+		}
+		return status, err
 	}
 
 	if !dry {
 		j.owner.SetStatusCondition(metav1.Condition{
-			Type:    j.initCompletedCondition,
+			Type:    j.condition,
 			Status:  metav1.ConditionTrue,
-			Reason:  "InitJobCompleted",
+			Reason:  j.reason,
 			Message: "Init job successfully completed",
 		})
 	}
 
-	return ComponentStatusWaitingFor("setting %s condition", j.initCompletedCondition), err
+	return ComponentStatusWaitingFor("setting %s condition", j.condition), err
 }
 
 func (j *InitJob) prepareRestart(ctx context.Context, dry bool) error {
-	if dry {
-		return nil
+	if !dry {
+		j.owner.SetStatusCondition(metav1.Condition{
+			Type:    j.condition,
+			Status:  metav1.ConditionFalse,
+			Reason:  "InitJobNeedRestart",
+			Message: "Init job needs restart",
+		})
 	}
-
-	if err := j.configs.RemoveIfExists(ctx); err != nil {
-		return err
-	}
-
-	if err := j.removeIfExists(ctx); err != nil {
-		return err
-	}
-	j.owner.SetStatusCondition(metav1.Condition{
-		Type:    j.initCompletedCondition,
-		Status:  metav1.ConditionFalse,
-		Reason:  "InitJobNeedRestart",
-		Message: "Init job needs restart",
-	})
 	return nil
 }
 
 func (j *InitJob) isRestartPrepared() bool {
-	jobExists := resources.Exists(j.initJob)
-	configExists := j.configs.Exists()
-	conditionIsFalse := j.owner.IsStatusConditionFalse(j.initCompletedCondition)
-	return !jobExists && !configExists && conditionIsFalse
+	return j.owner.IsStatusConditionFalse(j.condition)
 }
 
 func (j *InitJob) isRestartCompleted() bool {
-	return j.owner.IsStatusConditionTrue(j.initCompletedCondition)
-}
-
-func (j *InitJob) removeIfExists(ctx context.Context) error {
-	if !j.initJob.Exists() {
-		return nil
-	}
-	propagation := metav1.DeletePropagationForeground
-	return j.owner.DeleteObject(
-		ctx,
-		j.initJob.OldObject(),
-		&client.DeleteOptions{PropagationPolicy: &propagation},
-	)
+	return j.IsCompleted()
 }

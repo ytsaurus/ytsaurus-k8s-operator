@@ -34,6 +34,13 @@ type ComponentManagerStatus struct {
 	canUpdate    []ytv1.Component // Components with update allowed
 	cannotUpdate []ytv1.Component // Components with update blocked
 	nowUpdating  []ytv1.Component // Components updating right now
+
+	clusterMaintenance bool
+	mastersMaintenance bool
+	shutdownControl    bool
+	shutdownStorage    bool
+	shutdownTablets    bool
+	shutdownCompute    bool
 }
 
 //nolint:cyclop //shush
@@ -65,16 +72,24 @@ func NewComponentManager(
 		getHeaterStatus = ih.GetHeaterStatus
 	}
 
-	m := components.NewMaster(cfgen, ytsaurus)
+	var secondaryMasters []*components.Master
+	for i := range resource.Spec.SecondaryMasters {
+		sm := components.NewMaster(cfgen, ytsaurus, &resource.Spec.SecondaryMasters[i], nil)
+		secondaryMasters = append(secondaryMasters, sm)
+		allComponents = append(allComponents, sm)
+	}
+
+	// NOTE: Primary master readiness depends on readiness of secondary masters.
+	m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.PrimaryMasters, secondaryMasters)
 	allComponents = append(allComponents, m)
 
 	var hps []components.Component
-	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
+	for _, hpSpec := range resource.Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
 	allComponents = append(allComponents, hps...)
 
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, m, hps[0], getAllComponents)
 	allComponents = append(allComponents, yc)
 
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
@@ -82,7 +97,7 @@ func NewComponentManager(
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
-		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
+		for _, dndSpec := range resource.Spec.DataNodes {
 			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, yc, dndSpec))
 		}
 	}
@@ -95,7 +110,7 @@ func NewComponentManager(
 
 	if len(resource.Spec.RPCProxies) > 0 {
 		var rps []components.Component
-		for _, rpSpec := range ytsaurus.GetResource().Spec.RPCProxies {
+		for _, rpSpec := range resource.Spec.RPCProxies {
 			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
 		}
 		allComponents = append(allComponents, rps...)
@@ -103,7 +118,7 @@ func NewComponentManager(
 
 	if len(resource.Spec.TCPProxies) > 0 {
 		var tps []components.Component
-		for _, tpSpec := range ytsaurus.GetResource().Spec.TCPProxies {
+		for _, tpSpec := range resource.Spec.TCPProxies {
 			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
 		}
 		allComponents = append(allComponents, tps...)
@@ -111,7 +126,7 @@ func NewComponentManager(
 
 	if len(resource.Spec.KafkaProxies) > 0 {
 		var kps []components.Component
-		for _, kpSpec := range ytsaurus.GetResource().Spec.KafkaProxies {
+		for _, kpSpec := range resource.Spec.KafkaProxies {
 			kps = append(kps, components.NewKafkaProxy(cfgen, ytsaurus, m, kpSpec))
 		}
 		allComponents = append(allComponents, kps...)
@@ -119,7 +134,7 @@ func NewComponentManager(
 
 	var ends []components.Component
 	if len(resource.Spec.ExecNodes) > 0 {
-		for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
+		for _, endSpec := range resource.Spec.ExecNodes {
 			ends = append(ends, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec, yc))
 		}
 	}
@@ -127,7 +142,7 @@ func NewComponentManager(
 
 	var tnds []components.Component
 	if len(resource.Spec.TabletNodes) > 0 {
-		for idx, tndSpec := range ytsaurus.GetResource().Spec.TabletNodes {
+		for idx, tndSpec := range resource.Spec.TabletNodes {
 			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, tndSpec, idx == 0))
 		}
 	}
@@ -201,6 +216,8 @@ func NewComponentManager(
 func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 	logger := log.FromContext(ctx)
 	resource := cm.ytsaurus.GetResource()
+	maintenance := cm.ytsaurus.GetClusterMaintenance()
+	shutdown := maintenance.Shutdown
 
 	// Fetch component status.
 	var readyComponents []string
@@ -213,6 +230,13 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 		allRunning:         true,
 		allReadyOrUpdating: true,
 		needUpdate:         nil,
+
+		clusterMaintenance: shutdown != ytv1.ClusterShutdownNone,
+		mastersMaintenance: shutdown == ytv1.ClusterShutdownExceptMasters,
+		shutdownCompute:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything || shutdown == ytv1.ClusterShutdownCompute,
+		shutdownControl:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything,
+		shutdownStorage:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything,
+		shutdownTablets:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything || shutdown == ytv1.ClusterShutdownTablets,
 	}
 
 	for _, component := range cm.allComponents {
@@ -289,6 +313,18 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	if cm.ytsaurus.GetImageHeater("") == nil {
 		cm.ytsaurus.RemoveStatusCondition(consts.ConditionImageHeaterReady)
 		cm.ytsaurus.RemoveStatusCondition(consts.ConditionImageHeaterComplete)
+	}
+
+	if cm.status.clusterMaintenance {
+		shutdown := cm.ytsaurus.GetClusterMaintenance().Shutdown
+		cm.ytsaurus.SetStatusCondition(metav1.Condition{
+			Type:    consts.ConditionClusterMaintenance,
+			Status:  metav1.ConditionTrue,
+			Reason:  string(shutdown),
+			Message: fmt.Sprintf("Cluster is under maintenance, shutdown %v", shutdown),
+		})
+	} else {
+		cm.ytsaurus.RemoveStatusCondition(consts.ConditionClusterMaintenance)
 	}
 
 	hasPending := false

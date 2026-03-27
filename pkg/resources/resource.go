@@ -6,6 +6,8 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
@@ -55,6 +57,7 @@ func (r *BaseManagedResource[T]) Name() string {
 }
 
 func (r *BaseManagedResource[T]) Fetch(ctx context.Context) error {
+	r.oldObject.SetResourceVersion("")
 	return r.proxy.FetchObject(ctx, r.name, r.oldObject)
 }
 
@@ -74,6 +77,10 @@ func (r *BaseManagedResource[T]) IsUpdated() bool {
 
 func (r *BaseManagedResource[T]) Sync(ctx context.Context) error {
 	return r.proxy.SyncObject(ctx, r.oldObject, r.newObject)
+}
+
+func (r *BaseManagedResource[T]) DeleteForeground(ctx context.Context) error {
+	return r.proxy.DeleteObject(ctx, r.oldObject, client.PropagationPolicy(metav1.DeletePropagationForeground))
 }
 
 func Fetch(ctx context.Context, objects ...Fetchable) error {

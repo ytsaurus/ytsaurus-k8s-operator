@@ -6,7 +6,7 @@ spec:
   discovery:
     resources: {}
   primaryMasters:
-    cellTag: 0
+    cellTag: 1
     hostAddresses:
     - host1.external.address
     - host2.external.address

@@ -147,11 +147,11 @@ status:
   - lastTransitionTime: null
     message: Init job successfully completed
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: ClusterInitialization
     status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
-    message: yt-master-init-job-default completed
+    message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"

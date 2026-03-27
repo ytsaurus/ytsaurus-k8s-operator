@@ -42,7 +42,7 @@ data:
             };
         };
     }
-  init-cluster.sh: /entrypoint.sh
+  init-job-script.sh: /entrypoint.sh
 kind: ConfigMap
 metadata:
   annotations:

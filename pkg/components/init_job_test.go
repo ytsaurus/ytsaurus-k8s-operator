@@ -38,16 +38,19 @@ const (
 	waitTick    = 300 * time.Millisecond
 )
 
+var logger = GinkgoLogr
+
 func syncJobUntilReady(job *InitJob) {
 	ctx := context.Background()
 
-	Eventually(func() bool {
+	Eventually(func() SyncStatus {
 		err := job.Fetch(ctx)
 		Expect(err).NotTo(HaveOccurred())
 		st, err := job.Sync(ctx, false)
+		logger.Info("Job status", "state", st.SyncStatus, "message", st.Message)
 		Expect(err).NotTo(HaveOccurred())
-		return st.SyncStatus == SyncStatusReady
-	}, waitTimeout, waitTick).Should(BeTrue())
+		return st.SyncStatus
+	}, waitTimeout, waitTick).Should(Equal(SyncStatusReady))
 }
 
 func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
@@ -152,7 +155,7 @@ var _ = Describe("InitJob", func() {
 			cmData := testutil.FetchConfigMapData(
 				h,
 				"dummy-yt-master-init-job-config",
-				consts.InitClusterScriptFileName,
+				consts.InitJobScriptFilename,
 			)
 			Expect(cmData).To(Equal(scriptAfter))
 		})

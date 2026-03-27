@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -34,6 +36,12 @@ func flowCheckStatusCondition(conditionName string) flowCondition {
 	}
 }
 
+func flowInstantSuccess(conditionName string) flowCondition {
+	return func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
+		return stepResultMarkHappy
+	}
+}
+
 type flowStep struct {
 	updateState ytv1.UpdateState
 	// For most of the steps, there will be only one next step,
@@ -58,6 +66,11 @@ func newConditionalForkStep(updateState ytv1.UpdateState, unhappyNext *flowStep)
 
 func (s *flowStep) checkCondition(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 	condition := flowConditions[s.updateState]
+	if condition == nil {
+		logger := log.FromContext(ctx)
+		logger.Error(nil, "Update flow state conditions are not defined", "updateState", s.updateState)
+		return stepResultMarkUnsatisfied
+	}
 	return condition(ctx, ytsaurus, componentManager)
 }
 
@@ -184,7 +197,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStatePossibilityCheck: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) {
 			return stepResultMarkHappy
-		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		} else if ytsaurus.IsUpdateStatusConditionFalse(consts.ConditionHasPossibility) {
 			return stepResultMarkUnhappy
 		}
 		return stepResultMarkUnsatisfied
@@ -200,11 +213,12 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForTabletCellsRemovingStart:    flowCheckStatusCondition(consts.ConditionTabletCellsRemovingStarted),
 	ytv1.UpdateStateWaitingForTabletCellsRemoved:          flowCheckStatusCondition(consts.ConditionTabletCellsRemoved),
 	ytv1.UpdateStateWaitingForImaginaryChunksAbsence:      flowCheckStatusCondition(consts.ConditionDataNodesWithImaginaryChunksAbsent),
+	ytv1.UpdateStateWaitingForMasterCellsReconfiguration:  flowCheckStatusCondition(consts.ConditionMasterCellsReconfigured),
 	ytv1.UpdateStateWaitingForSnapshots:                   flowCheckStatusCondition(consts.ConditionSnaphotsSaved),
 	ytv1.UpdateStateWaitingForTabletCellsRecovery:         flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
 	ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:    flowCheckStatusCondition(consts.ConditionOpArchivePreparedForUpdating),
 	ytv1.UpdateStateWaitingForOpArchiveUpdate:             flowCheckStatusCondition(consts.ConditionOpArchiveUpdated),
-	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: flowCheckStatusCondition(consts.ConditionSidecarsPreparedForInitializing),
+	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: flowInstantSuccess(consts.ConditionSidecarsPreparedForInitializing), // TODO: Remove.
 	ytv1.UpdateStateWaitingForSidecarsInitialize:          flowCheckStatusCondition(consts.ConditionSidecarsInitialized),
 	ytv1.UpdateStateWaitingForQTStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQTStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQTStateUpdate:               flowCheckStatusCondition(consts.ConditionQTStateUpdated),
@@ -213,6 +227,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQAStateUpdate:               flowCheckStatusCondition(consts.ConditionQAStateUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:            flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
+	ytv1.UpdateStateWaitingForMasterEnterReadOnly:         flowCheckStatusCondition(consts.ConditionMasterEnteredReadOnly),
 	ytv1.UpdateStateWaitingForMasterExitReadOnly:          flowCheckStatusCondition(consts.ConditionMasterExitedReadOnly),
 	ytv1.UpdateStateWaitingForCypressPatch:                flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
@@ -244,7 +259,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 
 	updMaster := hasComponent(updatingComponents, consts.MasterType)
 	updTablet := hasComponent(updatingComponents, consts.TabletNodeType)
-	updMasterOrTablet := updMaster || updTablet
 	updDataNodes := hasComponent(updatingComponents, consts.DataNodeType)
 	updScheduler := hasComponent(updatingComponents, consts.SchedulerType)
 	updQueryTracker := hasComponent(updatingComponents, consts.QueryTrackerType)
@@ -256,7 +270,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		componentManager.getHeaterStatus != nil,
 		st(ytv1.UpdateStateWaitingForImageHeater),
 	).chainIf(
-		updMasterOrTablet,
+		(updMaster || updTablet) && !componentManager.status.shutdownControl,
 		newConditionalForkStep(
 			ytv1.UpdateStatePossibilityCheck,
 			// This is the unhappy path.
@@ -264,19 +278,25 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 			// Happy path will be chained automatically.
 		),
 	).chainIf(
-		updMaster,
+		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
-		updTablet,
+		updTablet && !componentManager.status.shutdownTablets,
 		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
 		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
 	).chainIf(
-		updDataNodes || updMaster,
+		(updDataNodes || updMaster) && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
 	).chainIf(
-		updMaster,
+		updMaster && componentManager.status.mastersMaintenance,
+		st(ytv1.UpdateStateWaitingForMasterCellsReconfiguration),
+	).chainIf(
+		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSnapshots),
+	).chainIf(
+		updMaster && componentManager.status.shutdownControl,
+		st(ytv1.UpdateStateWaitingForMasterEnterReadOnly),
 	).chain(
 		st(ytv1.UpdateStateWaitingForPodsRemoval),
 		st(ytv1.UpdateStateWaitingForPodsCreation),
@@ -285,31 +305,31 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
 	).chainIf(
 		updMaster,
-		st(ytv1.UpdateStateWaitingForSidecarsInitializingPrepare),
 		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
-	).chain(
+	).chainIf(
+		!componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForCypressPatch),
 	).chainIf(
-		updTablet,
+		updTablet && !componentManager.status.shutdownTablets,
 		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
-		updScheduler,
+		updScheduler && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdate),
 	).chainIf(
-		updQueryTracker,
+		updQueryTracker && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForQTStateUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForQTStateUpdate),
 	).chainIf(
-		updYqlAgent,
+		updYqlAgent && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForYqlaUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForYqlaUpdate),
 	).chainIf(
-		updQueueAgent,
+		updQueueAgent && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForQAStateUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForQAStateUpdate),
 	).chainIf(
-		updMaster,
+		updMaster && !componentManager.status.shutdownControl,
 		st(ytv1.UpdateStateWaitingForSafeModeDisabled),
 	).chain(
 		st(ytv1.UpdateStateWaitingForTimbertruckPrepared),

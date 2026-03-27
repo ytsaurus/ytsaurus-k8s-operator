@@ -278,8 +278,7 @@ func (yqla *YqlAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	ytClient := yqla.ytsaurusClient.GetYtClient()
 
 	// Check that the number of instances in YT matches the expected instanceCount
-	expectedCount := int(yqla.ytsaurus.GetResource().Spec.YQLAgents.InstanceCount)
-	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.YqlAgentType, expectedCount); err != nil {
+	if err := IsInstanceCountEqualYTSpec(ctx, ytClient, consts.YqlAgentType, yqla.server.getInstanceCount()); err != nil {
 		return ComponentStatusBlocked("Error: %v", err)
 	}
 

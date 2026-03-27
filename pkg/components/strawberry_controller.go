@@ -73,11 +73,16 @@ func NewStrawberryController(
 	// TODO: strawberry has a different image and can't be nil/fallback on CoreImage.
 	image := ptr.Deref(resource.Spec.StrawberryController.Image, resource.Spec.CoreImage)
 
+	instanceCount := int32(1)
+	if ytsaurus.GetClusterMaintenance().Shutdown != ytv1.ClusterShutdownNone {
+		instanceCount = 0
+	}
+
 	microservice := newMicroservice(
 		l,
 		ytsaurus,
 		image,
-		1,
+		instanceCount,
 		map[string]ConfigGenerator{
 			ControllerConfigFileName: {
 				Generator: cfgen.GetStrawberryControllerConfig,
@@ -264,7 +269,7 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 		if IsUpdatingComponent(c.ytsaurus, c) {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
-					err = removePods(ctx, c.microservice, &c.component)
+					err = c.RemovePods(ctx, c.microservice)
 				}
 				return ComponentStatusUpdateStep("pods removal"), err
 			}
