@@ -444,6 +444,16 @@ func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSel
 	}
 }
 
+func (cm *ComponentManager) initUpdateConditions(ctx context.Context) {
+	// Take snapshot of status conditions to change them during update without changing current update workflow.
+	if condition := cm.ytsaurus.GetStatusCondition(consts.ConditionMasterCellsRegistration); condition != nil {
+		cm.ytsaurus.SetUpdateStatusCondition(ctx, *condition)
+	}
+	if condition := cm.ytsaurus.GetStatusCondition(consts.ConditionMasterCellsSettlement); condition != nil {
+		cm.ytsaurus.SetUpdateStatusCondition(ctx, *condition)
+	}
+}
+
 func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
 	for _, component := range updatingComponents {
 		if component.Type != consts.TabletNodeType {
