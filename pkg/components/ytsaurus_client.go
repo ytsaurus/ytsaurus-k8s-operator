@@ -132,7 +132,22 @@ func (yc *YtsaurusClient) shouldSkipCypressOperations() bool {
 }
 
 //nolint:cyclop //shush
-func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context) (ComponentStatus, error) {
+func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if dry {
+		switch yc.ytsaurus.GetUpdateState() {
+		case ytv1.UpdateStatePossibilityCheck:
+		case ytv1.UpdateStateWaitingForSafeModeEnabled, ytv1.UpdateStateWaitingForSafeModeDisabled:
+		case ytv1.UpdateStateWaitingForTabletCellsSaving, ytv1.UpdateStateWaitingForTabletCellsRecovery:
+		case ytv1.UpdateStateWaitingForTabletCellsRemovingStart, ytv1.UpdateStateWaitingForTabletCellsRemoved:
+		case ytv1.UpdateStateWaitingForImaginaryChunksAbsence:
+		case ytv1.UpdateStateWaitingForSnapshots:
+		case ytv1.UpdateStateWaitingForCypressPatch:
+		default:
+			return ComponentStatusReady(), nil
+		}
+		return ComponentStatusUpdating("Ytsaurus client actions"), nil
+	}
+
 	var err error
 
 	switch yc.ytsaurus.GetUpdateState() {
@@ -392,14 +407,8 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 		}
 	}
 
-	if yc.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if yc.ytsaurus.GetUpdateState() == ytv1.UpdateStateImpossibleToStart {
-			return ComponentStatusReady(), err
-		}
-		if dry {
-			return SimpleStatus(SyncStatusUpdating), err
-		}
-		return yc.handleUpdatingState(ctx)
+	if yc.ytsaurus.IsUpdating() {
+		return yc.handleUpdatingState(ctx, dry)
 	}
 
 	if status := yc.NeedSyncCypressPatch(); status.SyncStatus != SyncStatusReady {
