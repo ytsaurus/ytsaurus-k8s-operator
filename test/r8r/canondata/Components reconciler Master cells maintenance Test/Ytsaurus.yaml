@@ -201,17 +201,35 @@ status:
     status: "True"
     type: ClusterMaintenance
   - lastTransitionTime: null
+    message: Master cell 2 registered
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-2-registered
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: Master-2Ready
   - lastTransitionTime: null
+    message: Master cell 3 registered
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-3-registered
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: Master-3Ready
+  - lastTransitionTime: null
+    message: Master cell 4 registered
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-4-registered
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1

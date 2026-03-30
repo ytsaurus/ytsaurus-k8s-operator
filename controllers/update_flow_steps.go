@@ -235,7 +235,14 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForQAStateUpdatingPrepare:      flowCheckStatusCondition(consts.ConditionQAStatePreparedForUpdating),
 	ytv1.UpdateStateWaitingForQAStateUpdate:               flowCheckStatusCondition(consts.ConditionQAStateUpdated),
 	ytv1.UpdateStateWaitingForSafeModeDisabled:            flowCheckStatusCondition(consts.ConditionSafeModeDisabled),
+	ytv1.UpdateStateWaitingForMasterEnterReadOnly:         flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterEnterReadOnly),
 	ytv1.UpdateStateWaitingForMasterExitReadOnly:          flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterExitReadOnly),
+	ytv1.UpdateStateWaitingForMasterCellsPreparation:      flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterCellsPreparation),
+	ytv1.UpdateStateWaitingForMasterCellsEnterReadOnly:    flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterCellsEnterReadOnly),
+	ytv1.UpdateStateWaitingForMasterCellsExitReadOnly:     flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterCellsExitReadOnly),
+	ytv1.UpdateStateWaitingForMasterCellsRegistration:     flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterCellsRegistration),
+	ytv1.UpdateStateWaitingForMasterCellsReconfiguration:  flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterCellsReconfiguration),
+	ytv1.UpdateStateWaitingForMasterCellsCompletion:       flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterCellsCompletion),
 	ytv1.UpdateStateWaitingForCypressPatch:                flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
 		if ytsaurus.GetResource().Spec.PrimaryMasters.Timbertruck == nil || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
@@ -333,6 +340,53 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForSafeModeDisabled),
 	).chain(
 		st(ytv1.UpdateStateWaitingForTimbertruckPrepared),
+	)
+
+	return tree
+}
+
+func masterMaintenanceFlow(componentManager *ComponentManager) *flowTree {
+	updatingComponents := componentManager.status.nowUpdating
+	updMaster := hasComponent(updatingComponents, consts.MasterType)
+
+	st := newSimpleStep
+	tree := newFlowTree(st(ytv1.UpdateStateNone))
+
+	// Master new master cell is added by two cluster update passes, each builds master snapshot.
+	// Workflow depends status update conditions which reflects cluster status at begin of update.
+	// Link: https://ytsaurus.tech/docs/en/admin-guide/cell-addition
+
+	tree.chainIf(
+		// Prepare for adding new master cell
+		updMaster && componentManager.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterCellsRegistration),
+		st(ytv1.UpdateStateWaitingForMasterCellsPreparation),
+	).chainIf(
+		// Build snapshot, update configs and restart masters:
+		// - old masters for cell registration (dynamic propagation)
+		// - all masters for cell reconfiguration (static propagation)
+		updMaster,
+		st(ytv1.UpdateStateWaitingForMasterCellsEnterReadOnly),
+	).chain(
+		st(ytv1.UpdateStateWaitingForPodsRemoval),
+		st(ytv1.UpdateStateWaitingForPodsCreation),
+	).chainIf(
+		updMaster,
+		st(ytv1.UpdateStateWaitingForMasterCellsExitReadOnly),
+	).chainIf(
+		// Waiting for new master cell registration and world initialization.
+		// Trigger update all masters for cell reconfiguration.
+		updMaster && componentManager.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterCellsRegistration),
+		st(ytv1.UpdateStateWaitingForMasterCellsRegistration),
+	).chainIf(
+		// Checks that there is no dynamically propagated master cells then do cell reconfiguration:
+		// - assigns roles to new master cells
+		// - mark new master cells as registered in cluster status conditions
+		updMaster && componentManager.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterCellsReconfiguration),
+		st(ytv1.UpdateStateWaitingForMasterCellsReconfiguration),
+	).chainIf(
+		updMaster,
+		// Finishes adding new master cell.
+		st(ytv1.UpdateStateWaitingForMasterCellsCompletion),
 	)
 
 	return tree

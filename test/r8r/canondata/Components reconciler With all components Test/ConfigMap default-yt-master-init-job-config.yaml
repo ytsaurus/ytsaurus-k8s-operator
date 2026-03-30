@@ -80,6 +80,11 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     if [ 'true' = 'true' ]; then
+    if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
+    yt set //sys/@config/multicell_manager/cell_descriptors '{
+    }'
+    yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true
+    fi
     /usr/bin/yt create group --attr '{name=admins}' --ignore-existing
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     /usr/bin/yt set //sys/schemas/tablet_cell/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'

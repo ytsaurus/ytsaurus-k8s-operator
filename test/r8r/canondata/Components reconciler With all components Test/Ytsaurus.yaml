@@ -393,6 +393,12 @@ status:
     status: "True"
     type: ImageHeaterReady
   - lastTransitionTime: null
+    message: Master cell 2 registered
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-2-registered
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready

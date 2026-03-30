@@ -3050,7 +3050,14 @@ _Appears in:_
 | `WaitingForSnapshots` |  |
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
+| `WaitingForMasterEnterReadOnly` |  |
 | `WaitingForMasterExitReadOnly` |  |
+| `WaitingForMasterCellsPreparation` |  |
+| `WaitingForMasterCellsEnterReadOnly` |  |
+| `WaitingForMasterCellsExitReadOnly` |  |
+| `WaitingForMasterCellsRegistration` |  |
+| `WaitingForMasterCellsReconfiguration` |  |
+| `WaitingForMasterCellsCompletion` |  |
 | `WaitingForCypressPatch` |  |
 | `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdatingPrepare` |  |

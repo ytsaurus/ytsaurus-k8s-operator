@@ -224,6 +224,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			ytsaurus.SetUpdatingComponents(cm.status.canUpdate)
 			ytsaurus.SetUpdateState(ytv1.UpdateStateNone)
 			ytsaurus.SetClusterState(ytv1.ClusterStateUpdating)
+			cm.initUpdateConditions(ctx)
 			needStatusUpdate = true
 
 		case len(cm.status.cannotUpdate) != 0:
@@ -260,7 +261,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		)
 		ytsaurus.RecordNormal("Update", fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), cm.status.nowUpdating))
 
-		updateFlow := buildFlowTree(cm)
+		var updateFlow *flowTree
+		if cm.status.mastersMaintenance {
+			updateFlow = masterMaintenanceFlow(cm)
+		} else {
+			updateFlow = buildFlowTree(cm)
+		}
+
 		if progressed, err := updateFlow.execute(ctx, ytsaurus, cm); err != nil {
 			return ctrl.Result{}, err
 		} else if progressed {

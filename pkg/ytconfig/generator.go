@@ -1,10 +1,12 @@
 package ytconfig
 
 import (
+	"encoding/json"
 	"fmt"
 	"maps"
 	"net"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -198,6 +200,26 @@ func (g *NodeGenerator) getMasterAddresses(masterCell *masterCellInfo) []string 
 	}
 	masterLabeller := g.GetMasterLabeller(masterCell.CellTag)
 	return masterLabeller.GetInstanceAddresses(masterCell.InstanceCount, consts.MasterRPCPort)
+}
+
+func (g *NodeGenerator) GetMasterCellTagsAsSortedJSON() string {
+	cellTags := make([]uint16, len(g.secondaryMasters))
+	for i := range g.secondaryMasters {
+		cellTags[i] = g.secondaryMasters[i].CellTag
+	}
+	slices.Sort(cellTags)
+	tags, err := json.Marshal(cellTags)
+	if err != nil {
+		panic(err)
+	}
+	return string(tags)
+}
+
+func (g *NodeGenerator) GetMasterCellAddresses(spec *ytv1.MastersSpec) []string {
+	return g.getMasterAddresses(&masterCellInfo{
+		MasterConnectionSpec: spec.MasterConnectionSpec,
+		InstanceCount:        spec.InstanceCount,
+	})
 }
 
 func (g *NodeGenerator) getMasterCachesAddresses() []string {
