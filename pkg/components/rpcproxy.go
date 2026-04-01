@@ -120,6 +120,14 @@ func (rp *RpcProxy) Fetch(ctx context.Context) error {
 func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
+	if !dry {
+		if secret := rp.tlsSecret; secret != nil {
+			statefulSet := rp.server.buildStatefulSet()
+			secret.AddVolume(&statefulSet.Spec.Template.Spec)
+			secret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+		}
+	}
+
 	if rp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if status, err := dispatchComponentUpdate(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
 			return *status, err
@@ -135,11 +143,6 @@ func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 
 	if rp.NeedSync() {
 		if !dry {
-			statefulSet := rp.server.buildStatefulSet()
-			if secret := rp.tlsSecret; secret != nil {
-				secret.AddVolume(&statefulSet.Spec.Template.Spec)
-				secret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
-			}
 			err = rp.server.Sync(ctx)
 		}
 		return ComponentStatusWaitingFor("components"), err
