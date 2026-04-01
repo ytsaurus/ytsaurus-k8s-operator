@@ -1,9 +1,12 @@
+# https://golangci-lint.run/docs/configuration/file/
+
 version: "2"
 
 run:
   timeout: 5m
-  allow-parallel-runners: true
-
+  allow-parallel-runners: false
+  allow-serial-runners: true
+  concurrency: 0  # auto
 
 issues:
   max-same-issues: 0  # disable

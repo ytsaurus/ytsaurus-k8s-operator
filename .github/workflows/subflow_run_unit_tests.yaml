@@ -1,8 +1,23 @@
 name: "Unit Tests"
 
 on:
-  workflow_call: {}
-  workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      DEBUG:
+        type: string
+        required: false
+        default: ""
+
+  workflow_dispatch:
+    inputs:
+      DEBUG:
+        description: "DEBUG"
+        type: string
+        required: false
+        default: ""
+
+env:
+  DEBUG: "${{ inputs.DEBUG }}"
 
 jobs:
   check:

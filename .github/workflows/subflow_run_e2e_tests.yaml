@@ -7,6 +7,10 @@ on:
         type: string
         required: false
         default: ""
+      DEBUG:
+        type: string
+        required: false
+        default: ""
       TEST_YTSAURUS_VERSION:
         type: string
         required: false
@@ -19,6 +23,11 @@ on:
         type: string
         required: false
         default: ""
+      DEBUG:
+        description: "DEBUG"
+        type: string
+        required: false
+        default: ""
       TEST_YTSAURUS_VERSION:
         description: "YTsaurus version or epoch"
         type: string
@@ -26,6 +35,7 @@ on:
         default: ""
 
 env:
+  DEBUG: "${{ inputs.DEBUG }}"
   TEST_YTSAURUS_VERSION: "${{ inputs.TEST_YTSAURUS_VERSION }}"
 
 jobs:
