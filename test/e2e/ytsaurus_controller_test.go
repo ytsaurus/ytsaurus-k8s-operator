@@ -165,6 +165,7 @@ type testRow struct {
 var _ = Describe("Ytsaurus versions", Label("versions"), func() {
 	It("Prints versions and images", func() {
 		log.Info("Versions",
+			"past", testutil.YtsaurusPastVersion,
 			"prev", testutil.YtsaurusPrevVersion,
 			"curr", testutil.YtsaurusCurrVersion,
 			"next", testutil.YtsaurusNextVersion,
@@ -793,6 +794,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
+			Entry("When update Ytsaurus past -> prev", testutil.YtsaurusPastVersion, testutil.YtsaurusPrevVersion),
 			Entry("When update Ytsaurus prev -> curr", testutil.YtsaurusPrevVersion, testutil.YtsaurusCurrVersion),
 			Entry("When update Ytsaurus curr -> next", testutil.YtsaurusCurrVersion, testutil.YtsaurusNextVersion),
 			Entry("When update Ytsaurus next -> late", testutil.YtsaurusNextVersion, testutil.YtsaurusLateVersion),
@@ -1922,6 +1924,8 @@ exec "$@"`
 				)).To(Equal("1\n"))
 			})
 		},
+			Entry("YTsaurus past", testutil.YtsaurusPastVersion),
+			Entry("YTsaurus prev", testutil.YtsaurusPrevVersion),
 			Entry("YTsaurus curr", testutil.YtsaurusCurrVersion),
 			Entry("YTsaurus next", testutil.YtsaurusNextVersion),
 			Entry("YTsaurus late", testutil.YtsaurusLateVersion),
