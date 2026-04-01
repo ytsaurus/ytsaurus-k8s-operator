@@ -47,14 +47,15 @@ type YtsaurusImages struct {
 var (
 	YtsaurusJobImage    = GetenvOr("YTSAURUS_JOB_IMAGE", "mirror.gcr.io/library/python:3.12-slim")
 	YtsaurusRegistry    = GetenvOr("YTSAURUS_REGISTRY", "ghcr.io/ytsaurus")
-	YtsaurusPrevVersion = os.Getenv("TEST_YTSAURUS_PREV_VERSION")
-	YtsaurusCurrVersion = os.Getenv("TEST_YTSAURUS_VERSION")
-	YtsaurusNextVersion = os.Getenv("TEST_YTSAURUS_NEXT_VERSION")
-	YtsaurusLateVersion = os.Getenv("TEST_YTSAURUS_LATE_VERSION")
+	YtsaurusPastVersion = os.Getenv("TEST_YTSAURUS_PAST_VERSION") // CURR-2
+	YtsaurusPrevVersion = os.Getenv("TEST_YTSAURUS_PREV_VERSION") // CURR-1
+	YtsaurusCurrVersion = os.Getenv("TEST_YTSAURUS_VERSION")      // CURR
+	YtsaurusNextVersion = os.Getenv("TEST_YTSAURUS_NEXT_VERSION") // CURR+1
+	YtsaurusLateVersion = os.Getenv("TEST_YTSAURUS_LATE_VERSION") // CURR+2
 
 	Images map[string]YtsaurusImages = map[string]YtsaurusImages{}
 
-	PrevImages, TestImages, NextImages YtsaurusImages
+	PastImages, PrevImages, CurrImages, NextImages, LateImages YtsaurusImages
 )
 
 type ImageEntry struct {
@@ -64,19 +65,19 @@ type ImageEntry struct {
 func init() {
 	images := map[string]map[string]ImageEntry{}
 	names := []string{"YTSAURUS", "SIDECARS", "STRAWBERRY", "CHYT", "QUERY_TRACKER"}
-	epochs := []string{"PAST", "PREVIOUS", "CURRENT", "COMING", "FUTURE", "NIGHTLY"}
+	epochs := []string{"ANCIENT", "MEDIEVAL", "LEGACY", "PREVIOUS", "LATEST", "NIGHTLY"}
 
 	if YtsaurusCurrVersion == "" {
-		YtsaurusCurrVersion = "CURRENT"
+		YtsaurusCurrVersion = "LATEST"
 	}
 
 	// Seed some default versions if nothing is set in environment.
 	defaultVersions := map[string]string{
-		"YTSAURUS_VERSION_CURRENT":      "25.2.2",
-		"SIDECARS_VERSION_CURRENT":      "0.0.1",
-		"STRAWBERRY_VERSION_CURRENT":    "0.0.15",
-		"CHYT_VERSION_CURRENT":          "2.17.4",
-		"QUERY_TRACKER_VERSION_CURRENT": "0.1.2",
+		"YTSAURUS_VERSION_LATEST":      "25.3.1",
+		"SIDECARS_VERSION_LATEST":      "0.0.1",
+		"STRAWBERRY_VERSION_LATEST":    "0.0.16",
+		"CHYT_VERSION_LATEST":          "2.18.2",
+		"QUERY_TRACKER_VERSION_LATEST": "0.1.2",
 	}
 
 	for _, name := range names {
@@ -111,7 +112,7 @@ func init() {
 	}
 
 	// Add directly set ytsaurus version.
-	for _, ver := range []string{YtsaurusPrevVersion, YtsaurusCurrVersion, YtsaurusNextVersion, YtsaurusLateVersion} {
+	for _, ver := range []string{YtsaurusPastVersion, YtsaurusPrevVersion, YtsaurusCurrVersion, YtsaurusNextVersion, YtsaurusLateVersion} {
 		if _, ok := images["YTSAURUS"][ver]; !ok && ver != "" {
 			images["YTSAURUS"][ver] = ImageEntry{
 				Epoch:   "CURRENT",
@@ -146,7 +147,11 @@ func init() {
 		}
 	}
 
+	// Pick other versions for tests relative to "CURR" epoch.
 	if index := slices.Index(epochs, images["YTSAURUS"][YtsaurusCurrVersion].Epoch); index != -1 {
+		if YtsaurusPastVersion == "" && index > 1 {
+			YtsaurusPastVersion = epochs[index-2]
+		}
 		if YtsaurusPrevVersion == "" && index > 0 {
 			YtsaurusPrevVersion = epochs[index-1]
 		}
@@ -157,9 +162,11 @@ func init() {
 			YtsaurusLateVersion = epochs[index+2]
 		}
 	}
+	PastImages = Images[YtsaurusPastVersion]
 	PrevImages = Images[YtsaurusPrevVersion]
-	TestImages = Images[YtsaurusCurrVersion]
+	CurrImages = Images[YtsaurusCurrVersion]
 	NextImages = Images[YtsaurusNextVersion]
+	LateImages = Images[YtsaurusLateVersion]
 }
 
 var (
