@@ -27,10 +27,11 @@ const (
 type ConfigFormat string
 
 const (
-	ConfigFormatYson               = "yson"
-	ConfigFormatJson               = "json"
-	ConfigFormatJsonWithJsPrologue = "json_with_js_prologue"
-	ConfigFormatToml               = "toml"
+	ConfigFormatText               ConfigFormat = "text"
+	ConfigFormatYson               ConfigFormat = "yson"
+	ConfigFormatJson               ConfigFormat = "json"
+	ConfigFormatJsonWithJsPrologue ConfigFormat = "json_with_js_prologue"
+	ConfigFormatToml               ConfigFormat = "toml"
 )
 
 type ConfigGeneratorFunc func() ([]byte, error)
@@ -200,6 +201,14 @@ func (h *ConfigMapBuilder) getCurrentConfigValue(fileName string) []byte {
 		return nil
 	}
 	return []byte(data)
+}
+
+func (h *ConfigMapBuilder) getAnnotation(ann string) string {
+	return h.configMap.OldObject().Annotations[ann]
+}
+
+func (h *ConfigMapBuilder) setAnnotation(ann, value string) {
+	metav1.SetMetaDataAnnotation(&h.configMap.NewObject().ObjectMeta, ann, value)
 }
 
 func (h *ConfigMapBuilder) needReload() (ComponentStatus, error) {

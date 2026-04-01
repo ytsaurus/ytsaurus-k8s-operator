@@ -416,9 +416,14 @@ type InstanceSpec struct {
 	//+optional
 	ReadinessProbeParams *HealthcheckProbeParams `json:"readinessProbeParams,omitempty"`
 	// Resources dedicated for component. Capacity is defined by requests, or limits for zero requests.
-	Resources             corev1.ResourceRequirements     `json:"resources,omitempty"`
-	InstanceCount         int32                           `json:"instanceCount,omitempty"`
-	MinReadyInstanceCount *int                            `json:"minReadyInstanceCount,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// Desired count of replicas. Default: 0.
+	//+kubebuilder:default:=0
+	//+kubebuilder:validation:Minimum:=0
+	InstanceCount int32 `json:"instanceCount,omitempty"`
+	// Required count of replicas. Defaulted and bounded by instanceCount.
+	//+kubebuilder:validation:Minimum:=0
+	MinReadyInstanceCount *int32                          `json:"minReadyInstanceCount,omitempty"`
 	Locations             []LocationSpec                  `json:"locations,omitempty"`
 	VolumeClaimTemplates  []EmbeddedPersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 	// Deprecated: use Affinity.PodAntiAffinity instead.
@@ -842,6 +847,9 @@ type CommonSpec struct {
 
 	ClusterFeatures *ClusterFeatures `json:"clusterFeatures,omitempty"`
 
+	// Controls cluster maintenance.
+	ClusterMaintenance *ClusterMaintenance `json:"clusterMaintenance,omitempty"`
+
 	// Default docker image for user jobs.
 	//+optional
 	JobImage *string `json:"jobImage,omitempty"`
@@ -976,6 +984,28 @@ type YtsaurusSpec struct {
 	UI *UISpec `json:"ui,omitempty"`
 }
 
+type ClusterShutdown string
+
+const (
+	ClusterShutdownNone ClusterShutdown = ""
+	// Shutdown compute plane: exec nodes and YQL agents.
+	ClusterShutdownCompute ClusterShutdown = "Compute"
+	// Shutdown everything.
+	ClusterShutdownEverything ClusterShutdown = "Everything"
+	// Shutdown everything except masters. Prepare for master cells reconfiguration.
+	ClusterShutdownExceptMasters ClusterShutdown = "ExceptMasters"
+	// Shutdown tablet nodes.
+	ClusterShutdownTablets ClusterShutdown = "Tablets"
+)
+
+type ClusterMaintenance struct {
+	// Shutdown defines which components are scaled down to zero replicas during cluster maintenance.
+	// Component configs are not changed: cluster functions are degraded accordingly.
+	//+kubebuilder:validation:Enum={"Compute","Everything","ExceptMasters","Tablets"}
+	Shutdown ClusterShutdown `json:"shutdown"`
+	// TODO: Add flags to stay in read-only, safe-mode, etc.
+}
+
 type ClusterState string
 
 const (
@@ -984,6 +1014,7 @@ const (
 	ClusterStatePreparing       ClusterState = "Preparing"
 	ClusterStateRunning         ClusterState = "Running"
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
+	ClusterStateMaintenance     ClusterState = "Maintenance"
 	ClusterStateUpdating        ClusterState = "Updating"
 	ClusterStateUpdateCanceled  ClusterState = "UpdateCanceled"
 	ClusterStateUpdateBlocked   ClusterState = "UpdateBlocked"
@@ -1065,7 +1096,7 @@ const (
 
 // ComponentRollingUpdateMode configures the rolling update strategy.
 // The maxUnavailable budget is derived from the component's minReadyInstanceCount:
-// maxUnavailable = instanceCount - minReadyInstanceCount.
+// maxUnavailable = max(1, instanceCount - minReadyInstanceCount).
 type ComponentRollingUpdateMode struct {
 }
 

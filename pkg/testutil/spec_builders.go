@@ -204,7 +204,7 @@ type YtsaurusBuilder struct {
 	Spyt         *ytv1.Spyt
 
 	// Set MinReadyInstanceCount for all components
-	MinReadyInstanceCount *int
+	MinReadyInstanceCount *int32
 
 	WithHTTPSProxy     bool
 	WithHTTPSOnlyProxy bool
