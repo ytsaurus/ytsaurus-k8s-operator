@@ -130,6 +130,12 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
+	if !dry && hp.httpsSecret != nil {
+		statefulSet := hp.server.buildStatefulSet()
+		hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
+		hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
+	}
+
 	if hp.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if status, err := dispatchComponentUpdate(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
 			return *status, err
@@ -145,11 +151,6 @@ func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error
 
 	if hp.NeedSync() {
 		if !dry {
-			statefulSet := hp.server.buildStatefulSet()
-			if hp.httpsSecret != nil {
-				hp.httpsSecret.AddVolume(&statefulSet.Spec.Template.Spec)
-				hp.httpsSecret.AddVolumeMount(&statefulSet.Spec.Template.Spec.Containers[0])
-			}
 			err = hp.server.Sync(ctx)
 		}
 		return ComponentStatusWaitingFor("components"), err

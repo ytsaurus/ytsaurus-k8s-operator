@@ -604,8 +604,10 @@ func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategy
 			MaxUnavailable: &maxUnavailableValue,
 		}
 	}
-	// Clear the built StatefulSet so it will be rebuilt with the new strategy
-	s.builtStatefulSet = nil
+	// Update strategy in-place if already built; if nil, it will be applied when rebuilt.
+	if s.builtStatefulSet != nil {
+		s.builtStatefulSet.Spec.UpdateStrategy = *s.updateStrategy
+	}
 }
 
 type stsRollingStatus struct {
