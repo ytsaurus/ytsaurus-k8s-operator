@@ -24,6 +24,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -91,6 +92,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: ClusterInitialization
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -293,7 +295,7 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/image-heater-targets: ca dnd ds end hp msc rp sch
+    ytsaurus.tech/image-heater-targets: ca dnd ds end hp ms-2 msc rp sch
     ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
@@ -437,6 +439,28 @@
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-master-2
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-master
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-master-2
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: masters-2
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+- annotations:
+    extra-pod-annotation: "true"
     ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
@@ -449,6 +473,29 @@
     yt_component: test-ytsaurus-yt-master
     ytsaurus.tech/cluster-name: test-ytsaurus
   name: ms
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+- annotations:
+    extra-pod-annotation: "true"
+    ytsaurus.tech/instance-hash: <censored>
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-master-2
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-master
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-master-2
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: ms-2
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1
@@ -690,6 +737,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -713,6 +761,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -736,6 +785,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -759,6 +809,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -1138,6 +1189,52 @@
     yt_metrics: "true"
     ytsaurus.tech/cluster-name: test-ytsaurus
   name: yt-http-proxy-monitoring
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+- annotations:
+    extra-pod-annotation: "true"
+    ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/config-overrides-version: "1"
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-master-2
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-master
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-master-2
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: yt-master-2-config
+  namespace: ytsaurus-components
+  ownerReferences:
+  - apiVersion: cluster.ytsaurus.tech/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Ytsaurus
+    name: test-ytsaurus
+    uid: ""
+  resourceVersion: "1"
+- annotations:
+    ytsaurus.tech/observed-generation: "1"
+  creationTimestamp: null
+  generation: 1
+  labels:
+    app.kubernetes.io/component: yt-master-2
+    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
+    app.kubernetes.io/name: yt-master
+    app.kubernetes.io/part-of: yt-test-ytsaurus
+    yt_component: test-ytsaurus-yt-master-2
+    yt_metrics: "true"
+    ytsaurus.tech/cluster-name: test-ytsaurus
+  name: yt-master-2-monitoring
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1

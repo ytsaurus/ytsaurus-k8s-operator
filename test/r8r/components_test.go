@@ -103,6 +103,10 @@ func CompleteOneJob(ctx context.Context, k8sClient client.WithWatch, namespace s
 		}
 		log.Info("Complete job", "name", job.Name)
 		job.Status.Succeeded = 1
+		job.Status.Conditions = append(job.Status.Conditions, batchv1.JobCondition{
+			Type:   batchv1.JobComplete,
+			Status: corev1.ConditionTrue,
+		})
 		Expect(k8sClient.Status().Update(ctx, &job)).To(Succeed())
 		return &job
 	}
@@ -281,7 +285,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 		By("Creating minimal Ytsaurus spec", func() {
 			ytBuilder = &testutil.YtsaurusBuilder{
-				MinReadyInstanceCount: ptr.To(0), // Do not wait any pods.
+				MinReadyInstanceCount: ptr.To(int32(0)), // Do not wait any pods.
 				Images:                testutil.TestImages,
 				Namespace:             namespace,
 			}
@@ -407,7 +411,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 			switch kind {
 			case "Ytsaurus":
-				Expect(obj).To(HaveField("Status.State", Equal(ytv1.ClusterStateRunning)))
+				if ytsaurus.Spec.ClusterMaintenance == nil {
+					Expect(obj).To(HaveField("Status.State", Equal(ytv1.ClusterStateRunning)))
+				}
 			case "Chyt":
 				Expect(obj).To(HaveField("Status.ReleaseStatus", Equal(ytv1.ChytReleaseStatusFinished)))
 			case "Spyt":
@@ -619,6 +625,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With all components", func() {
 		BeforeEach(func() {
 			ytBuilder.WithOverrides()
+			ytBuilder.WithSecondaryMaster()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
 			ytBuilder.WithDataNodes()
@@ -688,6 +695,28 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 	})
 
+	Context("Master cells maintenance", func() {
+		BeforeEach(func() {
+			ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
+				Shutdown: ytv1.ClusterShutdownExceptMasters,
+			}
+			ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, true))
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To(ytv1.GetMasterCellRoles(nil, false, true))
+			ytBuilder.WithSecondaryMaster().Roles = nil                             // Default
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To([]ytv1.MasterCellRole{}) // Empty
+		})
+		It("Test", func(ctx context.Context) {
+			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))
+			for _, sts := range statefulSets {
+				replicas := int32(0)
+				if sts.Labels["app.kubernetes.io/name"] == "yt-master" {
+					replicas = 1
+				}
+				Expect(sts.Spec.Replicas).To(HaveValue(Equal(replicas)), "replicas for sts %v", sts.Name)
+			}
+		})
+	})
+
 	Context("With CRI job environment", func() {
 		BeforeEach(func() {
 			ytBuilder.WithExecNodes()
@@ -748,6 +777,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		BeforeEach(func(ctx context.Context) {
 			ytsaurus = nil
 
+			ytBuilder.WithMasterCaches()
 			remoteYtsaurus := ytBuilder.CreateRemoteYtsaurus()
 			Expect(k8sClient.Create(ctx, remoteYtsaurus)).To(Succeed())
 		})

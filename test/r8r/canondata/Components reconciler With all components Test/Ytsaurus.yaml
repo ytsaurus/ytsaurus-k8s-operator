@@ -161,7 +161,6 @@ spec:
   - name: global-image-pull-secrets
   jobImage: mirror.gcr.io/library/python:3.12-slim
   masterCaches:
-    cellTagMasterCaches: 0
     instanceCount: 1
     loggers:
     - minLogLevel: info
@@ -312,6 +311,39 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+  secondaryMasters:
+  - cellTag: 2
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
   setHostnameAsFqdn: false
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.15
@@ -361,6 +393,18 @@ status:
     status: "True"
     type: ImageHeaterReady
   - lastTransitionTime: null
+    message: Master cell 2 registered
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-2-registered
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: Master-2Ready
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
@@ -373,13 +417,13 @@ status:
     status: "True"
     type: MasterCacheReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: ClusterInitialization
     status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
-    message: yt-master-init-job-default completed
+    message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -421,21 +465,21 @@ status:
     status: "True"
     type: SchedulerReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: yql-agent-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: userYtsaurusClientInitJobCompleted
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: userStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
@@ -451,9 +495,9 @@ status:
     status: "True"
     type: TimbertruckReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
@@ -463,9 +507,9 @@ status:
     status: "True"
     type: YqlAgentReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: clusterStrawberryControllerInitJobCompleted
   - lastTransitionTime: null

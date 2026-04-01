@@ -1,5 +1,6 @@
 - annotations:
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: ClusterInitialization
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1
@@ -215,6 +216,7 @@
   resourceVersion: "1"
 - annotations:
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1

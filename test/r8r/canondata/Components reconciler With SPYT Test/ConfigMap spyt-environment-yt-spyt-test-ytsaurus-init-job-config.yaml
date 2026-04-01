@@ -42,11 +42,12 @@ data:
             };
         };
     }
-  init-cluster.sh: /entrypoint.sh
+  init-job-script.sh: /entrypoint.sh
 kind: ConfigMap
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
   generation: 1

@@ -145,13 +145,13 @@ status:
     status: "True"
     type: DiscoveryReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: ClusterInitialization
     status: "True"
     type: defaultMasterInitJobCompleted
   - lastTransitionTime: null
-    message: yt-master-init-job-default completed
+    message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -169,9 +169,9 @@ status:
     status: "True"
     type: HttpProxyReady
   - lastTransitionTime: null
-    message: Init job successfully completed
+    message: Init job successfully completed in -1ns
     observedGeneration: 1
-    reason: InitJobCompleted
+    reason: InitJob
     status: "True"
     type: userYtsaurusClientInitJobCompleted
   - lastTransitionTime: null

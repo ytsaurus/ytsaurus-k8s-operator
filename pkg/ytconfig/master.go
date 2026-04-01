@@ -31,6 +31,12 @@ type CypressManager struct {
 	DefaultJournalWriteQuorum       int `yson:"default_journal_write_quorum,omitempty"`
 }
 
+// NYT::NCellMaster::TMasterCellDescriptor
+type MasterCellDescriptor struct {
+	Name  string                 `yson:"name,omitempty"`
+	Roles *[]ytv1.MasterCellRole `yson:"roles,omitempty"`
+}
+
 type MasterServer struct {
 	CommonServer
 	BusClient        *Bus                 `yson:"bus_client,omitempty"`
@@ -112,4 +118,17 @@ func configureMasterServerCypressManager(maxReplicationFactor int32, c *CypressM
 		c.DefaultFileReplicationFactor = 3
 		c.DefaultJournalReplicationFactor = 5
 	}
+}
+
+func GetMasterCellDescriptors(primary *ytv1.MastersSpec, secondary []ytv1.MastersSpec) map[string]MasterCellDescriptor {
+	descriptors := make(map[string]MasterCellDescriptor, 1+len(secondary))
+	if primary.Roles != nil {
+		descriptors[fmt.Sprintf("%d", primary.CellTag)] = MasterCellDescriptor{Roles: primary.Roles}
+	}
+	for _, cell := range secondary {
+		if cell.Roles != nil {
+			descriptors[fmt.Sprintf("%d", cell.CellTag)] = MasterCellDescriptor{Roles: cell.Roles}
+		}
+	}
+	return descriptors
 }

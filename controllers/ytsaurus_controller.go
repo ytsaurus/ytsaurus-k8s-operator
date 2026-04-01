@@ -174,7 +174,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			return ctrl.Result{Requeue: true}, err
 		}
 
-	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked:
+	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked, ytv1.ClusterStateMaintenance:
 		// All IsReadyToUpdate cluster states are handled here.
 		// Apply current update plan and choose components to update.
 		cm.applyUpdatePlan(resource.GetUpdatePlan())
@@ -190,6 +190,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 		switch {
+		case cm.status.allReady && cm.status.clusterMaintenance:
+			logger.Info("Ytsaurus cluster is under maintenance")
+			if ytsaurus.SetClusterState(ytv1.ClusterStateMaintenance) {
+				ytsaurus.RecordNormal("Maintenance", fmt.Sprintf("Ytsaurus cluster is under maintenance, shutdown %v", ytsaurus.GetClusterMaintenance().Shutdown))
+				needStatusUpdate = true
+			}
+
 		case cm.status.allReady:
 			logger.Info("Ytsaurus is running and happy")
 			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
@@ -217,6 +224,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			ytsaurus.SetUpdatingComponents(cm.status.canUpdate)
 			ytsaurus.SetUpdateState(ytv1.UpdateStateNone)
 			ytsaurus.SetClusterState(ytv1.ClusterStateUpdating)
+			cm.initUpdateConditions(ctx)
 			needStatusUpdate = true
 
 		case len(cm.status.cannotUpdate) != 0:
@@ -253,7 +261,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		)
 		ytsaurus.RecordNormal("Update", fmt.Sprintf("Update flow starting with %s, updating components: %v", ytsaurus.GetUpdateState(), cm.status.nowUpdating))
 
-		updateFlow := buildFlowTree(cm)
+		var updateFlow *flowTree
+		if cm.status.mastersMaintenance {
+			updateFlow = masterMaintenanceFlow(cm)
+		} else {
+			updateFlow = buildFlowTree(cm)
+		}
+
 		if progressed, err := updateFlow.execute(ctx, ytsaurus, cm); err != nil {
 			return ctrl.Result{}, err
 		} else if progressed {

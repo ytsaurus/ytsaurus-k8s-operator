@@ -2,23 +2,31 @@ package consts
 
 // Status conditions
 const (
-	ConditionOperatorVersion            = "OperatorVersion"
-	ConditionReadyToWork                = "ReadyToWork"
-	ConditionImageHeaterReady           = "ImageHeaterReady"
-	ConditionImageHeaterComplete        = "ImageHeaterComplete"
-	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
+	ConditionOperatorVersion              = "OperatorVersion"
+	ConditionClusterMaintenance           = "ClusterMaintenance"
+	ConditionMastersQuorumCheck           = "MastersQuorumCheck"
+	ConditionLostVitalChunksCheck         = "LostVitalChunksCheck"
+	ConditionQuorumMissingChunksCheck     = "QuorumMissingChunksCheck"
+	ConditionTabletCellBundlesHealthCheck = "TabletCellBundlesHealthCheck"
+	ConditionReadyToWork                  = "ReadyToWork"
+	ConditionImageHeaterReady             = "ImageHeaterReady"
+	ConditionImageHeaterComplete          = "ImageHeaterComplete"
+	ConditionTimbertruckUserInitialized   = "TimbertruckUserInitialized"
 )
 
 // Both status and update conditions
 const (
-	ConditionTimbertruckPrepared = "TimbertruckPrepared"
-	ConditionCypressPatchApplied = "CypressPatchApplied"
+	ConditionTimbertruckPrepared        = "TimbertruckPrepared"
+	ConditionCypressPatchApplied        = "CypressPatchApplied"
+	ConditionMasterCellsRegistration    = "MasterCellsRegistration"
+	ConditionMasterCellsReconfiguration = "MasterCellsReconfiguration"
 )
 
 // Component status conditions suffixes
 const (
 	ConditionReady            = "Ready"
 	ConditionInitJobCompleted = "InitJobCompleted"
+	ConidtionCellRegistered   = "-registered"
 )
 
 // Component update phase condition suffixes
@@ -32,12 +40,14 @@ const (
 	ConditionPodsUpdated            = "PodsUpdated"
 	ConditionPodsRemoved            = "PodsRemoved"
 	ConditionPodsRemovingStarted    = "PodsRemovingStarted"
+
+	// Suffix for update state itself
+	ConditionUpdateStateComplete = "Complete"
 )
 
 // Update conditions
 const (
 	ConditionHasPossibility                  = "HasPossibility"
-	ConditionNoPossibility                   = "NoPossibility"
 	ConditionSafeModeEnabled                 = "SafeModeEnabled"
 	ConditionTabletCellsSaved                = "TabletCellsSaved"
 	ConditionTabletCellsRemovingStarted      = "TabletCellsRemovingStarted"
@@ -46,7 +56,6 @@ const (
 	ConditionTabletCellsRecovered            = "TabletCellsRecovered"
 	ConditionOpArchiveUpdated                = "OpArchiveUpdated"
 	ConditionOpArchivePreparedForUpdating    = "OpArchivePreparedForUpdating"
-	ConditionSidecarsInitialized             = "SidecarsInitialized"
 	ConditionSidecarsPreparedForInitializing = "SidecarsPreparedForInitializing"
 	ConditionQTStateUpdated                  = "QTStateUpdated"
 	ConditionQTStatePreparedForUpdating      = "QTStatePreparedForUpdating"
@@ -54,8 +63,6 @@ const (
 	ConditionQAStatePreparedForUpdating      = "QAStatePreparedForUpdating"
 	ConditionYqlaUpdated                     = "YqlaUpdated"
 	ConditionYqlaPreparedForUpdating         = "YqlaPreparedForUpdating"
-	ConditionMasterExitReadOnlyPrepared      = "MasterExitReadOnlyPrepared"
-	ConditionMasterExitedReadOnly            = "MasterExitedReadOnly"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
 )
 
