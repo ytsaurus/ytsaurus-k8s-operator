@@ -10,7 +10,7 @@ spec:
   clusterFeatures: {}
   configOverrides:
     name: test-overrides
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
   discovery:
     instanceCount: 1
     loggers:

@@ -9,7 +9,7 @@ YTSAURUS_REGISTRY ?= ghcr.io/ytsaurus
 export YTSAURUS_REGISTRY
 
 # options for e2e tests:
-# epoch := PAST, PREVIOUS, CURRENT, COMING, FUTURE, NIGHTLY, <version>
+# epoch := <version>, NIGHTLY, LATEST, PREVIOUS, LEGACY, MEDIEVAL, ANCIENT
 # version := ${<name>_VERSION_<epoch>} or <epoch>
 # image := ${<name>_IMAGE_<version>} or ${<name>_IMAGE}:<version> or ${YTSAURUS_REGISTRY}/<name>:<version>
 
@@ -17,55 +17,55 @@ export YTSAURUS_REGISTRY
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus-nightly
 # skopeo inspect --format '{{range .RepoTags}}{{.}}\n{{end -}}' docker://ghcr.io/ytsaurus/ytsaurus-nightly
 
-## ytsaurus version or epoch for tests: X.Y[.Z], PAST, PREVIOUS, CURRENT, COMING, FUTURE, NIGHTLY
-TEST_YTSAURUS_VERSION ?= CURRENT
+## Current "CURR" ytsaurus version or epoch for tests: X.Y[.Z], NIGHTLY, LATEST, PREVIOUS, LEGACY, MEDIEVAL, ANCIENT
+TEST_YTSAURUS_VERSION ?= PREVIOUS
 export TEST_YTSAURUS_VERSION
 
 export YTSAURUS_IMAGE ?= ${YTSAURUS_REGISTRY}/ytsaurus
 
-## ytsaurus past version
-YTSAURUS_VERSION_PAST ?= 23.2.0
-export YTSAURUS_VERSION_PAST
+export YTSAURUS_IMAGE_26_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-2026-04-01-fdaad57c50812f9964e30aa1e38dfe35df9a4d53
+export YTSAURUS_IMAGE_25_4_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.4-2026-04-01-457bf4e6b8b82cd24c40c72ef525b87d57044359
+export YTSAURUS_IMAGE_25_3_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.3-2026-03-25-97fa8a3ae882ac3d556241ad367677c69d8ec26f
+export YTSAURUS_IMAGE_25_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.2-2026-03-13-9805a6fd1c4bbd327f0c49bca6db18bf0a76bb79
+export YTSAURUS_IMAGE_25_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.1-2025-09-30-da1f6800979c77f5a19f44dc18d970bb5a70ac03
+export YTSAURUS_IMAGE_24_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-24.2-2025-09-05-522db86a58d4950019121180a35c9b56d0d8af76
+export YTSAURUS_IMAGE_24_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-24.1-2025-06-18-dd4bd8bdc4d28993e7185b820930761540b29ae9
+export YTSAURUS_IMAGE_23_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-23.2-2025-02-19-7dae008dd5171a9c89857f2034746ac3119842db
 
-## ytsaurus previous version
-YTSAURUS_VERSION_PREVIOUS ?= 24.1.0
-export YTSAURUS_VERSION_PREVIOUS
-
-## ytsaurus current version
-YTSAURUS_VERSION_CURRENT ?= 24.2.1
-export YTSAURUS_VERSION_CURRENT
-
-## ytsaurus coming version
-YTSAURUS_VERSION_COMING ?= 25.1.0
-export YTSAURUS_VERSION_COMING
-
-## ytsaurus future version
-YTSAURUS_VERSION_FUTURE ?= 25.2.2
-export YTSAURUS_VERSION_FUTURE
-
-## ytsaurus nightly version
+## ytsaurus latest+1 version
 YTSAURUS_VERSION_NIGHTLY ?= 26.1.99
 export YTSAURUS_VERSION_NIGHTLY
 
-export YTSAURUS_IMAGE_23_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-23.2-2025-02-19-7dae008dd5171a9c89857f2034746ac3119842db
-export YTSAURUS_IMAGE_24_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-24.1-2025-06-18-dd4bd8bdc4d28993e7185b820930761540b29ae9
-export YTSAURUS_IMAGE_24_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-24.2-2025-09-05-522db86a58d4950019121180a35c9b56d0d8af76
-export YTSAURUS_IMAGE_25_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.1-2025-09-30-da1f6800979c77f5a19f44dc18d970bb5a70ac03
-export YTSAURUS_IMAGE_25_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.2-2025-12-09-d1b3fc19add6314e39833c19ebb8487f2f734ff9
-export YTSAURUS_IMAGE_25_3_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.3-2026-01-29-e13f47bfc34bcd70e6b268e0e3778366606e059e
-export YTSAURUS_IMAGE_25_4_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.4-2026-01-30-337b71eda802fd46fb01780fbfe2d7a1ba757b25
-export YTSAURUS_IMAGE_26_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-2026-01-30-20d7d021364a7e544a8ea59c22f058e0f13f0d94
+## ytsaurus latest version
+YTSAURUS_VERSION_LATEST ?= 25.3.1
+export YTSAURUS_VERSION_LATEST
+
+## ytsaurus latest-1 version
+YTSAURUS_VERSION_PREVIOUS ?= 25.2.2
+export YTSAURUS_VERSION_PREVIOUS
+
+## ytsaurus latest-2 version
+YTSAURUS_VERSION_LEGACY ?= 25.1.0
+export YTSAURUS_VERSION_LEGACY
+
+## ytsaurus latest-3 version
+YTSAURUS_VERSION_MEDIEVAL ?= 24.2.1
+export YTSAURUS_VERSION_MEDIEVAL
+
+## ytsaurus latest-4 version
+YTSAURUS_VERSION_ANCIENT ?= 24.1.0
+export YTSAURUS_VERSION_ANCIENT
 
 # https://github.com/orgs/ytsaurus/packages/container/package/sidecars
 # https://ytsaurus.tech/docs/en/admin-guide/install-ytmsvc
 
 export SIDECARS_IMAGE ?= ${YTSAURUS_REGISTRY}/sidecars
 
-export SIDECARS_VERSION_PAST ?= 0.0.1
+export SIDECARS_VERSION_LATEST ?= 0.0.1
 export SIDECARS_VERSION_PREVIOUS ?= 0.0.1
-export SIDECARS_VERSION_CURRENT ?= 0.0.1
-export SIDECARS_VERSION_COMING ?= 0.0.1
-export SIDECARS_VERSION_FUTURE ?= 0.0.1
+export SIDECARS_VERSION_LEGACY ?= 0.0.1
+export SIDECARS_VERSION_MEDIEVAL ?= 0.0.1
+export SIDECARS_VERSION_ANCIENT ?= 0.0.1
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker-nightly
@@ -73,15 +73,15 @@ export SIDECARS_VERSION_FUTURE ?= 0.0.1
 
 export QUERY_TRACKER_IMAGE ?= ${YTSAURUS_REGISTRY}/query-tracker
 
-export QUERY_TRACKER_VERSION_PAST ?= 0.0.10
-export QUERY_TRACKER_VERSION_PREVIOUS ?= 0.0.10
-export QUERY_TRACKER_VERSION_CURRENT ?= 0.0.11
-export QUERY_TRACKER_VERSION_COMING ?= 0.0.11
-export QUERY_TRACKER_VERSION_FUTURE ?= 0.1.2
-
-export QUERY_TRACKER_IMAGE_0_1_2 ?= ${QUERY_TRACKER_IMAGE}:stable-0.1.2
+export QUERY_TRACKER_VERSION_LATEST ?= 0.1.2
+export QUERY_TRACKER_VERSION_PREVIOUS ?= 0.1.2
+export QUERY_TRACKER_VERSION_LEGACY ?= 0.0.11
+export QUERY_TRACKER_VERSION_MEDIEVAL ?= 0.0.11
+export QUERY_TRACKER_VERSION_ANCIENT ?= 0.0.10
 
 export QUERY_TRACKER_IMAGE_NIGHTLY ?= ${QUERY_TRACKER_IMAGE}-nightly:dev-2026-01-30-14313a1279bd3f096e4d621722d06f4dd511ce98
+
+export QUERY_TRACKER_IMAGE_0_1_2 ?= ${QUERY_TRACKER_IMAGE}:stable-0.1.2
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/strawberry
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/strawberry-nightly
@@ -89,11 +89,11 @@ export QUERY_TRACKER_IMAGE_NIGHTLY ?= ${QUERY_TRACKER_IMAGE}-nightly:dev-2026-01
 
 export STRAWBERRY_IMAGE ?= ${YTSAURUS_REGISTRY}/strawberry
 
-export STRAWBERRY_VERSION_PAST ?= 0.0.13
-export STRAWBERRY_VERSION_PREVIOUS ?= 0.0.14
-export STRAWBERRY_VERSION_CURRENT ?= 0.0.15
-export STRAWBERRY_VERSION_COMING ?= 0.0.15
-export STRAWBERRY_VERSION_FUTURE ?= 0.0.15
+export STRAWBERRY_VERSION_LATEST ?= 0.0.16
+export STRAWBERRY_VERSION_PREVIOUS ?= 0.0.16
+export STRAWBERRY_VERSION_LEGACY ?= 0.0.15
+export STRAWBERRY_VERSION_MEDIEVAL ?= 0.0.15
+export STRAWBERRY_VERSION_ANCIENT ?= 0.0.14
 
 export STRAWBERRY_IMAGE_NIGHTLY ?= ${STRAWBERRY_IMAGE}-nightly:dev-2026-01-30-8551ddfc8cba5a5c2cc72d1cd2de3f8cdc206280
 
@@ -103,18 +103,20 @@ export STRAWBERRY_IMAGE_NIGHTLY ?= ${STRAWBERRY_IMAGE}-nightly:dev-2026-01-30-85
 
 export CHYT_IMAGE ?= ${YTSAURUS_REGISTRY}/chyt
 
-export CHYT_VERSION_PAST ?= 2.16.0
-export CHYT_VERSION_PREVIOUS ?= 2.16.0
-export CHYT_VERSION_CURRENT ?= 2.17.4
-export CHYT_VERSION_COMING ?= 2.17.4
-export CHYT_VERSION_FUTURE ?= 2.17.4
+export CHYT_VERSION_LATEST ?= 2.18.2
+export CHYT_VERSION_PREVIOUS ?= 2.17.4
+export CHYT_VERSION_LEGACY ?= 2.17.4
+export CHYT_VERSION_MEDIEVAL ?= 2.17.4
+export CHYT_VERSION_ANCIENT ?= 2.16.0
 
-export CHYT_IMAGE_NIGHTLY ?= ${CHYT_IMAGE}-nightly:dev-2026-01-30-14313a1279bd3f096e4d621722d06f4dd511ce98
+export CHYT_IMAGE_NIGHTLY ?= ${CHYT_IMAGE}-nightly:dev-2026-04-07-752404dcf7c2a667678958024a78be7f665d93e2
+
+export CHYT_IMAGE_2_18_2 ?= ${CHYT_IMAGE}:stable-2.18.2
 
 define LOAD_TEST_IMAGES
+$(YTSAURUS_IMAGE_$(subst .,_,$(YTSAURUS_VERSION_LATEST)))
 $(YTSAURUS_IMAGE_$(subst .,_,$(YTSAURUS_VERSION_PREVIOUS)))
-$(YTSAURUS_IMAGE_$(subst .,_,$(YTSAURUS_VERSION_CURRENT)))
-$(YTSAURUS_IMAGE_$(subst .,_,$(YTSAURUS_VERSION_COMING)))
+$(YTSAURUS_IMAGE_$(subst .,_,$(YTSAURUS_VERSION_LEGACY)))
 ${QUERY_TRACKER_IMAGE}:${QUERY_TRACKER_VERSION_CURRENT}
 ${CHYT_IMAGE}:${CHYT_VERSION_CURRENT}
 endef

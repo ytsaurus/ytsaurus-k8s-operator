@@ -20,7 +20,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 
 	newYtsaurus := func() *ytv1.Ytsaurus {
 		builder = &testutil.YtsaurusBuilder{
-			Images:    testutil.TestImages,
+			Images:    testutil.CurrImages,
 			Namespace: namespace,
 		}
 		By("Creating new ytsaurus spec")
@@ -477,7 +477,7 @@ var _ = Describe("Tests for required operator version webhook validation", Label
 
 	newYtsaurus := func() *ytv1.Ytsaurus {
 		builder = &testutil.YtsaurusBuilder{
-			Images:    testutil.TestImages,
+			Images:    testutil.CurrImages,
 			Namespace: namespace,
 		}
 

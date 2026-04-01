@@ -50,7 +50,7 @@ spec:
       - command:
         - sleep
         - inf
-        image: ghcr.io/ytsaurus/strawberry:0.0.15
+        image: ghcr.io/ytsaurus/strawberry:0.0.16
         imagePullPolicy: Always
         name: image
         resources:
