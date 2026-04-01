@@ -7,7 +7,7 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "3"
 spec:
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
   instanceCount: 1
   jobImage: mirror.gcr.io/library/python:3.12-slim
   jobResources:
