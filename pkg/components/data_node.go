@@ -122,6 +122,10 @@ func (n *DataNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
 		}
 	}
 
+	if !n.server.arePodsReady(ctx) {
+		return ComponentStatusBlocked("not enough pods are ready (waiting for MinReadyInstanceCount)")
+	}
+
 	return ComponentStatusReady()
 }
 

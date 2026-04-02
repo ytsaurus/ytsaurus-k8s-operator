@@ -128,10 +128,15 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount, minReadyI
 		if len(containerNames) > 0 {
 			ready = checkReadinessByContainers(pod, containerNames)
 		} else {
-			ready = pod.Status.Phase == corev1.PodRunning
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
+					ready = true
+					break
+				}
+			}
 		}
 		if !ready {
-			logger.Info("pod is not yet running", "podName", pod.Name, "phase", pod.Status.Phase)
+			logger.Info("pod is not yet ready", "podName", pod.Name, "phase", pod.Status.Phase)
 		} else {
 			readyInstanceCount += 1
 		}
@@ -139,7 +144,7 @@ func (s *StatefulSet) ArePodsReady(ctx context.Context, instanceCount, minReadyI
 
 	if readyInstanceCount < minReadyInstanceCount {
 		logger.Info(
-			"not enough pods are running",
+			"not enough pods are ready",
 			"component", s.labeller.GetFullComponentName(),
 			"readyInstanceCount", readyInstanceCount,
 			"minReadyInstanceCount", minReadyInstanceCount,

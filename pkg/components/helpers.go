@@ -406,6 +406,15 @@ func handleRollingUpdatingClusterState(
 
 	// Completion: all pods are exposed and on the new revision.
 	if partition == 0 && sts.updatedReplicas == totalCount {
+		// we need that check for 1 replica Instance groups
+		if !server.arePodsReady(ctx) {
+			minReady := server.getMinReadyInstanceCount(0)
+			logger.Info("Rolling update waiting for pods to be ready",
+				"component", cmp.GetFullName(),
+				"minReadyInstanceCount", minReady)
+			return ptr.To(ComponentStatusUpdateStep(
+				"rolling update (waiting for %d pods to be ready)", minReady)), nil
+		}
 		setPodsUpdatedCondition(ctx, ytsaurus, cmp)
 		return nil, nil
 	}
