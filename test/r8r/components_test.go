@@ -7,6 +7,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 
 	cryptorand "crypto/rand"
@@ -151,8 +152,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var ytsaurus *ytv1.Ytsaurus
 	var controllerObjects []apiproxy.ControllerObject
 	var k8sScheme *runtime.Scheme
-	var k8sEventBroadcaster record.EventBroadcaster
-	var k8sEvents []corev1.Event
+	var k8sEvents []*corev1.Event
 	var k8sClient client.WithWatch
 	var statefulSets map[string]*appsv1.StatefulSet
 	var daemonSets map[string]*appsv1.DaemonSet
@@ -253,24 +253,6 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				},
 			})
 			k8sClient = clientBuilder.Build()
-
-			k8sEventBroadcaster = record.NewBroadcasterForTests(0)
-			eventWatcher := k8sEventBroadcaster.StartEventWatcher(func(event *corev1.Event) {
-				log.Info("Event",
-					"type", event.Type,
-					"kind", event.InvolvedObject.Kind,
-					"name", event.InvolvedObject.Name,
-					"reason", event.Reason,
-					"message", event.Message,
-				)
-				event.FirstTimestamp.Reset()
-				event.LastTimestamp.Reset()
-				event.Name = ""
-				k8sEvents = append(k8sEvents, *event)
-			})
-			DeferCleanup(func() {
-				eventWatcher.Stop()
-			})
 		})
 
 		namespace = "ytsaurus-components"
@@ -319,12 +301,42 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+
+		var eventBroadcaster record.EventBroadcaster
+		var eventMutex sync.Mutex
+		var savedEvents []*corev1.Event
+		By("Watching events", func() {
+			eventBroadcaster = record.NewBroadcaster(
+				record.WithContext(ctx),
+				record.WithCorrelatorOptions(record.CorrelatorOptions{
+					MaxEvents: 1000,
+				}),
+			)
+			DeferCleanup(eventBroadcaster.Shutdown)
+			eventWatcher := eventBroadcaster.StartEventWatcher(func(event *corev1.Event) {
+				log.Info("Event",
+					"type", event.Type,
+					"kind", event.InvolvedObject.Kind,
+					"name", event.InvolvedObject.Name,
+					"reason", event.Reason,
+					"message", event.Message,
+				)
+				event.FirstTimestamp.Reset()
+				event.LastTimestamp.Reset()
+				event.Name = ""
+				eventMutex.Lock()
+				defer eventMutex.Unlock()
+				savedEvents = append(savedEvents, event)
+			})
+			DeferCleanup(eventWatcher.Stop)
+		})
+
 		By("Running ytsaurus reconciler", func() {
 			baseReconciler := controllers.BaseReconciler{
 				ClusterDomain: "cluster.local",
 				Client:        k8sClient,
 				Scheme:        k8sScheme,
-				Recorder:      k8sEventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
+				Recorder:      eventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
 			}
 
 			reconcilers := map[string]reconcile.Reconciler{
@@ -345,8 +357,6 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				}()
 				cryptorand.Reader = mathrand.New(mathrand.NewSource(42))
 			}
-
-			k8sEvents = nil
 
 			Expect(controllerObjects).ToNot(BeEmpty())
 
@@ -394,7 +404,15 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				}
 				return true, err
 			}, "60s", "0ms").Should(BeFalse())
+
+			By("Fetching events", func() {
+				eventMutex.Lock()
+				defer eventMutex.Unlock()
+				k8sEvents = savedEvents
+				savedEvents = nil
+			})
 		})
+
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
