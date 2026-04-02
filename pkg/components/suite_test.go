@@ -150,10 +150,6 @@ func (fs *FakeServer) getImageHeaterTarget() *ImageHeaterTarget {
 	return nil
 }
 
-func (fs *FakeServer) arePodsRemoved(ctx context.Context) bool {
-	return true
-}
-
 func (fs *FakeServer) arePodsReady(ctx context.Context) bool {
 	return fs.podsReady
 }
@@ -175,6 +171,10 @@ func (fs *FakeServer) setInstanceCount(int32) {
 
 func (fs *FakeServer) getMinReadyInstanceCount(margin int32) int32 {
 	return 0
+}
+
+func (fs *FakeServer) listPods(ctx context.Context) ([]corev1.Pod, error) {
+	return nil, nil
 }
 
 func (fs *FakeServer) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool) {
