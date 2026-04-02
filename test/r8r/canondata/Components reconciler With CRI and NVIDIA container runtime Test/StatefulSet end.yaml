@@ -67,7 +67,7 @@ spec:
           value: k8s.io
         - name: CONTAINER_RUNTIME_ENDPOINT
           value: unix:///yt/node-data/image-cache/containerd.sock
-        image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: ytserver
         ports:
         - containerPort: 10029
@@ -123,7 +123,7 @@ spec:
           value: k8s.io
         - name: CONTAINER_RUNTIME_ENDPOINT
           value: unix:///yt/node-data/image-cache/containerd.sock
-        image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: jobs
         ports:
         - containerPort: 10026
@@ -169,7 +169,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: prepare-locations
         resources: {}
         securityContext:
@@ -207,7 +207,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/ytsaurus:stable-24.2.1
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: postprocess-config
         resources: {}
         securityContext:
