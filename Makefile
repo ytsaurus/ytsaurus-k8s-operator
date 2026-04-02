@@ -70,9 +70,16 @@ else
 	OPERATOR_CHART_NAME_RELEASE=$(OPERATOR_CHART_NAME)
 endif
 
+CGO_ENABLED ?= 0
+
+DOCKER_BUILD_TARGET ?= release
+
 DOCKER_BUILD_ARGS += --build-arg VERSION="$(OPERATOR_VERSION)"
 DOCKER_BUILD_ARGS += --build-arg REVISION="$(shell git rev-parse HEAD)"
 DOCKER_BUILD_ARGS += --build-arg BUILD_DATE="$(shell date -Iseconds -u)"
+DOCKER_BUILD_ARGS += --build-arg CGO_ENABLED="$(CGO_ENABLED)"
+DOCKER_BUILD_ARGS += --build-arg GOFLAGS="$(GOFLAGS)"
+DOCKER_BUILD_ARGS += --target $(DOCKER_BUILD_TARGET)
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -92,8 +99,8 @@ SHELL = /usr/bin/env bash -o pipefail
 TEST_ENV ?= test-env.inc
 include ${TEST_ENV}
 
-## Enable test debug options: no parallelism, fail fast, keep artifacts.
-DEBUG ?=
+## Tests parallelism.
+GINKGO_PROCS ?= 2
 
 ## Dry run tests.
 DRYRUN ?=
@@ -104,9 +111,27 @@ FOCUS ?=
 ## Filter tests by labels: 'a && !(b || c)'
 GINKGO_LABEL_FILTER ?=
 
-ifeq ($(DEBUG),)
-## Tests parallelism.
-GINKGO_PROCS ?= 2
+## Enable debug options (asan|msan|race), disable test parallelism, fail fast, keep artifacts.
+DEBUG ?=
+
+ifneq ($(DEBUG),)
+	GINKGO_PROCS = 1
+	DOCKER_BUILD_TARGET = debug
+endif
+
+ifeq ($(DEBUG),asan)
+	CGO_ENABLED = 1
+	GOFLAGS += --asan
+endif
+
+ifeq ($(DEBUG),msan)
+	CGO_ENABLED = 1
+	GOFLAGS += --msan
+endif
+
+ifeq ($(DEBUG),race)
+	CGO_ENABLED = 1
+	GOFLAGS += --race
 endif
 
 ## Tests timeout.
@@ -121,6 +146,7 @@ GINKGO_FLAGS += --poll-progress-interval=1m
 GINKGO_FLAGS += --junit-report=report.xml
 
 ifneq ($(GITHUB_ACTION),)
+	GO_TEST_FLAGS += --trimpath
 	GINKGO_FLAGS += --github-output
 endif
 
@@ -146,7 +172,8 @@ else
 	REMOVE_CANONIZED = : dry-run rm -fr
 endif
 
-GO_TEST_FLAGS += -coverprofile cover.out
+GO_TEST_FLAGS += ${GOFLAGS}
+GO_TEST_FLAGS += --coverprofile cover.out
 
 ##@ General
 
@@ -196,10 +223,12 @@ generate-schema: ## Generate CRD json schema.
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
+	go -C api fmt ./...
 	go fmt ./...
 
 .PHONY: vet
 vet: ## Run go vet against code.
+	go -C api vet ./...
 	go vet ./...
 
 .PHONY: test
@@ -220,12 +249,14 @@ test-helm-chart: generate ## Run helm chart tests.
 
 .PHONY: lint
 lint: ## Run golangci-lint linter.
+	env -C api $(GOLANGCI_LINT) run
 	$(GOLANGCI_LINT) run
 
 .PHONY: lint-fix
 lint-fix: ## Run golangci-lint linter and perform fixes.
 	$(MAKE) fmt
 	$(MAKE) vet
+	env -C api $(GOLANGCI_LINT) run --fix
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: lint-generated
