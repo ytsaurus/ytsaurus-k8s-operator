@@ -2,6 +2,13 @@ apiVersion: v1
 data:
   cypress-patch.yson: |-
     {
+        "//sys"=[
+            {
+                op=replace;
+                path="/@disable_bundle_controller";
+                value=%false;
+            };
+        ];
         "//sys/@cluster_connection"=[
             {
                 op=replace;
@@ -54,6 +61,16 @@ data:
                 op=copy;
                 path="/test-ytsaurus";
                 from="//sys/@cluster_connection";
+            };
+        ];
+    }
+  yt-bundle-controller-cypress-patch.yson: |-
+    {
+        "//sys"=[
+            {
+                op=replace;
+                path="/@disable_bundle_controller";
+                value=%false;
             };
         ];
     }

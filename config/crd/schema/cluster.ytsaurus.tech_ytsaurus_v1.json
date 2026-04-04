@@ -833,6 +833,10 @@
                 }
               }
             },
+            "disable": {
+              "description": "Disable the bundle controller actions, switch it into read-only mode.",
+              "type": "boolean"
+            },
             "dnsConfig": {
               "description": "DNSConfig allows customizing the DNS settings.",
               "type": "object",
