@@ -155,6 +155,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var k8sEvents []corev1.Event
 	var k8sClient client.WithWatch
 	var statefulSets map[string]*appsv1.StatefulSet
+	var deployments map[string]*appsv1.Deployment
 	var daemonSets map[string]*appsv1.DaemonSet
 	var configMaps map[string]*corev1.ConfigMap
 	var secrets map[string]*corev1.Secret
@@ -490,12 +491,14 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 
 		By("Checking Deployments", func() {
+			deployments = make(map[string]*appsv1.Deployment)
 			var objList appsv1.DeploymentList
 			Expect(k8sClient.List(ctx, &objList)).To(Succeed())
 			for i := range objList.Items {
 				obj := &objList.Items[i]
 				log.Info("Found Deployment", "name", obj.Name)
 				objectList = append(objectList, obj.ObjectMeta)
+				deployments[obj.Name] = obj
 
 				obj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
 				obj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
@@ -634,6 +637,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithYqlAgent()
 			ytBuilder.WithHydraPersistenceUploader()
 			ytBuilder.WithTimbertruck()
+			ytBuilder.WithUI()
 			ytBuilder.WithAllClusterFeatures()
 			ytBuilder.WithAllGlobalPodOptions()
 			ytBuilder.WithAllInstancePodOptions(&ytsaurus.Spec.PrimaryMasters.InstanceSpec)
@@ -669,6 +673,27 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Expect(&podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
 				Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
 			}
+
+			for _, d := range deployments {
+				log.Info("deployment", "name", d.Name)
+				podSpec := &d.Spec.Template.Spec
+				Expect(podSpec.ImagePullSecrets).To(Equal(ytsaurus.Spec.ImagePullSecrets))
+				options := &ytsaurus.Spec.PodSpec
+				for k, v := range options.PodAnnotations {
+					Expect(d.Spec.Template.Annotations).To(HaveKeyWithValue(k, v))
+				}
+				for k, v := range options.PodLabels {
+					Expect(d.Spec.Template.Labels).To(HaveKeyWithValue(k, v))
+				}
+				Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
+				Expect(podSpec.NodeSelector).To(Equal(options.NodeSelector))
+				Expect(podSpec.RuntimeClassName).To(BeEquivalentTo(options.RuntimeClassName))
+				Expect(&podSpec.HostNetwork).To(BeEquivalentTo(options.HostNetwork))
+				Expect(podSpec.SetHostnameAsFQDN).To(BeEquivalentTo(options.SetHostnameAsFQDN))
+				Expect(&podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
+				Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
+			}
+
 			for _, job := range jobs {
 				log.Info("job", "name", job.Name)
 				podSpec := &job.Spec.Template.Spec
