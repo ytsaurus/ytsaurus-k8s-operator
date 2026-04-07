@@ -282,7 +282,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		By("Creating minimal Ytsaurus spec", func() {
 			ytBuilder = &testutil.YtsaurusBuilder{
 				MinReadyInstanceCount: ptr.To(int32(0)), // Do not wait any pods.
-				Images:                testutil.TestImages,
+				Images:                testutil.CurrImages,
 				Namespace:             namespace,
 			}
 			ytBuilder.CreateMinimal()
