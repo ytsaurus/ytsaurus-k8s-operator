@@ -121,6 +121,11 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 		return ComponentStatusWaitingFor(qt.secret.Name()), err
 	}
 
+	// TODO: Refactor this mess.
+	if status, err := qt.setup(ctx, dry); !status.IsReady() || err != nil {
+		return status, err
+	}
+
 	if qt.NeedSync() {
 		if !dry {
 			err = qt.server.Sync(ctx)
@@ -132,6 +137,12 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 	if !qt.server.arePodsReady(ctx) {
 		return ComponentStatusBlockedBy("pods"), err
 	}
+
+	return ComponentStatusReady(), nil
+}
+
+func (qt *QueryTracker) setup(ctx context.Context, dry bool) (ComponentStatus, error) {
+	var err error
 
 	// Wait for tablet nodes to proceed with query tracker state init.
 	if len(qt.tabletNodes) == 0 {
