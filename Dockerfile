@@ -1,6 +1,7 @@
 ARG VERSION
 ARG REVISION
 ARG BUILD_DATE
+ARG GOFLAGS
 
 # Build the manager binary
 FROM mirror.gcr.io/library/golang:1.24 AS builder
@@ -25,14 +26,25 @@ COPY pkg/ pkg/
 COPY controllers/ controllers/
 COPY validators/ validators/
 
+ARG GOOS=linux
+ARG GOARCH=amd64
+ARG CGO_ENABLED=0
+ARG GOFLAGS
 ARG GO_LDFLAGS="-X github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version.version=${VERSION}"
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "${GO_LDFLAGS}" -a -o manager main.go
+RUN go build ${GOFLAGS} -ldflags "${GO_LDFLAGS}" -a -o manager main.go
+
+FROM mirror.gcr.io/library/debian:13 AS debug
+WORKDIR /
+RUN apt update && apt install -y libasan8
+COPY --from=builder /workspace/manager .
+USER 65532:65532
+ENTRYPOINT ["/manager"]
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot AS release
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532
@@ -41,6 +53,7 @@ ARG VERSION
 ARG REVISION
 ARG BUILD_DATE
 
+# https://github.com/opencontainers/image-spec/blob/main/annotations.md
 LABEL org.opencontainers.image.title="YTsaurus Operator for Kubernetes"
 LABEL org.opencontainers.image.url="https://ytsaurus.tech"
 LABEL org.opencontainers.image.source="https://github.com/ytsaurus/ytsaurus-k8s-operator/"

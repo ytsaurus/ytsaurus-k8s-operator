@@ -9,6 +9,16 @@ on:
 
   workflow_dispatch:
     inputs:
+      DEBUG:
+        type: choice
+        required: false
+        default: ""
+        options:
+          - ""
+          - "1"
+          - "asan"
+          - "msan"
+          - "race"
       TEST_YTSAURUS_VERSION:
         description: "YTsaurus version or epoch"
         type: string
@@ -19,11 +29,14 @@ jobs:
   check-unit:
     name: Run unit tests
     uses: ./.github/workflows/subflow_run_unit_tests.yaml
+    with:
+      DEBUG: "${{ inputs.DEBUG }}"
 
   check-e2e:
     name: Run e2e tests
     uses: ./.github/workflows/subflow_run_e2e_tests.yaml
     with:
+      DEBUG: "${{ inputs.DEBUG }}"
       TEST_YTSAURUS_VERSION: "${{ inputs.TEST_YTSAURUS_VERSION }}"
 
   check-compat:
