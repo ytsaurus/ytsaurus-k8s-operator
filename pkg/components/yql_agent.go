@@ -185,6 +185,11 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor(yqla.secret.Name()), err
 	}
 
+	// TODO: Refactor this mess.
+	if status, err := yqla.setup(ctx, dry); !status.IsReady() || err != nil {
+		return status, err
+	}
+
 	if yqla.NeedSync() {
 		if !dry {
 			ss := yqla.server.buildStatefulSet()
@@ -213,6 +218,10 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusBlockedBy("pods"), err
 	}
 
+	return ComponentStatusReady(), nil
+}
+
+func (yqla *YqlAgent) setup(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if !dry {
 		yqla.initEnvironment.SetInitScript(yqla.createInitScript())
 	}
