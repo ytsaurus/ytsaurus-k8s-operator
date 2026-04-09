@@ -348,14 +348,7 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	isOnDelete := sts.Spec.UpdateStrategy.Type == appsv1.OnDeleteStatefulSetStrategyType
 
 	if isOnDelete {
-		if sts.Status.UpdateRevision == sts.Status.CurrentRevision {
-			logger.Info("StatefulSet update revision has not advanced yet",
-				"component", s.labeller.GetFullComponentName(),
-				"currentRevision", sts.Status.CurrentRevision,
-				"updateRevision", sts.Status.UpdateRevision)
-			return false
-		}
-
+		// Always use the per-pod label check instead of comparing revision fields.
 		pods, err := s.statefulSet.ListPods(ctx)
 		if err != nil {
 			logger.Error(err, "Failed to list pods for StatefulSet", "component", s.labeller.GetFullComponentName())
@@ -371,8 +364,8 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 		}
 
 		for _, pod := range pods {
-			if pod.DeletionTimestamp != nil {
-				logger.Info("OnDelete update in progress: pod is terminating",
+			if !podIsScheduled(&pod) {
+				logger.Info("OnDelete update in progress: pod is not scheduled or is terminating",
 					"component", s.labeller.GetFullComponentName(),
 					"pod", pod.Name)
 				return false
@@ -388,7 +381,7 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 				return false
 			}
 
-			if pod.Status.Phase != corev1.PodRunning {
+			if !podConditionIsTrue(&pod, corev1.PodReady) {
 				logger.Info("OnDelete update in progress: pod not ready",
 					"component", s.labeller.GetFullComponentName(),
 					"pod", pod.Name)
