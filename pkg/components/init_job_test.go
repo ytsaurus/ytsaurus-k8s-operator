@@ -2,6 +2,7 @@ package components
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"k8s.io/utils/ptr"
@@ -38,16 +39,19 @@ const (
 	waitTick    = 300 * time.Millisecond
 )
 
+var logger = GinkgoLogr
+
 func syncJobUntilReady(job *InitJob) {
 	ctx := context.Background()
 
-	Eventually(func() bool {
+	Eventually(func() SyncStatus {
 		err := job.Fetch(ctx)
 		Expect(err).NotTo(HaveOccurred())
 		st, err := job.Sync(ctx, false)
+		logger.Info("Job status", "state", st.SyncStatus, "message", st.Message)
 		Expect(err).NotTo(HaveOccurred())
-		return st.SyncStatus == SyncStatusReady
-	}, waitTimeout, waitTick).Should(BeTrue())
+		return st.SyncStatus
+	}, waitTimeout, waitTick).Should(Equal(SyncStatusReady))
 }
 
 func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
@@ -77,6 +81,10 @@ var _ = Describe("InitJob", func() {
 	var namespace string
 
 	JustBeforeEach(func() {
+		if os.Getenv("CANONIZE") != "" {
+			Skip("Nothing to CANONIZE")
+		}
+
 		h = testutil.NewTestHelper(GinkgoTB(), namespace, "../..")
 		h.Start(func(mgr ctrl.Manager) error { return nil })
 
@@ -101,26 +109,17 @@ var _ = Describe("InitJob", func() {
 			job.SetInitScript(scriptBefore)
 			syncJobUntilReady(job)
 
-			err := job.prepareRestart(ctx, false)
-			Expect(err).NotTo(HaveOccurred())
+			job.Restart()
 
 			By("Ensure job is deleted on restart")
 			Eventually(func() bool {
 				batchJob := batchv1.Job{}
-				err = ytsaurus.Client().Get(ctx, client.ObjectKey{
+				err := ytsaurus.Client().Get(ctx, client.ObjectKey{
 					Name:      "ms-init-job-dummy",
 					Namespace: namespace,
 				}, &batchJob)
 				return apierrors.IsNotFound(err)
 			}, waitTimeout, 100*time.Millisecond).Should(BeTrue())
-
-			By("Wait for restart to be prepared")
-			Eventually(func() bool {
-				job = newTestJob(ytsaurus)
-				err = job.Fetch(ctx)
-				Expect(err).NotTo(HaveOccurred())
-				return job.isRestartPrepared()
-			}, waitTimeout, waitTick).Should(BeTrue())
 		})
 	})
 
@@ -134,25 +133,16 @@ var _ = Describe("InitJob", func() {
 			job.SetInitScript(scriptBefore)
 			syncJobUntilReady(job)
 
-			err := job.prepareRestart(ctx, false)
-			Expect(err).NotTo(HaveOccurred())
-
-			Eventually(func() bool {
-				job = newTestJob(ytsaurus)
-				err = job.Fetch(ctx)
-				Expect(err).NotTo(HaveOccurred())
-				return job.isRestartPrepared()
-			}, waitTimeout, waitTick).Should(BeTrue())
-
 			// Imagine that new version of operator wants to set new init script for job.
 			job = newTestJob(ytsaurus)
 			job.SetInitScript(scriptAfter)
+			job.Restart()
 			syncJobUntilReady(job)
 
 			cmData := testutil.FetchConfigMapData(
 				h,
-				"dummy-yt-master-init-job-config",
-				consts.InitClusterScriptFileName,
+				"yt-master-init-job-dummy-config",
+				consts.InitJobScriptFileName,
 			)
 			Expect(cmData).To(Equal(scriptAfter))
 		})

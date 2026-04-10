@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -107,11 +108,13 @@ func (r *YtsaurusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			return log
 		}).
 		For(&ytv1.Ytsaurus{}).
-		Owns(&appsv1.StatefulSet{}).
-		Owns(&corev1.ConfigMap{}).
-		Owns(&corev1.Service{}).
+		Owns(&appsv1.DaemonSet{}).
 		Owns(&appsv1.Deployment{}).
+		Owns(&appsv1.StatefulSet{}).
+		Owns(&batchv1.Job{}).
+		Owns(&corev1.ConfigMap{}).
 		Owns(&corev1.Secret{}).
+		Owns(&corev1.Service{}).
 		Watches(
 			&corev1.ConfigMap{},
 			handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),

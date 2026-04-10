@@ -6,10 +6,7 @@ import (
 	"strings"
 
 	"go.ytsaurus.tech/yt/go/ypath"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -67,7 +64,7 @@ func NewScheduler(
 		}),
 	)
 
-	return &Scheduler{
+	scheduler := Scheduler{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		master:          master,
@@ -94,6 +91,10 @@ func NewScheduler(
 			l,
 			ytsaurus),
 	}
+
+	scheduler.initOpArchiveJob.envFrom = []corev1.EnvFromSource{scheduler.secret.GetEnvSource()}
+
+	return &scheduler
 }
 
 func (s *Scheduler) Fetch(ctx context.Context) error {
@@ -108,17 +109,18 @@ func (s *Scheduler) Fetch(ctx context.Context) error {
 func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if status, err := dispatchComponentUpdate(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
-			return *status, err
+	if s.ytsaurus.IsUpdating() {
+		if !IsUpdatingComponent(s.ytsaurus, s) {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
-
-		if status, err := s.updateOpArchive(ctx, dry); status != nil {
-			return *status, err
-		}
-
-		if s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
-			s.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForOpArchiveUpdate {
+		switch updateState := s.ytsaurus.GetUpdateState(); updateState {
+		case ytv1.UpdateStateWaitingForPodsRemoval, ytv1.UpdateStateWaitingForPodsCreation:
+			if status, err := dispatchComponentUpdate(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
+				return *status, err
+			}
+		case ytv1.UpdateStateWaitingForOpArchiveUpdate:
+			return s.initOpArchiveJob.RunUpdateScript(ctx, dry, s.ytsaurus, updateState, s.scriptInitOperationsArchive, nil)
+		default:
 			return ComponentStatusReady(), nil
 		}
 	}
@@ -179,68 +181,11 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 		}
 	}
 
-	if !dry {
-		s.prepareInitOperationsArchive()
-	}
-	return s.initOpArchiveJob.Sync(ctx, dry)
-}
-
-func (s *Scheduler) updateOpArchive(ctx context.Context, dry bool) (*ComponentStatus, error) {
-	var err error
-	switch s.ytsaurus.GetUpdateState() {
-	case ytv1.UpdateStateWaitingForOpArchiveUpdatingPrepare:
-		if !s.needOpArchiveInit() {
-			if !dry {
-				s.setConditionOpArchivePreparedForUpdating(ctx)
-			}
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
-		}
-		if !s.initOpArchiveJob.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), s.initOpArchiveJob.prepareRestart(ctx, dry)
-		}
-		if !dry {
-			s.setConditionOpArchivePreparedForUpdating(ctx)
-		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
-	case ytv1.UpdateStateWaitingForOpArchiveUpdate:
-		if !s.needOpArchiveInit() {
-			if !dry {
-				s.setConditionOpArchiveUpdated(ctx)
-			}
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
-		}
-		if !s.initOpArchiveJob.isRestartCompleted() {
-			return nil, nil
-		}
-		if !dry {
-			s.setConditionOpArchiveUpdated(ctx)
-		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
-	default:
-		return nil, nil
-	}
+	return s.initOpArchiveJob.RunScript(ctx, dry, "InitOperationsArchive", s.scriptInitOperationsArchive, nil)
 }
 
 func (s *Scheduler) needOpArchiveInit() bool {
 	return len(s.tabletNodes) > 0
-}
-
-func (s *Scheduler) setConditionOpArchivePreparedForUpdating(ctx context.Context) {
-	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionOpArchivePreparedForUpdating,
-		Status:  metav1.ConditionTrue,
-		Reason:  "OpArchivePreparedForUpdating",
-		Message: "Operations archive prepared for updating",
-	})
-}
-
-func (s *Scheduler) setConditionOpArchiveUpdated(ctx context.Context) {
-	s.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionOpArchiveUpdated,
-		Status:  metav1.ConditionTrue,
-		Reason:  "OpArchiveUpdated",
-		Message: "Operations archive updated",
-	})
 }
 
 func (s *Scheduler) createInitUserScript() string {
@@ -263,19 +208,14 @@ export INIT_OP_ARCHIVE=/usr/bin/init_operation_archive
 fi
 `
 
-func (s *Scheduler) prepareInitOperationsArchive() {
-	script := []string{
+func (s *Scheduler) scriptInitOperationsArchive() ([]string, error) {
+	return []string{
 		initJobWithNativeDriverPrologue(),
 		setInitOpArchivePath,
 		fmt.Sprintf("$INIT_OP_ARCHIVE --force --latest --proxy %s",
 			s.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 		SetWithIgnoreExisting("//sys/cluster_nodes/@config", "'{\"%true\" = {job_agent={enable_job_reporter=%true}}}'"),
-	}
-
-	s.initOpArchiveJob.SetInitScript(strings.Join(script, "\n"))
-	job := s.initOpArchiveJob.Build()
-	container := &job.Spec.Template.Spec.Containers[0]
-	container.EnvFrom = []corev1.EnvFromSource{s.secret.GetEnvSource()}
+	}, nil
 }
 
 func (s *Scheduler) UpdatePreCheck(ctx context.Context) ComponentStatus {

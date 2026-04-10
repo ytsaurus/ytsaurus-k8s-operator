@@ -368,13 +368,11 @@ func (qa *QueueAgent) updateQAState(ctx context.Context, dry bool) (*ComponentSt
 			}
 			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 		}
-		if !qa.initQAStateJob.isRestartPrepared() {
-			return ptr.To(SimpleStatus(SyncStatusUpdating)), qa.initQAStateJob.prepareRestart(ctx, dry)
-		}
 		if !dry {
+			qa.initQAStateJob.Restart()
 			qa.setConditionQAStatePreparedForUpdating(ctx)
 		}
-		return ptr.To(SimpleStatus(SyncStatusUpdating)), err
+		return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 	case ytv1.UpdateStateWaitingForQAStateUpdate:
 		if !qa.needQAStateInit() {
 			if !dry {
@@ -382,7 +380,7 @@ func (qa *QueueAgent) updateQAState(ctx context.Context, dry bool) (*ComponentSt
 			}
 			return ptr.To(SimpleStatus(SyncStatusUpdating)), nil
 		}
-		if !qa.initQAStateJob.isRestartCompleted() {
+		if !qa.initQAStateJob.IsCompleted() {
 			return nil, nil
 		}
 		if !dry {
