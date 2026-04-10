@@ -2071,6 +2071,21 @@ spec:
                       for cluster connections.
                     type: boolean
                 type: object
+              clusterMaintenance:
+                description: Controls cluster maintenance.
+                properties:
+                  shutdown:
+                    description: Shutdown defines which components are scaled down
+                      to zero replicas during...
+                    enum:
+                    - Compute
+                    - Everything
+                    - ExceptMasters
+                    - Tablets
+                    type: string
+                required:
+                - shutdown
+                type: object
               configOverrides:
                 description: LocalObjectReference contains enough information to let
                   you locate the...
@@ -16333,6 +16348,7 @@ spec:
                         type: object
                     type: object
                   cellTagMasterCaches:
+                    description: 'Deprecated: have no effect.'
                     type: integer
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings.
@@ -16378,9 +16394,15 @@ spec:
                     items:
                       type: string
                     type: array
+                  hostAddresses:
+                    items:
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
                   hostAddressesLabel:
                     type: string
                   hostAddressesMasterCaches:
+                    description: 'Deprecated: use hostAddresses instead.'
                     items:
                       type: string
                     type: array
@@ -17517,8 +17539,6 @@ spec:
                       - name
                       type: object
                     type: array
-                required:
-                - cellTagMasterCaches
                 type: object
               nativeTransport:
                 description: Common config for native RPC bus transport.
@@ -18305,6 +18325,10 @@ spec:
                         type: object
                     type: object
                   cellTag:
+                    description: Cell tag is an immutable identifier for particular
+                      cell of YTsaurus cluster.
+                    maximum: 61440
+                    minimum: 1
                     type: integer
                   dnsConfig:
                     description: DNSConfig allows customizing the DNS settings.
@@ -18356,6 +18380,7 @@ spec:
                     items:
                       type: string
                     type: array
+                    x-kubernetes-list-type: set
                   hostNetwork:
                     description: Use the host's network namespace.
                     type: boolean
@@ -18641,6 +18666,15 @@ spec:
                           resources required.
                         type: object
                     type: object
+                  roles:
+                    description: Roles assigned to this master cell.
+                    items:
+                      description: Other roles are allowed and handled as opaque strings,
+                        only naming convention...
+                      pattern: ^[a-z_]+$
+                      type: string
+                    type: array
+                    x-kubernetes-list-type: set
                   runtimeClassName:
                     description: Runtime class for instance pods.
                     type: string
@@ -27772,6 +27806,10 @@ spec:
                           type: object
                       type: object
                     cellTag:
+                      description: Cell tag is an immutable identifier for particular
+                        cell of YTsaurus cluster.
+                      maximum: 61440
+                      minimum: 1
                       type: integer
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
@@ -27824,6 +27862,7 @@ spec:
                       items:
                         type: string
                       type: array
+                      x-kubernetes-list-type: set
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean
@@ -28109,6 +28148,15 @@ spec:
                             resources required.
                           type: object
                       type: object
+                    roles:
+                      description: Roles assigned to this master cell.
+                      items:
+                        description: Other roles are allowed and handled as opaque
+                          strings, only naming convention...
+                        pattern: ^[a-z_]+$
+                        type: string
+                      type: array
+                      x-kubernetes-list-type: set
                     runtimeClassName:
                       description: Runtime class for instance pods.
                       type: string
@@ -28984,6 +29032,7 @@ spec:
                   required:
                   - cellTag
                   type: object
+                maxItems: 48
                 type: array
               setHostnameAsFqdn:
                 default: true

@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
+
 	corev1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
@@ -26,16 +30,20 @@ const (
 type Master struct {
 	serverComponent
 
+	mastersSpec *ytv1.MastersSpec
+
 	cfgen *ytconfig.Generator
 
-	initJob          *InitJob
-	exitReadOnlyJob  *InitJob
+	initJob *InitJob
+
 	adminCredentials corev1.Secret
 
 	uploaderSecret *resources.StringSecret
+
+	secondaryMasters []*Master
 }
 
-func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
+func buildMasterOptions(mastersSpec *ytv1.MastersSpec) []Option {
 	options := []Option{
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
@@ -44,37 +52,40 @@ func buildMasterOptions(resource *ytv1.Ytsaurus) []Option {
 		}),
 	}
 
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil && resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image != nil {
+	if mastersSpec.HydraPersistenceUploader != nil && mastersSpec.HydraPersistenceUploader.Image != nil {
 		options = append(options, WithSidecarImage(
 			consts.HydraPersistenceUploaderContainerName,
-			*resource.Spec.PrimaryMasters.HydraPersistenceUploader.Image,
+			*mastersSpec.HydraPersistenceUploader.Image,
 		))
 	}
 
 	checkAndAddTimbertruckToServerOptions(
 		&options,
-		resource.Spec.PrimaryMasters.Timbertruck,
-		resource.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers,
+		mastersSpec.Timbertruck,
+		mastersSpec.InstanceSpec.StructuredLoggers,
 	)
 
 	return options
 }
 
-func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
-	l := cfgen.GetComponentLabeller(consts.MasterType, "")
-
-	resource := ytsaurus.GetResource()
+func NewMaster(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	mastersSpec *ytv1.MastersSpec,
+	secondaryMasters []*Master,
+) *Master {
+	l := cfgen.GetMasterLabeller(mastersSpec.CellTag)
 
 	srv := newServer(
 		l,
 		ytsaurus,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
+		&mastersSpec.InstanceSpec,
 		"/usr/bin/ytserver-master",
 		[]ConfigGenerator{
 			{
 				"ytserver-master.yson",
 				ConfigFormatYson,
-				func() ([]byte, error) { return cfgen.GetMasterConfig(&resource.Spec.PrimaryMasters) },
+				func() ([]byte, error) { return cfgen.GetMasterConfig(mastersSpec) },
 			},
 			{
 				consts.ClientConfigFileName,
@@ -83,39 +94,40 @@ func NewMaster(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Master {
 			},
 		},
 		consts.MasterMonitoringPort,
-		buildMasterOptions(resource)...,
+		buildMasterOptions(mastersSpec)...,
 	)
 
-	initJob := NewInitJobForYtsaurus(
-		l,
-		ytsaurus,
-		"default",
-		consts.ClientConfigFileName,
-		cfgen.GetNativeClientConfig,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
-	)
+	var initJob *InitJob
 
-	exitReadOnlyJob := NewInitJobForYtsaurus(
-		l,
-		ytsaurus,
-		"exit-read-only",
-		consts.ClientConfigFileName,
-		cfgen.GetNativeClientConfig,
-		&resource.Spec.PrimaryMasters.InstanceSpec,
-	)
+	// Only for primary master.
+	if l.InstanceGroup == "" {
+		initJob = NewInitJobForYtsaurus(
+			l,
+			ytsaurus,
+			"default",
+			consts.ClientConfigFileName,
+			cfgen.GetNativeClientConfig,
+			&mastersSpec.InstanceSpec,
+		)
+	}
 
 	var uploaderSecret *resources.StringSecret
-	if resource.Spec.PrimaryMasters.HydraPersistenceUploader != nil {
+	if mastersSpec.HydraPersistenceUploader != nil {
 		uploaderSecret = resources.NewStringSecret(buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName), l, ytsaurus)
 	}
 
 	return &Master{
-		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
-		cfgen:           cfgen,
-		initJob:         initJob,
-		exitReadOnlyJob: exitReadOnlyJob,
-		uploaderSecret:  uploaderSecret,
+		serverComponent:  newLocalServerComponent(l, ytsaurus, srv),
+		mastersSpec:      mastersSpec,
+		cfgen:            cfgen,
+		initJob:          initJob,
+		uploaderSecret:   uploaderSecret,
+		secondaryMasters: secondaryMasters,
 	}
+}
+
+func (m *Master) IsPrimary() bool {
+	return m.labeller.InstanceGroup == ""
 }
 
 func (m *Master) Fetch(ctx context.Context) error {
@@ -132,7 +144,6 @@ func (m *Master) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		m.server,
 		m.initJob,
-		m.exitReadOnlyJob,
 		m.uploaderSecret,
 	)
 }
@@ -207,7 +218,7 @@ func (m *Master) initUploaderUser() (string, error) {
 		appendPathAclCommand,
 	)
 	return RunIfCondition(
-		fmt.Sprintf("'%v' = 'true'", m.ytsaurus.GetResource().Spec.PrimaryMasters.HydraPersistenceUploader != nil),
+		fmt.Sprintf("'%v' = 'true'", m.mastersSpec.HydraPersistenceUploader != nil),
 		RunIfNonexistent(fmt.Sprintf("//sys/users/%s", login), commands...),
 	), nil
 }
@@ -348,24 +359,94 @@ func (m *Master) initSchemaACLs() (string, error) {
 	return strings.Join(commands, "\n"), nil
 }
 
-func (m *Master) createInitScript() (string, error) {
+func (m *Master) scriptMasterCellDescriptors() ([]string, error) {
+	cellDescriptors := ytconfig.GetMasterCellDescriptors(m.mastersSpec, m.ytsaurus.GetResource().Spec.SecondaryMasters)
+	config, err := yson.MarshalFormat(cellDescriptors, yson.FormatPretty)
+	if err != nil {
+		return nil, err
+	}
+	return []string{
+		fmt.Sprintf("yt set %s '%s'", consts.MasterCellDescriptorsPath, string(config)),
+		`yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true`, // NOTE: This is default since 25.3
+	}, nil
+}
+
+func (m *Master) scriptMasterCellsPreparation() ([]string, error) {
+	return []string{
+		initJobWithNativeDriverPrologue(),
+		`yt set //sys/@config/chunk_manager/enable_chunk_refresh %false`,
+		`yt set //sys/@config/chunk_manager/enable_chunk_requisition_update %false`,
+		`yt set //sys/@config/multicell_manager/testing/allow_master_cell_with_empty_role %true`,
+		`yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true`,
+	}, nil
+}
+
+func (m *Master) scriptMasterCellsCompletion() ([]string, error) {
+	return []string{
+		initJobWithNativeDriverPrologue(),
+		`yt set //sys/@config/chunk_manager/enable_chunk_refresh %true`,
+		`yt set //sys/@config/chunk_manager/enable_chunk_requisition_update %true`,
+	}, nil
+}
+
+func (m *Master) scriptWaitingMasterCellsRegistation() ([]string, error) {
+	commands := []string{
+		initJobWithNativeDriverPrologue(),
+		fmt.Sprintf(
+			`test "$(yt get --format json //sys/@registered_master_cell_tags | jq -c sort)" = '%s'`,
+			m.cfgen.GetMasterCellTagsAsSortedJSON(),
+		),
+	}
+	if false {
+		// //sys/secondary_masters is filled by world initialization which happens every 5 minutes.
+		testCell := func(spec *ytv1.MastersSpec, path, tag string) {
+			for _, address := range m.cfgen.GetMasterCellAddresses(spec) {
+				commands = append(commands, fmt.Sprintf(`test "$(yt get %s%s/%s/%s/active)" = %%true`, path, tag, address, consts.MasterHydraPath))
+			}
+		}
+		testCell(m.mastersSpec, "//sys/primary_masters", "")
+		for _, secondary := range m.secondaryMasters {
+			testCell(secondary.mastersSpec, "//sys/secondary_masters/", secondary.labeller.InstanceGroup)
+		}
+	}
+	return commands, nil
+}
+
+func (m *Master) scriptMasterCellsSettlement() ([]string, error) {
+	commands, err := m.scriptMasterCellDescriptors()
+	if err != nil {
+		return nil, err
+	}
+	return append([]string{
+		initJobWithNativeDriverPrologue(),
+		`test "$(yt get //sys/@dynamically_propagated_masters_cell_tags)" = '[]'`,
+	}, commands...), nil
+}
+
+func (m *Master) scriptInitialization() ([]string, error) {
 	clusterConn := m.cfgen.GetClusterConnection()
 	connConfig, err := yson.MarshalFormat(clusterConn, yson.FormatPretty)
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+
+	initMasterCells, err := m.scriptMasterCellDescriptors()
+	if err != nil {
+		return nil, err
 	}
 
 	initSchemaACLsCommands, err := m.initSchemaACLs()
 	if err != nil {
-		return "", fmt.Errorf("failed to create init schema ACLs commands: %w", err)
+		return nil, fmt.Errorf("failed to create init schema ACLs commands: %w", err)
 	}
 
 	initHydraPersistenceUploaderUserCommands, err := m.initUploaderUser()
 	if err != nil {
-		return "", fmt.Errorf("failed to create init hydra persistence uploader user commands: %w", err)
+		return nil, fmt.Errorf("failed to create init hydra persistence uploader user commands: %w", err)
 	}
 
 	initCommands := []string{
+		RunIfExists("//sys/@provision_lock", initMasterCells...),
 		m.initGroups(),
 		RunIfExists("//sys/@provision_lock", initSchemaACLsCommands),
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
@@ -391,48 +472,108 @@ func (m *Master) createInitScript() (string, error) {
 		"/usr/bin/yt remove //sys/@provision_lock -f",
 	}
 
-	return strings.Join(script, "\n"), nil
+	return script, nil
 }
 
-func (m *Master) createExitReadOnlyScript() string {
-	script := []string{
+func (m *Master) scriptEnterReadOnly() ([]string, error) {
+	return []string{
+		initJobWithNativeDriverPrologue(),
+		`export YT_LOG_LEVEL=DEBUG`,
+		`/usr/bin/yt execute build_master_snapshots '{ set_read_only=%true; wait_for_snapshot_completion=%true; retry=%true; }'`,
+	}, nil
+}
+
+func (m *Master) scriptExitReadOnly() ([]string, error) {
+	return []string{
 		initJobWithNativeDriverPrologue(),
 		"export YT_LOG_LEVEL=DEBUG",
 		// COMPAT(l0kix2): remove || part when the compatibility with 23.1 and older is dropped.
 		`[[ "$YTSAURUS_VERSION" < "23.2" ]] && echo "master_exit_read_only is supported since 23.2, nothing to do" && exit 0`,
 		"/usr/bin/yt execute master_exit_read_only '{}'",
-	}
-
-	return strings.Join(script, "\n")
+	}, nil
 }
 
+func (m *Master) NeedUpdate() ComponentStatus {
+	// NOTE: See master maintenance update flow.
+	if m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsSettlement) && m.ytsaurus.GetClusterMaintenance().Shutdown == ytv1.ClusterShutdownExceptMasters {
+		return ComponentStatusNeedUpdate("Master cells settlement")
+	}
+	if !m.IsPrimary() && m.owner.IsStatusConditionFalse(m.labeller.GetCondition(consts.ConidtionCellSettled)) {
+		return ComponentStatusBlocked("Secondary master cell %v is not registered yet", m.labeller.InstanceGroup)
+	}
+	return m.server.needUpdate()
+}
+
+//nolint:cyclop //this is complex function
 func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterExitReadOnly {
-			return m.exitReadOnly(ctx, dry)
+	if m.ytsaurus.IsUpdating() {
+		if !IsUpdatingComponent(m.ytsaurus, m) {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
-		if m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitializingPrepare || m.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForSidecarsInitialize {
-			return m.sidecarsInit(ctx, dry)
+
+		updateState := m.ytsaurus.GetUpdateState()
+
+		if m.IsPrimary() {
+			switch updateState {
+			case ytv1.UpdateStateWaitingForMasterExitReadOnly, ytv1.UpdateStateWaitingForMasterCellsExitReadOnly:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptExitReadOnly, nil)
+			case ytv1.UpdateStateWaitingForSidecarsInitialize:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptInitialization, nil)
+			case ytv1.UpdateStateWaitingForMasterEnterReadOnly, ytv1.UpdateStateWaitingForMasterCellsEnterReadOnly:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptEnterReadOnly, nil)
+			case ytv1.UpdateStateWaitingForMasterCellsPreparation:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptMasterCellsPreparation, nil)
+			case ytv1.UpdateStateWaitingForMasterCellsRegistration:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptWaitingMasterCellsRegistation, func() {
+					// Finish master cells registration pass.
+					m.owner.RemoveStatusCondition(consts.ConditionMasterCellsRegistration)
+					// Trigger master cells settlement pass.
+					m.owner.SetStatusCondition(metav1.Condition{
+						Type:    consts.ConditionMasterCellsSettlement,
+						Status:  metav1.ConditionTrue,
+						Reason:  "MasterCellsRegistration",
+						Message: "Master cells settlement is pending",
+					})
+				})
+			case ytv1.UpdateStateWaitingForMasterCellsSettlement:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptMasterCellsSettlement, func() {
+					// Finish master cells settlement pass.
+					m.owner.RemoveStatusCondition(consts.ConditionMasterCellsSettlement)
+				})
+			case ytv1.UpdateStateWaitingForMasterCellsCompletion:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptMasterCellsCompletion, nil)
+			}
+		} else if m.mastersSpec.InstanceCount > 0 {
+			//nolint:gocritic
+			switch updateState {
+			case ytv1.UpdateStateWaitingForMasterCellsSettlement:
+				m.owner.SetStatusCondition(metav1.Condition{
+					Type:    m.labeller.GetCondition(consts.ConidtionCellSettled),
+					Status:  metav1.ConditionTrue,
+					Reason:  "Settlement",
+					Message: fmt.Sprintf("Secondary master cell %v is settled during cluster maintenance", m.labeller.InstanceGroup),
+				})
+			}
 		}
-		if IsUpdatingComponent(m.ytsaurus, m) {
+
+		switch updateState {
+		case ytv1.UpdateStateWaitingForPodsRemoval, ytv1.UpdateStateWaitingForPodsCreation:
+			// TODO: Cleanup, add separate update states for strategies.
 			switch getComponentUpdateStrategy(m.ytsaurus, consts.MasterType, m.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
 				if status, err := handleOnDeleteUpdatingClusterState(ctx, m.ytsaurus, m, &m.component, m.server, dry); status != nil {
 					return *status, err
 				}
+				return ComponentStatusReady(), err
 			default:
 				if status, err := handleBulkUpdatingClusterState(ctx, m.ytsaurus, m, &m.component, m.server, dry); status != nil {
 					return *status, err
 				}
 			}
-
-			if m.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		default:
+			return ComponentStatusReadyAfter("No actions required for this update state"), nil
 		}
 	}
 
@@ -459,161 +600,107 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return status, err
 	}
 
-	return m.runInitPhaseJobs(ctx, dry)
+	for _, secondaryMaster := range m.secondaryMasters {
+		if status := secondaryMaster.GetStatus(); !status.IsRunning() {
+			return status.Blocker(), nil
+		}
+	}
+
+	if m.ytsaurus.IsInitializing() {
+		if m.IsPrimary() {
+			return m.runInitPhaseJobs(ctx, dry)
+		} else if m.mastersSpec.InstanceCount > 0 {
+			m.owner.SetStatusCondition(metav1.Condition{
+				Type:    m.labeller.GetCondition(consts.ConidtionCellSettled),
+				Status:  metav1.ConditionTrue,
+				Reason:  "Initialization",
+				Message: fmt.Sprintf("Secondary master cell %v is settled during cluster initialization", m.labeller.InstanceGroup),
+			})
+		}
+	}
+
+	if !m.IsPrimary() && m.mastersSpec.InstanceCount > 0 && !m.owner.IsStatusConditionTrue(m.labeller.GetCondition(consts.ConidtionCellSettled)) {
+		m.owner.SetStatusCondition(metav1.Condition{
+			Type:    m.labeller.GetCondition(consts.ConidtionCellSettled),
+			Status:  metav1.ConditionFalse,
+			Reason:  "Reconfiguration",
+			Message: fmt.Sprintf("Secondary master cell %v registration is pending", m.labeller.InstanceGroup),
+		})
+		m.owner.SetStatusCondition(metav1.Condition{
+			Type:    consts.ConditionMasterCellsRegistration,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Reconfiguration",
+			Message: "Secondary master cells registration is pending",
+		})
+	}
+
+	return ComponentStatusReady(), nil
 }
 
 func (m *Master) doServerSync(ctx context.Context) error {
 	statefulSet := m.server.buildStatefulSet()
+
+	podMeta := &statefulSet.Spec.Template.ObjectMeta
+	metav1.SetMetaDataLabel(podMeta, consts.YTCellTagLabelName, m.labeller.GetCellName(m.mastersSpec.CellTag))
+	metav1.SetMetaDataLabel(podMeta, consts.YTCellIDLabelName, m.cfgen.GetCellID(m.mastersSpec.CellTag))
+
 	podSpec := &statefulSet.Spec.Template.Spec
 	podSpec.Containers[0].Env = append(podSpec.Containers[0].Env, getNativeClientConfigEnv()...)
 
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-
-	if primaryMastersSpec.HydraPersistenceUploader != nil && primaryMastersSpec.HydraPersistenceUploader.Image != nil {
+	if m.mastersSpec.HydraPersistenceUploader != nil && m.mastersSpec.HydraPersistenceUploader.Image != nil {
 		addHydraPersistenceUploaderToPodSpec(
-			*primaryMastersSpec.HydraPersistenceUploader.Image,
+			*m.mastersSpec.HydraPersistenceUploader.Image,
 			podSpec,
 			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			m.uploaderSecret.Name(),
 		)
 	}
-	if err := checkAndAddTimbertruckToPodSpec(primaryMastersSpec.Timbertruck, podSpec, &primaryMastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
+	if err := checkAndAddTimbertruckToPodSpec(m.mastersSpec.Timbertruck, podSpec, &m.mastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
 		return err
 	}
-	if err := AddSidecarsToPodSpec(primaryMastersSpec.Sidecars, podSpec); err != nil {
+	if err := AddSidecarsToPodSpec(m.mastersSpec.Sidecars, podSpec); err != nil {
 		return err
 	}
 
-	if len(primaryMastersSpec.HostAddresses) != 0 {
-		AddAffinity(statefulSet, m.getHostAddressLabel(), primaryMastersSpec.HostAddresses)
+	if len(m.mastersSpec.HostAddresses) != 0 {
+		AddAffinity(statefulSet, m.getHostAddressLabel(), m.mastersSpec.HostAddresses)
 	}
 	return m.server.Sync(ctx)
 }
 
 func (m *Master) GetCypressPatch() ypatch.PatchSet {
-	clusterConnection := m.cfgen.GetClusterConnection()
-	return ypatch.PatchSet{
-		"//sys/@cluster_connection": {
-			ypatch.Replace("/primary_master/addresses", &clusterConnection.PrimaryMaster.Addresses),
-			ypatch.Replace("/primary_master/peers", &clusterConnection.PrimaryMaster.Peers),
-			ypatch.ReplaceOrRemove("/bus_client", clusterConnection.BusClient),
-		},
+	if !m.IsPrimary() {
+		return nil
 	}
+
+	clusterConnection := m.cfgen.GetClusterConnection()
+
+	patch := ypatch.Patch{
+		ypatch.Replace("/primary_master/addresses", &clusterConnection.PrimaryMaster.Addresses),
+		ypatch.Replace("/primary_master/peers", &clusterConnection.PrimaryMaster.Peers),
+		ypatch.ReplaceOrRemove("/bus_client", clusterConnection.BusClient),
+	}
+
+	for index, cell := range clusterConnection.SecondaryMasters {
+		path := ypath.Path("/secondary_masters").Child(fmt.Sprintf("%v", index))
+		patch = append(patch,
+			ypatch.Replace(path.Child("addresses"), &cell.Addresses),
+			ypatch.Replace(path.Child("peers"), &cell.Peers),
+		)
+	}
+
+	return ypatch.PatchSet{"//sys/@cluster_connection": patch}
 }
 
 func (m *Master) getHostAddressLabel() string {
-	primaryMastersSpec := m.ytsaurus.GetResource().Spec.PrimaryMasters
-	if primaryMastersSpec.HostAddressLabel != "" {
-		return primaryMastersSpec.HostAddressLabel
+	if m.mastersSpec.HostAddressLabel != "" {
+		return m.mastersSpec.HostAddressLabel
 	}
 	return defaultHostAddressLabel
 }
 
-func (m *Master) setSidecarsInitializingPrepared(ctx context.Context, status metav1.ConditionStatus) {
-	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionSidecarsPreparedForInitializing,
-		Status:  status,
-		Reason:  "SidecarsPreparedForInitializing",
-		Message: "Sidecars are prepared for initializing",
-	})
-}
-
-func (m *Master) sidecarsInit(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSidecarsPreparedForInitializing) {
-		if !m.initJob.isRestartPrepared() {
-			if err := m.initJob.prepareRestart(ctx, dry); err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-		}
-		if !dry {
-			m.setSidecarsInitializingPrepared(ctx, metav1.ConditionTrue)
-		}
-		return SimpleStatus(SyncStatusUpdating), nil
-	}
-
-	if !m.initJob.IsCompleted() {
-		if !dry {
-			initScript, err := m.createInitScript()
-			if err != nil {
-				return ComponentStatus{}, fmt.Errorf("failed to create init script: %w", err)
-			}
-			m.initJob.SetInitScript(initScript)
-		}
-		return m.initJob.Sync(ctx, dry)
-	}
-
-	if !dry {
-		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionSidecarsInitialized,
-			Status:  metav1.ConditionTrue,
-			Reason:  "SidecarsInitialized",
-			Message: "Sidecars are initialized",
-		})
-		m.setSidecarsInitializingPrepared(ctx, metav1.ConditionFalse)
-	}
-	return SimpleStatus(SyncStatusUpdating), nil
-}
-
-func (m *Master) exitReadOnly(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if !m.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionMasterExitReadOnlyPrepared) {
-		if !m.exitReadOnlyJob.isRestartPrepared() {
-			if err := m.exitReadOnlyJob.prepareRestart(ctx, dry); err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-		}
-
-		if !dry {
-			m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionTrue)
-		}
-		return SimpleStatus(SyncStatusUpdating), nil
-	}
-
-	if !m.exitReadOnlyJob.IsCompleted() {
-		if !dry {
-			m.exitReadOnlyJob.SetInitScript(m.createExitReadOnlyScript())
-		}
-		return m.exitReadOnlyJob.Sync(ctx, dry)
-	}
-
-	if !dry {
-		m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-			Type:    consts.ConditionMasterExitedReadOnly,
-			Status:  metav1.ConditionTrue,
-			Reason:  "MasterExitedReadOnly",
-			Message: "Masters exited read-only state",
-		})
-		m.setMasterReadOnlyExitPrepared(ctx, metav1.ConditionFalse)
-	}
-	return SimpleStatus(SyncStatusUpdating), nil
-}
-
-func (m *Master) setMasterReadOnlyExitPrepared(ctx context.Context, status metav1.ConditionStatus) {
-	m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-		Type:    consts.ConditionMasterExitReadOnlyPrepared,
-		Status:  status,
-		Reason:  "MasterExitReadOnlyPrepared",
-		Message: "Masters are ready to exit read-only state",
-	})
-}
-
 func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatus, error) {
-	st, err := m.runMasterInitJob(ctx, dry)
-	if err != nil {
-		return ComponentStatus{}, err
-	}
-	return st, nil
-}
-
-// runMasterInitJob launches job only once in an Initialization phase.
-func (m *Master) runMasterInitJob(ctx context.Context, dry bool) (ComponentStatus, error) {
-	initScript, err := m.createInitScript()
-	if err != nil {
-		return ComponentStatus{}, fmt.Errorf("failed to create init script: %w", err)
-	}
-	if !dry {
-		m.initJob.SetInitScript(initScript)
-	}
-	return m.initJob.Sync(ctx, dry)
+	return m.initJob.RunScript(ctx, dry, "ClusterInitialization", m.scriptInitialization, nil)
 }
 
 func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string) {
@@ -679,4 +766,103 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 			},
 		},
 	)
+}
+
+// NYT::NHydra::EPeerState
+type MasterState string
+
+const (
+	MasterStateLeading   MasterState = "leading"
+	MasterStateFollowing MasterState = "following"
+)
+
+// See: https://github.com/ytsaurus/ytsaurus/blob/main/yt/yt/server/lib/hydra/distributed_hydra_manager.cpp
+type MasterHydra struct {
+	State                MasterState `yson:"state"`
+	SelfID               int32       `yson:"self_id"`
+	LeaderID             int32       `yson:"leader_id"`
+	Voting               bool        `yson:"voting"`
+	Active               bool        `yson:"active"`
+	ActiveLeader         bool        `yson:"active_leader"`
+	ActiveFollower       bool        `yson:"active_follower"`
+	BuildingSnapshot     bool        `yson:"building_snapshot"`
+	EnteringReadOnlyMode bool        `yson:"entering_read_only_mode"`
+	LastSnapshotReadOnly bool        `yson:"last_snapshot_read_only"`
+	ReadOnly             bool        `yson:"read_only"`
+}
+
+type MasterAddressWithAttributes struct {
+	Address     string `yson:",value"`
+	Maintenance bool   `yson:"maintenance,attr"`
+}
+
+func (m *Master) CheckQuorumHealth(ctx context.Context, ytClient yt.Client) (ok bool, msg string, err error) {
+	mastersPath := ypath.Path(consts.PrimaryMastersPath)
+
+	totalCount := m.server.getInstanceCount()
+	requiredCount := m.server.getMinReadyInstanceCount(0)
+
+	masters := make([]MasterAddressWithAttributes, 0, totalCount)
+	err = ytClient.ListNode(ctx, mastersPath, &masters, &yt.ListNodeOptions{
+		Attributes: []string{"maintenance"},
+	})
+	if err != nil {
+		return false, "", err
+	}
+
+	leaders := make([]string, 0, 1)
+	followers := make([]string, 0, totalCount)
+	var inactive, maintenance []string
+	for _, master := range masters {
+		var hydra MasterHydra
+		hydraPath := mastersPath.Child(master.Address).Child(consts.MasterHydraPath)
+		if err := ytClient.GetNode(ctx, hydraPath, &hydra, nil); err != nil {
+			return false, "", err
+		}
+		name := fmt.Sprintf("[%d] %s", hydra.SelfID, master.Address)
+		if !hydra.Active {
+			inactive = append(inactive, name)
+		}
+		if master.Maintenance {
+			maintenance = append(maintenance, name)
+		}
+		switch hydra.State {
+		case MasterStateLeading:
+			leaders = append(leaders, name)
+		case MasterStateFollowing:
+			followers = append(followers, name)
+		}
+	}
+
+	var note string
+	switch {
+	case len(maintenance) != 0:
+		note = "There is a master in maintenance"
+	case len(inactive) != 0:
+		note = "There is a non-active master"
+	case len(leaders) != 1:
+		note = "There is no single leader"
+	case len(followers)+1 < int(requiredCount):
+		note = "Not enough followers"
+	default:
+		note = "Quorum is OK"
+		ok = true
+	}
+
+	var buf strings.Builder
+	fmt.Fprintf(&buf, "Cell %v %v: leaders/followers/required/total=%d/%d/%d/%d, leaders=%v, followers=%v, inactive=%v, maintenance=%v",
+		m.mastersSpec.CellTag, note,
+		len(leaders), len(followers), requiredCount, totalCount,
+		leaders, followers, inactive, maintenance)
+
+	for _, secondary := range m.secondaryMasters {
+		ok2, msg2, err := secondary.CheckQuorumHealth(ctx, ytClient)
+		if err != nil {
+			return false, "", err
+		}
+		ok = ok && ok2
+		fmt.Fprintf(&buf, "\n%s", msg2)
+	}
+
+	return ok, buf.String(), nil
 }

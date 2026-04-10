@@ -3,7 +3,6 @@ package labeller
 import (
 	"fmt"
 	"maps"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -54,6 +53,11 @@ func (l *Labeller) GetClusterName() string {
 
 func (l *Labeller) GetClusterDomain() string {
 	return l.ClusterDomain
+}
+
+func (l *Labeller) GetCellName(cellTag uint16) string {
+	// Decimal like in cypress: "//sys/secondary_masters/{cell-tag}/{address}".
+	return fmt.Sprintf("%d", cellTag)
 }
 
 // getGroupName converts <name> into <name>[-group]
@@ -147,6 +151,14 @@ func (l *Labeller) GetInstanceAddressPort(index, port int) string {
 		port)
 }
 
+func (l *Labeller) GetInstanceAddresses(instanceCount int32, port int) []string {
+	addr := make([]string, instanceCount)
+	for index := range instanceCount {
+		addr[index] = l.GetInstanceAddressPort(int(index), port)
+	}
+	return addr
+}
+
 // GetComponentLabel Returns lower case hyphenated component type without name part.
 func (l *Labeller) GetComponentLabel() string {
 	return consts.ComponentLabel(l.ComponentType)
@@ -179,11 +191,11 @@ func (l *Labeller) GetSidecarConfigMapName(name string) string {
 }
 
 func (l *Labeller) GetInitJobName(name string) string {
-	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), strings.ToLower(name))
+	return fmt.Sprintf("%s-init-job-%s", l.GetFullComponentLabel(), name)
 }
 
 func (l *Labeller) GetInitJobConfigMapName(name string) string {
-	return fmt.Sprintf("%s-%s-init-job-config", strings.ToLower(name), l.GetFullComponentLabel())
+	return fmt.Sprintf("%s-init-job-%s-config", l.GetFullComponentLabel(), name)
 }
 
 func (l *Labeller) GetCondition(suffix string) string {

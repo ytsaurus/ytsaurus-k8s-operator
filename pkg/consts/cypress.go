@@ -1,5 +1,25 @@
 package consts
 
+const (
+	LostVitalChunksCountPath      = "//sys/lost_vital_chunks/@count"
+	ParityMissingChunksCountPath  = "//sys/parity_missing_chunks/@count"
+	DataMissingChunksCountPath    = "//sys/data_missing_chunks/@count"
+	UnsafelyPlacedChunksCountPath = "//sys/unsafely_placed_chunks/@count"
+	QuorumMissingChunksCountPath  = "//sys/quorum_missing_chunks/@count"
+
+	DisableSchedulerJobsAttr = "disable_scheduler_jobs"
+
+	PrimaryMastersPath   = "//sys/primary_masters"
+	SecondaryMastersPath = "//sys/secondary_masters"
+
+	// This is directory with symlinks to all masters.
+	ClusterMastersPath = "//sys/cluster_masters"
+
+	MasterHydraPath = "orchid/monitoring/hydra"
+
+	MasterCellDescriptorsPath = "//sys/@config/multicell_manager/cell_descriptors"
+)
+
 func ComponentCypressPath(component ComponentType) string {
 	switch component {
 	case ControllerAgentType:
@@ -15,7 +35,7 @@ func ComponentCypressPath(component ComponentType) string {
 	case MasterCacheType:
 		return "//sys/master_caches"
 	case MasterType:
-		return "//sys/primary_masters"
+		return ClusterMastersPath
 	case QueryTrackerType:
 		return "//sys/query_tracker/instances"
 	case QueueAgentType:
@@ -35,12 +55,3 @@ func ComponentCypressPath(component ComponentType) string {
 	}
 	return ""
 }
-
-const (
-	LostVitalChunksCountPath      = "//sys/lost_vital_chunks/@count"
-	ParityMissingChunksCountPath  = "//sys/parity_missing_chunks/@count"
-	DataMissingChunksCountPath    = "//sys/data_missing_chunks/@count"
-	UnsafelyPlacedChunksCountPath = "//sys/unsafely_placed_chunks/@count"
-	QuorumMissingChunksCountPath  = "//sys/quorum_missing_chunks/@count"
-	DisableSchedulerJobsAttr      = "disable_scheduler_jobs"
-)

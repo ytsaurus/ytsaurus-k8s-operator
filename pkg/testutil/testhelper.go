@@ -209,13 +209,6 @@ func UpdateObjectStatus(h *TestHelper, newObject client.Object) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func MarkJobSucceeded(h *TestHelper, key string) {
-	job := &batchv1.Job{}
-	FetchEventually(h, key, job)
-	job.Status.Succeeded = 1
-	UpdateObjectStatus(h, job)
-}
-
 func MarkAllJobsCompleted(h *TestHelper) {
 	jobs := &batchv1.JobList{}
 	err := h.GetK8sClient().List(context.Background(), jobs)
@@ -225,21 +218,23 @@ func MarkAllJobsCompleted(h *TestHelper) {
 		if job.Status.Succeeded == 0 {
 			h.t.Logf("found job %s, marking as completed", job.Name)
 			job.Status.Succeeded = 1
+			job.Status.Conditions = append(job.Status.Conditions, batchv1.JobCondition{
+				Type:   batchv1.JobComplete,
+				Status: corev1.ConditionTrue,
+			})
 			UpdateObjectStatus(h, job)
 		}
 		if !job.DeletionTimestamp.IsZero() {
 			h.t.Logf(
-				"found job %s, with deletion ts %s and finalizers: %s. Deleting as gc would do in real cluster.",
+				"found job %s, with deletion ts %s and finalizers: %s. Cleanup finalizers as controllers would do in real cluster.",
 				job.Name,
 				job.DeletionTimestamp,
 				job.Finalizers,
 			)
-			job.Finalizers = []string{}
+			job.Finalizers = nil
 			UpdateObject(h, &batchv1.Job{}, job)
 			err = h.client.Delete(context.Background(), job)
-			if err != nil && !apierrors.IsNotFound(err) {
-				Expect(err).NotTo(HaveOccurred())
-			}
+			Expect(err).To(Or(Succeed(), Satisfy(apierrors.IsNotFound)))
 		}
 	}
 }

@@ -442,11 +442,6 @@ type InstanceSpec struct {
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
-type MasterConnectionSpec struct {
-	CellTag       int16    `json:"cellTag"`
-	HostAddresses []string `json:"hostAddresses,omitempty"`
-}
-
 type HydraPersistenceUploaderSpec struct {
 	Image *string `json:"image,omitempty"`
 }
@@ -459,6 +454,11 @@ type TimbertruckSpec struct {
 type MastersSpec struct {
 	InstanceSpec         `json:",inline"`
 	MasterConnectionSpec `json:",inline"`
+
+	// Roles assigned to this master cell. List roles explicitly because defaults are changing.
+	// Assigned or default roles cannot be removed after cell creation without risk of data loss.
+	//+listType=set
+	Roles *[]MasterCellRole `json:"roles,omitempty"`
 
 	HostAddressLabel string `json:"hostAddressLabel,omitempty"`
 
@@ -800,15 +800,15 @@ type DeprecatedSpytSpec struct {
 	SpytVersion  string `json:"spytVersion,omitempty"`
 }
 
-type MasterCachesConnectionSpec struct {
-	CellTag       int16    `json:"cellTagMasterCaches"`
-	HostAddresses []string `json:"hostAddressesMasterCaches,omitempty"`
-}
-
 type MasterCachesSpec struct {
 	InstanceSpec               `json:",inline"`
 	MasterCachesConnectionSpec `json:",inline"`
 	HostAddressLabel           string `json:"hostAddressesLabel,omitempty"`
+
+	// Deprecated: have no effect.
+	CellTagMasterCaches uint16 `json:"cellTagMasterCaches,omitempty"`
+	// Deprecated: use hostAddresses instead.
+	HostAddressesMasterCaches []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 
 type CypressProxiesSpec struct {
@@ -846,6 +846,9 @@ type CommonSpec struct {
 	CoreImage string `json:"coreImage,omitempty"`
 
 	ClusterFeatures *ClusterFeatures `json:"clusterFeatures,omitempty"`
+
+	// Controls cluster maintenance.
+	ClusterMaintenance *ClusterMaintenance `json:"clusterMaintenance,omitempty"`
 
 	// Default docker image for user jobs.
 	//+optional
@@ -952,17 +955,18 @@ type YtsaurusSpec struct {
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
-	Discovery        DiscoverySpec `json:"discovery,omitempty"`
-	PrimaryMasters   MastersSpec   `json:"primaryMasters,omitempty"`
+	Discovery      DiscoverySpec `json:"discovery,omitempty"`
+	PrimaryMasters MastersSpec   `json:"primaryMasters,omitempty"`
+	//+kubebuilder:validation:MaxItems:=48
 	SecondaryMasters []MastersSpec `json:"secondaryMasters,omitempty"`
 	//+optional
 	MasterCaches *MasterCachesSpec `json:"masterCaches,omitempty"`
-	// +kubebuilder:validation:MinItems:=1
+	//+kubebuilder:validation:MinItems:=1
 	HTTPProxies  []HTTPProxiesSpec  `json:"httpProxies,omitempty"`
 	RPCProxies   []RPCProxiesSpec   `json:"rpcProxies,omitempty"`
 	TCPProxies   []TCPProxiesSpec   `json:"tcpProxies,omitempty"`
 	KafkaProxies []KafkaProxiesSpec `json:"kafkaProxies,omitempty"`
-	// +kubebuilder:validation:MinItems:=1
+	//+kubebuilder:validation:MinItems:=1
 	DataNodes        []DataNodesSpec       `json:"dataNodes,omitempty"`
 	ExecNodes        []ExecNodesSpec       `json:"execNodes,omitempty"`
 	Schedulers       *SchedulersSpec       `json:"schedulers,omitempty"`
@@ -981,6 +985,28 @@ type YtsaurusSpec struct {
 	UI *UISpec `json:"ui,omitempty"`
 }
 
+type ClusterShutdown string
+
+const (
+	ClusterShutdownNone ClusterShutdown = ""
+	// Shutdown compute plane: exec nodes and YQL agents.
+	ClusterShutdownCompute ClusterShutdown = "Compute"
+	// Shutdown everything.
+	ClusterShutdownEverything ClusterShutdown = "Everything"
+	// Shutdown everything except masters. Prepare for master cells reconfiguration.
+	ClusterShutdownExceptMasters ClusterShutdown = "ExceptMasters"
+	// Shutdown tablet nodes.
+	ClusterShutdownTablets ClusterShutdown = "Tablets"
+)
+
+type ClusterMaintenance struct {
+	// Shutdown defines which components are scaled down to zero replicas during cluster maintenance.
+	// Component configs are not changed: cluster functions are degraded accordingly.
+	//+kubebuilder:validation:Enum={"Compute","Everything","ExceptMasters","Tablets"}
+	Shutdown ClusterShutdown `json:"shutdown"`
+	// TODO: Add flags to stay in read-only, safe-mode, etc.
+}
+
 type ClusterState string
 
 const (
@@ -989,6 +1015,7 @@ const (
 	ClusterStatePreparing       ClusterState = "Preparing"
 	ClusterStateRunning         ClusterState = "Running"
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
+	ClusterStateMaintenance     ClusterState = "Maintenance"
 	ClusterStateUpdating        ClusterState = "Updating"
 	ClusterStateUpdateCanceled  ClusterState = "UpdateCanceled"
 	ClusterStateUpdateBlocked   ClusterState = "UpdateBlocked"
@@ -1012,18 +1039,23 @@ const (
 	UpdateStateWaitingForPodsRemoval                 UpdateState = "WaitingForPodsRemoval"
 	UpdateStateWaitingForPodsCreation                UpdateState = "WaitingForPodsCreation"
 	UpdateStateWaitingForMasterReady                 UpdateState = "WaitingForMasterReady"
+	UpdateStateWaitingForMasterEnterReadOnly         UpdateState = "WaitingForMasterEnterReadOnly"
 	UpdateStateWaitingForMasterExitReadOnly          UpdateState = "WaitingForMasterExitReadOnly"
+	UpdateStateWaitingForMasterCellsPreparation      UpdateState = "WaitingForMasterCellsPreparation"
+	UpdateStateWaitingForMasterCellsEnterReadOnly    UpdateState = "WaitingForMasterCellsEnterReadOnly"
+	UpdateStateWaitingForMasterCellsExitReadOnly     UpdateState = "WaitingForMasterCellsExitReadOnly"
+	UpdateStateWaitingForMasterCellsRegistration     UpdateState = "WaitingForMasterCellsRegistration"
+	UpdateStateWaitingForMasterCellsSettlement       UpdateState = "WaitingForMasterCellsSettlement"
+	UpdateStateWaitingForMasterCellsCompletion       UpdateState = "WaitingForMasterCellsCompletion"
 	UpdateStateWaitingForCypressPatch                UpdateState = "WaitingForCypressPatch"
 	UpdateStateWaitingForTabletCellsRecovery         UpdateState = "WaitingForTabletCellsRecovery"
-	UpdateStateWaitingForOpArchiveUpdatingPrepare    UpdateState = "WaitingForOpArchiveUpdatingPrepare"
 	UpdateStateWaitingForOpArchiveUpdate             UpdateState = "WaitingForOpArchiveUpdate"
-	UpdateStateWaitingForSidecarsInitializingPrepare UpdateState = "WaitingForSidecarsInitializingPrepare"
+	UpdateStateWaitingForSidecarsInitializingPrepare UpdateState = "WaitingForSidecarsInitializingPrepare" // TODO: Remove, it holds alignment.
 	UpdateStateWaitingForSidecarsInitialize          UpdateState = "WaitingForSidecarsInitialize"
 	UpdateStateWaitingForQTStateUpdatingPrepare      UpdateState = "WaitingForQTStateUpdatingPrepare"
 	UpdateStateWaitingForQTStateUpdate               UpdateState = "WaitingForQTStateUpdate"
 	UpdateStateWaitingForQAStateUpdatingPrepare      UpdateState = "WaitingForQAStateUpdatingPrepare"
 	UpdateStateWaitingForQAStateUpdate               UpdateState = "WaitingForQAStateUpdate"
-	UpdateStateWaitingForYqlaUpdatingPrepare         UpdateState = "WaitingForYqlaUpdatingPrepare"
 	UpdateStateWaitingForYqlaUpdate                  UpdateState = "WaitingForYqlaUpdate"
 	UpdateStateWaitingForSafeModeDisabled            UpdateState = "WaitingForSafeModeDisabled"
 	UpdateStateWaitingForTimbertruckPrepared         UpdateState = "WaitingForTimbertruckPrepared"
