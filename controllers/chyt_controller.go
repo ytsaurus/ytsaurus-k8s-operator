@@ -20,7 +20,9 @@ import (
 	"context"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+
 	"k8s.io/apimachinery/pkg/types"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -76,6 +78,7 @@ func (r *ChytReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 func (r *ChytReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&ytv1.Chyt{}).
+		Owns(&batchv1.Job{}).
 		Owns(&corev1.Secret{}).
 		Complete(r)
 }

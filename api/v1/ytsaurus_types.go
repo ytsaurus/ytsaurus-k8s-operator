@@ -847,6 +847,9 @@ type CommonSpec struct {
 
 	ClusterFeatures *ClusterFeatures `json:"clusterFeatures,omitempty"`
 
+	// Controls cluster maintenance.
+	ClusterMaintenance *ClusterMaintenance `json:"clusterMaintenance,omitempty"`
+
 	// Default docker image for user jobs.
 	//+optional
 	JobImage *string `json:"jobImage,omitempty"`
@@ -981,6 +984,28 @@ type YtsaurusSpec struct {
 	UI *UISpec `json:"ui,omitempty"`
 }
 
+type ClusterShutdown string
+
+const (
+	ClusterShutdownNone ClusterShutdown = ""
+	// Shutdown compute plane: exec nodes and YQL agents.
+	ClusterShutdownCompute ClusterShutdown = "Compute"
+	// Shutdown everything.
+	ClusterShutdownEverything ClusterShutdown = "Everything"
+	// Shutdown everything except masters. Prepare for master cells reconfiguration.
+	ClusterShutdownExceptMasters ClusterShutdown = "ExceptMasters"
+	// Shutdown tablet nodes.
+	ClusterShutdownTablets ClusterShutdown = "Tablets"
+)
+
+type ClusterMaintenance struct {
+	// Shutdown defines which components are scaled down to zero replicas during cluster maintenance.
+	// Component configs are not changed: cluster functions are degraded accordingly.
+	//+kubebuilder:validation:Enum={"Compute","Everything","ExceptMasters","Tablets"}
+	Shutdown ClusterShutdown `json:"shutdown"`
+	// TODO: Add flags to stay in read-only, safe-mode, etc.
+}
+
 type ClusterState string
 
 const (
@@ -989,6 +1014,7 @@ const (
 	ClusterStatePreparing       ClusterState = "Preparing"
 	ClusterStateRunning         ClusterState = "Running"
 	ClusterStateReconfiguration ClusterState = "Reconfiguration"
+	ClusterStateMaintenance     ClusterState = "Maintenance"
 	ClusterStateUpdating        ClusterState = "Updating"
 	ClusterStateUpdateCanceled  ClusterState = "UpdateCanceled"
 	ClusterStateUpdateBlocked   ClusterState = "UpdateBlocked"
@@ -1015,15 +1041,13 @@ const (
 	UpdateStateWaitingForMasterExitReadOnly          UpdateState = "WaitingForMasterExitReadOnly"
 	UpdateStateWaitingForCypressPatch                UpdateState = "WaitingForCypressPatch"
 	UpdateStateWaitingForTabletCellsRecovery         UpdateState = "WaitingForTabletCellsRecovery"
-	UpdateStateWaitingForOpArchiveUpdatingPrepare    UpdateState = "WaitingForOpArchiveUpdatingPrepare"
 	UpdateStateWaitingForOpArchiveUpdate             UpdateState = "WaitingForOpArchiveUpdate"
-	UpdateStateWaitingForSidecarsInitializingPrepare UpdateState = "WaitingForSidecarsInitializingPrepare"
+	UpdateStateWaitingForSidecarsInitializingPrepare UpdateState = "WaitingForSidecarsInitializingPrepare" // TODO: Remove, it holds alignment.
 	UpdateStateWaitingForSidecarsInitialize          UpdateState = "WaitingForSidecarsInitialize"
 	UpdateStateWaitingForQTStateUpdatingPrepare      UpdateState = "WaitingForQTStateUpdatingPrepare"
 	UpdateStateWaitingForQTStateUpdate               UpdateState = "WaitingForQTStateUpdate"
 	UpdateStateWaitingForQAStateUpdatingPrepare      UpdateState = "WaitingForQAStateUpdatingPrepare"
 	UpdateStateWaitingForQAStateUpdate               UpdateState = "WaitingForQAStateUpdate"
-	UpdateStateWaitingForYqlaUpdatingPrepare         UpdateState = "WaitingForYqlaUpdatingPrepare"
 	UpdateStateWaitingForYqlaUpdate                  UpdateState = "WaitingForYqlaUpdate"
 	UpdateStateWaitingForSafeModeDisabled            UpdateState = "WaitingForSafeModeDisabled"
 	UpdateStateWaitingForTimbertruckPrepared         UpdateState = "WaitingForTimbertruckPrepared"

@@ -54,6 +54,10 @@ func (c *Ytsaurus) GetClusterFeatures() ytv1.ClusterFeatures {
 	return ptr.Deref(c.GetCommonSpec().ClusterFeatures, ytv1.ClusterFeatures{})
 }
 
+func (c *Ytsaurus) GetClusterMaintenance() ytv1.ClusterMaintenance {
+	return ptr.Deref(c.GetCommonSpec().ClusterMaintenance, ytv1.ClusterMaintenance{})
+}
+
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
 }
@@ -90,7 +94,7 @@ func (c *Ytsaurus) IsReadyToWork() bool {
 
 func (c *Ytsaurus) IsReadyToUpdate() bool {
 	switch c.GetClusterState() {
-	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked:
+	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked, ytv1.ClusterStateMaintenance:
 		return true
 	}
 	return false
@@ -123,6 +127,14 @@ func (c *Ytsaurus) IsUpdatingComponent(componentType consts.ComponentType, compo
 
 func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+}
+
+func (c *Ytsaurus) IsUpdateStatusConditionFalse(condition string) bool {
+	return meta.IsStatusConditionFalse(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+}
+
+func (c *Ytsaurus) GetUpdateStatusCondition(condition string) *metav1.Condition {
+	return meta.FindStatusCondition(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
 
 func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) {
@@ -209,6 +221,10 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 		return err
 	}
 	return nil
+}
+
+func (c *Ytsaurus) GetUpdateStateCompleteCondition(updateState ytv1.UpdateState) string {
+	return string(updateState) + consts.ConditionUpdateStateComplete
 }
 
 func BuildComponentsSummary(components []ytv1.Component) string {
