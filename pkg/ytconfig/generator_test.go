@@ -205,6 +205,22 @@ func TestGetExecNodeConfig(t *testing.T) {
 	}
 }
 
+func TestGetExecNodeConfigPerJobDirectory(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	g := NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, testClusterDomain)
+	spec := getExecNodeSpec(nil)
+	spec.JobProxyLogManager = &ytv1.JobProxyLogManagerSpec{
+		Mode: ytv1.JobProxyLoggingModePerJobDirectory,
+		Locations: []ytv1.JobProxyLogManagerLocationSpec{
+			{Path: "/mnt/disk1/logs"},
+			{Path: "/mnt/disk2/logs"},
+		},
+	}
+	cfg, err := g.GetExecNodeConfig(spec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetExecNodeConfigWithCri(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
