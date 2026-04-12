@@ -9,6 +9,7 @@ bin
 testbin/*
 cover.out
 report.xml
+test-results-history
 
 # Test binary, build with `go test -c`
 *.test

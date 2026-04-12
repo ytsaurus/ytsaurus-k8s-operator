@@ -41,6 +41,8 @@ import (
 	oformat "github.com/onsi/gomega/format"
 	otypes "github.com/onsi/gomega/types"
 
+	_ "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testresults"
+
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
