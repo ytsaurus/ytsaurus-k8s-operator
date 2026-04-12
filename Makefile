@@ -148,6 +148,8 @@ endif
 
 GO_TEST_FLAGS += -coverprofile cover.out
 
+export TEST_RESULTS_HISTORY = ${CURDIR}/test-results-history
+
 ##@ General
 
 .PHONY: all
