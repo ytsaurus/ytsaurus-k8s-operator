@@ -45,6 +45,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 )
@@ -60,7 +61,7 @@ var cancel context.CancelFunc
 
 func TestWebhooks(t *testing.T) {
 	RegisterFailHandler(Fail)
-
+	testutil.SetupResultsHistory()
 	RunSpecs(t, "Webhook Suite")
 }
 
