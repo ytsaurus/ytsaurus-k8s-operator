@@ -55,6 +55,7 @@ func NewGenerator(ytsaurus *ytv1.Ytsaurus, clusterDomain string) *Generator {
 func NewLocalNodeGenerator(ytsaurus *ytv1.Ytsaurus, resourceName string, clusterDomain string) *NodeGenerator {
 	var dataNodesInstanceCount int32
 	for _, dataNodes := range ytsaurus.Spec.DataNodes {
+		// FIXME: Should it look at MinReadyInstanceCount?
 		dataNodesInstanceCount += dataNodes.InstanceCount
 	}
 

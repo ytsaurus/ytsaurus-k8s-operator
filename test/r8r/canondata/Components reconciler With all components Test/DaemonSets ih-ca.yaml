@@ -3,7 +3,7 @@ kind: DaemonSet
 metadata:
   annotations:
     extra-pod-annotation: "true"
-    ytsaurus.tech/image-heater-targets: ca dnd ds end hp msc rp sch
+    ytsaurus.tech/image-heater-targets: ca dnd dnd-d ds end end-e hp msc rp sch
     ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
   creationTimestamp: null
