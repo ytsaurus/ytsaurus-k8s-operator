@@ -379,6 +379,17 @@ func (m *Master) createInitScript() (string, error) {
 		m.initMedia(),
 	}
 
+	if m.cfgen.GetMaxReplicationFactor() < 3 {
+		// To create system dyntables with correct replication factor (//sys/operations_archive/..., //sys/query_tracker/..., etc)
+		initCommands = append(
+			initCommands,
+			RunIfNonexistent(
+				"//@replication_factor",
+				fmt.Sprintf("/usr/bin/yt set //@replication_factor %d", m.cfgen.GetMaxReplicationFactor()),
+			),
+		)
+	}
+
 	initScript := RunIfCondition(
 		fmt.Sprintf("'%v' = 'true'", ytv1.ClusterStateInitializing == m.ytsaurus.GetClusterState()),
 		initCommands...,
