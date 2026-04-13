@@ -75,8 +75,15 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(tn.ytsaurus, tn) {
-			if status, err := handleBulkUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.component, tn.server, dry); status != nil {
-				return *status, err
+			switch getComponentUpdateStrategy(tn.ytsaurus, tn.GetType(), tn.GetShortName()) {
+			case ytv1.ComponentUpdateModeTypeOnDelete:
+				if status, err := handleOnDeleteUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.component, tn.server, dry); status != nil {
+					return *status, err
+				}
+			default:
+				if status, err := handleBulkUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.component, tn.server, dry); status != nil {
+					return *status, err
+				}
 			}
 		} else {
 			return ComponentStatusReadyAfter("Not updating component"), nil
