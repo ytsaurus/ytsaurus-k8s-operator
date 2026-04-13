@@ -1,6 +1,6 @@
 module github.com/ytsaurus/ytsaurus-k8s-operator/tool/golangci-lint
 
-go 1.24.6
+go 1.24.13
 
 tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 
