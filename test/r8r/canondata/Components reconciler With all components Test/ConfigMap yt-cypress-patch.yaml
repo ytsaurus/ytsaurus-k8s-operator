@@ -73,10 +73,16 @@ data:
   yt-data-node-cypress-patch.yson: |-
     {
     }
+  yt-data-node-d-cypress-patch.yson: |-
+    {
+    }
   yt-discovery-cypress-patch.yson: |-
     {
     }
   yt-exec-node-cypress-patch.yson: |-
+    {
+    }
+  yt-exec-node-e-cypress-patch.yson: |-
     {
     }
   yt-http-proxy-cypress-patch.yson: |-

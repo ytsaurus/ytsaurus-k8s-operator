@@ -621,12 +621,14 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithOverrides()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
-			ytBuilder.WithDataNodes()
+			ytBuilder.WithDataNodes(3, "")
+			ytBuilder.WithDataNodes(3, "d")
 			// FIXME(khlebnikov): Do not bootstrap tablet cell bundles when not asked.
 			// ytBuilder.WithTabletNodes()
 			ytBuilder.WithScheduler()
 			ytBuilder.WithControllerAgents()
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
+			ytBuilder.WithExecNodes(1, "e")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithStrawberryController()
 			ytBuilder.WithQueryTracker()
@@ -690,7 +692,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	Context("With CRI job environment", func() {
 		BeforeEach(func() {
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithOverrides()
 		})
@@ -700,7 +702,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With CRI job environment - CRI-O", Label("crio"), func() {
 		BeforeEach(func() {
 			ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 		})
 		It("Test", func(ctx context.Context) {})
@@ -708,7 +710,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	Context("With CRI and NVIDIA container runtime", func() {
 		BeforeEach(func() {
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithNvidiaContainerRuntime()
 			ytBuilder.WithOverrides()
@@ -719,7 +721,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With CRI and NVIDIA container runtime - CRI-O", Label("crio"), func() {
 		BeforeEach(func() {
 			ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithNvidiaContainerRuntime()
 		})

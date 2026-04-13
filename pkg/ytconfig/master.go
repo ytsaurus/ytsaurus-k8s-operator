@@ -86,6 +86,7 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 }
 
 func configureMasterServerCypressManager(maxReplicationFactor int32, c *CypressManager) {
+	// TODO: Add explicit cluster-wide configuration for default replication factors.
 	switch {
 	case maxReplicationFactor <= 1:
 		c.DefaultJournalReadQuorum = 1
