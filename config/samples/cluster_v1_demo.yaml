@@ -109,11 +109,11 @@ spec:
     - instanceCount: 3
 
   queryTrackers:
-    image: ghcr.io/ytsaurus/query-tracker:0.0.11-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
     instanceCount: 1
 
   yqlAgents:
-    image: ghcr.io/ytsaurus/query-tracker:0.0.11-relwithdebinfo
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
     instanceCount: 1
 
   schedulers:
@@ -127,7 +127,7 @@ spec:
     instanceCount: 1
 
   strawberry:
-    image: ghcr.io/ytsaurus/strawberry:0.0.15
+    image: ghcr.io/ytsaurus/strawberry:0.0.16
     resources:
       limits:
         memory: 100Mi
