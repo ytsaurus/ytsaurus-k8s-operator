@@ -191,6 +191,23 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		},
 	}
 
+	if cri.Runtime != nil {
+		var gpuProvider string
+		if cri.Runtime.Nvidia != nil {
+			gpuProvider = "nvidia"
+		}
+		if cri.Runtime.Metax != nil {
+			gpuProvider = "metax"
+		}
+		if gpuProvider != "" {
+			// for gpuagent_runner.sh
+			container.Env = append(container.Env, corev1.EnvVar{
+				Name:  "YT_GPU_PROVIDER",
+				Value: gpuProvider,
+			})
+		}
+	}
+
 	switch cri.Service {
 	case ytv1.CRIServiceContainerd:
 		configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)

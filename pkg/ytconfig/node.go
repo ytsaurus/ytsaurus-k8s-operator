@@ -708,7 +708,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	switch {
 	case spec.GPUManager != nil && spec.GPUManager.GPUInfoProvider != nil:
 		gpuInfoSource.Type = *spec.GPUManager.GPUInfoProvider
-	case spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && spec.JobEnvironment.Runtime.Nvidia != nil:
+	case spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && (spec.JobEnvironment.Runtime.Nvidia != nil || spec.JobEnvironment.Runtime.Metax != nil):
 		gpuInfoSource.Type = ytv1.GPUInfoProviderGPUAgent
 	default:
 		gpuInfoSource.Type = ytv1.GPUInfoProviderNvidiaSMI
