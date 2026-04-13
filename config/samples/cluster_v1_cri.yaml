@@ -2,6 +2,10 @@
 
 # This configuration is for experiments and is not suited to production as is.
 #
+# See notes below about:
+# - Enabling TmpFS in jobs
+# - Setup for Cgroup-v2
+#
 # Documentation for YTsaurus specification:
 # https://ytsaurus.tech/docs/en/admin-guide/prepare-spec
 #
@@ -289,17 +293,23 @@ spec:
           mountPath: /yt/exec-node-logs
         - name: node-data
           mountPath: /yt/node-data
-          # mountPropagation: Bidirectional  # Enable for tmpfs in jobs
+          # mountPropagation: Bidirectional  # Enable for TmpFS in jobs
+        - name: yt-scripts
+          mountPath: /yt/scripts
         # Bind mount and use containerd registry config from node.
         # - name: config-registry
         #   mountPath: /config/registry
         #   readOnly: true
 
-      # volumes:
-      #   - name: config-registry
-      #     hostPath:
-      #       path: /etc/containerd/certs.d
-      #       type: Directory
+      volumes:
+        - name: yt-scripts
+          configMap:
+            name: yt-scripts
+            defaultMode: 365 # 0o555
+      # - name: config-registry
+      #   hostPath:
+      #     path: /etc/containerd/certs.d
+      #     type: Directory
 
       volumeClaimTemplates:
         - metadata:
@@ -313,7 +323,7 @@ spec:
             name: exec-node-logs
           spec: *logsVolumeSpec
 
-      # privileged: true  # Enable for tmpfs in jobs
+      # privileged: true  # Enable for TmpFS in jobs
 
       jobResources:
         # Allocate resources for jobs container
@@ -332,6 +342,37 @@ spec:
           # criService: crio|containerd
           apiRetryTimeoutSeconds: 180
           # registryConfigPath: /config/registry
+          # Requried setup for Cgroup-v2
+          entrypointWrapper:
+            - "/yt/scripts/setup-cgroup-v2.sh"
+            - "tini"
+            - "--"
+      # Enable for TmpFS in jobs - umount leftover mounts on stop
+      # initContainers:
+      #   - |
+      #    name: umount-submounts
+      #    image: mirror.gcr.io/library/ubuntu:focal
+      #    resources:
+      #      requests:
+      #        cpu: "0"
+      #        memory: 0Mi
+      #      limits:
+      #        cpu: "2"
+      #        memory: 128Mi
+      #    securityContext:
+      #      privileged: true
+      #    restartPolicy: Always
+      #    terminationMessagePolicy: FallbackToLogsOnError
+      #    volumeMounts:
+      #      - name: yt-scripts
+      #        mountPath: /yt/scripts
+      #      - name: node-data
+      #        mountPath: /yt/node-data
+      #        mountPropagation: Bidirectional
+      #    command:
+      #      - /yt/scripts/wait-and-umount-submounts.sh
+      #    args:
+      #      - /yt/node-data/slots
 
   schedulers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
@@ -456,3 +497,47 @@ spec:
         memory: 100Mi
 
 ---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yt-scripts
+data:
+  # Setup cgroup namespace for Cgroup-v2 and move itself into sub-cgroup "init".
+  setup-cgroup-v2.sh: |
+    #!/bin/bash
+    set -eux
+    findmnt /sys/fs/cgroup || mount -t cgroup2 cgroup2 /sys/fs/cgroup
+    if [ -f /sys/fs/cgroup/cgroup.controllers ] ; then
+        if [ "$(cat /proc/self/cgroup)" != "0::/" ] ; then
+          umount /sys/fs/cgroup
+          exec unshare --cgroup "$0" "$@"
+        fi
+        mkdir /sys/fs/cgroup/init
+        echo $$ >/sys/fs/cgroup/init/cgroup.procs
+        controllers=($(</sys/fs/cgroup/cgroup.controllers))
+        echo ${controllers[@]/#/+} >/sys/fs/cgroup/cgroup.subtree_control
+    fi
+    exec "$@"
+
+  # Wait for SIGTERM and then umount submounts for paths from arguments.
+  wait-and-umount-submounts.sh: |
+    #!/bin/bash
+    set -eux -o pipefail
+    volumes=("$@")
+    do_umount_submounts() {
+      for submount in $(findmnt -lnR -o TARGET "$1" | tac) ; do
+        if [ "$submount" != "$1" ] ; then
+          umount --verbose "$submount" || return 1
+        fi
+      done
+      return 0
+    }
+    exec 3<> <(:)
+    trap "echo >&3" SIGTERM
+    read <&3
+    for volume in ${volumes[@]} ; do
+      while ! do_umount_submounts "$volume" ; do
+        sleep 1
+      done
+    done
