@@ -370,9 +370,9 @@ func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithBootstrap()
 	b.WithScheduler()
 	b.WithControllerAgents()
-	b.WithDataNodes()
-	b.WithTabletNodes()
-	b.WithExecNodes()
+	b.WithDataNodes(3, "")
+	b.WithTabletNodes(3, "")
+	b.WithExecNodes(1, "")
 }
 
 func (b *YtsaurusBuilder) WithOverrides() {
@@ -452,41 +452,22 @@ func (b *YtsaurusBuilder) WithAllInstancePodOptions(spec *ytv1.InstanceSpec) {
 	spec.Tolerations = []corev1.Toleration{{Key: "instance-toleration"}}
 }
 
-// TODO (l0kix2): merge with ytconfig build spec helpers.
-func (b *YtsaurusBuilder) WithDataNodes() {
-	b.WithDataNodesCount(3, nil)
-}
-
-func (b *YtsaurusBuilder) WithNamedDataNodes(name *string) {
-	b.WithDataNodesCount(3, name)
-}
-
-func (b *YtsaurusBuilder) WithDataNodesCount(count int32, name *string) {
-	dataNodeSpec := ytv1.DataNodesSpec{
+func (b *YtsaurusBuilder) WithDataNodes(count int32, name string) {
+	b.Ytsaurus.Spec.DataNodes = append(b.Ytsaurus.Spec.DataNodes, ytv1.DataNodesSpec{
 		InstanceSpec: b.CreateDataNodeInstanceSpec(count),
-	}
-	if name != nil {
-		dataNodeSpec.Name = *name
-	}
-	b.Ytsaurus.Spec.DataNodes = append(b.Ytsaurus.Spec.DataNodes, dataNodeSpec)
+		Name:         name,
+	})
 }
 
-func (b *YtsaurusBuilder) WithTabletNodes() {
-	b.WithTabletNodesCount(3)
+func (b *YtsaurusBuilder) WithTabletNodes(count int32, name string) {
+	b.Ytsaurus.Spec.TabletNodes = append(b.Ytsaurus.Spec.TabletNodes, ytv1.TabletNodesSpec{
+		InstanceSpec: b.CreateTabletNodeSpec(count),
+		Name:         name,
+	})
 }
 
-func (b *YtsaurusBuilder) WithTabletNodesCount(count int32) {
-	b.Ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{
-		{
-			InstanceSpec: b.CreateTabletNodeSpec(count),
-		},
-	}
-}
-
-func (b *YtsaurusBuilder) WithExecNodes() {
-	b.Ytsaurus.Spec.ExecNodes = []ytv1.ExecNodesSpec{
-		b.CreateExecNodeSpec(),
-	}
+func (b *YtsaurusBuilder) WithExecNodes(count int32, name string) {
+	b.Ytsaurus.Spec.ExecNodes = append(b.Ytsaurus.Spec.ExecNodes, b.CreateExecNodeSpec(count, name))
 }
 
 func (b *YtsaurusBuilder) WithScheduler() {
@@ -610,10 +591,11 @@ func getPortFromEnv(envvar string) *int32 {
 	return nil
 }
 
-func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
+func (b *YtsaurusBuilder) CreateExecNodeSpec(count int32, name string) ytv1.ExecNodesSpec {
 	return ytv1.ExecNodesSpec{
+		Name: name,
 		InstanceSpec: ytv1.InstanceSpec{
-			InstanceCount:         1,
+			InstanceCount:         count,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Resources:             *execNodeResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
@@ -804,7 +786,7 @@ func (b *YtsaurusBuilder) CreateRemoteExecNodes() *ytv1.RemoteExecNodes {
 				CoreImage: b.Images.Core,
 				JobImage:  ptr.To(b.Images.Job),
 			},
-			ExecNodesSpec: b.CreateExecNodeSpec(),
+			ExecNodesSpec: b.CreateExecNodeSpec(1, ""),
 		},
 	}
 }
