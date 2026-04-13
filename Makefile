@@ -444,7 +444,10 @@ helm-chart: manifests ## Generate helm chart.
 	$(YQ) '.name="$(OPERATOR_CHART_NAME_RELEASE)" | .version="$(OPERATOR_VERSION)" | .appVersion="$(OPERATOR_VERSION)"' <config/helm/Chart.yaml >$(OPERATOR_CHART)/Chart.yaml
 
 update-samples-image:
-	sed "s#$(firstword $(subst :, ,$(YTSAURUS_SAMPLE_IMAGE_CURRENT))):.*#${YTSAURUS_SAMPLE_IMAGE_CURRENT}#" -i config/samples/*.yaml
+	sed "s#$(firstword $(subst :, ,$(YTSAURUS_SAMPLE_IMAGE))):.*#${YTSAURUS_SAMPLE_IMAGE}#" -i config/samples/*.yaml
+	sed "s#$(firstword $(subst :, ,$(QUERY_TRACKER_SAMPLE_IMAGE))):.*#${QUERY_TRACKER_SAMPLE_IMAGE}#" -i config/samples/*.yaml
+	sed "s#$(firstword $(subst :, ,$(STRAWBERRY_SAMPLE_IMAGE))):.*#${STRAWBERRY_SAMPLE_IMAGE}#" -i config/samples/*.yaml
+	sed "s#$(firstword $(subst :, ,$(CHYT_SAMPLE_IMAGE))):.*#${CHYT_SAMPLE_IMAGE}#" -i config/samples/*.yaml
 
 ##@ Deployment
 
