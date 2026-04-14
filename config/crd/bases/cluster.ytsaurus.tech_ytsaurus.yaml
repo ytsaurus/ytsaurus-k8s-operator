@@ -9651,10 +9651,6 @@ spec:
               dnsPolicy:
                 description: DNSPolicy defines how DNS will be configured.
                 type: string
-              enableFullUpdate:
-                default: true
-                description: 'Deprecated: use updatePlan instead.'
-                type: boolean
               ephemeralCluster:
                 default: false
                 description: Allow prioritizing performance over data safety.
@@ -35215,18 +35211,6 @@ spec:
                       type: object
                   type: object
                 type: array
-              updateSelector:
-                description: 'Deprecated: use updatePlan instead.'
-                enum:
-                - ""
-                - Nothing
-                - MasterOnly
-                - DataNodesOnly
-                - TabletNodesOnly
-                - ExecNodesOnly
-                - StatelessOnly
-                - Everything
-                type: string
               useIpv4:
                 default: false
                 type: boolean

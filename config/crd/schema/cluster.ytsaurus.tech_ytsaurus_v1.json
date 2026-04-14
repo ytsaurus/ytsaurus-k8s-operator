@@ -11229,11 +11229,6 @@
           "description": "DNSPolicy defines how DNS will be configured.",
           "type": "string"
         },
-        "enableFullUpdate": {
-          "description": "Deprecated: use updatePlan instead.",
-          "type": "boolean",
-          "default": true
-        },
         "ephemeralCluster": {
           "description": "Allow prioritizing performance over data safety.",
           "type": "boolean",
@@ -41102,20 +41097,6 @@
               }
             }
           }
-        },
-        "updateSelector": {
-          "description": "Deprecated: use updatePlan instead.",
-          "type": "string",
-          "enum": [
-            "",
-            "Nothing",
-            "MasterOnly",
-            "DataNodesOnly",
-            "TabletNodesOnly",
-            "ExecNodesOnly",
-            "StatelessOnly",
-            "Everything"
-          ]
         },
         "useIpv4": {
           "type": "boolean",

@@ -647,16 +647,12 @@ func (r *baseValidator) validateCommonSpec(spec *ytv1.CommonSpec) field.ErrorLis
 	return allErrors
 }
 
-func (r *baseValidator) validateUpdateSelectors(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
+func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 	planPath := field.NewPath("spec").Child("updatePlan")
 	exclusiveClass := consts.ComponentClassUnspecified
 
 	if newYtsaurus.Spec.UpdatePlan != nil {
-		if len(newYtsaurus.Spec.UpdatePlan) == 0 {
-			allErrors = append(allErrors, field.Required(planPath, "updatePlan should not be empty"))
-		}
-
 		for i, entry := range newYtsaurus.Spec.UpdatePlan {
 			entryPath := planPath.Index(i)
 			if entry.Class != consts.ComponentClassUnspecified && (entry.Component.Type != "" || entry.Component.Name != "") {
@@ -771,7 +767,7 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	allErrors = append(allErrors, r.validateYQLAgents(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateUi(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateExistsYtsaurus(ctx, newYtsaurus)...)
-	allErrors = append(allErrors, r.validateUpdateSelectors(newYtsaurus)...)
+	allErrors = append(allErrors, r.validateUpdatePlan(newYtsaurus)...)
 
 	return allErrors
 }

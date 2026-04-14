@@ -309,9 +309,6 @@ linters:
       - path: validators
         text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
 
-      - path: controllers/ytsaurus_local_test.go
-        text: "SA1019: ytsaurusResource.Spec.EnableFullUpdate is deprecated"
-
       - path: pkg/ytconfig/generator.go
         text: "SA1019: .*\\.ExtraPodAnnotations is deprecated"
 

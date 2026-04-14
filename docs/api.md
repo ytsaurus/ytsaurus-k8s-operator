@@ -3015,29 +3015,6 @@ _Appears in:_
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
 
 
-#### UpdateSelector
-
-_Underlying type:_ _string_
-
-
-
-
-
-_Appears in:_
-- [YtsaurusSpec](#ytsaurusspec)
-
-| Field | Description |
-| --- | --- |
-| `` | UpdateSelectorUnspecified means that selector is disabled and would be ignored completely.<br /> |
-| `Nothing` | UpdateSelectorNothing means that no component could be updated.<br /> |
-| `MasterOnly` | UpdateSelectorMasterOnly means that only master could be updated.<br /> |
-| `DataNodesOnly` | UpdateSelectorTabletNodesOnly means that only data nodes could be updated<br /> |
-| `TabletNodesOnly` | UpdateSelectorTabletNodesOnly means that only tablet nodes could be updated<br /> |
-| `ExecNodesOnly` | UpdateSelectorExecNodesOnly means that only tablet nodes could be updated<br /> |
-| `StatelessOnly` | UpdateSelectorStatelessOnly means that only stateless components (everything but master, data nodes, and tablet nodes)<br />could be updated.<br /> |
-| `Everything` | UpdateSelectorEverything means that all components could be updated.<br />With this setting and if master or tablet nodes need update all the components would be updated.<br /> |
-
-
 #### UpdateState
 
 _Underlying type:_ _string_
@@ -3289,9 +3266,7 @@ _Appears in:_
 | `adminCredentials` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ | Setting to false disables all operator actions. Default: true. | true |  |
-| `enableFullUpdate` _boolean_ | Deprecated: use updatePlan instead. | true |  |
-| `updateSelector` _[UpdateSelector](#updateselector)_ | Deprecated: use updatePlan instead. |  | Enum: [ Nothing MasterOnly DataNodesOnly TabletNodesOnly ExecNodesOnly StatelessOnly Everything] <br /> |
-| `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Defines components which are allowed to update.<br />Must contain either single "class" item or several "component" items.<br />Default: update everything (unless defined deprecated updateSelector or enableFullUpdate). |  |  |
+| `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |

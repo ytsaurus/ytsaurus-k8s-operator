@@ -7,6 +7,10 @@ metadata:
 spec:
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
 
+  # Allow updating everything at once
+  updatePlan:
+    - class: Everything
+
   discovery:
     instanceCount: 1
 

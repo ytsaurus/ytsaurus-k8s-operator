@@ -940,17 +940,9 @@ type YtsaurusSpec struct {
 	//+kubebuilder:default:=true
 	IsManaged *bool `json:"isManaged,omitempty"`
 
-	// Deprecated: use updatePlan instead.
-	//+kubebuilder:default:=true
-	EnableFullUpdate *bool `json:"enableFullUpdate,omitempty"`
-
-	// Deprecated: use updatePlan instead.
-	//+kubebuilder:validation:Enum={"","Nothing","MasterOnly","DataNodesOnly","TabletNodesOnly","ExecNodesOnly","StatelessOnly","Everything"}
-	UpdateSelector UpdateSelector `json:"updateSelector,omitempty"`
-
 	// Defines components which are allowed to update.
-	// Must contain either single "class" item or several "component" items.
-	// Default: update everything (unless defined deprecated updateSelector or enableFullUpdate).
+	// Can contain either single "class" item or several "component" items.
+	// When empty: update nothing
 	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
@@ -1061,29 +1053,6 @@ type TabletCellBundleInfo struct {
 type BundleControllerInfo struct {
 	Disabled *bool `json:"disabled,omitempty"`
 }
-
-type UpdateSelector string
-
-const (
-	// UpdateSelectorUnspecified means that selector is disabled and would be ignored completely.
-	UpdateSelectorUnspecified UpdateSelector = ""
-	// UpdateSelectorNothing means that no component could be updated.
-	UpdateSelectorNothing UpdateSelector = "Nothing"
-	// UpdateSelectorMasterOnly means that only master could be updated.
-	UpdateSelectorMasterOnly UpdateSelector = "MasterOnly"
-	// UpdateSelectorTabletNodesOnly means that only data nodes could be updated
-	UpdateSelectorDataNodesOnly UpdateSelector = "DataNodesOnly"
-	// UpdateSelectorTabletNodesOnly means that only tablet nodes could be updated
-	UpdateSelectorTabletNodesOnly UpdateSelector = "TabletNodesOnly"
-	// UpdateSelectorExecNodesOnly means that only tablet nodes could be updated
-	UpdateSelectorExecNodesOnly UpdateSelector = "ExecNodesOnly"
-	// UpdateSelectorStatelessOnly means that only stateless components (everything but master, data nodes, and tablet nodes)
-	// could be updated.
-	UpdateSelectorStatelessOnly UpdateSelector = "StatelessOnly"
-	// UpdateSelectorEverything means that all components could be updated.
-	// With this setting and if master or tablet nodes need update all the components would be updated.
-	UpdateSelectorEverything UpdateSelector = "Everything"
-)
 
 type ComponentUpdateModeType string
 
@@ -1229,62 +1198,8 @@ func (r *Ytsaurus) GetUpdatePlan() []ComponentUpdateSelector {
 	if len(r.Spec.UpdatePlan) != 0 {
 		return r.Spec.UpdatePlan
 	}
-
-	// Generate effective plan from legacy options.
-	switch r.Spec.UpdateSelector {
-	case UpdateSelectorNothing:
-		return []ComponentUpdateSelector{{
-			Class: ComponentClassNothing,
-		}}
-	case UpdateSelectorMasterOnly:
-		return []ComponentUpdateSelector{{
-			Component: Component{
-				Type: MasterType,
-			},
-		}}
-	case UpdateSelectorDataNodesOnly:
-		return []ComponentUpdateSelector{{
-			Component: Component{
-				Type: DataNodeType,
-			},
-		}}
-	case UpdateSelectorTabletNodesOnly:
-		return []ComponentUpdateSelector{{
-			Component: Component{
-				Type: TabletNodeType,
-			},
-		}}
-	case UpdateSelectorExecNodesOnly:
-		return []ComponentUpdateSelector{{
-			Component: Component{
-				Type: ExecNodeType,
-			},
-		}}
-	case UpdateSelectorStatelessOnly:
-		return []ComponentUpdateSelector{{
-			Class: ComponentClassStateless,
-		}}
-	case UpdateSelectorEverything:
-		return []ComponentUpdateSelector{{
-			Class: ComponentClassEverything,
-		}}
-	case UpdateSelectorUnspecified:
-		if r.Spec.EnableFullUpdate != nil && !*r.Spec.EnableFullUpdate {
-			return []ComponentUpdateSelector{{
-				Class: ComponentClassStateless,
-			}}
-		}
-		// Else: fail back to default plan below.
-	default:
-		// Do nothing when seeing unknown update selector.
-		return []ComponentUpdateSelector{{
-			Class: ComponentClassNothing,
-		}}
-	}
-
-	// This is default update plan when no options are set.
 	return []ComponentUpdateSelector{{
-		Class: ComponentClassEverything,
+		Class: ComponentClassNothing,
 	}}
 }
 
