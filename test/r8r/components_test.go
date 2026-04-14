@@ -413,7 +413,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 					requestQueue = slices.Delete(requestQueue, index, index+1)
 				}
 				return true, err
-			}, "60s", "0ms").Should(BeFalse())
+			}, "60s", "0ms").Should(BeFalseBecause("reconcile loop should drain all requests"))
 
 			By("Fetching events", func() {
 				k8sEvents = fetchEvents()

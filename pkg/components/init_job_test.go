@@ -47,7 +47,7 @@ func syncJobUntilReady(job *InitJob) {
 		st, err := job.Sync(ctx, false)
 		Expect(err).NotTo(HaveOccurred())
 		return st.SyncStatus == SyncStatusReady
-	}, waitTimeout, waitTick).Should(BeTrue())
+	}, waitTimeout, waitTick).Should(BeTrueBecause("init job should reach SyncStatusReady"))
 }
 
 func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
@@ -112,7 +112,7 @@ var _ = Describe("InitJob", func() {
 					Namespace: namespace,
 				}, &batchJob)
 				return apierrors.IsNotFound(err)
-			}, waitTimeout, 100*time.Millisecond).Should(BeTrue())
+			}, waitTimeout, 100*time.Millisecond).Should(BeTrueBecause("init job should be deleted after restart"))
 
 			By("Wait for restart to be prepared")
 			Eventually(func() bool {
@@ -120,7 +120,7 @@ var _ = Describe("InitJob", func() {
 				err = job.Fetch(ctx)
 				Expect(err).NotTo(HaveOccurred())
 				return job.isRestartPrepared()
-			}, waitTimeout, waitTick).Should(BeTrue())
+			}, waitTimeout, waitTick).Should(BeTrueBecause("init job restart should be prepared"))
 		})
 	})
 
@@ -142,7 +142,7 @@ var _ = Describe("InitJob", func() {
 				err = job.Fetch(ctx)
 				Expect(err).NotTo(HaveOccurred())
 				return job.isRestartPrepared()
-			}, waitTimeout, waitTick).Should(BeTrue())
+			}, waitTimeout, waitTick).Should(BeTrueBecause("init job restart should be prepared after script update"))
 
 			// Imagine that new version of operator wants to set new init script for job.
 			job = newTestJob(ytsaurus)
