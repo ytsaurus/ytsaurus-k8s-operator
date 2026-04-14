@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	cryptorand "crypto/rand"
 	mathrand "math/rand"
@@ -328,8 +329,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			})
 
 			fetchEvents = func() (events []*corev1.Event) {
-				eventWatcher.Stop() // It also drains queue.
-				Expect(eventWatcher.ResultChan()).To(BeEmpty())
+				Eventually(eventWatcher.ResultChan).WithPolling(time.Millisecond).MustPassRepeatedly(100).To(BeEmpty())
+				eventWatcher.Stop()
 				for {
 					select {
 					case e := <-savedEvents:
