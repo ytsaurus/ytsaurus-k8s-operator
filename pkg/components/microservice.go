@@ -3,6 +3,8 @@ package components
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 
 	"k8s.io/utils/ptr"
 
@@ -71,7 +73,8 @@ func newMicroservice(
 		ytsaurus.GetResource().Spec.ConfigOverrides,
 	)
 
-	for fileName, generator := range generators {
+	for _, fileName := range slices.Sorted(maps.Keys(generators)) {
+		generator := generators[fileName]
 		configs.AddGenerator(fileName, generator.Format, generator.Generator)
 	}
 
