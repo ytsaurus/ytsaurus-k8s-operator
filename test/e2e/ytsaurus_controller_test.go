@@ -762,6 +762,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					By("Setting old core image for testing upgrade")
 					ytsaurus.Spec.CoreImage = oldImage
+					By("Setting ClassEverything for the update plan")
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				})
 
 				It("Triggers cluster update", Label(newEpoch), Label(newVersion), func(ctx context.Context) {
@@ -806,9 +808,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		Context("Test update plan selector", Label("plan", "selector"), func() {
 
-			It("Should be updated according to UpdateSelector=Everything", func(ctx context.Context) {
+			It("Should be updated according to class=ComponentClassEverything", func(ctx context.Context) {
 
-				By("Run cluster update with selector: class=Nothing")
+				By("Run cluster update with class=Nothing")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
@@ -832,7 +834,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"pods shouldn't be recreated when update is blocked",
 				)
 
-				By("Update cluster update with selector: class=Everything")
+				By("Update cluster update with class=Everything")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				UpdateObject(ctx, ytsaurus)
 
@@ -867,9 +869,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Unchanged).To(BeEmpty(), "unchanged")
 			})
 
-			It("Should be updated according to UpdateSelector=TabletNodesOnly,ExecNodesOnly", func(ctx context.Context) {
+			It("Should be updated according to Component=TabletNodesOnly,ExecNodesOnly", func(ctx context.Context) {
 
-				By("Run cluster update with selector:ExecNodesOnly")
+				By("Run cluster update with component:Type:ExecNodeType")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.ExecNodeType,
@@ -883,7 +885,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				By("Wait cluster update with selector:ExecNodesOnly complete")
+				By("Wait cluster update with component:Type:ExecNodeType complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
@@ -899,7 +901,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("end-0"), "updated")
 
-				By("Run cluster update with selector:TabletNodesOnly")
+				By("Run cluster update with component:Type:TabletNodeType")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.TabletNodeType,
@@ -912,7 +914,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				By("Wait cluster update with selector:TabletNodesOnly complete")
+				By("Wait cluster update with component:Type:TabletNodeType complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
@@ -929,9 +931,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Updated).To(ConsistOf("tnd-0", "tnd-1", "tnd-2"), "updated")
 			})
 
-			It("Should be updated according to UpdateSelector=MasterOnly,StatelessOnly", func(ctx context.Context) {
+			It("Should be updated according to UpdatePlan=MasterOnly,ComponentClassStateless", func(ctx context.Context) {
 
-				By("Run cluster update with selector:MasterOnly")
+				By("Run cluster update with component:Type:MasterType")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.MasterType,
@@ -945,7 +947,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				By("Wait cluster update with selector:MasterOnly complete")
+				By("Wait cluster update with component:Type:MasterType complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
@@ -961,7 +963,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("ms-0"), "updated")
 
-				By("Run cluster update with selector:StatelessOnly")
+				By("Run cluster update with class:ComponentClassStateless")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Class: consts.ComponentClassStateless,
 				}}
@@ -979,7 +981,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				By("Wait cluster update with selector:StatelessOnly complete")
+				By("Wait cluster update with class:ComponentClassStateless complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
@@ -1012,7 +1014,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
 				podsBeforeUpdate = getComponentPods(ctx, namespace)
 
-				By("Run cluster update with selector targeting only second data node group")
+				By("Run cluster update with update plan targeting only second data node group")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.DataNodeType,
@@ -1027,7 +1029,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).ToNot(BeEmpty())
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
-				By("Wait cluster update with selector:DataNodesOnly complete")
+				By("Wait cluster update with component:DataNodeType:dn-2 complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 				Expect(ytsaurus).Should(HaveObservedGeneration())
 				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponents).To(BeEmpty())
@@ -1058,6 +1060,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Adding CRI job environment")
 				ytBuilder.WithCRIJobEnvironment()
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{Component: ytv1.Component{Type: consts.DiscoveryType}},
+					{Component: ytv1.Component{Type: consts.ExecNodeType}},
+				}
 			})
 
 			It("ConfigOverrides update should trigger reconciliation", func(ctx context.Context) {
@@ -1122,6 +1128,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update")
 				podsBeforeUpdate := getComponentPods(ctx, namespace)
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				UpdateObject(ctx, ytsaurus)
 
 				// FIXME: Cluster state oscillates.
@@ -1173,6 +1180,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			BeforeEach(func() {
 				ytBuilder.WithTabletNodes()
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 			})
 
 			It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func(ctx context.Context) {
@@ -1214,6 +1222,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// FIXME: Why?
 				By("Removing tablet nodes")
 				ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 			})
 
 			It("Should run and try to update Ytsaurus with lvc", func(ctx context.Context) {

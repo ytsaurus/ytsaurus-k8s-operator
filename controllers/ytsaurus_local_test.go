@@ -154,8 +154,8 @@ var _ = Describe("Ytsaurus Controller", func() {
 
 				imageUpdated := testYtsaurusImage + "-updated"
 				ytsaurusResource.Spec.Discovery.Image = &imageUpdated
-				GinkgoWriter.Println("[ Updating discovery with disabled full update ]")
-				ytsaurusResource.Spec.EnableFullUpdate = ptr.To(false)
+				GinkgoWriter.Println("[ Updating discovery with stateless update plan ]")
+				ytsaurusResource.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: ytv1.ComponentClassStateless}}
 				testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
 				waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
@@ -186,8 +186,8 @@ var _ = Describe("Ytsaurus Controller", func() {
 
 				imageUpdated := testYtsaurusImage + "-updated"
 				ytsaurusResource.Spec.PrimaryMasters.Image = &imageUpdated
-				GinkgoWriter.Println("[ Updating master with disabled full update (should block) ]")
-				ytsaurusResource.Spec.EnableFullUpdate = ptr.To(false)
+				GinkgoWriter.Println("[ Updating master with stateless update plan (should block) ]")
+				ytsaurusResource.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: ytv1.ComponentClassStateless}}
 				testutil.UpdateObject(h, &ytv1.Ytsaurus{}, &ytsaurusResource)
 
 				waitClusterState(h, ytv1.ClusterStateUpdateBlocked, ytsaurusResource.Generation)

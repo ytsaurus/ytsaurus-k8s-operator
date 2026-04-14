@@ -7,6 +7,10 @@ metadata:
 spec:
   coreImage: ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2024-12-06-ee9e61d820c81624e2562edca351e9bc8bdd7e2e
 
+  # Allow updating everything at once
+  updatePlan:
+    - class: Everything
+
   discovery:
     instanceCount: 1
 
