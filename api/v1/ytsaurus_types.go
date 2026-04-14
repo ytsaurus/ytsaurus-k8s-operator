@@ -241,9 +241,14 @@ type JobProxyLogManagerLocationSpec struct {
 
 type JobProxyLogManagerSpec struct {
 	//+kubebuilder:default:=simple
-	Mode JobProxyLoggingMode `json:"mode,omitempty"`
-	//+optional
+	Mode      JobProxyLoggingMode              `json:"mode,omitempty"`
 	Locations []JobProxyLogManagerLocationSpec `json:"locations,omitempty"`
+	//+kubebuilder:default:=2
+	ShardingKeyLength int `json:"sharding_key_length,omitempty"`
+	//+kubebuilder:default:=604800000
+	LogsStoragePeriod int `json:"logs_storage_period,omitempty"`
+	//+kubebuilder:default:=4
+	DirectoryTraversalConcurrency int `json:"directory_traversal_concurrency,omitempty"`
 }
 
 // LogWriterType string describes types of possible log writers.

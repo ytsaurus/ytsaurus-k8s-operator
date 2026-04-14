@@ -266,11 +266,12 @@ type JobProxyLogManagerLocation struct {
 }
 
 type JobProxyLogManager struct {
-	Mode string `yson:"mode"`
+	Mode string `yson:"mode,omitempty"`
 
-	// simple mode
+	// only for `simple` mode
 	Directory string `yson:"directory,omitempty"`
-	// per_job_directory mode
+
+	// only for `per_job_directory` mode
 	Locations []JobProxyLogManagerLocation `yson:"locations,omitempty"`
 
 	ShardingKeyLength             int           `yson:"sharding_key_length"`
@@ -746,10 +747,11 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	}
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
 	jobProxyLogging := jobProxyLoggingBuilder.logging
+
 	c.ExecNode.JobProxy.JobProxyLogging = JobProxyLogging{
 		Logging:            jobProxyLogging,
 		LogManagerTemplate: jobProxyLogging,
-		Mode:               "simple",
+		Mode:               string(spec.JobProxyLogManager.Mode),
 	}
 
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.RequireAuthentication = true
@@ -757,24 +759,27 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 
 	// Configure JobProxyLogManager
 	jplm := &c.ExecNode.JobProxyLogManager
-	jplm.ShardingKeyLength = 2
-	jplm.LogsStoragePeriod = yson.Duration(7 * 24 * time.Hour) // 1 week
-	jplm.DirectoryTraversalConcurrency = 4
+	jplm.ShardingKeyLength = spec.JobProxyLogManager.ShardingKeyLength
+	jplm.LogsStoragePeriod = yson.Duration(spec.JobProxyLogManager.LogsStoragePeriod)
+	jplm.DirectoryTraversalConcurrency = spec.JobProxyLogManager.DirectoryTraversalConcurrency
 	jplm.LogDump = LogDump{
-		BufferSize:    1024 * 1024, // 1MB
+		BufferSize:    1024 * 1024,
 		LogWriterName: "debug",
 	}
 
-	if spec.JobProxyLogManager != nil && spec.JobProxyLogManager.Mode == ytv1.JobProxyLoggingModePerJobDirectory {
-		jplm.Mode = "per_job_directory"
-		for _, loc := range spec.JobProxyLogManager.Locations {
+	switch spec.JobProxyLogManager.Mode {
+	case ytv1.JobProxyLoggingModeSimple:
+		jplm.Mode = string(ytv1.JobProxyLoggingModeSimple)
+		jplm.Directory = ChooseJobProxyLoggingPath(&spec.InstanceSpec)
+	case ytv1.JobProxyLoggingModePerJobDirectory:
+		jplm.Mode = string(ytv1.JobProxyLoggingModePerJobDirectory)
+		for _, location := range spec.JobProxyLogManager.Locations {
 			jplm.Locations = append(jplm.Locations, JobProxyLogManagerLocation{
-				Path: loc.Path,
+				Path: location.Path,
 			})
 		}
-	} else {
-		jplm.Mode = "simple"
-		jplm.Directory = ChooseJobProxyLoggingPath(&spec.InstanceSpec)
+	default:
+		return c, fmt.Errorf("JobProxyLogManager misconfigured")
 	}
 
 	// TODO(khlebnikov): Drop legacy fields depending on ytsaurus version.
