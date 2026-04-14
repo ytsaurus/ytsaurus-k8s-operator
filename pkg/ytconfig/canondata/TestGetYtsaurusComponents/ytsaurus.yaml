@@ -44,6 +44,8 @@ spec:
     resources: {}
   execNodes:
   - instanceCount: 50
+    jobProxyLogManager:
+      mode: simple
     jobProxyLoggers:
     - categoriesFilter:
         type: exclude

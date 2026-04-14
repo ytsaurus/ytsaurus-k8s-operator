@@ -1046,6 +1046,9 @@ func getExecNodeSpec(jobResources *corev1.ResourceRequirements) ytv1.ExecNodesSp
 		},
 		JobResources:     jobResources,
 		ClusterNodesSpec: testClusterNodeSpec,
+		JobProxyLogManager: &ytv1.JobProxyLogManagerSpec{
+			Mode: ytv1.JobProxyLoggingModeSimple,
+		},
 		JobProxyLoggers: []ytv1.TextLoggerSpec{
 			{
 				BaseLoggerSpec: ytv1.BaseLoggerSpec{

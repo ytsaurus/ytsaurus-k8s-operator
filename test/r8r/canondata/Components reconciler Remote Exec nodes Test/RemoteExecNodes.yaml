@@ -10,6 +10,13 @@ spec:
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
   instanceCount: 1
   jobImage: mirror.gcr.io/library/python:3.12-slim
+  jobProxyLogManager:
+    directoryTraversalConcurrency: 4
+    locations:
+    - path: /yt/disk0/exec-node-logs
+    logsStoragePeriod: 604800000
+    mode: per_job_directory
+    shardingKeyLength: 2
   jobResources:
     limits:
       cpu: "4"

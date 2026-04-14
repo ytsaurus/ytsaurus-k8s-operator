@@ -10510,31 +10510,29 @@ spec:
                           type: integer
                       type: object
                     jobProxyLogManager:
-                      description: JobProxyLogManagerSpec configures JobProxyLogManager
-                        behaviour.
                       properties:
+                        directoryTraversalConcurrency:
+                          default: 2
+                          type: integer
                         locations:
-                          description: List of disk locations for per_job_directory
-                            mode.
                           items:
-                            description: JobProxyLogManagerLocationSpec defines a
-                              single disk location for...
                             properties:
                               path:
-                                description: Path to the directory on disk for job
-                                  proxy logs.
                                 type: string
                             required:
                             - path
                             type: object
                           type: array
+                        logsStoragePeriod:
+                          type: integer
                         mode:
-                          default: simple
-                          description: 'Logging mode: simple (default) or per_job_directory.'
+                          default: per_job_directory
                           enum:
                           - simple
                           - per_job_directory
                           type: string
+                        shardingKeyLength:
+                          type: integer
                       type: object
                     jobProxyLoggers:
                       items:

@@ -10514,6 +10514,31 @@ spec:
                             default is 5 per CPU.
                           type: integer
                       type: object
+                    jobProxyLogManager:
+                      properties:
+                        directoryTraversalConcurrency:
+                          default: 2
+                          type: integer
+                        locations:
+                          items:
+                            properties:
+                              path:
+                                type: string
+                            required:
+                            - path
+                            type: object
+                          type: array
+                        logsStoragePeriod:
+                          type: integer
+                        mode:
+                          default: per_job_directory
+                          enum:
+                          - simple
+                          - per_job_directory
+                          type: string
+                        shardingKeyLength:
+                          type: integer
+                      type: object
                     jobProxyLoggers:
                       items:
                         properties:

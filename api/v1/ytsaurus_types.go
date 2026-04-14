@@ -227,7 +227,6 @@ const (
 	LogLevelError   LogLevel = "error"
 )
 
-// JobProxyLoggingMode describes the logging mode for JobProxyLogManager.
 // +kubebuilder:validation:Enum=simple;per_job_directory
 type JobProxyLoggingMode string
 
@@ -236,20 +235,21 @@ const (
 	JobProxyLoggingModePerJobDirectory JobProxyLoggingMode = "per_job_directory"
 )
 
-// JobProxyLogManagerLocationSpec defines a single disk location for per_job_directory mode.
 type JobProxyLogManagerLocationSpec struct {
-	// Path to the directory on disk for job proxy logs.
 	Path string `json:"path"`
 }
 
-// JobProxyLogManagerSpec configures JobProxyLogManager behaviour.
 type JobProxyLogManagerSpec struct {
-	// Logging mode: simple (default) or per_job_directory.
-	//+kubebuilder:default:=simple
+	//+kubebuilder:default:=per_job_directory
 	Mode JobProxyLoggingMode `json:"mode,omitempty"`
-	// List of disk locations for per_job_directory mode.
 	//+optional
 	Locations []JobProxyLogManagerLocationSpec `json:"locations,omitempty"`
+	//+optional
+	ShardingKeyLength int `json:"shardingKeyLength,omitempty"`
+	//+optional
+	LogsStoragePeriod int `json:"logsStoragePeriod,omitempty"`
+	//+kubebuilder:default:=2
+	DirectoryTraversalConcurrency int `json:"directoryTraversalConcurrency,omitempty"`
 }
 
 // LogWriterType string describes types of possible log writers.

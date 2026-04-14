@@ -197,7 +197,7 @@ data:
                         ];
                         "flush_period"=3000;
                     };
-                    mode=simple;
+                    mode="per_job_directory";
                 };
             };
             "job_proxy_authentication_manager"={
@@ -243,10 +243,15 @@ data:
                 "flush_period"=3000;
             };
             "job_proxy_log_manager"={
-                mode=simple;
-                directory="/var/log/job-proxy";
+                locations=[
+                    {
+                        path="/yt/disk0/exec-node-logs";
+                        "disk_health_checker"={
+                        };
+                    };
+                ];
                 "sharding_key_length"=2;
-                "logs_storage_period"=604800000;
+                "logs_storage_period"=604;
                 "directory_traversal_concurrency"=4;
                 "log_dump"={
                     "buffer_size"=1048576;
