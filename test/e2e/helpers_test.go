@@ -743,3 +743,21 @@ func restartPod(ctx context.Context, namespace, name string) {
 		HaveField("Status.Phase", Equal(corev1.PodRunning)),
 	))
 }
+
+func findContainer(containers []corev1.Container, name string) *corev1.Container {
+	for i := range containers {
+		if containers[i].Name == name {
+			return &containers[i]
+		}
+	}
+	return nil
+}
+
+func findVolumeMount(volumeMounts []corev1.VolumeMount, name string) *corev1.VolumeMount {
+	for i := range volumeMounts {
+		if volumeMounts[i].Name == name {
+			return &volumeMounts[i]
+		}
+	}
+	return nil
+}

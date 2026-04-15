@@ -76,6 +76,11 @@ func NewRemoteExecNodes(
 
 func (n *RemoteExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if n.NeedSync() {
+		if !dry {
+			if err := n.doBuildBase(); err != nil {
+				return ComponentStatusBlockedBy("cannot build exec node spec"), err
+			}
+		}
 		return n.doSyncBase(ctx, dry)
 	}
 
