@@ -372,7 +372,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			}, bootstrapTimeout, pollInterval).Should(Succeed())
 			Expect(caBundleCertificates).ToNot(BeEmpty())
 			rootCAs := x509.NewCertPool()
-			Expect(rootCAs.AppendCertsFromPEM(caBundleCertificates)).To(BeTrue())
+			Expect(rootCAs.AppendCertsFromPEM(caBundleCertificates)).To(BeTrueBecause("CA bundle certificates should be parsed successfully"))
 			httpTransport.TLSClientConfig = &tls.Config{
 				RootCAs: rootCAs,
 			}
@@ -478,7 +478,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			By("Checking YTsaurus HTTP client", func() {
 				// NOTE: NodeExists retries - see ReadRetryParams.
-				Expect(ytClient.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrueBecause("root node should exist via HTTP client"))
 				// NOTE: WhoAmI right now does not retry.
 				Eventually(ctx, func(ctx context.Context) (*yt.WhoAmIResult, error) {
 					return ytClient.WhoAmI(ctx, nil)
@@ -496,7 +496,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			By("Checking YTsaurus HTTPS client", func() {
 				// NOTE: NodeExists retries - see ReadRetryParams.
-				Expect(ytClientHTTPS.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrue())
+				Expect(ytClientHTTPS.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrueBecause("root node should exist via HTTPS client"))
 				// NOTE: WhoAmI right now does not retry.
 				Eventually(ctx, func(ctx context.Context) (*yt.WhoAmIResult, error) {
 					return ytClientHTTPS.WhoAmI(ctx, nil)
@@ -550,7 +550,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		ytRPCClient = getYtRPCClient(httpClient, ytProxyAddress, ytRPCProxyAddress)
 
 		By("Checking RPC proxy is working")
-		Expect(ytRPCClient.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrue())
+		Expect(ytRPCClient.NodeExists(ctx, ypath.Path("/"), nil)).To(BeTrueBecause("root node should exist via RPC client"))
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -1105,7 +1105,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					var value any
 					err := ytClient.GetNode(ctx, ypath.Path("//sys/scheduler/config/spec_template/issue_temporary_token"), &value, nil)
 					return value, err
-				}, upgradeTimeout, pollInterval).Should(BeTrue())
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("scheduler config issue_temporary_token should be set"))
 			})
 
 		}) // update overrides
@@ -1192,7 +1192,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						return false
 					}
 					return len(notGoodBundles) == 0
-				}, upgradeTimeout, pollInterval).Should(BeTrue())
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all tablet cell bundles should be in good health"))
 
 				By("Ban all tablet nodes")
 				for i := range ytsaurus.Spec.TabletNodes[0].InstanceCount {
@@ -1207,7 +1207,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						return false
 					}
 					return len(notGoodBundles) > 0
-				}, reactionTimeout, pollInterval).Should(BeTrue())
+				}, reactionTimeout, pollInterval).Should(BeTrueBecause("some tablet cell bundles should not be in good health after banning"))
 
 				runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 			})
@@ -1252,7 +1252,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						return false
 					}
 					return lvcCount > 0
-				}, reactionTimeout, pollInterval).Should(BeTrue())
+				}, reactionTimeout, pollInterval).Should(BeTrueBecause("lost vital chunks count should be greater than zero after banning data nodes"))
 
 				runImpossibleUpdateAndRollback(ytsaurus, ytClient)
 			})
@@ -1267,7 +1267,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should run with query tracker and check that query tracker rpc address set up correctly", func(ctx context.Context) {
 				By("Check that query tracker channel exists in cluster_connection")
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/query_tracker/stages/production/channel"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/query_tracker/stages/production/channel"), nil)).Should(BeTrueBecause("query tracker channel should exist in cluster_connection"))
 			})
 
 		}) // update query-tracker
@@ -1281,25 +1281,25 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should run with yql agent and check that yql agent channel options set up correctly", func(ctx context.Context) {
 
 				By("Check that yql agent channel exists in cluster_connection")
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel"), nil)).Should(BeTrueBecause("yql agent channel should exist in cluster_connection"))
 				result := true
 				Expect(ytClient.GetNode(ctx, ypath.Path("//sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address"), &result, nil)).Should(Succeed())
-				Expect(result).Should(BeFalse())
+				Expect(result).Should(BeFalseBecause("disable_balancing_on_single_address should be false"))
 
 				By("Check that access control object namespace 'queries' exists")
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries"), nil)).Should(BeTrueBecause("access control object namespace queries should exist"))
 
 				By("Check that access control object 'nobody' in namespace 'queries' exists")
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/nobody"), nil)).Should(BeTrueBecause("access control object nobody in namespace queries should exist"))
 
 				By("Check that access control object 'everyone' in namespace 'queries' exists")
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone"), nil)).Should(BeTrueBecause("access control object everyone in namespace queries should exist"))
 
 				By("Check that access control object 'everyone-use' in namespace 'queries' exists")
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-use"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-use"), nil)).Should(BeTrueBecause("access control object everyone-use in namespace queries should exist"))
 
 				By("Check that access control object 'everyone-share' in namespace 'queries' exists")
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-share"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/access_control_object_namespaces/queries/everyone-share"), nil)).Should(BeTrueBecause("access control object everyone-share in namespace queries should exist"))
 
 				By("Check that access control object namespace 'queries' allows users to create children and owners to do everything")
 				queriesAcl := []map[string]interface{}{}
@@ -1361,8 +1361,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			})
 
 			It("Should run with queue agent", func(ctx context.Context) {
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/queue_agents/queues"), nil)).Should(BeTrue())
-				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/queue_agents/consumers"), nil)).Should(BeTrue())
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/queue_agents/queues"), nil)).Should(BeTrueBecause("queue_agents/queues node should exist"))
+				Expect(ytClient.NodeExists(ctx, ypath.Path("//sys/queue_agents/consumers"), nil)).Should(BeTrueBecause("queue_agents/consumers node should exist"))
 			})
 
 		}) // update queue-agent
@@ -1495,7 +1495,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						return false
 					}
 					return isTableCellHealthGood
-				}, upgradeTimeout, pollInterval).Should(BeTrue())
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("tablet cell should be in good health"))
 
 				By("Create a dynamic table on a remote tablet node")
 
@@ -1515,7 +1515,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						return false
 					}
 					return len(notGoodBundles) == 0
-				}, upgradeTimeout, pollInterval).Should(BeTrue())
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all tablet cell bundles should be in good health"))
 
 				By("Mounting the dynamic table")
 				errMount := ytClient.MountTable(ctx, ypath.Path(dynamicTableTest), &yt.MountTableOptions{})
@@ -1527,7 +1527,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						return false
 					}
 					return isTableMounted
-				}, upgradeTimeout, pollInterval).Should(BeTrue())
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("dynamic table should be in mounted state"))
 
 				By("Inserting a row into dynamic table")
 				Eventually(func(g Gomega) {
@@ -1705,7 +1705,7 @@ exec "$@"`
 				Expect(err).Should(Succeed())
 
 				_, err = cli.NodeExists(ctx, ypath.Path("/"), nil)
-				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrue())
+				Expect(yterrors.ContainsErrorCode(err, yterrors.CodeRPCAuthenticationError)).Should(BeTrueBecause("unauthenticated RPC request should produce CodeRPCAuthenticationError"))
 
 				By("Checking RPC proxy works with token")
 				cli = getYtRPCClient(httpClient, ytProxyAddress, ytRPCProxyAddress)
@@ -1746,21 +1746,21 @@ exec "$@"`
 				body, err := io.ReadAll(rsp.Body)
 				Expect(err).Should(Succeed())
 
-				Expect(json.Valid(body)).Should(BeTrue())
+				Expect(json.Valid(body)).Should(BeTrueBecause("monitoring response body should be valid JSON"))
 
 				var parsedBody map[string]any
 				Expect(json.Unmarshal(body, &parsedBody)).Should(Succeed())
 
 				sensors, ok := parsedBody["sensors"].([]any)
-				Expect(ok).Should(BeTrue())
+				Expect(ok).Should(BeTrueBecause("parsed body should contain sensors as []any"))
 				Expect(sensors).ShouldNot(BeEmpty())
 
 				sensor, ok := sensors[0].(map[string]any)
-				Expect(ok).Should(BeTrue())
+				Expect(ok).Should(BeTrueBecause("sensor should be a map[string]any"))
 				Expect("labels").Should(BeKeyOf(sensor))
 
 				labels, ok := sensor["labels"].(map[string]any)
-				Expect(ok).Should(BeTrue())
+				Expect(ok).Should(BeTrueBecause("sensor labels should be a map[string]any"))
 				Expect("host").Should(BeKeyOf(labels))
 				Expect("pod").Should(BeKeyOf(labels))
 				// We don not check the actual value, since it is something weird in our testing setup.
@@ -1881,7 +1881,7 @@ exec "$@"`
 						if !conn.Encrypted && component.Type == consts.RpcProxyType {
 							continue
 						}
-						Expect(conn.Encrypted).To(BeTrue(), "connection %q between %q and %q band %q", connID, component.Address, conn.Address, conn.MultiplexingBand)
+						Expect(conn.Encrypted).To(BeTrueBecause("connection %q between %q and %q band %q should be encrypted", connID, component.Address, conn.Address, conn.MultiplexingBand))
 					}
 				}
 			})
@@ -1911,7 +1911,7 @@ exec "$@"`
 				By("Waiting http proxy", func() {
 					Eventually(func(ctx context.Context) (bool, error) {
 						return ytClient.NodeExists(ctx, ypath.Path("/"), nil)
-					}, bootstrapTimeout, pollInterval, ctx).MustPassRepeatedly(5).Should(BeTrue())
+					}, bootstrapTimeout, pollInterval, ctx).MustPassRepeatedly(5).Should(BeTrueBecause("root node should exist via HTTP proxy after certificate reissue"))
 				})
 
 				// FIXME(khlebnikov): Workaround for DNS issues inside cluster.
@@ -2031,7 +2031,7 @@ exec "$@"`
 							}
 						}
 						return true
-					}, upgradeTimeout, pollInterval).Should(BeTrue())
+					}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all %s pods should be on the new revision %s", stsName, updateRevision))
 
 					checkClusterHealth(ctx, ytClient)
 					checkChunkLocations(ytClient)
@@ -2106,7 +2106,7 @@ exec "$@"`
 								current.Status.UpdateRevision != "" &&
 								current.Status.UpdateRevision != current.Status.CurrentRevision
 						},
-						BeTrue(),
+						BeTrueBecause("StatefulSet %s should have update revision different from current revision", stsName),
 					))
 
 					oldRev := sts.Status.CurrentRevision
@@ -2120,7 +2120,7 @@ exec "$@"`
 							}
 						}
 						return true
-					}, 10*time.Second).Should(BeTrue())
+					}, 10*time.Second).Should(BeTrueBecause("all %s pods should remain on old revision %s", stsName, oldRev))
 
 					By("Manually delete component pods")
 					for name := range podsBeforeUpdate {
@@ -2159,7 +2159,7 @@ exec "$@"`
 							}
 						}
 						return true
-					}, upgradeTimeout, pollInterval).Should(BeTrue())
+					}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all %s pods should be on the new revision %s", stsName, updateRevision))
 				})
 			},
 			Entry("update scheduler", Label(consts.GetStatefulSetPrefix(consts.SchedulerType)), consts.SchedulerType, consts.GetStatefulSetPrefix(consts.SchedulerType)),
@@ -2190,7 +2190,7 @@ exec "$@"`
 							execNode.VolumeMounts[i].MountPropagation = ptr.To(corev1.MountPropagationBidirectional)
 							foundNodeDataMount = true
 						}
-						Expect(foundNodeDataMount).To(BeTrue(), "node-data volume mount")
+						Expect(foundNodeDataMount).To(BeTrueBecause("found node-data volume mount"))
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -2236,7 +2236,7 @@ exec "$@"`
 
 							return true
 						},
-						BeTrue(),
+						BeTrueBecause("StatefulSet %s should have RollingUpdate strategy with correct partition and maxUnavailable", stsName),
 					))
 
 					if componentType == consts.ExecNodeType {
@@ -2250,14 +2250,14 @@ exec "$@"`
 							for _, initContainer := range podSpec.InitContainers {
 								g.Expect(initContainer.SecurityContext).ToNot(BeNil(), initContainer.Name)
 								g.Expect(initContainer.SecurityContext.Privileged).ToNot(BeNil(), initContainer.Name)
-								g.Expect(*initContainer.SecurityContext.Privileged).To(BeTrue(), initContainer.Name)
+								g.Expect(*initContainer.SecurityContext.Privileged).To(BeTrueBecause("privileged"), initContainer.Name)
 							}
 
 							serverContainer := findContainer(podSpec.Containers, consts.YTServerContainerName)
 							g.Expect(serverContainer).ToNot(BeNil())
 							g.Expect(serverContainer.SecurityContext).ToNot(BeNil())
 							g.Expect(serverContainer.SecurityContext.Privileged).ToNot(BeNil())
-							g.Expect(*serverContainer.SecurityContext.Privileged).To(BeTrue())
+							g.Expect(*serverContainer.SecurityContext.Privileged).To(BeTrueBecause("privileged"))
 
 							serverMount := findVolumeMount(serverContainer.VolumeMounts, "node-data")
 							g.Expect(serverMount).ToNot(BeNil())
@@ -2268,7 +2268,7 @@ exec "$@"`
 							g.Expect(jobsContainer).ToNot(BeNil())
 							g.Expect(jobsContainer.SecurityContext).ToNot(BeNil())
 							g.Expect(jobsContainer.SecurityContext.Privileged).ToNot(BeNil())
-							g.Expect(*jobsContainer.SecurityContext.Privileged).To(BeTrue())
+							g.Expect(*jobsContainer.SecurityContext.Privileged).To(BeTrueBecause("privileged"))
 
 							jobsMount := findVolumeMount(jobsContainer.VolumeMounts, "node-data")
 							g.Expect(jobsMount).ToNot(BeNil())
@@ -2305,7 +2305,7 @@ exec "$@"`
 							}
 						}
 						return true
-					}, upgradeTimeout, pollInterval).Should(BeTrue())
+					}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all %s pods should be on the new revision %s", stsName, updateRevision))
 
 					By("Verifying only target component pods were recreated")
 					podsAfterUpdate := getComponentPods(ctx, namespace)
@@ -2364,8 +2364,8 @@ exec "$@"`
 				for name := range podsBeforeUpdate {
 					if strings.HasPrefix(name, namedDndStsName+"-") {
 						pod, stillExists := podsNow[name]
-						Expect(stillExists).To(BeTrue(), "named rack pod %s should still exist before its turn", name)
-						Expect(pod.DeletionTimestamp.IsZero()).To(BeTrue(), "named rack pod %s should not be deleting before its turn", name)
+						Expect(stillExists).To(BeTrueBecause("named rack pod %s should still exist before its turn", name))
+						Expect(pod.DeletionTimestamp.IsZero()).To(BeTrueBecause("named rack pod %s should not be deleting before its turn", name))
 					}
 				}
 
@@ -2391,7 +2391,7 @@ exec "$@"`
 						}
 					}
 					return true
-				}, upgradeTimeout, pollInterval).Should(BeTrue())
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all default rack pods should be on the new revision %s", defaultUpdateRevision))
 
 				By("Verifying named rack (3c25) pods are on the new revision")
 				EventuallyObject(ctx, &namedSts, reactionTimeout).Should(WithTransform(
@@ -2409,7 +2409,7 @@ exec "$@"`
 						}
 					}
 					return true
-				}, upgradeTimeout, pollInterval).Should(BeTrue())
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all named rack pods should be on the new revision %s", namedUpdateRevision))
 
 				checkClusterHealth(ctx, ytClient)
 				checkChunkLocations(ytClient)
@@ -2528,7 +2528,7 @@ func checkClusterHealth(ctx context.Context, ytClient yt.Client) {
 			var clusterHealth ClusterHealthReport
 			clusterHealth.Collect(ctx, ytClient)
 			return len(clusterHealth.Alerts) == 0 && len(clusterHealth.Errors) == 0
-		}, reactionTimeout, pollInterval).Should(BeTrue())
+		}, reactionTimeout, pollInterval).Should(BeTrueBecause("cluster should have no alerts and no errors"))
 	})
 
 	By("Checking that tablet cell bundles are in `good` health")
@@ -2538,11 +2538,12 @@ func checkClusterHealth(ctx context.Context, ytClient yt.Client) {
 			return false
 		}
 		return len(notGoodBundles) == 0
-	}, reactionTimeout, pollInterval).Should(BeTrue())
+	}, reactionTimeout, pollInterval).Should(BeTrueBecause("all tablet cell bundles should be in good health"))
 }
 
 func createTestUser(ytClient yt.Client) {
 	By("Create a test user")
+	// BUG: https://github.com/ytsaurus/ytsaurus-k8s-operator/issues/775
 	Eventually(func() (bool, error) {
 		_, err := ytClient.CreateObject(specCtx, yt.NodeUser, &yt.CreateObjectOptions{
 			Attributes: map[string]any{"name": "test-user"},
@@ -2553,7 +2554,7 @@ func createTestUser(ytClient yt.Client) {
 			return false, nil
 		}
 		return true, err
-	}).Should(BeTrue())
+	}, reactionTimeout, pollInterval).Should(BeTrueBecause("test user should be created successfully"))
 
 	By("Check that test user cannot access things they shouldn't")
 	hasPermission, err := ytClient.CheckPermission(specCtx, "test-user", yt.PermissionWrite, ypath.Path("//sys/groups/superusers"), nil)
@@ -2631,7 +2632,7 @@ func checkChunkLocations(ytClient yt.Client) {
 	err := ytClient.GetNode(specCtx, ypath.Path(realChunkLocationPath), &realChunkLocationsValue, nil)
 	Expect(err).Should(Or(Succeed(), Satisfy(yterrors.ContainsResolveError)))
 	if err == nil {
-		Expect(realChunkLocationsValue).Should(BeTrue())
+		Expect(realChunkLocationsValue).Should(BeTrueBecause("enable_real_chunk_locations should be true at %s", realChunkLocationPath))
 	}
 
 	var values []yson.ValueWithAttrs
@@ -2640,7 +2641,7 @@ func checkChunkLocations(ytClient yt.Client) {
 	})).Should(Succeed())
 
 	for _, node := range values {
-		Expect(node.Attrs["use_imaginary_chunk_locations"]).ShouldNot(BeTrue())
+		Expect(node.Attrs["use_imaginary_chunk_locations"]).ShouldNot(BeTrueBecause("use_imaginary_chunk_locations should not be set on data node"))
 	}
 }
 
@@ -2709,7 +2710,7 @@ func (o *TestOperation) Wait() *yt.OperationStatus {
 			return true
 		}
 		return false
-	}, operationTimeout, operationPollInterval, specCtx).Should(BeTrue())
+	}, operationTimeout, operationPollInterval, specCtx).Should(BeTrueBecause("operation %s should complete", o.Id))
 	return opStatus
 }
 

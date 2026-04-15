@@ -347,6 +347,5 @@ linters:
       - path: '_test\.go'
         linters:
           - fatcontext
-          - forbidigo # TODO
           - gochecknoglobals
           - gosec
