@@ -233,10 +233,6 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 func (n *baseExecNode) doSyncBase(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	if !dry {
-		err = n.doBuildBase()
-		if err != nil {
-			return ComponentStatusBlockedBy("cannot build exec node spec"), err
-		}
 		err = resources.Sync(ctx, n.server, n.sidecarConfig)
 	}
 	return ComponentStatusWaitingFor("components"), err

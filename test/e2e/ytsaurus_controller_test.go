@@ -2166,6 +2166,22 @@ exec "$@"`
 					case consts.HttpProxyType:
 						ytsaurus.Spec.HTTPProxies[0].InstanceCount = int32(6)
 						ytsaurus.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(minReady)
+					case consts.ExecNodeType:
+						execNode := &ytsaurus.Spec.ExecNodes[0]
+						execNode.InstanceCount = 3
+						execNode.MinReadyInstanceCount = ptr.To(minReady)
+						execNode.Privileged = true
+						ytBuilder.SetupCRIJobEnvironment(execNode)
+
+						foundNodeDataMount := false
+						for i := range execNode.VolumeMounts {
+							if execNode.VolumeMounts[i].Name != "node-data" {
+								continue
+							}
+							execNode.VolumeMounts[i].MountPropagation = ptr.To(corev1.MountPropagationBidirectional)
+							foundNodeDataMount = true
+						}
+						Expect(foundNodeDataMount).To(BeTrue(), "node-data volume mount")
 					}
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
 						{
@@ -2213,6 +2229,44 @@ exec "$@"`
 						},
 						BeTrue(),
 					))
+
+					if componentType == consts.ExecNodeType {
+
+						By("Verify rolling update keeps exec-node CRI pod spec enrichments")
+						Eventually(func(g Gomega) {
+							g.Expect(k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: stsName}, &sts)).To(Succeed())
+
+							podSpec := sts.Spec.Template.Spec
+							g.Expect(podSpec.InitContainers).ToNot(BeEmpty())
+							for _, initContainer := range podSpec.InitContainers {
+								g.Expect(initContainer.SecurityContext).ToNot(BeNil(), initContainer.Name)
+								g.Expect(initContainer.SecurityContext.Privileged).ToNot(BeNil(), initContainer.Name)
+								g.Expect(*initContainer.SecurityContext.Privileged).To(BeTrue(), initContainer.Name)
+							}
+
+							serverContainer := findContainer(podSpec.Containers, consts.YTServerContainerName)
+							g.Expect(serverContainer).ToNot(BeNil())
+							g.Expect(serverContainer.SecurityContext).ToNot(BeNil())
+							g.Expect(serverContainer.SecurityContext.Privileged).ToNot(BeNil())
+							g.Expect(*serverContainer.SecurityContext.Privileged).To(BeTrue())
+
+							serverMount := findVolumeMount(serverContainer.VolumeMounts, "node-data")
+							g.Expect(serverMount).ToNot(BeNil())
+							g.Expect(serverMount.MountPropagation).ToNot(BeNil())
+							g.Expect(*serverMount.MountPropagation).To(Equal(corev1.MountPropagationBidirectional))
+
+							jobsContainer := findContainer(podSpec.Containers, consts.JobsContainerName)
+							g.Expect(jobsContainer).ToNot(BeNil())
+							g.Expect(jobsContainer.SecurityContext).ToNot(BeNil())
+							g.Expect(jobsContainer.SecurityContext.Privileged).ToNot(BeNil())
+							g.Expect(*jobsContainer.SecurityContext.Privileged).To(BeTrue())
+
+							jobsMount := findVolumeMount(jobsContainer.VolumeMounts, "node-data")
+							g.Expect(jobsMount).ToNot(BeNil())
+							g.Expect(jobsMount.MountPropagation).ToNot(BeNil())
+							g.Expect(*jobsMount.MountPropagation).To(Equal(corev1.MountPropagationHostToContainer))
+						}, reactionTimeout, pollInterval).Should(Succeed())
+					}
 
 					By("Waiting cluster update completes")
 					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
@@ -2262,6 +2316,7 @@ exec "$@"`
 				})
 			},
 			Entry("update http-proxy", Label(consts.GetStatefulSetPrefix(consts.HttpProxyType)), consts.HttpProxyType, consts.GetStatefulSetPrefix(consts.HttpProxyType), int32(2)),
+			Entry("update exec-node with CRI sidecar", Label(consts.GetStatefulSetPrefix(consts.ExecNodeType)), consts.ExecNodeType, consts.GetStatefulSetPrefix(consts.ExecNodeType), int32(2)),
 		)
 		Context("concurrent rolling update for multiple data-node groups", Label("rollingupdate-dnd"), func() {
 			const (

@@ -82,6 +82,12 @@ func NewExecNode(
 }
 
 func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if !dry {
+		if err := n.doBuildBase(); err != nil {
+			return ComponentStatusBlockedBy("cannot build exec node spec"), err
+		}
+	}
+
 	if n.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if status, err := dispatchComponentUpdate(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
 			return *status, err
