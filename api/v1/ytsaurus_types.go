@@ -638,10 +638,15 @@ type GPUManagerSpec struct {
 
 type NvidiaRuntimeSpec struct{}
 
+type MetaxRuntimeSpec struct{}
+
 type JobRuntimeSpec struct {
 	// Use NVIDIA Container Runtime.
 	//+optional
 	Nvidia *NvidiaRuntimeSpec `json:"nvidia,omitempty"`
+	// Use METAX Container Runtime.
+	//+optional
+	Metax *MetaxRuntimeSpec `json:"metax,omitempty"`
 }
 
 type JobEnvironmentSpec struct {

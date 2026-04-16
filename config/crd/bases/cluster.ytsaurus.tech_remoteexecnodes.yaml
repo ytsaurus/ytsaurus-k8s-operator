@@ -1000,6 +1000,9 @@ spec:
                     description: 'Container Runtime configuration for CRI service.
                       Default: runc.'
                     properties:
+                      metax:
+                        description: Use METAX Container Runtime.
+                        type: object
                       nvidia:
                         description: Use NVIDIA Container Runtime.
                         type: object
