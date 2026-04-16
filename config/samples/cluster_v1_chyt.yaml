@@ -8,6 +8,8 @@ spec:
   ytsaurus:
     name:
       minisaurus
-  image: ghcr.io/ytsaurus/chyt:2.17.4-relwithdebinfo
+  # https://ytsaurus.tech/docs/en/admin-guide/releases#chyt
+  # append "-relwithdebinfo" for image with debug symbols
+  image: ghcr.io/ytsaurus/chyt:2.18.3
   makeDefault: true
   createPublicClique: true
