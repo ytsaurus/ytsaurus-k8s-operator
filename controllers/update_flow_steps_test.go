@@ -221,6 +221,40 @@ var _ = Describe("BuildFlowTree", func() {
 	)
 })
 
+var _ = Describe("ShouldRemoveTabletCellsOnUpdate", func() {
+	type testCase struct {
+		updatePlan         []ytv1.ComponentUpdateSelector
+		updatingComponents []ytv1.Component
+		expected           bool
+	}
+
+	DescribeTable("should derive tablet cell removal mode from tablet node update strategy",
+		func(tc testCase) {
+			Expect(shouldRemoveTabletCellsOnUpdate(tc.updatePlan, tc.updatingComponents)).To(Equal(tc.expected))
+		},
+		Entry("defaults to removing tablet cells", testCase{
+			expected: true,
+		}),
+		Entry("keeps removing tablet cells for bulk tablet updates", testCase{
+			updatePlan: []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{Type: consts.TabletNodeType},
+			}},
+			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
+			expected:           true,
+		}),
+		Entry("skips removing tablet cells for onDelete tablet updates", testCase{
+			updatePlan: []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{Type: consts.TabletNodeType},
+				Strategy: &ytv1.ComponentUpdateStrategy{
+					OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
+				},
+			}},
+			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
+			expected:           false,
+		}),
+	)
+})
+
 var _ = Describe("HasComponent", func() {
 	type testCase struct {
 		name               string

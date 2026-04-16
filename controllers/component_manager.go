@@ -409,7 +409,6 @@ func (cm *ComponentManager) areComponentPodsRemoved(component components.Compone
 func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
 	cm.status.canUpdate = nil
 	cm.status.cannotUpdate = nil
-	cm.status.removeTabletCellsOnUpdate = true
 	count := make([]int32, len(updatePlan))
 	for _, component := range cm.status.needUpdate {
 		index := -1
@@ -426,15 +425,28 @@ func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSel
 		if index >= 0 {
 			count[index] += 1
 			cm.status.canUpdate = append(cm.status.canUpdate, component)
-			if component.Type == consts.TabletNodeType &&
-				updatePlan[index].Strategy != nil &&
-				updatePlan[index].Strategy.Type() == ytv1.ComponentUpdateModeTypeOnDelete {
-				cm.status.removeTabletCellsOnUpdate = false
-			}
 		} else {
 			cm.status.cannotUpdate = append(cm.status.cannotUpdate, component)
 		}
 	}
+}
+
+func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+	for _, component := range updatingComponents {
+		if component.Type != consts.TabletNodeType {
+			continue
+		}
+		for _, selector := range updatePlan {
+			if !canUpdateComponent(selector, component) {
+				continue
+			}
+			if selector.Strategy != nil && selector.Strategy.Type() == ytv1.ComponentUpdateModeTypeOnDelete {
+				return false
+			}
+			break
+		}
+	}
+	return true
 }
 
 func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
