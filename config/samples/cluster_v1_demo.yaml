@@ -5,6 +5,8 @@ kind: Ytsaurus
 metadata:
   name: ytdemo
 spec:
+  # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
+  # remove "-relwithdebinfo" for image without debug symbols
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
 
   # Allow updating everything at once
@@ -114,11 +116,15 @@ spec:
     - instanceCount: 3
 
   queryTrackers:
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
+    # append "-relwithdebinfo" for image with debug symbols
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
     instanceCount: 1
 
   yqlAgents:
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
+    # append "-relwithdebinfo" for image with debug symbols
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
     instanceCount: 1
 
   schedulers:
@@ -132,7 +138,7 @@ spec:
     instanceCount: 1
 
   strawberry:
-    image: ghcr.io/ytsaurus/strawberry:0.0.16
+    image: ghcr.io/ytsaurus/strawberry:0.0.17
     resources:
       limits:
         memory: 100Mi

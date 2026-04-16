@@ -5,7 +5,9 @@ kind: Ytsaurus
 metadata:
   name: minisaurus
 spec:
-  coreImage: ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2024-12-06-ee9e61d820c81624e2562edca351e9bc8bdd7e2e
+  # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
+  # remove "-relwithdebinfo" for image without debug symbols
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
 
   # Allow updating everything at once
   updatePlan:
@@ -39,7 +41,6 @@ spec:
       loggers: *loggers
       instanceCount: 1
       role: default
-      image: ghcr.io/ytsaurus/ytsaurus-nightly:dev-24.2-2024-12-26-d79040f9b4037aabf1f6b686e442cc029679a285
 
   primaryMasters:
     instanceCount: 1
@@ -164,15 +165,19 @@ spec:
     resources:
       limits:
         memory: 100Mi
-    image: ghcr.io/ytsaurus/strawberry:0.0.16
+    image: ghcr.io/ytsaurus/strawberry:0.0.17
 
   tabletNodes:
     - instanceCount: 1
 
   yqlAgents:
     instanceCount: 1
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
+    # append "-relwithdebinfo" for image with debug symbols
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
 
   queryTrackers:
     instanceCount: 1
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
+    # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
+    # append "-relwithdebinfo" for image with debug symbols
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
