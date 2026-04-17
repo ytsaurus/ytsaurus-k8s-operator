@@ -5,7 +5,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "13"
+  resourceVersion: "14"
 spec:
   clusterFeatures: {}
   configOverrides:
@@ -175,6 +175,12 @@ status:
     reason: InitJob
     status: "True"
     type: userYtsaurusClientInitJobCompleted
+  - lastTransitionTime: null
+    message: Cypress operations skipped
+    observedGeneration: 1
+    reason: HealthChecks
+    status: "True"
+    type: UpdateIsPossible
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1

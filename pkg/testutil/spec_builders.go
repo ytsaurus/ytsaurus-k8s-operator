@@ -309,6 +309,14 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithSecondaryMaster() *ytv1.MastersSpec {
+	b.Ytsaurus.Spec.SecondaryMasters = append(b.Ytsaurus.Spec.SecondaryMasters, b.Ytsaurus.Spec.PrimaryMasters)
+	count := len(b.Ytsaurus.Spec.SecondaryMasters)
+	spec := &b.Ytsaurus.Spec.SecondaryMasters[count-1]
+	spec.CellTag += uint16(count) //nolint:gosec //no overflow
+	return spec
+}
+
 func (b *YtsaurusBuilder) WithHydraPersistenceUploader() {
 	b.Ytsaurus.Spec.PrimaryMasters.HydraPersistenceUploader = &ytv1.HydraPersistenceUploaderSpec{
 		Image: ptr.To(b.Images.Sidecars),
@@ -771,18 +779,27 @@ func (b *YtsaurusBuilder) CreateSpyt() *ytv1.Spyt {
 }
 
 func (b *YtsaurusBuilder) CreateRemoteYtsaurus() *ytv1.RemoteYtsaurus {
+	var masterCaches *ytv1.MasterCachesConnectionSpec
+	if b.Ytsaurus.Spec.MasterCaches != nil {
+		masterCaches = &ytv1.MasterCachesConnectionSpec{
+			HostAddresses: []string{
+				fmt.Sprintf("msc-0.masters.%s.svc.cluster.local", b.Namespace),
+			},
+		}
+	}
 	return &ytv1.RemoteYtsaurus{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      RemoteResourceName,
 			Namespace: b.Namespace,
 		},
 		Spec: ytv1.RemoteYtsaurusSpec{
-			MasterConnectionSpec: ytv1.MasterConnectionSpec{
+			PrimaryMaster: &ytv1.MasterConnectionSpec{
 				CellTag: CellTag,
 				HostAddresses: []string{
 					fmt.Sprintf("ms-0.masters.%s.svc.cluster.local", b.Namespace),
 				},
 			},
+			MasterCaches: masterCaches,
 		},
 	}
 }

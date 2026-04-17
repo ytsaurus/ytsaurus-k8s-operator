@@ -161,7 +161,6 @@ spec:
   - name: global-image-pull-secrets
   jobImage: mirror.gcr.io/library/python:3.12-slim
   masterCaches:
-    cellTagMasterCaches: 0
     instanceCount: 1
     loggers:
     - minLogLevel: info
@@ -312,6 +311,39 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+  secondaryMasters:
+  - cellTag: 2
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
   setHostnameAsFqdn: false
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.17
@@ -365,6 +397,18 @@ status:
     reason: Ready
     status: "True"
     type: ImageHeaterReady
+  - lastTransitionTime: null
+    message: Secondary master cell 2 is settled during cluster initialization
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-2-Settled
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: Master-2Ready
   - lastTransitionTime: null
     message: 'Pods are ready: 0 of 1'
     observedGeneration: 1
@@ -456,6 +500,18 @@ status:
     status: "True"
     type: userStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
+    message: Cypress operations skipped
+    observedGeneration: 1
+    reason: HealthChecks
+    status: "True"
+    type: UpdateIsPossible
+  - lastTransitionTime: null
+    message: Job yt-yql-agent-init-job-yql-agent-update-environment completed in -1ns
+    observedGeneration: 1
+    reason: YQLAgentSetup
+    status: "True"
+    type: yql-agent-update-environmentYqlAgentInitJobCompleted
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
@@ -467,12 +523,6 @@ status:
     reason: Ready
     status: "True"
     type: TimbertruckReady
-  - lastTransitionTime: null
-    message: Job yt-yql-agent-init-job-yql-agent-update-environment completed in -1ns
-    observedGeneration: 1
-    reason: YQLAgentSetup
-    status: "True"
-    type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
     message: Job yt-strawberry-controller-init-job-cluster completed in -1ns
     observedGeneration: 1

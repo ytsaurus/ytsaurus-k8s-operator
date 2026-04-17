@@ -28,6 +28,44 @@ data:
                 ];
                 "cell_id"="65726e65-ad6b7562-10259-79747361";
             };
+            "secondary_masters"=[
+                {
+                    addresses=[
+                        "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-20259-79747361";
+                };
+                {
+                    addresses=[
+                        "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-30259-79747361";
+                };
+                {
+                    addresses=[
+                        "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-40259-79747361";
+                };
+            ];
             "discovery_connection"={
                 addresses=[
                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
@@ -51,6 +89,27 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     if [ 'true' = 'true' ]; then
+    if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
+    yt set //sys/@config/multicell_manager/cell_descriptors '{
+        "1"={
+            roles=[
+                "cypress_node_host";
+                "transaction_coordinator";
+            ];
+        };
+        "2"={
+            roles=[
+                "cypress_node_host";
+                "chunk_host";
+            ];
+        };
+        "4"={
+            roles=[
+            ];
+        };
+    }'
+    yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true
+    fi
     /usr/bin/yt create group --attr '{name=admins}' --ignore-existing
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     /usr/bin/yt set //sys/schemas/tablet_cell/@acl '[{action=allow;subjects=[users;];permissions=[read;];};{action=allow;subjects=[admins;];permissions=[read;write;administer;create;remove;];};]'
@@ -96,6 +155,44 @@ data:
             ];
             "cell_id"="65726e65-ad6b7562-10259-79747361";
         };
+        "secondary_masters"=[
+            {
+                addresses=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-20259-79747361";
+            };
+            {
+                addresses=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-30259-79747361";
+            };
+            {
+                addresses=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+                peers=[
+                    {
+                        address="ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                        voting=%true;
+                    };
+                ];
+                "cell_id"="65726e65-ad6b7562-40259-79747361";
+            };
+        ];
         "discovery_connection"={
             addresses=[
                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";

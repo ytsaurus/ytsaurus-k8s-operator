@@ -18240,9 +18240,6 @@
         },
         "masterCaches": {
           "type": "object",
-          "required": [
-            "cellTagMasterCaches"
-          ],
           "properties": {
             "affinity": {
               "description": "Affinity is a group of affinity scheduling rules.",
@@ -19000,6 +18997,7 @@
               }
             },
             "cellTagMasterCaches": {
+              "description": "Deprecated: have no effect.",
               "type": "integer"
             },
             "dnsConfig": {
@@ -19058,10 +19056,18 @@
                 "type": "string"
               }
             },
+            "hostAddresses": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "x-kubernetes-list-type": "set"
+            },
             "hostAddressesLabel": {
               "type": "string"
             },
             "hostAddressesMasterCaches": {
+              "description": "Deprecated: use hostAddresses instead.",
               "type": "array",
               "items": {
                 "type": "string"
@@ -21316,7 +21322,10 @@
               }
             },
             "cellTag": {
-              "type": "integer"
+              "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+              "type": "integer",
+              "maximum": 61440,
+              "minimum": 1
             },
             "dnsConfig": {
               "description": "DNSConfig allows customizing the DNS settings.",
@@ -21381,7 +21390,8 @@
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "x-kubernetes-list-type": "set"
             },
             "hostNetwork": {
               "description": "Use the host's network namespace.",
@@ -21774,6 +21784,16 @@
                   }
                 }
               }
+            },
+            "roles": {
+              "description": "Roles assigned to this master cell.",
+              "type": "array",
+              "items": {
+                "description": "Other roles are allowed and handled as opaque strings, only naming convention...",
+                "type": "string",
+                "pattern": "^[a-z_]+$"
+              },
+              "x-kubernetes-list-type": "set"
             },
             "runtimeClassName": {
               "description": "Runtime class for instance pods.",
@@ -31593,6 +31613,7 @@
         },
         "secondaryMasters": {
           "type": "array",
+          "maxItems": 48,
           "items": {
             "type": "object",
             "required": [
@@ -32355,7 +32376,10 @@
                 }
               },
               "cellTag": {
-                "type": "integer"
+                "description": "Cell tag is an immutable identifier for particular cell of YTsaurus cluster.",
+                "type": "integer",
+                "maximum": 61440,
+                "minimum": 1
               },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
@@ -32420,7 +32444,8 @@
                 "type": "array",
                 "items": {
                   "type": "string"
-                }
+                },
+                "x-kubernetes-list-type": "set"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",
@@ -32813,6 +32838,16 @@
                     }
                   }
                 }
+              },
+              "roles": {
+                "description": "Roles assigned to this master cell.",
+                "type": "array",
+                "items": {
+                  "description": "Other roles are allowed and handled as opaque strings, only naming convention...",
+                  "type": "string",
+                  "pattern": "^[a-z_]+$"
+                },
+                "x-kubernetes-list-type": "set"
               },
               "runtimeClassName": {
                 "description": "Runtime class for instance pods.",

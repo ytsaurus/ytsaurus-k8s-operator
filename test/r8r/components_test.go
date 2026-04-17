@@ -651,6 +651,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With all components", func() {
 		BeforeEach(func() {
 			ytBuilder.WithOverrides()
+			ytBuilder.WithSecondaryMaster()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
 			ytBuilder.WithDataNodes()
@@ -726,6 +727,10 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
 				Shutdown: ytv1.ClusterShutdownExceptMasters,
 			}
+			ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, true))
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To(ytv1.GetMasterCellRoles(nil, false, true))
+			ytBuilder.WithSecondaryMaster().Roles = nil                             // Default
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To([]ytv1.MasterCellRole{}) // Empty
 		})
 		It("Test", func(ctx context.Context) {
 			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))
@@ -799,6 +804,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		BeforeEach(func(ctx context.Context) {
 			ytsaurus = nil
 
+			ytBuilder.WithMasterCaches()
 			remoteYtsaurus := ytBuilder.CreateRemoteYtsaurus()
 			Expect(k8sClient.Create(ctx, remoteYtsaurus)).To(Succeed())
 		})

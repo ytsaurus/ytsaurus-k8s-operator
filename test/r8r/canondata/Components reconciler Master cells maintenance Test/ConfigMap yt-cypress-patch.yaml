@@ -5,6 +5,48 @@ data:
         "//sys/@cluster_connection"=[
             {
                 op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/1/addresses";
+                value=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/1/peers";
+                value=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/2/addresses";
+                value=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/2/peers";
+                value=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
                 path="/primary_master/addresses";
                 value=[
                     "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
@@ -48,6 +90,63 @@ data:
     }
   yt-http-proxy-cypress-patch.yson: |-
     {
+    }
+  yt-master-2-cypress-patch.yson: |-
+    {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/secondary_masters/0/addresses";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/0/peers";
+                value=[
+                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+        ];
+    }
+  yt-master-3-cypress-patch.yson: |-
+    {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/secondary_masters/1/addresses";
+                value=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/1/peers";
+                value=[
+                    "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+        ];
+    }
+  yt-master-4-cypress-patch.yson: |-
+    {
+        "//sys/@cluster_connection"=[
+            {
+                op=replace;
+                path="/secondary_masters/2/addresses";
+                value=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+            {
+                op=replace;
+                path="/secondary_masters/2/peers";
+                value=[
+                    "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                ];
+            };
+        ];
     }
   yt-master-cypress-patch.yson: |-
     {

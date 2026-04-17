@@ -54,6 +54,44 @@ data:
                 ];
                 "cell_id"="65726e65-ad6b7562-10259-79747361";
             };
+            "secondary_masters"=[
+                {
+                    addresses=[
+                        "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-20259-79747361";
+                };
+                {
+                    addresses=[
+                        "ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-3-0.masters-3.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-30259-79747361";
+                };
+                {
+                    addresses=[
+                        "ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                    ];
+                    peers=[
+                        {
+                            address="ms-4-0.masters-4.ytsaurus-components.svc.cluster.local:9010";
+                            voting=%true;
+                        };
+                    ];
+                    "cell_id"="65726e65-ad6b7562-40259-79747361";
+                };
+            ];
             "discovery_connection"={
                 addresses=[
                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";

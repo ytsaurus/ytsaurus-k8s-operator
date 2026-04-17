@@ -101,7 +101,6 @@ spec:
   - instanceCount: 3
     resources: {}
   masterCaches:
-    cellTagMasterCaches: 0
     instanceCount: 3
     resources: {}
   oauthService:
@@ -115,7 +114,7 @@ spec:
       - matchPattern: (.*)@ytsaurus.team
         replacement: \1
   primaryMasters:
-    cellTag: 0
+    cellTag: 1
     instanceCount: 1
     locations:
     - locationType: MasterChangelogs
