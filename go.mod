@@ -23,7 +23,7 @@ require (
 	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.1
 	go.ytsaurus.tech/library/go/core/log v0.0.4
-	go.ytsaurus.tech/yt/go v0.0.29
+	go.ytsaurus.tech/yt/go v0.0.32
 	k8s.io/api v0.32.12
 	k8s.io/apimachinery v0.32.12
 	k8s.io/client-go v0.32.12

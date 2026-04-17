@@ -258,8 +258,22 @@ type LogDump struct {
 	LogWriterName string `yson:"log_writer_name"`
 }
 
+type DiskHealthChecker struct{}
+
+type JobProxyLogManagerLocation struct {
+	Path              string            `yson:"path"`
+	DiskHealthChecker DiskHealthChecker `yson:"disk_health_checker,omitempty"`
+}
+
 type JobProxyLogManager struct {
-	Directory                     string        `yson:"directory"`
+	Mode string `yson:"mode,omitempty"`
+
+	// only for `simple` mode
+	Directory string `yson:"directory,omitempty"`
+
+	// only for `per_job_directory` mode
+	Locations []JobProxyLogManagerLocation `yson:"locations,omitempty"`
+
 	ShardingKeyLength             int           `yson:"sharding_key_length"`
 	LogsStoragePeriod             yson.Duration `yson:"logs_storage_period"`
 	DirectoryTraversalConcurrency int           `yson:"directory_traversal_concurrency"`
@@ -733,23 +747,39 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	}
 	jobProxyLoggingBuilder.logging.FlushPeriod = 3000
 	jobProxyLogging := jobProxyLoggingBuilder.logging
+
 	c.ExecNode.JobProxy.JobProxyLogging = JobProxyLogging{
 		Logging:            jobProxyLogging,
 		LogManagerTemplate: jobProxyLogging,
-		Mode:               "simple",
+		Mode:               string(spec.JobProxyLogManager.Mode),
 	}
 
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.RequireAuthentication = true
 	c.ExecNode.JobProxy.JobProxyAuthenticationManager.CypressTokenAuthenticator.Secure = true
 
 	// Configure JobProxyLogManager
-	c.ExecNode.JobProxyLogManager.Directory = ChooseJobProxyLoggingPath(&spec.InstanceSpec)
-	c.ExecNode.JobProxyLogManager.ShardingKeyLength = 2
-	c.ExecNode.JobProxyLogManager.LogsStoragePeriod = yson.Duration(7 * 24 * time.Hour) // 1 week
-	c.ExecNode.JobProxyLogManager.DirectoryTraversalConcurrency = 4
-	c.ExecNode.JobProxyLogManager.LogDump = LogDump{
-		BufferSize:    1024 * 1024, // 1MB
+	jplm := &c.ExecNode.JobProxyLogManager
+	jplm.ShardingKeyLength = spec.JobProxyLogManager.ShardingKeyLength
+	jplm.LogsStoragePeriod = yson.Duration(spec.JobProxyLogManager.LogsStoragePeriod)
+	jplm.DirectoryTraversalConcurrency = spec.JobProxyLogManager.DirectoryTraversalConcurrency
+	jplm.LogDump = LogDump{
+		BufferSize:    1024 * 1024,
 		LogWriterName: "debug",
+	}
+
+	switch spec.JobProxyLogManager.Mode {
+	case ytv1.JobProxyLoggingModeSimple:
+		jplm.Mode = string(ytv1.JobProxyLoggingModeSimple)
+		jplm.Directory = ChooseJobProxyLoggingPath(&spec.InstanceSpec)
+	case ytv1.JobProxyLoggingModePerJobDirectory:
+		jplm.Mode = string(ytv1.JobProxyLoggingModePerJobDirectory)
+		for _, location := range spec.JobProxyLogManager.Locations {
+			jplm.Locations = append(jplm.Locations, JobProxyLogManagerLocation{
+				Path: location.Path,
+			})
+		}
+	default:
+		return c, fmt.Errorf("JobProxyLogManager misconfigured")
 	}
 
 	// TODO(khlebnikov): Drop legacy fields depending on ytsaurus version.

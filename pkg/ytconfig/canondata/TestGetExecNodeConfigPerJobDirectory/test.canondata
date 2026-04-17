@@ -97,15 +97,9 @@
         exec;
     ];
     "resource_limits"={
-        "total_memory"=111669149696;
-        "total_cpu"=119.000000;
-        "node_dedicated_cpu"=20.000000;
-        "memory_limits"={
-            "user_jobs"={
-                type=static;
-                value=106300440576;
-            };
-        };
+        "total_memory"=5368709120;
+        "total_cpu"=20.000000;
+        "node_dedicated_cpu"=0.000000;
     };
     tags=[
         "rack:xn-a";
@@ -114,7 +108,7 @@
     "skynet_http_port"=11029;
     "job_resource_manager"={
         "resource_limits"={
-            "user_slots"=495;
+            "user_slots"=100;
         };
     };
     "exec_node"={
@@ -140,7 +134,7 @@
         };
         "job_controller"={
             "resource_limits"={
-                "user_slots"=495;
+                "user_slots"=100;
             };
             "gpu_manager"={
                 "gpu_info_source"={
@@ -262,8 +256,19 @@
             "flush_period"=3000;
         };
         "job_proxy_log_manager"={
-            mode=simple;
-            directory="/var/log/job-proxy";
+            mode="per_job_directory";
+            locations=[
+                {
+                    path="/mnt/disk1/logs";
+                    "disk_health_checker"={
+                    };
+                };
+                {
+                    path="/mnt/disk2/logs";
+                    "disk_health_checker"={
+                    };
+                };
+            ];
             "sharding_key_length"=2;
             "logs_storage_period"=604800000;
             "directory_traversal_concurrency"=4;

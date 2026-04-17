@@ -952,6 +952,7 @@ _Appears in:_
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
+| `jobProxyLogManager` _[JobProxyLogManagerSpec](#jobproxylogmanagerspec)_ |  |  |  |
 
 
 #### FileObjectReference
@@ -1225,6 +1226,61 @@ _Appears in:_
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
 | `runtime` _[JobRuntimeSpec](#jobruntimespec)_ | Container Runtime configuration for CRI service. Default: runc. |  |  |
+
+
+#### JobProxyLogManagerLocationSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobProxyLogManagerSpec](#jobproxylogmanagerspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `path` _string_ |  |  |  |
+
+
+#### JobProxyLogManagerSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [ExecNodesSpec](#execnodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `mode` _[JobProxyLoggingMode](#jobproxyloggingmode)_ |  | simple | Enum: [simple per_job_directory] <br /> |
+| `locations` _[JobProxyLogManagerLocationSpec](#jobproxylogmanagerlocationspec) array_ |  |  |  |
+| `sharding_key_length` _integer_ |  | 2 |  |
+| `logs_storage_period` _integer_ |  | 604800000 |  |
+| `directory_traversal_concurrency` _integer_ |  | 4 |  |
+
+
+#### JobProxyLoggingMode
+
+_Underlying type:_ _string_
+
+
+
+_Validation:_
+- Enum: [simple per_job_directory]
+
+_Appears in:_
+- [JobProxyLogManagerSpec](#jobproxylogmanagerspec)
+
+| Field | Description |
+| --- | --- |
+| `simple` |  |
+| `per_job_directory` |  |
 
 
 #### JobRuntimeSpec
@@ -2308,6 +2364,7 @@ _Appears in:_
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
+| `jobProxyLogManager` _[JobProxyLogManagerSpec](#jobproxylogmanagerspec)_ |  |  |  |
 
 
 #### RemoteExecNodesStatus

@@ -393,6 +393,7 @@ data:
             "forward_all_environment_variables"=%true;
             "use_artifact_binds"=%true;
             "job_proxy_log_manager"={
+                mode=simple;
                 directory="/var/log/job-proxy";
                 "sharding_key_length"=2;
                 "logs_storage_period"=604800000;

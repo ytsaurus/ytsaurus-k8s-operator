@@ -1031,6 +1031,33 @@ spec:
               jobImage:
                 description: Default docker image for user jobs.
                 type: string
+              jobProxyLogManager:
+                properties:
+                  directory_traversal_concurrency:
+                    default: 4
+                    type: integer
+                  locations:
+                    items:
+                      properties:
+                        path:
+                          type: string
+                      required:
+                      - path
+                      type: object
+                    type: array
+                  logs_storage_period:
+                    default: 604800000
+                    type: integer
+                  mode:
+                    default: simple
+                    enum:
+                    - simple
+                    - per_job_directory
+                    type: string
+                  sharding_key_length:
+                    default: 2
+                    type: integer
+                type: object
               jobProxyLoggers:
                 items:
                   properties:
