@@ -8,6 +8,13 @@ const (
 	ConditionImageHeaterReady           = "ImageHeaterReady"
 	ConditionImageHeaterComplete        = "ImageHeaterComplete"
 	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
+
+	// Cluster health checks
+	ConditionUpdateIsPossible             = "UpdateIsPossible"
+	ConditionMastersQuorumCheck           = "MastersQuorumCheck"
+	ConditionLostVitalChunksCheck         = "LostVitalChunksCheck"
+	ConditionQuorumMissingChunksCheck     = "QuorumMissingChunksCheck"
+	ConditionTabletCellBundlesHealthCheck = "TabletCellBundlesHealthCheck"
 )
 
 // Both status and update conditions
@@ -40,8 +47,6 @@ const (
 
 // Update conditions
 const (
-	ConditionHasPossibility                  = "HasPossibility"
-	ConditionNoPossibility                   = "NoPossibility"
 	ConditionSafeModeEnabled                 = "SafeModeEnabled"
 	ConditionTabletCellsSaved                = "TabletCellsSaved"
 	ConditionTabletCellsRemovingStarted      = "TabletCellsRemovingStarted"

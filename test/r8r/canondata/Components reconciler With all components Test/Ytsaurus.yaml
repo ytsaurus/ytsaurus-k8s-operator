@@ -456,6 +456,18 @@ status:
     status: "True"
     type: userStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
+    message: Cypress operations skipped
+    observedGeneration: 1
+    reason: HealthChecks
+    status: "True"
+    type: UpdateIsPossible
+  - lastTransitionTime: null
+    message: Job yt-yql-agent-init-job-yql-agent-update-environment completed in -1ns
+    observedGeneration: 1
+    reason: YQLAgentSetup
+    status: "True"
+    type: yql-agent-update-environmentYqlAgentInitJobCompleted
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
@@ -467,12 +479,6 @@ status:
     reason: Ready
     status: "True"
     type: TimbertruckReady
-  - lastTransitionTime: null
-    message: Job yt-yql-agent-init-job-yql-agent-update-environment completed in -1ns
-    observedGeneration: 1
-    reason: YQLAgentSetup
-    status: "True"
-    type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
     message: Job yt-strawberry-controller-init-job-cluster completed in -1ns
     observedGeneration: 1

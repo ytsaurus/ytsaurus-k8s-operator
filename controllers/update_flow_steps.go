@@ -197,9 +197,9 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStatePossibilityCheck: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionHasPossibility) {
+		if ytsaurus.IsStatusConditionTrue(consts.ConditionUpdateIsPossible) {
 			return stepResultMarkHappy
-		} else if ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionNoPossibility) {
+		} else if ytsaurus.IsStatusConditionFalse(consts.ConditionUpdateIsPossible) {
 			return stepResultMarkUnhappy
 		}
 		return stepResultMarkUnsatisfied
