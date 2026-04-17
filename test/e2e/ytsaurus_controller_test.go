@@ -766,7 +766,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				})
 
-				It("Triggers cluster update", Label(newEpoch), Label(newVersion), func(ctx context.Context) {
+				It("Triggers cluster update", Label(newVersion), func(ctx context.Context) {
 					By("Checking jobs")
 					completedJobs := namespaceWatcher.GetCompletedJobNames()
 					Expect(completedJobs).Should(ConsistOf(
@@ -800,10 +800,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
 				})
 			},
-			Entry("When update Ytsaurus PAST -> PREV", testutil.YtsaurusPastVersion, testutil.YtsaurusPrevVersion),
-			Entry("When update Ytsaurus PREV -> CURR", testutil.YtsaurusPrevVersion, testutil.YtsaurusCurrVersion),
-			Entry("When update Ytsaurus CURR -> NEXT", testutil.YtsaurusCurrVersion, testutil.YtsaurusNextVersion),
-			Entry("When update Ytsaurus NEXT -> LATE", testutil.YtsaurusNextVersion, testutil.YtsaurusLateVersion),
+			Entry("When update Ytsaurus PAST -> PREV", Label("PREV"), testutil.YtsaurusPastVersion, testutil.YtsaurusPrevVersion),
+			Entry("When update Ytsaurus PREV -> CURR", Label("CURR"), testutil.YtsaurusPrevVersion, testutil.YtsaurusCurrVersion),
+			Entry("When update Ytsaurus CURR -> NEXT", Label("NEXT"), testutil.YtsaurusCurrVersion, testutil.YtsaurusNextVersion),
+			Entry("When update Ytsaurus NEXT -> LATE", Label("LATE"), testutil.YtsaurusNextVersion, testutil.YtsaurusLateVersion),
 		)
 
 		Context("Test update plan selector", Label("plan", "selector"), func() {
@@ -1544,9 +1544,25 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	}) // remote
 
-	Context("Integration tests", Label("integration"), func() {
+	DescribeTableSubtree("Integration tests", Label("integration"), func(epoch string) {
+		images := testutil.Images[epoch]
+		if epoch == "" || images.Core == "" {
+			return
+		}
+		ytVersion := images.YtsaurusVersion.String()
 
-		Context("With CRI job environment", Label("cri", "containerd"), func() {
+		BeforeEach(func() {
+			By("Setting images")
+			log.Info("YTsaurus images",
+				"coreImage", images.Core,
+				"chytImage", images.Chyt,
+				"strawberry", images.Strawberry,
+				"queryTracker", images.QueryTracker,
+			)
+			ytBuilder.Images = images
+		})
+
+		Context("With CRI job environment", Label(ytVersion, "cri", "containerd"), func() {
 
 			BeforeEach(func() {
 				By("Adding exec nodes")
@@ -1565,33 +1581,18 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			Context("With nvidia runtime", Label("nvidia"), func() {
 				BeforeEach(func() {
-					if ytBuilder.Images.YtsaurusVersion.LessThan(version.MustParse("25.2.0")) {
-						images := testutil.Images["25.2"]
-						if images.Core == "" {
-							Skip("Ytsaurus version does not support CRI-O")
-						}
-						By("Switching ytsaurus image to 25.2")
-						ytsaurus.Spec.CoreImage = images.Core
-					}
-
 					ytBuilder.WithNvidiaContainerRuntime()
 				})
 				It("Verify CRI job environment", func(ctx context.Context) {
 				})
 			})
+		}) // integration cri containerd
 
-		}) // integration cri
-
-		Context("With CRI-O", Label("cri", "crio"), func() {
+		Context("With CRI-O", Label(ytVersion, "cri", "crio"), func() {
 
 			BeforeEach(func() {
 				if ytBuilder.Images.YtsaurusVersion.LessThan(version.MustParse("25.2.0")) {
-					images := testutil.Images["25.2"]
-					if images.Core == "" {
-						Skip("Ytsaurus version does not support CRI-O")
-					}
-					By("Switching ytsaurus image to 25.2")
-					ytsaurus.Spec.CoreImage = images.Core
+					Skip("Ytsaurus before 25.2 do not support CRI-O")
 				}
 
 				By("Adding exec nodes")
@@ -1684,9 +1685,9 @@ exec "$@"`
 				})
 			})
 
-		}) // integration crio
+		}) // integration cri crio
 
-		Context("With RPC proxy", Label("rpc-proxy"), func() {
+		Context("With RPC proxy", Label(ytVersion, "rpc-proxy"), func() {
 			BeforeEach(func() {
 				ytBuilder.WithRPCProxies()
 			})
@@ -1717,7 +1718,7 @@ exec "$@"`
 
 		}) // integration rpc-proxy
 
-		Context("With host network", Label("host-network"), func() {
+		Context("With host network", Label(ytVersion, "host-network"), func() {
 
 			BeforeEach(func() {
 				ytsaurus.Spec.HostNetwork = ptr.To(true)
@@ -1771,7 +1772,7 @@ exec "$@"`
 
 		}) // integration host-network
 
-		Context("With CHYT", Label("chyt"), func() {
+		Context("With CHYT", Label(ytVersion, "chyt"), func() {
 
 			BeforeEach(func() {
 				By("Adding strawberry")
@@ -1792,21 +1793,10 @@ exec "$@"`
 
 		}) // integration chyt
 
-		DescribeTableSubtree("With Bus RPC TLS", Label("tls"), func(epoch string) {
-			images := testutil.Images[epoch]
-			if epoch == "" || images.Core == "" {
-				return
-			}
-
+		Context("With Bus RPC TLS", Label(ytVersion, "tls"), func() {
 			var nativeServerCert, nativeClientCert *certv1.Certificate
 
 			BeforeEach(func() {
-				log.Info("YTsaurus images",
-					"coreImage", images.Core,
-					"chytImage", images.Chyt,
-					"strawberry", images.Strawberry,
-					"queryTracker", images.QueryTracker,
-				)
 				if images.Core == "" || images.Chyt == "" || images.Strawberry == "" || images.QueryTracker == "" {
 					Skip("One of required images is not specified")
 				}
@@ -1886,7 +1876,7 @@ exec "$@"`
 				}
 			})
 
-			It("Verify that mTLS is active", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+			It("Verify that mTLS is active", func(ctx context.Context) {
 				By("Getting CHYT operation id")
 				clickHouseID, err := queryClickHouseID(ctx, httpClient, ytProxyAddress)
 				Expect(err).To(Succeed())
@@ -1936,15 +1926,15 @@ exec "$@"`
 					"SELECT * FROM `//tmp/chyt_test`;",
 				)).To(Equal("1\n"))
 			})
-		},
-			Entry("YTsaurus PAST", testutil.YtsaurusPastVersion),
-			Entry("YTsaurus PREV", testutil.YtsaurusPrevVersion),
-			Entry("YTsaurus CURR", testutil.YtsaurusCurrVersion),
-			Entry("YTsaurus NEXT", testutil.YtsaurusNextVersion),
-			Entry("YTsaurus LATE", testutil.YtsaurusLateVersion),
-		) // integration tls
+		}) // integration tls
 
-	}) // integration
+	},
+		Entry("YTsaurus PAST", Label("PAST"), testutil.YtsaurusPastVersion),
+		Entry("YTsaurus PREV", Label("PREV"), testutil.YtsaurusPrevVersion),
+		Entry("YTsaurus CURR", Label("CURR"), testutil.YtsaurusCurrVersion),
+		Entry("YTsaurus NEXT", Label("NEXT"), testutil.YtsaurusNextVersion),
+		Entry("YTsaurus LATE", Label("LATE"), testutil.YtsaurusLateVersion),
+	) // integration
 
 	// FIXME(khlebnikov): Refactor this - update just one component.
 	Context("update plan strategy testing", Label("update", "plan", "strategy"), func() {
