@@ -45,6 +45,8 @@ type ComponentManagerStatus struct {
 	shutdownStorage    bool
 	shutdownTablets    bool
 	shutdownCompute    bool
+
+	removeTabletCellsOnUpdate bool // Skip tablet cell save/remove/recover when tablet nodes use OnDelete strategy
 }
 
 //nolint:cyclop //shush
@@ -427,6 +429,24 @@ func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSel
 			cm.status.cannotUpdate = append(cm.status.cannotUpdate, component)
 		}
 	}
+}
+
+func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+	for _, component := range updatingComponents {
+		if component.Type != consts.TabletNodeType {
+			continue
+		}
+		for _, selector := range updatePlan {
+			if !canUpdateComponent(selector, component) {
+				continue
+			}
+			if selector.Strategy != nil && selector.Strategy.Type() == ytv1.ComponentUpdateModeTypeOnDelete {
+				return false
+			}
+			break
+		}
+	}
+	return true
 }
 
 func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {

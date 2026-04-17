@@ -266,6 +266,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	case ytv1.ClusterStateUpdating:
 		cm.status.nowUpdating = ytsaurus.GetUpdatingComponents()
+		cm.status.removeTabletCellsOnUpdate = shouldRemoveTabletCellsOnUpdate(resource.GetUpdatePlan(), cm.status.nowUpdating)
 
 		logger.Info("Ytsaurus updating",
 			"updateState", ytsaurus.GetUpdateState(),
