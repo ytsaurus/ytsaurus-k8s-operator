@@ -60,7 +60,7 @@ data:
             };
             "master_cache"={
                 addresses=[
-                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+                    "msc-0.masters.ytsaurus-components.svc.cluster.local:9018";
                 ];
                 "cell_id"="65726e65-ad6b7562-10259-79747361";
                 "enable_master_cache_discovery"=%false;

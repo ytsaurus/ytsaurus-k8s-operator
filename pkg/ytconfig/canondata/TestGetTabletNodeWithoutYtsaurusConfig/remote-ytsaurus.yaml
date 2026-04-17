@@ -3,16 +3,15 @@ metadata:
   name: test
   namespace: fake
 spec:
-  cellTag: 1000
-  cellTagMasterCaches: 0
-  hostAddresses:
-  - host1.external.address
-  - host2.external.address
-  - host3.external.address
-  hostAddressesMasterCaches:
-  - host1.external.address
-  - host2.external.address
-  - host3.external.address
-  instanceCount: 3
-  resources: {}
+  masterCaches:
+    hostAddresses:
+    - host1.external.address
+    - host2.external.address
+    - host3.external.address
+  primaryMaster:
+    cellTag: 1000
+    hostAddresses:
+    - host1.external.address
+    - host2.external.address
+    - host3.external.address
 status: {}
