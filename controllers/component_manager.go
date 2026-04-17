@@ -47,6 +47,7 @@ type ComponentManagerStatus struct {
 	shutdownCompute    bool
 
 	removeTabletCellsOnUpdate bool // Skip tablet cell save/remove/recover when tablet nodes use OnDelete strategy
+	runsMasterSafetySteps     bool // Run master pre/post-update safety steps (safe mode, snapshots, exit read-only) when master does NOT use OnDelete strategy
 }
 
 //nolint:cyclop //shush
@@ -431,22 +432,35 @@ func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSel
 	}
 }
 
-func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+// shouldRunPreUpdateStepsFor returns false when all updating components of the given type use OnDelete strategy
+func shouldRunPreUpdateStepsFor(
+	componentType consts.ComponentType,
+	updatePlan []ytv1.ComponentUpdateSelector,
+	updatingComponents []ytv1.Component,
+) bool {
 	for _, component := range updatingComponents {
-		if component.Type != consts.TabletNodeType {
+		if component.Type != componentType {
 			continue
 		}
 		for _, selector := range updatePlan {
 			if !canUpdateComponent(selector, component) {
 				continue
 			}
-			if selector.Strategy != nil && selector.Strategy.Type() == ytv1.ComponentUpdateModeTypeOnDelete {
-				return false
+			if selector.Strategy == nil || selector.Strategy.Type() != ytv1.ComponentUpdateModeTypeOnDelete {
+				return true // this component is NOT onDelete → must run pre-update steps
 			}
 			break
 		}
 	}
-	return true
+	return false
+}
+
+func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+	return shouldRunPreUpdateStepsFor(consts.TabletNodeType, updatePlan, updatingComponents)
+}
+
+func shouldRunMasterSafetySteps(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+	return shouldRunPreUpdateStepsFor(consts.MasterType, updatePlan, updatingComponents)
 }
 
 func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
