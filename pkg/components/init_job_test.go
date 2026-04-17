@@ -119,7 +119,7 @@ var _ = Describe("InitJob", func() {
 					Namespace: namespace,
 				}, &batchJob)
 				return apierrors.IsNotFound(err)
-			}, waitTimeout, 100*time.Millisecond).Should(BeTrue())
+			}, waitTimeout, 100*time.Millisecond).Should(BeTrueBecause("init job %q should be deleted", "ms-init-job-dummy"))
 		})
 	})
 
