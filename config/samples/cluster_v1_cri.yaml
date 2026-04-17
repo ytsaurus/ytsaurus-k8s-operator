@@ -20,6 +20,7 @@ metadata:
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
   # https://github.com/ytsaurus/ytsaurus/pkgs/container/ytsaurus
+  # append "-relwithdebinfo" for image with debug symbols
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
 
   # Allow updating everything at once
@@ -447,7 +448,8 @@ spec:
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
+    # append "-relwithdebinfo" for image with debug symbols
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
 
     loggers: *loggers
 
@@ -471,7 +473,8 @@ spec:
     instanceCount: 1
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#query-tracker
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2-relwithdebinfo
+    # append "-relwithdebinfo" for image with debug symbols
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
 
     loggers: *loggers
 
@@ -494,7 +497,7 @@ spec:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
-    image: ghcr.io/ytsaurus/strawberry:0.0.16
+    image: ghcr.io/ytsaurus/strawberry:0.0.17
 
     resources:
       limits:

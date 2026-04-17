@@ -9,6 +9,8 @@ spec:
     name: remote-ytsaurus
 
   # FIXME: Move cluster options into RemoteYtsaurus.
+  # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
+  # append "-relwithdebinfo" for image with debug symbols
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
 
   jobImage: mirror.gcr.io/library/python:3.12-slim
