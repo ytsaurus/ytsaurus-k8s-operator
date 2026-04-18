@@ -113,6 +113,12 @@ jobs:
         run: |
           make test-e2e
 
+      - name: Make logs snapshot
+        if: always()
+        shell: bash
+        run: |
+          make logs-snapshot
+
       - name: Cleanup k8s cluster
         shell: bash
         run: |
@@ -126,3 +132,12 @@ jobs:
           name: "E2E tests"
           path: "report.xml"
           reporter: java-junit
+
+      # https://github.com/actions/upload-artifact
+      - name: Upload logs snapshot
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: "logs E2E tests ${{ matrix.e2e.name }}"
+          path: "logs/"
+          retention-days: 10

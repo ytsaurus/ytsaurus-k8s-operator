@@ -148,6 +148,7 @@ GINKGO_FLAGS += --junit-report=report.xml
 ifneq ($(GITHUB_ACTION),)
 	GO_TEST_FLAGS += --trimpath
 	GINKGO_FLAGS += --github-output
+	LOGS_SNAPSHOT = logs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA}
 endif
 
 ifneq ($(FOCUS),)
@@ -411,6 +412,17 @@ helm-minikube-install: helm-chart ## Build docker image in minikube and install 
 .PHONY: helm-uninstall
 helm-uninstall: ## Uninstal helm chart.
 	$(HELM) uninstall -n $(OPERATOR_NAMESPACE) $(OPERATOR_INSTANCE)
+
+## Logs snapshot directory.
+LOGS_SNAPSHOT ?= logs/$(shell date -Ins)
+
+.PHONY: logs-snapshot
+logs-snapshot: LOGS_SNAPSHOT := ${LOGS_SNAPSHOT}
+logs-snapshot: ## Save operator logs snapshot to directory ${LOGS_SNAPSHOT}.
+	mkdir -p ${LOGS_SNAPSHOT}
+	-$(KUBECTL) describe pods -A &>${LOGS_SNAPSHOT}/pods.log
+	-$(KUBECTL) -n $(OPERATOR_NAMESPACE) logs -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE) --tail=-1 &>${LOGS_SNAPSHOT}/operator.log
+	-$(KUBECTL) -n $(OPERATOR_NAMESPACE) logs -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE) --tail=-1 --previous &>${LOGS_SNAPSHOT}/operator-previous.log
 
 .PHONY: kind-deploy-ytsaurus
 kind-deploy-ytsaurus: ## Deploy sample ytsaurus cluster and all requirements.
