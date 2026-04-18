@@ -67,19 +67,22 @@ jobs:
               from_input: ${{ ( ! inputs.e2e_filter ) && true || '' }}
 
     steps:
+      # https://github.com/jlumbroso/free-disk-space
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
           large-packages: false
 
+      # https://github.com/actions/checkout
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
+      # https://github.com/actions/setup-go
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
 
@@ -113,16 +116,32 @@ jobs:
         run: |
           make test-e2e
 
+      - name: Make logs snapshot
+        if: always()
+        shell: bash
+        run: |
+          make logs-snapshot
+
       - name: Cleanup k8s cluster
         shell: bash
         run: |
           make helm-uninstall
           make kind-delete-cluster
 
+      # https://github.com/dorny/test-reporter
       - name: Report results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: "E2E tests"
           path: "report.xml"
           reporter: java-junit
+
+      # https://github.com/actions/upload-artifact
+      - name: Upload logs snapshot
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: "logs E2E tests ${{ matrix.e2e.name }}"
+          path: "logs/"
+          retention-days: 10
