@@ -67,19 +67,22 @@ jobs:
               from_input: ${{ ( ! inputs.e2e_filter ) && true || '' }}
 
     steps:
+      # https://github.com/jlumbroso/free-disk-space
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: false
           large-packages: false
 
+      # https://github.com/actions/checkout
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
+      # https://github.com/actions/setup-go
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
 
@@ -125,9 +128,10 @@ jobs:
           make helm-uninstall
           make kind-delete-cluster
 
+      # https://github.com/dorny/test-reporter
       - name: Report results
         if: always()
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: "E2E tests"
           path: "report.xml"
