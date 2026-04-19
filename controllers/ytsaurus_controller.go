@@ -268,7 +268,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		cm.status.nowUpdating = ytsaurus.GetUpdatingComponents()
 		updatePlan := resource.GetUpdatePlan()
 		cm.status.removeTabletCellsOnUpdate = shouldRemoveTabletCellsOnUpdate(updatePlan, cm.status.nowUpdating)
-		cm.status.runsMasterSafetySteps = shouldRunMasterSafetySteps(updatePlan, cm.status.nowUpdating)
+		cm.status.masterHotUpdate = shouldUseMasterHotUpdate(updatePlan, cm.status.nowUpdating)
 
 		logger.Info("Ytsaurus updating",
 			"updateState", ytsaurus.GetUpdateState(),

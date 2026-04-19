@@ -269,7 +269,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
 	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
 	removeTabletCells := componentManager.status.removeTabletCellsOnUpdate
-	runsMasterSafetySteps := componentManager.status.runsMasterSafetySteps
+	masterHotUpdate := componentManager.status.masterHotUpdate
 
 	// TODO: if validation conditions can be not mentioned here or needed
 	tree.chainIf(
@@ -284,7 +284,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 			// Happy path will be chained automatically.
 		),
 	).chainIf(
-		updMaster && runsMasterSafetySteps,
+		updMaster && !masterHotUpdate,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
 	).chainIf(
 		updTablet && !componentManager.status.shutdownTablets && removeTabletCells,
@@ -295,7 +295,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updDataNodes || updMaster,
 		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
 	).chainIf(
-		updMaster && runsMasterSafetySteps,
+		updMaster && !masterHotUpdate,
 		st(ytv1.UpdateStateWaitingForSnapshots),
 	).chain(
 		st(ytv1.UpdateStateWaitingForPodsRemoval),
@@ -304,7 +304,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		updMaster,
 		st(ytv1.UpdateStateWaitingForMasterReady),
 	).chainIf(
-		updMaster && runsMasterSafetySteps,
+		updMaster && !masterHotUpdate,
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
 	).chainIf(
 		updMaster,
@@ -329,7 +329,7 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForQAStateUpdatingPrepare),
 		st(ytv1.UpdateStateWaitingForQAStateUpdate),
 	).chainIf(
-		updMaster && runsMasterSafetySteps,
+		updMaster && !masterHotUpdate,
 		st(ytv1.UpdateStateWaitingForSafeModeDisabled),
 	).chain(
 		st(ytv1.UpdateStateWaitingForTimbertruckPrepared),

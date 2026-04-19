@@ -18,7 +18,7 @@ var _ = Describe("BuildFlowTree", func() {
 		expectedStates            []ytv1.UpdateState
 		unhappyPath               bool
 		removeTabletCellsOnUpdate bool
-		runsMasterSafetySteps     bool
+		masterHotUpdate           bool
 	}
 
 	DescribeTable("should build correct flow tree",
@@ -27,7 +27,7 @@ var _ = Describe("BuildFlowTree", func() {
 				status: ComponentManagerStatus{
 					nowUpdating:               tc.updatingComponents,
 					removeTabletCellsOnUpdate: tc.removeTabletCellsOnUpdate,
-					runsMasterSafetySteps:     tc.runsMasterSafetySteps,
+					masterHotUpdate:           tc.masterHotUpdate,
 				},
 			}
 			tree := buildFlowTree(&componentManager)
@@ -62,7 +62,7 @@ var _ = Describe("BuildFlowTree", func() {
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
 			},
-			runsMasterSafetySteps: true,
+			masterHotUpdate: false,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -185,7 +185,7 @@ var _ = Describe("BuildFlowTree", func() {
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
 			},
-			runsMasterSafetySteps: false,
+			masterHotUpdate: true,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -205,7 +205,7 @@ var _ = Describe("BuildFlowTree", func() {
 				{Type: consts.TabletNodeType},
 			},
 			removeTabletCellsOnUpdate: true,
-			runsMasterSafetySteps:     true,
+			masterHotUpdate:           false,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,

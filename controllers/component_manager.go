@@ -47,7 +47,7 @@ type ComponentManagerStatus struct {
 	shutdownCompute    bool
 
 	removeTabletCellsOnUpdate bool // Skip tablet cell save/remove/recover when tablet nodes use OnDelete strategy
-	runsMasterSafetySteps     bool // Run master pre/post-update safety steps (safe mode, snapshots, exit read-only) when master does NOT use OnDelete strategy
+	masterHotUpdate           bool // Master update uses OnDelete — skip safety steps (safe mode, snapshots, exit read-only)
 }
 
 //nolint:cyclop //shush
@@ -459,8 +459,8 @@ func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, 
 	return shouldRunPreUpdateStepsFor(consts.TabletNodeType, updatePlan, updatingComponents)
 }
 
-func shouldRunMasterSafetySteps(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
-	return shouldRunPreUpdateStepsFor(consts.MasterType, updatePlan, updatingComponents)
+func shouldUseMasterHotUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+	return !shouldRunPreUpdateStepsFor(consts.MasterType, updatePlan, updatingComponents)
 }
 
 func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
