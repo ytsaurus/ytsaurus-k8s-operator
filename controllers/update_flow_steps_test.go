@@ -18,6 +18,7 @@ var _ = Describe("BuildFlowTree", func() {
 		expectedStates            []ytv1.UpdateState
 		unhappyPath               bool
 		removeTabletCellsOnUpdate bool
+		masterHotUpdate           bool
 	}
 
 	DescribeTable("should build correct flow tree",
@@ -26,6 +27,7 @@ var _ = Describe("BuildFlowTree", func() {
 				status: ComponentManagerStatus{
 					nowUpdating:               tc.updatingComponents,
 					removeTabletCellsOnUpdate: tc.removeTabletCellsOnUpdate,
+					masterHotUpdate:           tc.masterHotUpdate,
 				},
 			}
 			tree := buildFlowTree(&componentManager)
@@ -60,6 +62,7 @@ var _ = Describe("BuildFlowTree", func() {
 			updatingComponents: []ytv1.Component{
 				{Type: consts.MasterType},
 			},
+			masterHotUpdate: false,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -178,6 +181,23 @@ var _ = Describe("BuildFlowTree", func() {
 				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		}),
+		Entry("master update with onDelete strategy", testCase{
+			updatingComponents: []ytv1.Component{
+				{Type: consts.MasterType},
+			},
+			masterHotUpdate: true,
+			expectedStates: []ytv1.UpdateState{
+				ytv1.UpdateStateNone,
+				ytv1.UpdateStatePossibilityCheck,
+				ytv1.UpdateStateWaitingForImaginaryChunksAbsence,
+				ytv1.UpdateStateWaitingForPodsRemoval,
+				ytv1.UpdateStateWaitingForPodsCreation,
+				ytv1.UpdateStateWaitingForMasterReady,
+				ytv1.UpdateStateWaitingForSidecarsInitialize,
+				ytv1.UpdateStateWaitingForCypressPatch,
+				ytv1.UpdateStateWaitingForTimbertruckPrepared,
+			},
+		}),
 		Entry("combined master and tablet update", testCase{
 			name: "combined master and tablet update",
 			updatingComponents: []ytv1.Component{
@@ -185,6 +205,7 @@ var _ = Describe("BuildFlowTree", func() {
 				{Type: consts.TabletNodeType},
 			},
 			removeTabletCellsOnUpdate: true,
+			masterHotUpdate:           false,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -233,7 +254,7 @@ var _ = Describe("ShouldRemoveTabletCellsOnUpdate", func() {
 			Expect(shouldRemoveTabletCellsOnUpdate(tc.updatePlan, tc.updatingComponents)).To(Equal(tc.expected))
 		},
 		Entry("defaults to removing tablet cells", testCase{
-			expected: true,
+			expected: false,
 		}),
 		Entry("keeps removing tablet cells for bulk tablet updates", testCase{
 			updatePlan: []ytv1.ComponentUpdateSelector{{
