@@ -592,11 +592,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		})
 
 		By("Waiting scheduler could provide operation status", func() {
-			Eventually(ctx, op.Status, bootstrapTimeout, pollInterval).ShouldNot(BeNil())
+			op.WaitStatus(ctx)
 		})
 
 		By("Waiting operation completion", func() {
-			op.Wait()
+			op.Wait(ctx)
 		})
 	})
 
@@ -608,9 +608,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking map operation")
 		op := NewMapTestOperation(ytClient)
-		Expect(op.Start()).Should(Succeed())
+		Expect(op.Start(ctx)).Should(Succeed())
 		By("Waiting operation completion", func() {
-			op.Wait()
+			op.Wait(ctx)
 		})
 	})
 
@@ -722,12 +722,18 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			By("Running vanilla operation")
 			op := NewVanillaOperation(ytClient)
 
-			By("Waiting scheduler is ready to start operation")
-			Eventually(ctx, op.Start, bootstrapTimeout, pollInterval).Should(Succeed())
+			By("Waiting scheduler is ready to start operation", func() {
+				Eventually(ctx, op.Start, bootstrapTimeout, pollInterval).Should(Succeed())
+			})
+
+			By("Waiting scheduler could provide operation status", func() {
+				op.WaitStatus(ctx)
+			})
 
 			// FIXME(khlebnikov): In some cases cluster is broken and cannot run operations.
-			By("Aborting operation")
-			Expect(op.Abort()).To(Succeed())
+			By("Aborting operation", func() {
+				Expect(op.Abort(ctx)).To(Succeed())
+			})
 		}
 	})
 
@@ -1404,7 +1410,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
 
 				By("Running running vanilla operation")
-				NewVanillaOperation(ytClient).Run()
+				NewVanillaOperation(ytClient).Run(ctx)
 
 				By("Running sort operation to ensure exec node works")
 				op := runAndCheckSortOperation(ytClient)
@@ -2642,8 +2648,8 @@ type TestOperation struct {
 	Id     yt.OperationID
 }
 
-func (o *TestOperation) Start() error {
-	id, err := o.Client.StartOperation(specCtx, o.Spec.Type, o.Spec, nil)
+func (o *TestOperation) Start(ctx context.Context) error {
+	id, err := o.Client.StartOperation(ctx, o.Spec.Type, o.Spec, nil)
 	if err == nil {
 		log.Info("Operation started", "id", id)
 		o.Id = id
@@ -2655,10 +2661,20 @@ func (o *TestOperation) Status(ctx context.Context) (*yt.OperationStatus, error)
 	return o.Client.GetOperation(ctx, o.Id, nil)
 }
 
-func (o *TestOperation) Abort() error {
-	err := o.Client.AbortOperation(specCtx, o.Id, nil)
+func (o *TestOperation) WaitStatus(ctx context.Context) {
+	Eventually(ctx, o.Status, operationTimeout, operationPollInterval).ShouldNot(BeNil())
+}
+
+func (o *TestOperation) Abort(ctx context.Context) error {
+	err := o.Client.AbortOperation(ctx, o.Id, nil)
+	if yterrors.ContainsErrorCode(err, yterrors.CodeNoSuchOperation) {
+		if status, err := o.Status(ctx); err == nil && status.State.IsFinished() {
+			log.Info("Operation is finished", "id", o.Id, "state", status.State)
+			return nil
+		}
+	}
 	if err == nil {
-		log.Info("Operation aborted", "id", o.Id)
+		log.Info("Operation is aborted", "id", o.Id)
 	}
 	return err
 }
@@ -2688,10 +2704,10 @@ func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
 	}
 }
 
-func (o *TestOperation) Wait() *yt.OperationStatus {
+func (o *TestOperation) Wait(ctx context.Context) *yt.OperationStatus {
 	var opStatus *yt.OperationStatus
 	trackStatus := NewOprationStatusTracker()
-	Eventually(func(ctx context.Context) bool {
+	Eventually(ctx, func(ctx context.Context) bool {
 		var err error
 		opStatus, err = o.Status(ctx)
 		Expect(err).NotTo(HaveOccurred())
@@ -2705,10 +2721,10 @@ func (o *TestOperation) Wait() *yt.OperationStatus {
 	return opStatus
 }
 
-func (o *TestOperation) Run() *yt.OperationStatus {
-	err := o.Start()
+func (o *TestOperation) Run(ctx context.Context) *yt.OperationStatus {
+	err := o.Start(ctx)
 	Expect(err).NotTo(HaveOccurred())
-	return o.Wait()
+	return o.Wait(ctx)
 }
 
 func NewVanillaOperation(ytClient yt.Client) *TestOperation {
