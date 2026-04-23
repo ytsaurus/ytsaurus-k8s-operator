@@ -395,14 +395,17 @@ func (m *Master) scriptExitReadOnly() ([]string, error) {
 func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
-	if m.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
+	if m.ytsaurus.IsUpdating() {
+		if !IsUpdatingComponent(m.ytsaurus, m) {
+			return ComponentStatusReadyAfter("Not updating component"), nil
+		}
 		switch updateState := m.ytsaurus.GetUpdateState(); updateState {
 		case ytv1.UpdateStateWaitingForMasterExitReadOnly:
 			return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptExitReadOnly, nil)
 		case ytv1.UpdateStateWaitingForSidecarsInitialize:
 			return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, m.scriptInitialization, nil)
-		}
-		if IsUpdatingComponent(m.ytsaurus, m) {
+		case ytv1.UpdateStateWaitingForPodsRemoval:
+			// TODO: Cleanup, add separate update states for strategies.
 			switch getComponentUpdateStrategy(m.ytsaurus, consts.MasterType, m.GetShortName()) {
 			case ytv1.ComponentUpdateModeTypeOnDelete:
 				if status, err := handleOnDeleteUpdatingClusterState(ctx, m.ytsaurus, m, &m.component, m.server, dry); status != nil {
@@ -413,12 +416,11 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 					return *status, err
 				}
 			}
-
-			if m.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
-				return ComponentStatusReady(), err
-			}
-		} else {
-			return ComponentStatusReadyAfter("Not updating component"), nil
+		case ytv1.UpdateStateWaitingForMasterReady:
+			// Masters are upgraded first at separate update state.
+			// Sync server and create pods below.
+		default:
+			return ComponentStatusReadyAfter("No actions required for this update state"), nil
 		}
 	}
 
