@@ -299,13 +299,14 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForSnapshots),
 	).chain(
 		st(ytv1.UpdateStateWaitingForPodsRemoval),
-		st(ytv1.UpdateStateWaitingForPodsCreation),
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForMasterReady),
 	).chainIf(
 		updMaster && !masterHotUpdate,
 		st(ytv1.UpdateStateWaitingForMasterExitReadOnly),
+	).chain(
+		st(ytv1.UpdateStateWaitingForPodsCreation),
 	).chainIf(
 		updMaster,
 		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
