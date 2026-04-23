@@ -33,9 +33,14 @@ func podConditionIsTrue(pod *corev1.Pod, conditionType corev1.PodConditionType) 
 	})
 }
 
-// Pod is scheduled to node and not deleted yet
+// Pod is terminating.
+func podIsTerminating(pod *corev1.Pod) bool {
+	return !pod.DeletionTimestamp.IsZero()
+}
+
+// Pod is scheduled to node.
 func podIsScheduled(pod *corev1.Pod) bool {
-	return podConditionIsTrue(pod, corev1.PodScheduled) && pod.DeletionTimestamp.IsZero()
+	return podConditionIsTrue(pod, corev1.PodScheduled)
 }
 
 func podContainerIsRunning(pod *corev1.Pod, name string) bool {
@@ -61,12 +66,17 @@ func podContainerNames(pod *corev1.Pod, names []string) []string {
 	return names
 }
 
-// Counts pods where all containers or containers with given names are scheduled, running and ready.
-func countPods(pods []corev1.Pod, containerNames []string) (scheduled, running, ready int32) {
+// Counts pods where all containers or containers with given names have passed certain startup phase.
+func countPods(pods []corev1.Pod, containerNames []string) (pending, scheduled, running, ready, terminating int32) {
 	for _, pod := range pods {
+		if podIsTerminating(&pod) {
+			terminating += 1
+			continue
+		}
 		if podIsScheduled(&pod) {
 			scheduled += 1
 		} else {
+			pending += 1
 			continue
 		}
 
@@ -82,7 +92,7 @@ func countPods(pods []corev1.Pod, containerNames []string) (scheduled, running, 
 			ready += 1
 		}
 	}
-	return scheduled, running, ready
+	return pending, scheduled, running, ready, terminating
 }
 
 func arePodsReady(
@@ -104,26 +114,26 @@ func arePodsReady(
 
 	instanceCount := manager.getInstanceCount()
 	minReadyCount := manager.getMinReadyInstanceCount(0)
-	scheduledPods, runningPods, readyPods := countPods(pods, containerNames)
+	pendingPods, scheduledPods, runningPods, readyPods, terminatingPods := countPods(pods, containerNames)
 
 	switch {
 	case len(pods) > int(instanceCount):
-		status = ComponentStatusBlocked("Too many pods: %v of %v", len(pods), instanceCount)
-	case scheduledPods < minReadyCount:
-		status = ComponentStatusBlocked("Not enough scheduled pods: %v of %v", scheduledPods, instanceCount)
+		status = ComponentStatusBlocked("Too many pods: %v of %v, running %v, terminating %v", len(pods), instanceCount, runningPods, terminatingPods)
 	case runningPods < minReadyCount:
-		status = ComponentStatusBlocked("Not enough running pods: %v of %v", runningPods, instanceCount)
+		status = ComponentStatusBlocked("Not enough running pods: %v of %v, pending %v, scheduled %v, need %v", runningPods, instanceCount, pendingPods, scheduledPods, minReadyCount)
 	case readyPods < minReadyCount:
-		status = ComponentStatusStarted("Not enough ready pods: %v of %v", readyPods, instanceCount)
+		status = ComponentStatusStarted("Not enough ready pods: %v of %v, running %v, need %v", readyPods, instanceCount, runningPods, minReadyCount)
 	default:
-		return ComponentStatusReadyAfter("Pods are ready: %v of %v", readyPods, instanceCount), nil
+		return ComponentStatusReadyAfter("Pods are ready: %v of %v, running %v, need %v", readyPods, instanceCount, runningPods, minReadyCount), nil
 	}
 
 	logger.Info(status.Message,
 		"component", l.GetFullComponentName(),
 		"workload", l.GetComponentShortName(),
 		"podsCount", len(pods),
+		"scheduledPods", scheduledPods,
 		"runningPods", runningPods,
+		"terminatingPods", terminatingPods,
 		"instanceCount", instanceCount,
 		"readyPods", readyPods,
 		"minReadyCount", minReadyCount,
