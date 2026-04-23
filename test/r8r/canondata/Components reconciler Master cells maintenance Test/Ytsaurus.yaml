@@ -97,7 +97,7 @@ status:
     status: "True"
     type: ClusterMaintenance
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 0'
+    message: 'Pods are ready: 0 of 0, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -115,7 +115,7 @@ status:
     status: "True"
     type: MasterReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 0'
+    message: 'Pods are ready: 0 of 0, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"

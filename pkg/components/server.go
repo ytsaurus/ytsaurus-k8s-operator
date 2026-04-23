@@ -385,8 +385,15 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 		}
 
 		for _, pod := range pods {
+			if podIsTerminating(&pod) {
+				logger.Info("OnDelete update in progress: pod is terminating",
+					"component", s.labeller.GetFullComponentName(),
+					"pod", pod.Name)
+				return false
+			}
+
 			if !podIsScheduled(&pod) {
-				logger.Info("OnDelete update in progress: pod is not scheduled or is terminating",
+				logger.Info("OnDelete update in progress: pod is not scheduled",
 					"component", s.labeller.GetFullComponentName(),
 					"pod", pod.Name)
 				return false
