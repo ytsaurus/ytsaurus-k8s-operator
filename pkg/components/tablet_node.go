@@ -155,6 +155,7 @@ func (tn *TabletNode) getBundleOptions(bundle string) map[string]any {
 		}
 	}
 
+	// TODO: Add explicit cluster-wide configuration for default replication factors.
 	if tn.cfgen.GetMaxReplicationFactor() < 3 {
 		options["changelog_replication_factor"] = 1
 		options["changelog_read_quorum"] = 1

@@ -743,6 +743,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		BeforeEach(func() {
 			By("Adding base components")
 			ytBuilder.WithBaseComponents()
+
+			By("Setting update plan: class Everything")
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+				Class: consts.ComponentClassEverything,
+			}}
 		})
 
 		JustBeforeEach(func(ctx context.Context) {
@@ -764,12 +769,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Skip("Ytsaurus old or new image is not specified")
 					}
 
-					ytBuilder.WithNamedDataNodes(ptr.To("dn-t"))
-
 					By("Setting old core image for testing upgrade")
 					ytsaurus.Spec.CoreImage = oldImage
-					By("Setting ClassEverything for the update plan")
-					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				})
 
 				It("Triggers cluster update", Label(newVersion), func(ctx context.Context) {
@@ -816,8 +817,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should be updated according to class=ComponentClassEverything", func(ctx context.Context) {
 
-				By("Run cluster update with class=Nothing")
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassNothing}}
+				By("Updating cluster: class Nothing")
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Class: consts.ComponentClassNothing,
+				}}
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 
@@ -840,8 +843,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					"pods shouldn't be recreated when update is blocked",
 				)
 
-				By("Update cluster update with class=Everything")
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+				By("Updating cluster: class Everything")
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Class: consts.ComponentClassEverything,
+				}}
 				UpdateObject(ctx, ytsaurus)
 
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
@@ -877,7 +882,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should be updated according to Component=TabletNodesOnly,ExecNodesOnly", func(ctx context.Context) {
 
-				By("Run cluster update with component:Type:ExecNodeType")
+				By("Updating cluster: component type ExecNodeType")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.ExecNodeType,
@@ -907,7 +912,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("end-0"), "updated")
 
-				By("Run cluster update with component:Type:TabletNodeType")
+				By("Updating cluster: component type TabletNodeType")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.TabletNodeType,
@@ -939,7 +944,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 			It("Should be updated according to UpdatePlan=MasterOnly,ComponentClassStateless", func(ctx context.Context) {
 
-				By("Run cluster update with component:Type:MasterType")
+				By("Updating cluster: component type MasterType")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
 						Type: consts.MasterType,
@@ -1066,10 +1071,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				By("Adding CRI job environment")
 				ytBuilder.WithCRIJobEnvironment()
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-					{Component: ytv1.Component{Type: consts.DiscoveryType}},
-					{Component: ytv1.Component{Type: consts.ExecNodeType}},
-				}
 			})
 
 			It("ConfigOverrides update should trigger reconciliation", func(ctx context.Context) {
@@ -1134,7 +1135,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Run cluster update")
 				podsBeforeUpdate := getComponentPods(ctx, namespace)
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				UpdateObject(ctx, ytsaurus)
 
 				// FIXME: Cluster state oscillates.
@@ -1185,11 +1185,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With tablet nodes", Label("tablet"), func() {
 
 			BeforeEach(func() {
-				ytBuilder.WithTabletNodes()
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+
 			})
 
 			It("Should run and try to update Ytsaurus with tablet cell bundle which is not in `good` health", func(ctx context.Context) {
+
+				Expect(ytsaurus.Spec.TabletNodes).ShouldNot(BeEmpty())
 
 				By("Check that tablet cell bundles are in `good` health")
 				Eventually(func() bool {
@@ -1228,7 +1229,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// FIXME: Why?
 				By("Removing tablet nodes")
 				ytsaurus.Spec.TabletNodes = []ytv1.TabletNodesSpec{}
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 			})
 
 			It("Should run and try to update Ytsaurus with lvc", func(ctx context.Context) {
@@ -1467,7 +1467,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With remote tablet nodes", Label("tablet"), func() {
 			BeforeEach(func() {
 				// We have to create the minimal YT - with master, discovery servers and data-nodes
-				ytBuilder.WithDataNodes()
+				ytBuilder.WithDataNodes(3, "")
 
 				By("Adding remote tablet nodes")
 				remoteNodes = ytBuilder.CreateRemoteTabletNodes()
@@ -1574,8 +1574,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Adding exec nodes")
 				ytBuilder.WithScheduler()
 				ytBuilder.WithControllerAgents()
-				ytBuilder.WithExecNodes()
-				ytBuilder.WithDataNodes()
+				ytBuilder.WithExecNodes(1, "")
+				ytBuilder.WithDataNodes(3, "")
 
 				By("Adding CRI job environment")
 				ytBuilder.WithCRIJobEnvironment()
@@ -1604,8 +1604,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				By("Adding exec nodes")
 				ytBuilder.WithScheduler()
 				ytBuilder.WithControllerAgents()
-				ytBuilder.WithExecNodes()
-				ytBuilder.WithDataNodes()
+				ytBuilder.WithExecNodes(1, "")
+				ytBuilder.WithDataNodes(3, "")
 
 				By("Adding CRI-O job environment")
 				ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
@@ -1981,14 +1981,12 @@ exec "$@"`
 					case consts.ExecNodeType:
 						ytsaurus.Spec.ExecNodes[0].InstanceCount = 3
 					}
-					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-						{
-							Component: ytv1.Component{Type: componentType},
-							Strategy: &ytv1.ComponentUpdateStrategy{
-								RunPreChecks: ptr.To(true),
-							},
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+						Component: ytv1.Component{Type: componentType},
+						Strategy: &ytv1.ComponentUpdateStrategy{
+							RunPreChecks: ptr.To(true),
 						},
-					}
+					}}
 				})
 				It("Should update "+stsName+" in bulkUpdate mode and have Running state", func(ctx context.Context) {
 
@@ -2063,15 +2061,15 @@ exec "$@"`
 						ytBuilder.WithRPCProxies()
 						ytsaurus.Spec.RPCProxies[0].InstanceCount = 3
 					}
-					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-						{
-							Component: ytv1.Component{Type: componentType},
-							Strategy: &ytv1.ComponentUpdateStrategy{
-								OnDelete:     &ytv1.ComponentOnDeleteUpdateMode{},
-								RunPreChecks: ptr.To(true),
-							},
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+						Component: ytv1.Component{
+							Type: componentType,
 						},
-					}
+						Strategy: &ytv1.ComponentUpdateStrategy{
+							OnDelete:     &ytv1.ComponentOnDeleteUpdateMode{},
+							RunPreChecks: ptr.To(true),
+						},
+					}}
 				})
 				It("should update "+stsName+" with OnDelete strategy and have cluster Running state", func(ctx context.Context) {
 
@@ -2189,15 +2187,15 @@ exec "$@"`
 						}
 						Expect(foundNodeDataMount).To(BeTrueBecause("found node-data volume mount"))
 					}
-					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-						{
-							Component: ytv1.Component{Type: componentType},
-							Strategy: &ytv1.ComponentUpdateStrategy{
-								RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
-								RunPreChecks:  ptr.To(true),
-							},
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+						Component: ytv1.Component{
+							Type: componentType,
 						},
-					}
+						Strategy: &ytv1.ComponentUpdateStrategy{
+							RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+							RunPreChecks:  ptr.To(true),
+						},
+					}}
 				})
 
 				It("should update "+stsName+" with RollingUpdate strategy and have cluster Running state", func(ctx context.Context) {
@@ -2325,88 +2323,85 @@ exec "$@"`
 			Entry("update exec-node with CRI sidecar", Label(consts.GetStatefulSetPrefix(consts.ExecNodeType)), consts.ExecNodeType, consts.GetStatefulSetPrefix(consts.ExecNodeType), int32(2)),
 		)
 		Context("concurrent rolling update for multiple data-node groups", Label("rollingupdate-dnd"), func() {
-			const (
-				defaultDndStsName = "dnd"
-				namedDndStsName   = "dnd-3c25"
-			)
-
 			BeforeEach(func() {
-				ytBuilder.WithNamedDataNodes(ptr.To("3c25"))
-				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-					{
-						// Unnamed selector matches all DataNode groups.
-						Component: ytv1.Component{Type: consts.DataNodeType},
-						Strategy: &ytv1.ComponentUpdateStrategy{
-							RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
-							RunPreChecks:  ptr.To(true),
-						},
-						Concurrency: ptr.To(int32(1)),
+				ytsaurus.Spec.DataNodes = nil
+				ytBuilder.WithDataNodes(3, "a")
+				ytBuilder.WithDataNodes(3, "b")
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					// Unnamed selector matches all DataNode groups.
+					Component: ytv1.Component{
+						Type: consts.DataNodeType,
 					},
-				}
+					Strategy: &ytv1.ComponentUpdateStrategy{
+						RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+						RunPreChecks:  ptr.To(true),
+					},
+					Concurrency: ptr.To(int32(1)),
+				}}
 			})
 
-			It("should update data-node groups sequentially (default first, then 3c25) and reach Running state", func(ctx context.Context) {
+			It("should update data-node groups sequentially (dnd-a-*, then dnd-b-*) and reach Running state", func(ctx context.Context) {
 				By("Triggering update")
 				updateSpecToTriggerAllComponentUpdate(ytsaurus)
 				UpdateObject(ctx, ytsaurus)
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
 
-				By("Verifying only default dnd group is updating first (Concurrency=1)")
+				By("Verifying only dnd-a-* group is updating first (Concurrency=1)")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdatingComponentsNames(""))
-				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(ContainSubstring(defaultDndStsName))
-				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(ContainSubstring(namedDndStsName))
+				Expect(ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary).To(ContainSubstring("dnd-a"))
+				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).To(ContainSubstring("dnd-b"))
 
-				By("Verifying named rack (3c25) pods are untouched while default is updating")
+				By("Verifying pods dnd-b-* are untouched while dnd-a-* is updating")
 				podsNow := getComponentPods(ctx, namespace)
 				for name := range podsBeforeUpdate {
-					if strings.HasPrefix(name, namedDndStsName+"-") {
+					if strings.HasPrefix(name, "dnd-b-") {
 						pod, stillExists := podsNow[name]
-						Expect(stillExists).To(BeTrueBecause("named rack pod %s should still exist before its turn", name))
-						Expect(pod.DeletionTimestamp.IsZero()).To(BeTrueBecause("named rack pod %s should not be deleting before its turn", name))
+						Expect(stillExists).To(BeTrueBecause("pod %s should still exist before its turn", name))
+						Expect(pod.DeletionTimestamp.IsZero()).To(BeTrueBecause("pod %s should not be deleting before its turn", name))
 					}
 				}
 
 				By("Waiting for cluster update to complete")
 				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateUpdateBlocked())
 
-				defaultSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: defaultDndStsName}}
-				namedSts := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: namedDndStsName}}
+				StsA := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "dnd-a"}}
+				StsB := appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "dnd-b"}}
 
-				By("Verifying default rack pods are on the new revision")
-				EventuallyObject(ctx, &defaultSts, reactionTimeout).Should(WithTransform(
+				By("Verifying dnd-a-* pods are on the new revision")
+				EventuallyObject(ctx, &StsA, reactionTimeout).Should(WithTransform(
 					func(current *appsv1.StatefulSet) string { return current.Status.UpdateRevision },
 					Not(BeEmpty()),
 				))
-				defaultUpdateRevision := defaultSts.Status.UpdateRevision
+				UpdateRevisionA := StsA.Status.UpdateRevision
 				Eventually(func() bool {
 					podsNow := getComponentPods(ctx, namespace)
 					for name, pod := range podsNow {
-						if strings.HasPrefix(name, defaultDndStsName+"-") && !strings.HasPrefix(name, namedDndStsName+"-") {
-							if pod.Labels[appsv1.StatefulSetRevisionLabel] != defaultUpdateRevision {
+						if strings.HasPrefix(name, "dnd-a-") {
+							if pod.Labels[appsv1.StatefulSetRevisionLabel] != UpdateRevisionA {
 								return false
 							}
 						}
 					}
 					return true
-				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all default rack pods should be on the new revision %s", defaultUpdateRevision))
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("pods dnd-a-* should be on the new revision %s", UpdateRevisionA))
 
-				By("Verifying named rack (3c25) pods are on the new revision")
-				EventuallyObject(ctx, &namedSts, reactionTimeout).Should(WithTransform(
+				By("Verifying pods dnd-b-* are on the new revision")
+				EventuallyObject(ctx, &StsB, reactionTimeout).Should(WithTransform(
 					func(current *appsv1.StatefulSet) string { return current.Status.UpdateRevision },
 					Not(BeEmpty()),
 				))
-				namedUpdateRevision := namedSts.Status.UpdateRevision
+				UpdateRevisionB := StsB.Status.UpdateRevision
 				Eventually(func() bool {
 					podsNow := getComponentPods(ctx, namespace)
 					for name, pod := range podsNow {
-						if strings.HasPrefix(name, namedDndStsName+"-") {
-							if pod.Labels[appsv1.StatefulSetRevisionLabel] != namedUpdateRevision {
+						if strings.HasPrefix(name, "dnd-b-") {
+							if pod.Labels[appsv1.StatefulSetRevisionLabel] != UpdateRevisionB {
 								return false
 							}
 						}
 					}
 					return true
-				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("all named rack pods should be on the new revision %s", namedUpdateRevision))
+				}, upgradeTimeout, pollInterval).Should(BeTrueBecause("pods dnd-b-* should be on the new revision %s", UpdateRevisionB))
 
 				checkClusterHealth(ctx, ytClient)
 				checkChunkLocations(ytClient)
@@ -2569,6 +2564,7 @@ func checkPodLabelCount(pods map[string]corev1.Pod, labelKey string, labelValue 
 	Expect(podCount).Should(Equal(expectedCount))
 }
 
+// TODO: move into r8r tests
 func checkPodLabels(ctx context.Context, namespace string) {
 	cluster := testutil.YtsaurusName
 	pods := getAllPods(ctx, namespace)
@@ -2588,20 +2584,8 @@ func checkPodLabels(ctx context.Context, namespace string) {
 			HaveKeyWithValue("ytsaurus.tech/cluster-name", cluster),
 		)),
 	)))
-	Expect(pods).Should(ContainElement(And(
-		HaveField("Name", "dnd-dn-t-1"),
-		HaveField("Labels", And(
-			HaveKeyWithValue("app.kubernetes.io/name", "yt-data-node"),
-			HaveKeyWithValue("app.kubernetes.io/component", "yt-data-node-dn-t"),
-			HaveKeyWithValue("yt_component", fmt.Sprintf("%v-yt-data-node-dn-t", cluster)),
-			HaveKeyWithValue("app.kubernetes.io/managed-by", "ytsaurus-k8s-operator"),
-			HaveKeyWithValue("app.kubernetes.io/part-of", fmt.Sprintf("yt-%v", cluster)),
-			HaveKeyWithValue("ytsaurus.tech/cluster-name", cluster),
-		)),
-	)))
-	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-data-node", 6)
+	checkPodLabelCount(pods, "app.kubernetes.io/name", "yt-data-node", 3)
 	checkPodLabelCount(pods, "app.kubernetes.io/component", "yt-data-node", 3)
-	checkPodLabelCount(pods, "app.kubernetes.io/component", "yt-data-node-dn-t", 3)
 
 	Expect(pods).Should(ContainElement(And(
 		HaveField("Name", "ms-0"),

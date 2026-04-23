@@ -70,6 +70,36 @@ spec:
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data
+  - instanceCount: 3
+    locations:
+    - locationType: ChunkStore
+      path: /yt/node-data/chunk-store
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    name: d
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: node-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+    volumeMounts:
+    - mountPath: /yt/node-data
+      name: node-data
   discovery:
     instanceCount: 1
     loggers:
@@ -115,6 +145,51 @@ spec:
       useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
+    privileged: false
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: node-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/node-data
+      name: node-data
+  - instanceCount: 1
+    jobEnvironment:
+      cri:
+        apiRetryTimeoutSeconds: 120
+    jobResources:
+      limits:
+        cpu: "4"
+        memory: 8Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    locations:
+    - locationType: ChunkCache
+      path: /yt/node-data/chunk-cache
+    - locationType: Slots
+      path: /yt/node-data/slots
+    - locationType: ImageCache
+      path: /yt/node-data/image-cache
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    name: e
     privileged: false
     resources:
       limits:
@@ -395,11 +470,23 @@ status:
     status: "True"
     type: DataNodeReady
   - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 3'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: DataNode-dReady
+  - lastTransitionTime: null
     message: 'Pods are ready: 0 of 1'
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: ExecNodeReady
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 1'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: ExecNode-eReady
   - lastTransitionTime: null
     message: 'Pods are ready: 0 of 1'
     observedGeneration: 1

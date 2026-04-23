@@ -628,15 +628,13 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	Context("Image heater only for masters", func() {
 		BeforeEach(func() {
-			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
-				{
-					Component: ytv1.Component{
-						Type: ytv1.ImageHeaterType,
-						Name: consts.GetStatefulSetPrefix(ytv1.MasterType),
-					},
-					Concurrency: ptr.To(int32(2)),
+			ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+				Component: ytv1.Component{
+					Type: ytv1.ImageHeaterType,
+					Name: consts.GetStatefulSetPrefix(ytv1.MasterType),
 				},
-			}
+				Concurrency: ptr.To(int32(2)),
+			}}
 		})
 		It("Test", func(ctx context.Context) {
 			Expect(daemonSets).To(ConsistOf(
@@ -653,12 +651,14 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithOverrides()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
-			ytBuilder.WithDataNodes()
+			ytBuilder.WithDataNodes(3, "")
+			ytBuilder.WithDataNodes(3, "d")
 			// FIXME(khlebnikov): Do not bootstrap tablet cell bundles when not asked.
 			// ytBuilder.WithTabletNodes()
 			ytBuilder.WithScheduler()
 			ytBuilder.WithControllerAgents()
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
+			ytBuilder.WithExecNodes(1, "e")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithStrawberryController()
 			ytBuilder.WithQueryTracker()
@@ -741,7 +741,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	Context("With CRI job environment", func() {
 		BeforeEach(func() {
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithOverrides()
 		})
@@ -751,7 +751,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With CRI job environment - CRI-O", Label("crio"), func() {
 		BeforeEach(func() {
 			ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 		})
 		It("Test", func(ctx context.Context) {})
@@ -759,7 +759,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	Context("With CRI and NVIDIA container runtime", func() {
 		BeforeEach(func() {
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithNvidiaContainerRuntime()
 			ytBuilder.WithOverrides()
@@ -770,7 +770,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With CRI and NVIDIA container runtime - CRI-O", Label("crio"), func() {
 		BeforeEach(func() {
 			ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
-			ytBuilder.WithExecNodes()
+			ytBuilder.WithExecNodes(1, "")
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithNvidiaContainerRuntime()
 		})
