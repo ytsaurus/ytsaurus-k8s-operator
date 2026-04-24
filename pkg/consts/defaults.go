@@ -1,5 +1,9 @@
 package consts
 
+import (
+	"time"
+)
+
 const DefaultAdminLogin = "admin"
 const DefaultAdminPassword = "password"
 
@@ -36,3 +40,5 @@ func GetDefaultStrawberryControllerFamilies() []string {
 const DefaultTimbertruckDirectoryPath = "//sys/admin/logs"
 
 const DefaultImageHeaterConcurrency = 100
+
+const DefaultClusterStatusPollPeriod = time.Minute
