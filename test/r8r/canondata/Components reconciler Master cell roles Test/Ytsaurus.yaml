@@ -193,17 +193,35 @@ status:
     status: "True"
     type: OperatorVersion
   - lastTransitionTime: null
+    message: Secondary master cell 2 is settled during cluster initialization
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-2-Settled
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: Master-2Ready
   - lastTransitionTime: null
+    message: Secondary master cell 3 is settled during cluster initialization
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-3-Settled
+  - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: Master-3Ready
+  - lastTransitionTime: null
+    message: Secondary master cell 4 is settled during cluster initialization
+    observedGeneration: 1
+    reason: Initialization
+    status: "True"
+    type: Master-4-Settled
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1

@@ -19,8 +19,10 @@ const (
 
 // Both status and update conditions
 const (
-	ConditionTimbertruckPrepared = "TimbertruckPrepared"
-	ConditionCypressPatchApplied = "CypressPatchApplied"
+	ConditionTimbertruckPrepared     = "TimbertruckPrepared"
+	ConditionCypressPatchApplied     = "CypressPatchApplied"
+	ConditionMasterCellsRegistration = "MasterCellsRegistration"
+	ConditionMasterCellsSettlement   = "MasterCellsSettlement"
 )
 
 // Component status conditions suffixes
@@ -28,6 +30,7 @@ const (
 	ConditionReady            = "Ready"
 	ConditionInitJobCompleted = "InitJobCompleted"
 	ConditionQuorumCheck      = "-QuorumCheck"
+	ConditionCellSettled      = "-Settled"
 )
 
 // Component update phase condition suffixes
