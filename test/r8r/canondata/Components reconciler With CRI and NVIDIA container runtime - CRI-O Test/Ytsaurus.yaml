@@ -139,7 +139,7 @@ status:
     status: "True"
     type: OperatorVersion
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -157,13 +157,13 @@ status:
     status: "True"
     type: MasterReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: ExecNodeReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"

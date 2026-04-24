@@ -365,13 +365,13 @@ status:
     status: "True"
     type: ImageHeaterReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: DiscoveryReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -389,31 +389,31 @@ status:
     status: "True"
     type: MasterReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 3'
+    message: 'Pods are ready: 0 of 3, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: DataNodeReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: ExecNodeReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: ControllerAgentReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
     type: HttpProxyReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1'
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
@@ -437,7 +437,7 @@ status:
     status: "True"
     type: yql-agent-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 0'
+    message: 'Pods are ready: 0 of 0, running 0, need 0'
     observedGeneration: 1
     reason: Ready
     status: "True"
