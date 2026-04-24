@@ -227,6 +227,31 @@ const (
 	LogLevelError   LogLevel = "error"
 )
 
+// +kubebuilder:validation:Enum=simple;per_job_directory
+type JobProxyLoggingMode string
+
+const (
+	JobProxyLoggingModeSimple          JobProxyLoggingMode = "simple"
+	JobProxyLoggingModePerJobDirectory JobProxyLoggingMode = "per_job_directory"
+)
+
+type JobProxyLogManagerLocationSpec struct {
+	Path string `json:"path"`
+}
+
+type JobProxyLogManagerSpec struct {
+	//+kubebuilder:default:=per_job_directory
+	Mode JobProxyLoggingMode `json:"mode,omitempty"`
+	//+optional
+	Locations []JobProxyLogManagerLocationSpec `json:"locations,omitempty"`
+	//+optional
+	ShardingKeyLength int `json:"shardingKeyLength,omitempty"`
+	//+optional
+	LogsStoragePeriod int `json:"logsStoragePeriod,omitempty"`
+	//+kubebuilder:default:=2
+	DirectoryTraversalConcurrency int `json:"directoryTraversalConcurrency,omitempty"`
+}
+
 // LogWriterType string describes types of possible log writers.
 // +enum
 type LogWriterType string
@@ -683,6 +708,8 @@ type ExecNodesSpec struct {
 	JobResources *corev1.ResourceRequirements `json:"jobResources,omitempty"`
 	//+optional
 	JobEnvironment *JobEnvironmentSpec `json:"jobEnvironment,omitempty"`
+	//+optional
+	JobProxyLogManager *JobProxyLogManagerSpec `json:"jobProxyLogManager,omitempty"`
 }
 
 type TabletNodesSpec struct {

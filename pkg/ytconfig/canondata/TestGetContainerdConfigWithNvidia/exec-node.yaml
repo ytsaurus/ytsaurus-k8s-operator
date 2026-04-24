@@ -11,6 +11,8 @@ jobEnvironment:
     nvidia: {}
   useArtifactBinds: true
   userSlots: 42
+jobProxyLogManager:
+  mode: simple
 jobProxyLoggers:
 - categoriesFilter:
     type: exclude

@@ -92,6 +92,8 @@ type Logging struct {
 }
 
 type JobProxyLogging struct {
+	// COMPAT(epsilond1)
+	// 26.1 - job_proxy/job_proxy_logging/mode = per_job_directory
 	// COMPAT(ignat)
 	// 23.2 — job_proxy_logging
 	// 24.1 — job_proxy/job_proxy_logging

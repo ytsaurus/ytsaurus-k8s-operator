@@ -1155,6 +1155,43 @@
           "description": "Default docker image for user jobs.",
           "type": "string"
         },
+        "jobProxyLogManager": {
+          "type": "object",
+          "properties": {
+            "directoryTraversalConcurrency": {
+              "type": "integer",
+              "default": 2
+            },
+            "locations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "path"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "logsStoragePeriod": {
+              "type": "integer"
+            },
+            "mode": {
+              "type": "string",
+              "default": "per_job_directory",
+              "enum": [
+                "simple",
+                "per_job_directory"
+              ]
+            },
+            "shardingKeyLength": {
+              "type": "integer"
+            }
+          }
+        },
         "jobProxyLoggers": {
           "type": "array",
           "items": {
