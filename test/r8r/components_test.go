@@ -58,6 +58,7 @@ var log = logf.Log
 func TestComponents(t *testing.T) {
 	oformat.MaxLength = 20_000 // Do not truncate large YT errors
 	RegisterFailHandler(Fail)
+	testutil.SetupResultsHistory()
 	RunSpecs(t, "Test components")
 }
 

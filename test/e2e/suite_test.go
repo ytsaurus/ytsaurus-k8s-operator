@@ -61,6 +61,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	//+kubebuilder:scaffold:imports
@@ -91,6 +92,7 @@ var _ = BeforeEach(func() {
 func TestE2E(t *testing.T) {
 	oformat.MaxLength = 20_000 // Do not truncate large YT errors
 	RegisterFailHandler(Fail)
+	testutil.SetupResultsHistory()
 	RunSpecs(t, "E2E Tests")
 }
 

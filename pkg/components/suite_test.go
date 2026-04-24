@@ -21,11 +21,13 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
 func TestComponents(t *testing.T) {
 	RegisterFailHandler(Fail)
+	testutil.SetupResultsHistory()
 	RunSpecs(t, "Components fake suite")
 }
 
