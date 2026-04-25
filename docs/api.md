@@ -1513,6 +1513,26 @@ _Appears in:_
 | `hostAddressesMasterCaches` _string array_ | Deprecated: use hostAddresses instead. |  |  |
 
 
+#### MasterCellRole
+
+_Underlying type:_ _string_
+
+Other roles are allowed and handled as opaque strings, only naming convention is validated.
+Link: https://ytsaurus.tech/docs/en/admin-guide/cell-addition
+
+_Validation:_
+- Pattern: `^[a-z_]+$`
+
+_Appears in:_
+- [MastersSpec](#mastersspec)
+
+| Field | Description |
+| --- | --- |
+| `cypress_node_host` | Handling cypress tree or sub-tree (portal). Default role for both primary and secondary cells.<br /> |
+| `transaction_coordinator` | Handling transactions. Default role for primary cell.<br /> |
+| `chunk_host` | Handling chunk metadata. Default role for secondary cells and for primary if there is no secondary cells.<br /> |
+
+
 #### MasterConnectionSpec
 
 
@@ -1573,6 +1593,7 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 | `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
 | `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole)_ | Roles assigned to this master cell. Explicit enlisting is preferred, because defaults could change.<br />In general, assigned or default roles cannot be removed later without risk of data loss. |  | Pattern: `^[a-z_]+$` <br /> |
 | `hostAddressLabel` _string_ |  |  |  |
 | `maxSnapshotCountToKeep` _integer_ |  |  |  |
 | `maxChangelogCountToKeep` _integer_ |  |  |  |

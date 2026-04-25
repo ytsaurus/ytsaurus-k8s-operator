@@ -465,6 +465,10 @@ func HaveClusterStateRunning() otypes.GomegaMatcher {
 	return HaveClusterState(ytv1.ClusterStateRunning)
 }
 
+func HaveClusterStatePreparing() otypes.GomegaMatcher {
+	return HaveClusterState(ytv1.ClusterStatePreparing)
+}
+
 func HaveClusterStateUpdating() otypes.GomegaMatcher {
 	return HaveClusterState(ytv1.ClusterStateUpdating)
 }

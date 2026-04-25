@@ -144,18 +144,48 @@ func runImpossibleUpdateAndRollback(ytsaurus *ytv1.Ytsaurus, ytClient yt.Client)
 	ytsaurus.Spec.CoreImage = testutil.NextImages.Core
 	UpdateObject(specCtx, ytsaurus)
 
-	EventuallyYtsaurus(specCtx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStateImpossibleToStart))
+	EventuallyYtsaurus(specCtx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdateBlocked())
 
 	By("Set previous core image")
 	ytsaurus.Spec.CoreImage = testutil.CurrImages.Core
 	UpdateObject(specCtx, ytsaurus)
 
-	By("Wait for running")
-	EventuallyYtsaurus(specCtx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+	By("Wait for cluster back to preparing state")
+	EventuallyYtsaurus(specCtx, ytsaurus, upgradeTimeout).Should(HaveClusterStatePreparing())
 
 	By("Check that cluster alive after update")
 	res := make([]string, 0)
 	Expect(ytClient.ListNode(specCtx, ypath.Path("/"), &res, nil)).Should(Succeed())
+}
+
+func checkMasterCellChunkServer(ctx context.Context, ytClient yt.Client, cellTag uint16) {
+	filePath := ypath.Path(fmt.Sprintf("//tmp/file-at-cell-%d", cellTag))
+	fileID, err := ytClient.CreateNode(ctx, filePath, yt.NodeFile, &yt.CreateNodeOptions{
+		Attributes: map[string]any{
+			"external":          true,
+			"external_cell_tag": cellTag,
+		},
+	})
+	Expect(err).To(Succeed())
+	log.Info("File", "filePath", filePath, "cellTag", cellTag, "fileID", fileID)
+
+	// FIXME: Cluster shouldn't be Running if it have not enough data nodes to operate.
+	Eventually(func() error {
+		wc, err := ytClient.WriteFile(ctx, filePath, nil)
+		if err == nil {
+			Expect(wc.Write([]byte("test"))).To(Equal(4))
+			err = wc.Close()
+		}
+		return err
+	}, upgradeTimeout, pollInterval).To(Succeed())
+
+	var chunkIds []string
+	Expect(ytClient.GetNode(ctx, filePath.Attr("chunk_ids"), &chunkIds, nil)).To(Succeed())
+	Expect(chunkIds).To(HaveLen(1))
+	log.Info("File", "filePath", filePath, "chunkId", chunkIds[0])
+	Expect(chunkIds[0]).To(MatchRegexp(fmt.Sprintf("^[^-]+-[^-]+-%x[^-]{4}-[^-]+$", cellTag)))
+
+	Expect(ytClient.RemoveNode(ctx, filePath, nil)).To(Succeed())
 }
 
 type testRow struct {
@@ -259,10 +289,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				GenerateName: "test-e2e-",
 				Labels: map[string]string{
 					"app.kubernetes.io/component": "test",
-					"app.kubernetes.io/name":      "test-" + strings.Join(currentSpec.Labels(), "-"),
 					"app.kubernetes.io/part-of":   "ytsaurus-dev",
 				},
 				Annotations: map[string]string{
+					"ytsaurus.tech/test-labels": strings.Join(currentSpec.Labels(), " "),
 					"kubernetes.io/description": currentSpec.LeafNodeText,
 				},
 			},
@@ -812,6 +842,76 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			Entry("When update Ytsaurus NEXT -> LATE", Label("LATE"), testutil.YtsaurusNextVersion, testutil.YtsaurusLateVersion),
 		)
 
+		DescribeTableSubtree("Updating multicell Ytsaurus image", Label("multicell"),
+			func(oldEpoch, newEpoch string) {
+				newVersion := testutil.Images[newEpoch].YtsaurusVersion.String()
+				if oldEpoch == "" || newEpoch == "" || newVersion == "" {
+					return
+				}
+				oldImage := testutil.Images[oldEpoch]
+				newImage := testutil.Images[newEpoch]
+
+				BeforeEach(func() {
+					if oldImage.Core == "" || newImage.Core == "" {
+						Skip("Ytsaurus old or new image is not specified")
+					}
+
+					brokenVersions, err := version.ParseConstraints("~24.2")
+					Expect(err).To(Succeed())
+					if brokenVersions.Check(&oldImage.YtsaurusVersion) || brokenVersions.Check(&newImage.YtsaurusVersion) {
+						Skip("YTsaurus old/new version does not support multicell")
+					}
+
+					By("Setting 3 master replicas")
+					ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+
+					By("Adding secondary master cell")
+					ytBuilder.WithSecondaryMaster()
+
+					By("Setting old core image for testing upgrade")
+					ytsaurus.Spec.CoreImage = oldImage.Core
+
+					By("Update plan: class Everything")
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+						Class: consts.ComponentClassEverything,
+					}}
+				})
+
+				It("Triggers cluster update", Label(newVersion), func(ctx context.Context) {
+					By("Checking chunk server for secondary master cells")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
+
+					log.Info("Update core image", "before", ytsaurus.Spec.CoreImage, "after", newImage.Core)
+					ytsaurus.Spec.CoreImage = newImage.Core
+					UpdateObject(ctx, ytsaurus)
+
+					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+					By("Waiting cluster update completes")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					checkClusterHealth(ctx, ytClient)
+					checkChunkLocations(ytClient)
+
+					podsAfterFullUpdate := getComponentPods(ctx, namespace)
+					pods := getChangedPods(podsBeforeUpdate, podsAfterFullUpdate)
+					Expect(pods.Heated).ToNot(BeEmpty(), "heated")
+					Expect(pods.Created).To(BeEmpty(), "created")
+					Expect(pods.Deleted).To(BeEmpty(), "deleted")
+					Expect(pods.Updated).ToNot(BeEmpty(), "updated")
+					Expect(pods.Unchanged).To(BeEmpty(), "unchanged")
+
+					CurrentlyObject(ctx, ytsaurus).Should(HaveObservedGeneration())
+
+					By("Checking chunk server for secondary master cells")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
+				})
+			},
+			Entry("When update Ytsaurus PAST -> PREV", Label("PREV"), testutil.YtsaurusPastVersion, testutil.YtsaurusPrevVersion),
+			Entry("When update Ytsaurus PREV -> CURR", Label("CURR"), testutil.YtsaurusPrevVersion, testutil.YtsaurusCurrVersion),
+			Entry("When update Ytsaurus CURR -> NEXT", Label("NEXT"), testutil.YtsaurusCurrVersion, testutil.YtsaurusNextVersion),
+			Entry("When update Ytsaurus NEXT -> LATE", Label("LATE"), testutil.YtsaurusNextVersion, testutil.YtsaurusLateVersion),
+		)
+
 		Context("Test update plan selector", Label("plan", "selector"), func() {
 
 			It("Should be updated according to class=ComponentClassEverything", func(ctx context.Context) {
@@ -1137,32 +1237,20 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
 				UpdateObject(ctx, ytsaurus)
 
-				// FIXME: Cluster state oscillates.
-				if false {
-					By("Waiting stable version")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveStableResourceVersion(consistencyTimeout))
+				By("Waiting for cluster state UpdateBlocked")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdateBlocked())
+				Expect(ytsaurus).Should(HaveStatusCondition(consts.ConditionUpdateIsPossible, ConditionStatusFalse()))
 
-					By("Waiting for PossibilityCheck")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck))
+				By("Check consistent UpdateIsPossible")
+				ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
+					HaveClusterStateUpdateBlocked(),
+					HaveStatusCondition(consts.ConditionUpdateIsPossible, ConditionStatusFalse()),
+				))
 
-					By("Waiting for condition NoPossibility")
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(WithInvariant(
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue()),
-					))
-
-					By("Check consistent NoPossibility")
-					ConsistentlyYtsaurus(ctx, ytsaurus, consistencyTimeout).Should(And(
-						HaveClusterUpdateState(ytv1.UpdateStatePossibilityCheck),
-						Not(HaveClusterUpdateCondition(consts.ConditionHasPossibility, ConditionStatusDefined())),
-						HaveClusterUpdateCondition(consts.ConditionNoPossibility, ConditionStatusTrue())),
-					)
-				} else {
-					By("Checking that pods are not changed")
-					Consistently(ctx, func(ctx context.Context) changedObjects {
-						return getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
-					}, consistencyTimeout, pollInterval).To(HaveField("Changed", BeEmpty()))
-				}
+				By("Checking that pods are not changed")
+				Consistently(ctx, func(ctx context.Context) changedObjects {
+					return getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
+				}, consistencyTimeout, pollInterval).To(HaveField("Changed", BeEmpty()))
 
 				// This is a test for specific regression bug when master pods are recreated during PossibilityCheck stage.
 				By("Check that master pod was NOT recreated at the PossibilityCheck stage")
@@ -1934,6 +2022,47 @@ exec "$@"`
 				)).To(Equal("1\n"))
 			})
 		}) // integration tls
+
+		Context("With secondary cells", Label(ytVersion, "multicell"), func() {
+
+			BeforeEach(func() {
+				brokenVersions, err := version.ParseConstraints("~24.2")
+				Expect(err).To(Succeed())
+				if brokenVersions.Check(&images.YtsaurusVersion) {
+					Skip(fmt.Sprintf("YTsaurus version %v does not support multicell", images.YtsaurusVersion.Original()))
+				}
+
+				By("Adding data nodes")
+				ytBuilder.WithDataNodes()
+			})
+
+			Context("Create cluster with secondary master", Label("initialization"), func() {
+
+				BeforeEach(func() {
+					By("Setting 3 replicas for each master cell")
+					ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+
+					By("Adding two secondary master cells")
+					ytBuilder.WithSecondaryMaster()
+					ytBuilder.WithSecondaryMaster()
+
+					// Give role chunk host to all master cells.
+					ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, false))
+				})
+
+				It("Verifies master cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+					By("Checking chunk server for primary master cells")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.PrimaryMasters.CellTag)
+
+					By("Checking chunk server for secondary master cells")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[1].CellTag)
+					// TODO: Check cypress portals.
+				})
+
+			}) // integration multicell initialization
+
+		}) // integration multicell
 
 	},
 		Entry("YTsaurus PAST", Label("PAST"), testutil.YtsaurusPastVersion),

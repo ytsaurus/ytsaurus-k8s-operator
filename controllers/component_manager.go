@@ -79,16 +79,24 @@ func NewComponentManager(
 		getHeaterStatus = ih.GetHeaterStatus
 	}
 
-	m := components.NewMaster(cfgen, ytsaurus)
+	var secondaryMasters []*components.Master
+	for i := range resource.Spec.SecondaryMasters {
+		sm := components.NewMaster(cfgen, ytsaurus, &resource.Spec.SecondaryMasters[i], nil)
+		secondaryMasters = append(secondaryMasters, sm)
+		allComponents = append(allComponents, sm)
+	}
+
+	// NOTE: Primary master readiness depends on readiness of secondary masters.
+	m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.PrimaryMasters, secondaryMasters)
 	allComponents = append(allComponents, m)
 
 	var hps []components.Component
-	for _, hpSpec := range ytsaurus.GetResource().Spec.HTTPProxies {
+	for _, hpSpec := range resource.Spec.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
 	allComponents = append(allComponents, hps...)
 
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, hps[0], getAllComponents)
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, m, hps[0], getAllComponents)
 	allComponents = append(allComponents, yc)
 
 	d := components.NewDiscovery(cfgen, ytsaurus, yc)
@@ -96,7 +104,7 @@ func NewComponentManager(
 
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
-		for _, dndSpec := range ytsaurus.GetResource().Spec.DataNodes {
+		for _, dndSpec := range resource.Spec.DataNodes {
 			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, yc, dndSpec))
 		}
 	}
@@ -109,7 +117,7 @@ func NewComponentManager(
 
 	if len(resource.Spec.RPCProxies) > 0 {
 		var rps []components.Component
-		for _, rpSpec := range ytsaurus.GetResource().Spec.RPCProxies {
+		for _, rpSpec := range resource.Spec.RPCProxies {
 			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
 		}
 		allComponents = append(allComponents, rps...)
@@ -117,7 +125,7 @@ func NewComponentManager(
 
 	if len(resource.Spec.TCPProxies) > 0 {
 		var tps []components.Component
-		for _, tpSpec := range ytsaurus.GetResource().Spec.TCPProxies {
+		for _, tpSpec := range resource.Spec.TCPProxies {
 			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
 		}
 		allComponents = append(allComponents, tps...)
@@ -125,19 +133,19 @@ func NewComponentManager(
 
 	if len(resource.Spec.KafkaProxies) > 0 {
 		var kps []components.Component
-		for _, kpSpec := range ytsaurus.GetResource().Spec.KafkaProxies {
+		for _, kpSpec := range resource.Spec.KafkaProxies {
 			kps = append(kps, components.NewKafkaProxy(cfgen, ytsaurus, m, kpSpec))
 		}
 		allComponents = append(allComponents, kps...)
 	}
 
-	for _, endSpec := range ytsaurus.GetResource().Spec.ExecNodes {
+	for _, endSpec := range resource.Spec.ExecNodes {
 		allComponents = append(allComponents, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec, yc))
 	}
 
 	var tnds []components.Component
 	if len(resource.Spec.TabletNodes) > 0 {
-		for idx, tndSpec := range ytsaurus.GetResource().Spec.TabletNodes {
+		for idx, tndSpec := range resource.Spec.TabletNodes {
 			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, tndSpec, idx == 0))
 		}
 	}
@@ -256,6 +264,14 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			"message", status.Message,
 		)
 
+		if component.GetType() == consts.YtsaurusClientType && !status.IsReady() {
+			// Virtual component without pods can be non-ready, but not non-running.
+			// They should not initiate cluster reconfiguration.
+			cm.status.pending = append(cm.status.pending, component.GetComponent())
+			cm.status.allReady = false
+			continue
+		}
+
 		if component.GetType() == consts.MasterType && !status.IsReady() {
 			cm.status.masterReady = false
 		}
@@ -323,6 +339,8 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	}
 
 	hasPending := false
+	hasStarted := false
+	var syncStatus components.ComponentStatus
 	var syncErr error
 	for _, c := range cm.allComponents {
 		status, err := c.Sync(ctx, true)
@@ -331,23 +349,26 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 		}
 		c.SetStatus(status)
 
-		if status.SyncStatus == components.SyncStatusPending ||
-			status.SyncStatus == components.SyncStatusUpdating {
+		switch status.SyncStatus {
+		case components.SyncStatusPending, components.SyncStatusUpdating:
 			hasPending = true
 			logger.Info("Sync component",
 				"component", c.GetFullName(),
 				"status", status.SyncStatus,
 				"message", status.Message,
 			)
-			if status, err := c.Sync(ctx, false); err != nil {
-				logger.Error(err, "Cannot sync component",
-					"component", c.GetFullName(),
-					"status", status.SyncStatus,
-					"message", status.Message,
-				)
-				syncErr = err
-				break
-			}
+			syncStatus, syncErr = c.Sync(ctx, false)
+		case components.SyncStatusStarted:
+			hasStarted = true
+		}
+
+		if syncErr != nil {
+			logger.Error(syncErr, "Cannot sync component",
+				"component", c.GetFullName(),
+				"status", syncStatus.SyncStatus,
+				"message", syncStatus.Message,
+			)
+			break
 		}
 
 		if cm.ytsaurus.IsInitializing() && c.GetType() == consts.ImageHeaterType {
@@ -365,16 +386,16 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if syncErr != nil {
+	switch {
+	case syncErr != nil:
 		return ctrl.Result{Requeue: true}, syncErr
-	}
-
-	if !hasPending {
-		// All components are blocked.
+	case hasPending:
+		return ctrl.Result{RequeueAfter: time.Second}, nil
+	case hasStarted:
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	default:
+		return ctrl.Result{RequeueAfter: consts.DefaultClusterStatusPollPeriod}, nil
 	}
-
-	return ctrl.Result{RequeueAfter: time.Second}, nil
 }
 
 func (cm *ComponentManager) allUpdatingImagesAreHeated() bool {

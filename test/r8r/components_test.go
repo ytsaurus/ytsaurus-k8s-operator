@@ -651,6 +651,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With all components", func() {
 		BeforeEach(func() {
 			ytBuilder.WithOverrides()
+			ytBuilder.WithSecondaryMaster()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
 			ytBuilder.WithDataNodes()
@@ -726,6 +727,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
 				Shutdown: ytv1.ClusterShutdownExceptMasters,
 			}
+			ytBuilder.WithSecondaryMaster()
 		})
 		It("Test", func(ctx context.Context) {
 			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))
@@ -736,6 +738,22 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				}
 				Expect(sts.Spec.Replicas).To(HaveValue(Equal(replicas)), "replicas for sts %v", sts.Name)
 			}
+		})
+	})
+
+	Context("Master cell roles", func() {
+		BeforeEach(func() {
+			// Primary master cell with explicit default roles.
+			ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, true))
+			// Secondary master cells with:
+			// - implicit default roles
+			// - explicit default roles
+			// - explicit empty roles
+			ytBuilder.WithSecondaryMaster().Roles = nil
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To(ytv1.GetMasterCellRoles(nil, false, true))
+			ytBuilder.WithSecondaryMaster().Roles = ptr.To([]ytv1.MasterCellRole{})
+		})
+		It("Test", func(ctx context.Context) {
 		})
 	})
 
