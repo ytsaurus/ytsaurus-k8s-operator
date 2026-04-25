@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"k8s.io/utils/ptr"
 
@@ -43,6 +42,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 )
 
@@ -75,7 +75,7 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	if !ptr.Deref(ytsaurus.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, &ytsaurus) {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
-		return ctrl.Result{RequeueAfter: time.Minute}, nil
+		return ctrl.Result{RequeueAfter: consts.DefaultClusterStatusPollPeriod}, nil
 	}
 
 	if err := validators.ValidateVersionConstraint(ytsaurus.Spec.RequiresOperatorVersion); err != nil {
@@ -147,6 +147,7 @@ func (r *YtsaurusReconciler) findObjectsForConfigMap(ctx context.Context, config
 	return requests
 }
 
+//nolint:cyclop //ok
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx, "ytsaurusState", resource.Status.State)
 	ctx = log.IntoContext(ctx, logger)
@@ -222,9 +223,27 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 				needStatusUpdate = true
 			}
 
+		case len(cm.status.needUpdate) == 0 && !cm.status.allReady:
+			logger.Info("Ytsaurus is waiting for readiness of some components",
+				"pending", cm.status.pending,
+				"blocked", cm.status.blocked,
+				"started", cm.status.started,
+			)
+			if ytsaurus.GetClusterState() == ytv1.ClusterStateRunning {
+				needStatusUpdate = ytsaurus.SetClusterState(ytv1.ClusterStatePreparing)
+			}
+
 		case len(cm.status.needUpdate) == 0:
 			logger.Info("All components are up-to-date")
 			if ytsaurus.SetClusterState(ytv1.ClusterStateRunning) {
+				needStatusUpdate = true
+			}
+
+		case !ytsaurus.IsStatusConditionTrue(consts.ConditionUpdateIsPossible):
+			logger.Info("Ytsaurus update is not possible",
+				"condition", ytsaurus.GetStatusCondition(consts.ConditionUpdateIsPossible),
+			)
+			if ytsaurus.IsStatusConditionFalse(consts.ConditionUpdateIsPossible) && ytsaurus.SetClusterState(ytv1.ClusterStateUpdateBlocked) {
 				needStatusUpdate = true
 			}
 
@@ -237,6 +256,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			ytsaurus.SetUpdatingComponents(cm.status.canUpdate)
 			ytsaurus.SetUpdateState(ytv1.UpdateStateNone)
 			ytsaurus.SetClusterState(ytv1.ClusterStateUpdating)
+			cm.initUpdateConditions(ctx)
 			needStatusUpdate = true
 
 		case len(cm.status.cannotUpdate) != 0:
@@ -255,7 +275,9 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 		}
 
 		// All done, nothing has changed - do not requeue reconcile.
-		return ctrl.Result{}, nil
+		if cm.status.allReady {
+			return ctrl.Result{}, nil
+		}
 
 	case ytv1.ClusterStateReconfiguration:
 		if cm.status.allRunning {
@@ -282,7 +304,13 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			apiproxy.BuildComponentsSummary(cm.status.started),
 		))
 
-		updateFlow := buildFlowTree(cm)
+		var updateFlow *flowTree
+		if cm.status.mastersMaintenance {
+			updateFlow = masterMaintenanceFlow(cm)
+		} else {
+			updateFlow = buildFlowTree(cm)
+		}
+
 		if progressed, err := updateFlow.execute(ctx, ytsaurus, cm); err != nil {
 			return ctrl.Result{}, err
 		} else if progressed {
