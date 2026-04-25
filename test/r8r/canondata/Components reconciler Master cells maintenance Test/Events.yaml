@@ -386,7 +386,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "7"
+    resourceVersion: "9"
   lastTimestamp: null
   message: Created YT object yt-client-secret (*v1.Secret)
   metadata:
@@ -406,7 +406,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -426,7 +426,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Created YT object yt-client-init-job-user-config (*v1.ConfigMap)
   metadata:
@@ -446,7 +446,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "8"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Created YT object yt-client-init-job-user (*v1.Job)
   metadata:
@@ -466,7 +466,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "12"
   lastTimestamp: null
   message: Created YT object yt-cypress-patch (*v1.ConfigMap)
   metadata:
@@ -486,7 +486,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "12"
   lastTimestamp: null
   message: Skip patch apply in test
   metadata:
@@ -506,7 +506,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "12"
+    resourceVersion: "14"
   lastTimestamp: null
   message: Ytsaurus cluster is under maintenance, shutdown ExceptMasters
   metadata:
