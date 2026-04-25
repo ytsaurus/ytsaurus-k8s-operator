@@ -289,10 +289,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				GenerateName: "test-e2e-",
 				Labels: map[string]string{
 					"app.kubernetes.io/component": "test",
-					"app.kubernetes.io/name":      "test-" + strings.Join(currentSpec.Labels(), "-"),
 					"app.kubernetes.io/part-of":   "ytsaurus-dev",
 				},
 				Annotations: map[string]string{
+					"ytsaurus.tech/test-labels": strings.Join(currentSpec.Labels(), " "),
 					"kubernetes.io/description": currentSpec.LeafNodeText,
 				},
 			},
