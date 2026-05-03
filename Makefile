@@ -176,6 +176,9 @@ endif
 GO_TEST_FLAGS += ${GOFLAGS}
 GO_TEST_FLAGS += --coverprofile cover.out
 
+TEST_RESULTS_HISTORY ?= ${CURDIR}/test-results-history
+export TEST_RESULTS_HISTORY
+
 ##@ General
 
 .PHONY: all

@@ -37,6 +37,7 @@ on:
 env:
   DEBUG: "${{ inputs.DEBUG }}"
   TEST_YTSAURUS_VERSION: "${{ inputs.TEST_YTSAURUS_VERSION }}"
+  TEST_RESULTS_HISTORY: "${{ github.workspace }}/test-results-history"
 
 jobs:
   check:
@@ -109,6 +110,18 @@ jobs:
           make helm-kind-install
           kubectl get pod -A
 
+      # https://github.com/actions/cache
+      - name: Restore test results history
+        id: restore-test-results-history
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ env.TEST_RESULTS_HISTORY }}
+          key: test-results-history-${{ matrix.e2e.name }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            test-results-history-${{ matrix.e2e.name }}-${{ github.ref_name }}
+            test-results-history-${{ matrix.e2e.name }}
+            test-results-history
+
       - name: Run ${{ matrix.e2e.name }} e2e tests
         env:
           GINKGO_LABEL_FILTER: ${{ matrix.e2e.filter }}
@@ -136,6 +149,15 @@ jobs:
           name: "E2E tests"
           path: "report.xml"
           reporter: java-junit
+
+      # https://github.com/actions/cache
+      - name: Save test results history
+        id: save-test-results-history
+        if: always()
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ env.TEST_RESULTS_HISTORY }}
+          key: ${{ steps.restore-test-results-history.outputs.cache-primary-key }}
 
       # https://github.com/actions/upload-artifact
       - name: Upload logs snapshot
