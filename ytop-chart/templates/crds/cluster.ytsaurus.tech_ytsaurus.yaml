@@ -10502,7 +10502,7 @@ spec:
                             Default: runc.'
                           properties:
                             metax:
-                              description: Use NVIDIA Container Runtime.
+                              description: Use METAX Container Runtime.
                               type: object
                             nvidia:
                               description: Use NVIDIA Container Runtime.

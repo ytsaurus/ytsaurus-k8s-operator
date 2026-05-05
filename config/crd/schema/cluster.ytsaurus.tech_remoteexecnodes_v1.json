@@ -1136,7 +1136,7 @@
               "type": "object",
               "properties": {
                 "metax": {
-                  "description": "Use NVIDIA Container Runtime.",
+                  "description": "Use METAX Container Runtime.",
                   "type": "object"
                 },
                 "nvidia": {

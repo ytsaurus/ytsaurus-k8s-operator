@@ -1238,7 +1238,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `nvidia` _[NvidiaRuntimeSpec](#nvidiaruntimespec)_ | Use NVIDIA Container Runtime. |  |  |
-| `metax` _[MetaxRuntimeSpec](#metaxruntimespec)_ | Use NVIDIA Container Runtime. |  |  |
+| `metax` _[MetaxRuntimeSpec](#metaxruntimespec)_ | Use METAX Container Runtime. |  |  |
 
 
 #### KafkaProxiesSpec

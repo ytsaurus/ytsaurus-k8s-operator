@@ -706,23 +706,24 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		return c, err
 	}
 
-	gpuInfoSource := &c.ExecNode.GpuManager.GpuInfoSource
+	gpuManager := &c.ExecNode.GpuManager
 	switch {
 	case spec.GPUManager != nil && spec.GPUManager.GPUInfoProvider != nil:
-		gpuInfoSource.Type = *spec.GPUManager.GPUInfoProvider
-	case spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && (spec.JobEnvironment.Runtime.Nvidia != nil || spec.JobEnvironment.Runtime.Metax != nil):
-		gpuInfoSource.Type = ytv1.GPUInfoProviderGPUAgent
-		c.ExecNode.GpuManager.UseGpuInfoProviderForDeviceDiscovery = true
-		if spec.JobEnvironment.Runtime.Nvidia == nil {
-			c.ExecNode.GpuManager.GpuFlavor = ptr.To("other")
-		}
+		gpuManager.GpuInfoSource.Type = *spec.GPUManager.GPUInfoProvider
+	case spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && spec.JobEnvironment.Runtime.Nvidia != nil:
+		gpuManager.GpuInfoSource.Type = ytv1.GPUInfoProviderGPUAgent
+		gpuManager.UseGpuInfoProviderForDeviceDiscovery = true
+	case spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && spec.JobEnvironment.Runtime.Metax != nil:
+		gpuManager.GpuInfoSource.Type = ytv1.GPUInfoProviderGPUAgent
+		gpuManager.UseGpuInfoProviderForDeviceDiscovery = true
+		gpuManager.GpuFlavor = ptr.To("other")
 	default:
-		gpuInfoSource.Type = ytv1.GPUInfoProviderNvidiaSMI
+		gpuManager.GpuInfoSource.Type = ytv1.GPUInfoProviderNvidiaSMI
 	}
 
-	if gpuInfoSource.Type == ytv1.GPUInfoProviderGPUAgent {
-		gpuInfoSource.Address = fmt.Sprintf("localhost:%d", GpuAgentPort)
-		gpuInfoSource.ServiceName = "NYT.NGpuAgent.NProto.GpuAgent"
+	if gpuManager.GpuInfoSource.Type == ytv1.GPUInfoProviderGPUAgent {
+		gpuManager.GpuInfoSource.Address = fmt.Sprintf("localhost:%d", GpuAgentPort)
+		gpuManager.GpuInfoSource.ServiceName = "NYT.NGpuAgent.NProto.GpuAgent"
 	}
 
 	c.Logging = getExecNodeLogging(spec)

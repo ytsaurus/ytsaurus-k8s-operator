@@ -287,12 +287,15 @@ func (cri *CRIConfigGenerator) GetAdditionalEnvironmentVariables(spec *ytv1.Exec
 	}
 
 	var gpuProvider string
-	if cri.Runtime.Nvidia != nil {
+	switch {
+	case cri.Runtime == nil:
+		return nil
+	case cri.Runtime.Nvidia != nil:
 		gpuProvider = "nvidia"
-	}
-	if cri.Runtime.Metax != nil {
+	case cri.Runtime.Metax != nil:
 		gpuProvider = "metax"
 	}
+
 	if gpuProvider == "" {
 		return nil
 	}

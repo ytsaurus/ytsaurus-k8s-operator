@@ -639,7 +639,7 @@ type JobRuntimeSpec struct {
 	// Use NVIDIA Container Runtime.
 	//+optional
 	Nvidia *NvidiaRuntimeSpec `json:"nvidia,omitempty"`
-	// Use NVIDIA Container Runtime.
+	// Use METAX Container Runtime.
 	//+optional
 	Metax *MetaxRuntimeSpec `json:"metax,omitempty"`
 }
