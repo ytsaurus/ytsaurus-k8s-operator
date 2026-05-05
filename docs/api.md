@@ -1238,6 +1238,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `nvidia` _[NvidiaRuntimeSpec](#nvidiaruntimespec)_ | Use NVIDIA Container Runtime. |  |  |
+| `metax` _[MetaxRuntimeSpec](#metaxruntimespec)_ | Use NVIDIA Container Runtime. |  |  |
 
 
 #### KafkaProxiesSpec
@@ -1579,6 +1580,19 @@ _Appears in:_
 | `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
 | `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
+
+
+#### MetaxRuntimeSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobRuntimeSpec](#jobruntimespec)
+
 
 
 #### MetricExporter

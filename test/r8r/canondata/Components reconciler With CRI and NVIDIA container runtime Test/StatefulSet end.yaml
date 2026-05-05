@@ -117,6 +117,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: YT_GPU_PROVIDER
+          value: nvidia
         - name: CONTAINERD_ADDRESS
           value: /yt/node-data/image-cache/containerd.sock
         - name: CONTAINERD_NAMESPACE

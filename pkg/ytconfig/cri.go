@@ -24,6 +24,9 @@ const (
 	runtimeNameNvidia = "nvidia"
 	runtimePathNvidia = "/usr/bin/nvidia-container-runtime"
 
+	runtimeNameMetax = "metax"
+	runtimePathMetax = "/usr/bin/mx-container-runtime"
+
 	crioMonitorCgroup = "pod"
 	crioMonitorPath   = "/usr/libexec/crio/conmon"
 
@@ -249,16 +252,50 @@ func (cri *CRIConfigGenerator) getContainerdRuntimes() (runtimes map[string]any,
 	}
 	defaultRuntimeName = runtimeNameRunc
 
-	if cri.Runtime != nil && cri.Runtime.Nvidia != nil {
-		runtimes[runtimeNameNvidia] = map[string]any{
-			"runtime_type": "io.containerd.runc.v2",
-			"sandbox_mode": "podsandbox",
-			"options": map[string]any{
-				"BinaryName": runtimePathNvidia,
-			},
+	if cri.Runtime != nil {
+		if cri.Runtime.Nvidia != nil {
+			runtimes[runtimeNameNvidia] = map[string]any{
+				"runtime_type": "io.containerd.runc.v2",
+				"sandbox_mode": "podsandbox",
+				"options": map[string]any{
+					"BinaryName": runtimePathNvidia,
+				},
+			}
+			defaultRuntimeName = runtimeNameNvidia
 		}
-		defaultRuntimeName = runtimeNameNvidia
+		if cri.Runtime.Metax != nil {
+			runtimes[runtimeNameMetax] = map[string]any{
+				"runtime_type": "io.containerd.runc.v2",
+				"sandbox_mode": "podsandbox",
+				"options": map[string]any{
+					"BinaryName": runtimePathMetax,
+				},
+			}
+			defaultRuntimeName = runtimeNameMetax
+		}
 	}
 
 	return runtimes, defaultRuntimeName
+}
+
+func (cri *CRIConfigGenerator) GetAdditionalEnvironmentVariables() map[string]string {
+	if cri.Runtime == nil {
+		return nil
+	}
+
+	var gpuProvider string
+	if cri.Runtime.Nvidia != nil {
+		gpuProvider = "nvidia"
+	}
+	if cri.Runtime.Metax != nil {
+		gpuProvider = "metax"
+	}
+	if gpuProvider == "" {
+		return nil
+	}
+
+	return map[string]string{
+		// for gpuagent_runner.sh
+		"YT_GPU_PROVIDER": gpuProvider,
+	}
 }

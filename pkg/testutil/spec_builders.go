@@ -682,6 +682,14 @@ func (b *YtsaurusBuilder) WithNvidiaContainerRuntime() {
 	}
 }
 
+func (b *YtsaurusBuilder) WithMetaxContainerRuntime() {
+	for i := range b.Ytsaurus.Spec.ExecNodes {
+		b.Ytsaurus.Spec.ExecNodes[i].JobEnvironment.Runtime = &ytv1.JobRuntimeSpec{
+			Metax: &ytv1.MetaxRuntimeSpec{},
+		}
+	}
+}
+
 func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
 	return ytv1.InstanceSpec{
 		InstanceCount:         instanceCount,

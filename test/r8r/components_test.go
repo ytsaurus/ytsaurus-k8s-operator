@@ -777,6 +777,16 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		It("Test", func(ctx context.Context) {})
 	})
 
+	Context("With CRI and METAX container runtime", func() {
+		BeforeEach(func() {
+			ytBuilder.WithExecNodes()
+			ytBuilder.WithCRIJobEnvironment()
+			ytBuilder.WithMetaxContainerRuntime()
+			ytBuilder.WithOverrides()
+		})
+		It("Test", func(ctx context.Context) {})
+	})
+
 	Context("With CHYT", Label("chyt"), func() {
 		BeforeEach(func(ctx context.Context) {
 			chyt := ytBuilder.CreateChyt()

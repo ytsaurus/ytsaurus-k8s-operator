@@ -224,7 +224,9 @@ type GpuInfoSource struct {
 const GpuAgentPort = 23105
 
 type GpuManager struct {
-	GpuInfoSource GpuInfoSource `yson:"gpu_info_source"`
+	GpuInfoSource                        GpuInfoSource `yson:"gpu_info_source"`
+	GpuFlavor                            *string       `yson:"gpu_flavor,omitempty"`
+	UseGpuInfoProviderForDeviceDiscovery bool          `yson:"use_gpu_info_provider_for_device_discovery,omitempty"`
 }
 
 type JobController struct {
@@ -708,8 +710,12 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 	switch {
 	case spec.GPUManager != nil && spec.GPUManager.GPUInfoProvider != nil:
 		gpuInfoSource.Type = *spec.GPUManager.GPUInfoProvider
-	case spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && spec.JobEnvironment.Runtime.Nvidia != nil:
+	case spec.JobEnvironment != nil && spec.JobEnvironment.Runtime != nil && (spec.JobEnvironment.Runtime.Nvidia != nil || spec.JobEnvironment.Runtime.Metax != nil):
 		gpuInfoSource.Type = ytv1.GPUInfoProviderGPUAgent
+		c.ExecNode.GpuManager.UseGpuInfoProviderForDeviceDiscovery = true
+		if spec.JobEnvironment.Runtime.Nvidia == nil {
+			c.ExecNode.GpuManager.GpuFlavor = ptr.To("other")
+		}
 	default:
 		gpuInfoSource.Type = ytv1.GPUInfoProviderNvidiaSMI
 	}

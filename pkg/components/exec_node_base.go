@@ -191,6 +191,13 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		},
 	}
 
+	for name, value := range cri.GetAdditionalEnvironmentVariables() {
+		container.Env = append(container.Env, corev1.EnvVar{
+			Name:  name,
+			Value: value,
+		})
+	}
+
 	switch cri.Service {
 	case ytv1.CRIServiceContainerd:
 		configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
