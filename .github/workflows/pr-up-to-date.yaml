@@ -1,0 +1,30 @@
+name: PR up-to-date
+
+on:
+  pull_request: {}
+
+env:
+  PR_BASE: ${{ github.event.pull_request.base.ref }}
+  PR_HEAD: ${{ github.event.pull_request.head.sha }}
+
+jobs:
+  needs-rebase:
+    name: Needs rebase
+    runs-on: ubuntu-latest
+
+    steps:
+      # https://github.com/actions/checkout
+      - name: Checkout PR branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.PR_HEAD }}
+          fetch-depth: 0
+
+      - name: Has latest commits
+        run: |
+          if git merge-base --is-ancestor "origin/${PR_BASE}" HEAD; then
+            echo "OK: PR branch is on top of the ${PR_BASE}."
+          else
+            echo "::error::PR branch is $(git rev-list --count "origin/${PR_BASE}" --not HEAD) commit(s) behind ${PR_BASE} and PROBABLY needs to be rebased."
+            exit 1
+          fi
