@@ -278,8 +278,11 @@ func (cri *CRIConfigGenerator) getContainerdRuntimes() (runtimes map[string]any,
 	return runtimes, defaultRuntimeName
 }
 
-func (cri *CRIConfigGenerator) GetAdditionalEnvironmentVariables() map[string]string {
+func (cri *CRIConfigGenerator) GetAdditionalEnvironmentVariables(spec *ytv1.ExecNodesSpec) map[string]string {
 	if cri.Runtime == nil {
+		return nil
+	}
+	if spec.GPUManager != nil && spec.GPUManager.GPUInfoProvider != ptr.To(ytv1.GPUInfoProviderGPUAgent) {
 		return nil
 	}
 

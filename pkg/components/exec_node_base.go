@@ -191,7 +191,7 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		},
 	}
 
-	for name, value := range cri.GetAdditionalEnvironmentVariables() {
+	for name, value := range cri.GetAdditionalEnvironmentVariables(n.spec) {
 		container.Env = append(container.Env, corev1.EnvVar{
 			Name:  name,
 			Value: value,
