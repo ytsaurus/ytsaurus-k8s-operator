@@ -200,7 +200,13 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: generate
-generate: generate-code manifests helm-chart generate-docs generate-schema ## Generate everything.
+generate: ## Generate everything.
+	$(MAKE) generate-code
+	$(MAKE) manifests
+	$(MAKE) helm-chart
+	$(MAKE) generate-docs
+	$(MAKE) generate-schema
+	$(MAKE) generate-canondata
 
 .PHONY: manifests
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -210,7 +216,8 @@ manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefin
 .PHONY: generate-code
 generate-code: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}"
-	$(MAKE) fmt vet
+	$(MAKE) fmt
+	$(MAKE) vet
 
 .PHONY: generate-docs
 generate-docs: ## Generate documentation.
@@ -221,6 +228,12 @@ generate-docs: ## Generate documentation.
 generate-schema: ## Generate CRD json schema.
 	rm -f config/crd/schema/*.json
 	go run tool/crd-schema/crd-schema.go config/crd/schema config/crd/bases/*.yaml
+
+.PHONY: generate-canondata
+generate-canondata: ## Generate canon test results.
+	$(REMOVE_CANONIZED) pkg/ytconfig/canondata pkg/components/canondata test/r8r/canondata
+	CANONIZE=y \
+	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./pkg/components/... ./test/r8r/...
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -245,7 +258,7 @@ clean-e2e: ## Delete k8s namespaces created by e2e tests.
 	$(KUBECTL) delete namespaces -l "app.kubernetes.io/part-of=ytsaurus-dev,app.kubernetes.io/component=test"
 
 .PHONY: test-helm-chart
-test-helm-chart: generate ## Run helm chart tests.
+test-helm-chart: generate-code manifests helm-chart ## Run helm chart tests.
 	./compat_test.sh
 
 .PHONY: lint
@@ -261,22 +274,14 @@ lint-fix: ## Run golangci-lint linter and perform fixes.
 	$(GOLANGCI_LINT) run --fix
 
 .PHONY: lint-generated
-lint-generated: generate helm-chart ## Check that generated files are uptodate and committed.
+lint-generated: ## Check that generated files are uptodate and committed.
+	$(MAKE) generate
 	git diff | cat
-	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart)"
+	test -z "$(shell git status --porcelain api docs/api.md config ytop-chart '**/canondata/*')"
 
 .PHONY: canonize
-canonize: generate-code manifests envtest-assets ## Canonize test results.
-	$(REMOVE_CANONIZED) pkg/components/canondata pkg/ytconfig/canondata test/r8r/canondata
-	CANONIZE=y \
-	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig ./pkg/components ./test/r8r
-	! git status --porcelain '**/canondata/*' | grep .
-
-.PHONY: canonize-ytconfig
-canonize-ytconfig: generate-code fmt vet ## Canonize ytconfig and reconciler test results.
-	$(REMOVE_CANONIZED) pkg/ytconfig/canondata test/r8r/canondata
-	CANONIZE=y \
-	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./test/r8r/...
+canonize: generate-code ## Canonize test results.
+	$(MAKE) generate-canondata
 	! git status --porcelain '**/canondata/*' | grep .
 
 ##@ K8s operations

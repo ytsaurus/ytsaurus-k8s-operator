@@ -9,8 +9,8 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  check:
-    name: Run checks
+  linters:
+    name: Run linters
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +26,12 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Run linters
+      - name: Run code linters
         shell: bash
         run: |
           make lint
+
+      - name: Check generated files
+        shell: bash
+        run: |
           make lint-generated
