@@ -121,6 +121,12 @@ func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
 		"signature_policy": path.Join(consts.CRIOConfigMountPoint, consts.CRIOSignaturePolicyFileName),
 	}
 
+	if cri.Spec.ImagePullSecret != nil {
+		secretPath := path.Join(consts.DockerSecretMountPath, consts.DockerSecretFileName)
+		crioImage["global_auth_file"] = secretPath
+		crioImage["pause_image_auth_file"] = secretPath
+	}
+
 	crioMetrics := map[string]any{}
 
 	crioRuntimeRuntimes := map[string]any{

@@ -6,6 +6,8 @@ data:
       [crio.api]
         listen = "/yt/node-data/image-cache/cri.sock"
       [crio.image]
+        global_auth_file = "/config/image-pull-secret/config.json"
+        pause_image_auth_file = "/config/image-pull-secret/config.json"
         signature_policy = "/config/crio/policy.json"
       [crio.metrics]
         enable_metrics = true

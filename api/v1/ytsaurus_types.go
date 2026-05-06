@@ -615,6 +615,10 @@ type CRIJobEnvironmentSpec struct {
 	// Pull images periodically.
 	//+optional
 	ImagePullPeriodSeconds *int32 `json:"imagePullPeriodSeconds,omitempty"`
+	// For CRI-O: credentials for pulling job images, "jobImage", "sandboxImage": secret type "kubernetes.io/dockerconfigjson".
+	// This is used if operation spec contains no "secure_vault/docker_auth".
+	//+optional
+	ImagePullSecret *corev1.LocalObjectReference `json:"imagePullSecret,omitempty"`
 }
 
 // GPU information provider.
@@ -897,7 +901,9 @@ type CommonSpec struct {
 	// Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead.
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
-	ConfigOverrides  *corev1.LocalObjectReference  `json:"configOverrides,omitempty"`
+	ConfigOverrides *corev1.LocalObjectReference `json:"configOverrides,omitempty"`
+
+	// Credentials for pulling "coreImage" and "image" set for components.
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 

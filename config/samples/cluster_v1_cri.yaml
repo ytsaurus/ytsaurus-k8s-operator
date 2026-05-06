@@ -346,8 +346,12 @@ spec:
         cri:
           # criService: crio|containerd
           apiRetryTimeoutSeconds: 180
+          ## For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md
           # registryConfigPath: /config/registry
-          # Requried setup for Cgroup-v2
+          ## For crio: https://kubernetes.io/docs/concepts/configuration/secret/#docker-config-secrets
+          # imagePullSecret:
+          #   name: image-pull-secret
+          ## Requried setup for Cgroup-v2
           entrypointWrapper:
             - "/yt/scripts/setup-cgroup-v2.sh"
             - "tini"

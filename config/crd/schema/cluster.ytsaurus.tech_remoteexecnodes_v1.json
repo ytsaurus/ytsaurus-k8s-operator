@@ -1025,6 +1025,7 @@
           "type": "string"
         },
         "imagePullSecrets": {
+          "description": "Credentials for pulling \"coreImage\" and \"image\" set for components.",
           "type": "array",
           "items": {
             "description": "LocalObjectReference contains enough information to let you locate the...",
@@ -1102,6 +1103,18 @@
                   "description": "Pull images periodically.",
                   "type": "integer",
                   "format": "int32"
+                },
+                "imagePullSecret": {
+                  "description": "For CRI-O: credentials for pulling job images, \"jobImage\", \"sandboxImage\":...",
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "description": "Name of the referent.",
+                      "type": "string",
+                      "default": ""
+                    }
+                  },
+                  "x-kubernetes-map-type": "atomic"
                 },
                 "imageSizeEstimation": {
                   "description": "Initial estimation for space required for pulling image into cache.",

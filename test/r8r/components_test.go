@@ -659,6 +659,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithScheduler()
 			ytBuilder.WithControllerAgents()
 			ytBuilder.WithExecNodes()
+			ytBuilder.ImagePullSecret = &corev1.LocalObjectReference{Name: "image-pull-secret"}
 			ytBuilder.WithCRIJobEnvironment()
 			ytBuilder.WithStrawberryController()
 			ytBuilder.WithQueryTracker()
@@ -751,6 +752,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With CRI job environment - CRI-O", Label("crio"), func() {
 		BeforeEach(func() {
 			ytBuilder.CRIService = ptr.To(ytv1.CRIServiceCRIO)
+			ytBuilder.ImagePullSecret = &corev1.LocalObjectReference{Name: "image-pull-secret"}
 			ytBuilder.WithExecNodes()
 			ytBuilder.WithCRIJobEnvironment()
 		})

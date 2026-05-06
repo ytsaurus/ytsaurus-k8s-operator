@@ -140,6 +140,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /config/image-pull-secret
+          name: image-pull-secret
+          readOnly: true
         - mountPath: /config/crio
           name: config-crio
           readOnly: true
@@ -221,6 +224,13 @@ spec:
         name: config-template
       - emptyDir: {}
         name: config
+      - name: image-pull-secret
+        secret:
+          items:
+          - key: .dockerconfigjson
+            mode: 256
+            path: config.json
+          secretName: image-pull-secret
       - configMap:
           name: yt-exec-node-jobs-config
         name: config-crio

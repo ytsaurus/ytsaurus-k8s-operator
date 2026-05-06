@@ -31,6 +31,8 @@ spec:
       cri:
         apiRetryTimeoutSeconds: 120
         criService: crio
+        imagePullSecret:
+          name: image-pull-secret
     jobResources:
       limits:
         cpu: "4"

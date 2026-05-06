@@ -220,6 +220,8 @@ type YtsaurusBuilder struct {
 	WithHTTPSOnlyProxy bool
 	WithRPCProxy       bool
 	WithRPCProxyTLS    bool
+
+	ImagePullSecret *corev1.LocalObjectReference
 }
 
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
@@ -661,6 +663,7 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 			CRIService:             b.CRIService,
 			SandboxImage:           b.SandboxImage,
 			APIRetryTimeoutSeconds: ptr.To(int32(120)),
+			ImagePullSecret:        b.ImagePullSecret,
 		},
 	}
 }

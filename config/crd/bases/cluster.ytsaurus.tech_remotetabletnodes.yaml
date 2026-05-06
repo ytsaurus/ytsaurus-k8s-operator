@@ -918,6 +918,8 @@ spec:
                 description: Overrides coreImage for component.
                 type: string
               imagePullSecrets:
+                description: Credentials for pulling "coreImage" and "image" set for
+                  components.
                 items:
                   description: LocalObjectReference contains enough information to
                     let you locate the...

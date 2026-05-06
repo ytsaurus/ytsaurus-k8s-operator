@@ -28,6 +28,8 @@ type baseExecNode struct {
 	ytsaurusClient internalYtsaurusClient
 
 	sidecarConfig *ConfigMapBuilder
+
+	imagePullSecret *resources.DockerSecret
 }
 
 func (n *baseExecNode) Fetch(ctx context.Context) error {
@@ -106,6 +108,11 @@ func (n *baseExecNode) doBuildBase() error {
 	}
 
 	if n.criConfig.Service != ytv1.CRIServiceNone {
+		if secret := n.criConfig.Spec.ImagePullSecret; secret != nil {
+			n.imagePullSecret = resources.NewDockerSecret(secret.Name, consts.DockerSecretVolumeName, consts.DockerSecretMountPath)
+			n.imagePullSecret.AddVolume(podSpec)
+		}
+
 		if n.criConfig.Isolated {
 			// Add CRI service sidecar container for running jobs.
 			n.addCRIServiceSidecar(n.criConfig, podSpec)
@@ -133,6 +140,8 @@ func (n *baseExecNode) addCRIServiceConfig(cri *ytconfig.CRIConfigGenerator, pod
 	if n.sidecarConfig == nil {
 		return
 	}
+
+	n.imagePullSecret.AddVolumeMount(container)
 
 	switch cri.Service {
 	case ytv1.CRIServiceCRIO:

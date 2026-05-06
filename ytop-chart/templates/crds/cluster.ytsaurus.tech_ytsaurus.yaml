@@ -10473,6 +10473,16 @@ spec:
                               description: Pull images periodically.
                               format: int32
                               type: integer
+                            imagePullSecret:
+                              description: 'For CRI-O: credentials for pulling job
+                                images, "jobImage", "sandboxImage":...'
+                              properties:
+                                name:
+                                  default: ""
+                                  description: Name of the referent.
+                                  type: string
+                              type: object
+                              x-kubernetes-map-type: atomic
                             imageSizeEstimation:
                               description: Initial estimation for space required for
                                 pulling image into cache.
@@ -13742,6 +13752,8 @@ spec:
                 minItems: 1
                 type: array
               imagePullSecrets:
+                description: Credentials for pulling "coreImage" and "image" set for
+                  components.
                 items:
                   description: LocalObjectReference contains enough information to
                     let you locate the...

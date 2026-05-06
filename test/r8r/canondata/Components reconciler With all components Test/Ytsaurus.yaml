@@ -95,6 +95,8 @@ spec:
     jobEnvironment:
       cri:
         apiRetryTimeoutSeconds: 120
+        imagePullSecret:
+          name: image-pull-secret
     jobResources:
       limits:
         cpu: "4"

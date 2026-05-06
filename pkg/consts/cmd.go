@@ -70,6 +70,10 @@ const (
 	ContainerdConfigMountPoint = "/config/containerd"
 	ContainerdSocketName       = "containerd.sock"
 	ContainerdConfigFileName   = "containerd.toml"
+
+	DockerSecretVolumeName = "image-pull-secret"
+	DockerSecretMountPath  = "/config/image-pull-secret"
+	DockerSecretFileName   = "config.json"
 )
 
 const (
