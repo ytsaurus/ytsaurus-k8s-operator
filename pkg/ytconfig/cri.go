@@ -282,7 +282,7 @@ func (cri *CRIConfigGenerator) GetAdditionalEnvironmentVariables(spec *ytv1.Exec
 	if cri.Runtime == nil {
 		return nil
 	}
-	if spec.GPUManager != nil && spec.GPUManager.GPUInfoProvider != ptr.To(ytv1.GPUInfoProviderGPUAgent) {
+	if spec.GPUManager != nil && ptr.Deref(spec.GPUManager.GPUInfoProvider, ytv1.GPUInfoProviderGPUAgent) != ytv1.GPUInfoProviderGPUAgent {
 		return nil
 	}
 

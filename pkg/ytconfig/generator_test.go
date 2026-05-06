@@ -271,6 +271,17 @@ func TestGetContainerdConfigWithNvidia(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetContainerdConfigWithMetax(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	spec := withRuntime(withCri(getExecNodeSpec(nil), nil, false, nil), &ytv1.JobRuntimeSpec{Metax: &ytv1.MetaxRuntimeSpec{}})
+	canonize.AssertStruct(t, "exec-node", spec)
+	g := NewCRIConfigGenerator(&spec)
+	cfg, err := g.GetContainerdConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 	remoteYtsaurus := getRemoteYtsaurus()
 	commonSpec := getCommonSpec()
