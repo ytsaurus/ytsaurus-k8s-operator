@@ -69,6 +69,7 @@ data:
     /usr/bin/yt create map_node '//sys/cypress_tokens/14b533659078502056731585e8e419e7d02f6a0b5b730733f2aad5bf15126c84' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/14b533659078502056731585e8e419e7d02f6a0b5b730733f2aad5bf15126c84/@user' 'robot-ytsaurus-k8s-operator'
     /usr/bin/yt add-member robot-ytsaurus-k8s-operator superusers || true
+    while [ "$(/usr/bin/yt check-permission --format json robot-ytsaurus-k8s-operator administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
 kind: ConfigMap
 metadata:
   annotations:

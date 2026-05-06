@@ -34,6 +34,7 @@ func createUserCommand(userName, password, token string, isSuperuser bool) []str
 
 	if isSuperuser {
 		result = append(result, fmt.Sprintf("/usr/bin/yt add-member %s superusers || true", userName))
+		result = append(result, fmt.Sprintf(`while [ "$(/usr/bin/yt check-permission --format json %s administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done`, userName))
 	}
 
 	return result

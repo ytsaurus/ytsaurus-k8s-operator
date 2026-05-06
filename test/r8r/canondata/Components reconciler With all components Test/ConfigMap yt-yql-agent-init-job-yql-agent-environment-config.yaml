@@ -69,8 +69,10 @@ data:
     /usr/bin/yt create map_node '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/19d30cd963cd0abccecdb687eb8831e1e681d703edf9f885f86e0cc8b9752f67/@user' 'yql_agent'
     /usr/bin/yt add-member yql_agent superusers || true
+    while [ "$(/usr/bin/yt check-permission --format json yql_agent administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
     /usr/bin/yt create user --attributes '{name="yql_agent"}' --ignore-existing
     /usr/bin/yt add-member yql_agent superusers || true
+    while [ "$(/usr/bin/yt check-permission --format json yql_agent administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
     /usr/bin/yt add-member --member yql_agent --group superusers || true
     /usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing
     /usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%false;addresses=["yqla-0.yql-agents.ytsaurus-components.svc.cluster.local:9019";]}}}}'

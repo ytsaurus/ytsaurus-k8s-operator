@@ -54,6 +54,7 @@ data:
     /usr/bin/yt create map_node '//sys/cypress_tokens/e28158b13a04f4fffd1470944443ad0d57277e4b6ac9646c2e562678d162410c' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/e28158b13a04f4fffd1470944443ad0d57277e4b6ac9646c2e562678d162410c/@user' 'chyt_releaser'
     /usr/bin/yt add-member chyt_releaser superusers || true
+    while [ "$(/usr/bin/yt check-permission --format json chyt_releaser administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
 kind: ConfigMap
 metadata:
   annotations:

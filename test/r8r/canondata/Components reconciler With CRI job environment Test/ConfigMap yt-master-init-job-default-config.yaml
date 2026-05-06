@@ -119,6 +119,7 @@ data:
     /usr/bin/yt create map_node '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8/@user' 'admin'
     /usr/bin/yt add-member admin superusers || true
+    while [ "$(/usr/bin/yt check-permission --format json admin administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
     fi
 
     fi
