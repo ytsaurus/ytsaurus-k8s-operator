@@ -500,7 +500,7 @@ func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Componen
 			Reason:  "PreChecksFailed",
 			Message: msg,
 		})
-		return ptr.To(ComponentStatusBlocked("%v", msg)), yterrors.Err(msg)
+		return ptr.To(ComponentStatusBlocked("%v", msg)), nil
 	}
 	// Set PreChecksCompleted condition for this component
 	ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
