@@ -475,7 +475,7 @@ build: generate-code ## Build manager binary.
 .PHONY: run
 run: generate-code manifests ## Run a controller from your host.
 	K8S_CLUSTER_DOMAIN=cluster.local \
-	go run ${GOFLAGS} -ldflags "$(GO_LDFLAGS)" ./main.go
+	go run ${GOFLAGS} -ldflags "$(GO_LDFLAGS)" ./main.go --zap-devel
 
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.

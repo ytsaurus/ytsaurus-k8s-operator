@@ -35,6 +35,8 @@ controllerManager:
       - --health-probe-bind-address=:8081
       - --metrics-bind-address=:8080
       - --leader-elect
+      - --zap-log-level=debug
+      # - --zap-devel
     # env: environment variables injected into the manager container.
     env:
       # GOMAXPROCS: limits the number of OS threads used by the Go runtime.
