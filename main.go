@@ -24,7 +24,11 @@ import (
 
 	"k8s.io/utils/ptr"
 
+	"k8s.io/klog/v2"
+
 	"go.uber.org/zap/zapcore"
+
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
@@ -47,7 +51,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -95,6 +98,7 @@ func main() {
 	enableWebhooks := os.Getenv("ENABLE_WEBHOOKS") != "false"
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	klog.SetLogger(ctrl.Log.WithName("klog"))
 
 	ctx := ctrl.SetupSignalHandler()
 
