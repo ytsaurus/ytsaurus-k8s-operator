@@ -10,6 +10,10 @@ import (
 
 	"k8s.io/utils/ptr"
 
+	"github.com/go-logr/zapr"
+	ytlog "go.ytsaurus.tech/library/go/core/log"
+	ytlogzap "go.ytsaurus.tech/library/go/core/log/zap"
+
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -392,11 +396,19 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 			proxy = yc.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 			disableProxyDiscovery = false
 		}
+
+		// Unwrap logr logger into zap core to construct yt logging contraption.
+		var ytClientLogger ytlog.Structured
+		if zu, ok := logger.GetSink().(zapr.Underlier); ok {
+			ytClientLogger = ytlogzap.NewWithCore(zu.GetUnderlying().Core()).WithName("ytsaurus-client").Structured()
+		}
+
 		yc.ytClient, err = ythttp.NewClient(&yt.Config{
 			Proxy:                 proxy,
 			Token:                 token,
 			LightRequestTimeout:   &timeout,
 			DisableProxyDiscovery: disableProxyDiscovery,
+			Logger:                ytClientLogger,
 		})
 
 		if err != nil {
