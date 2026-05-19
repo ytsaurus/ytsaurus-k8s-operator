@@ -221,6 +221,7 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 		logger.Error(err, "unable to update Ytsaurus update state")
 		return err
 	}
+	metrics.ObserveUpdateState(c.ytsaurus.GetName(), c.ytsaurus.GetNamespace(), updateState)
 	return nil
 }
 

@@ -14,6 +14,7 @@ import (
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -258,6 +259,12 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 
 		component.SetStatus(status)
 		component.SetReadyCondition(status)
+		metrics.ObserveComponentSyncStatus(
+			resource.Name,
+			resource.Namespace,
+			component.GetFullName(),
+			string(status.SyncStatus),
+		)
 		logger.Info("Component status",
 			"component", component.GetFullName(),
 			"status", status.SyncStatus,

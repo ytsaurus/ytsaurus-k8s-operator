@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/utils/ptr"
 
@@ -75,6 +76,7 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	metrics.ObserveClusterState(ytsaurus.GetName(), ytsaurus.GetNamespace(), ytsaurus.Status.State)
+	metrics.ObserveUpdateState(ytsaurus.GetName(), ytsaurus.GetNamespace(), ytsaurus.Status.UpdateStatus.State)
 
 	if !ptr.Deref(ytsaurus.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, &ytsaurus) {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
@@ -86,7 +88,10 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 
-	return r.Sync(ctx, &ytsaurus)
+	start := time.Now()
+	result, err := r.Sync(ctx, &ytsaurus)
+	metrics.ObserveReconcile(ytsaurus.GetName(), ytsaurus.GetNamespace(), time.Since(start), err)
+	return result, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
