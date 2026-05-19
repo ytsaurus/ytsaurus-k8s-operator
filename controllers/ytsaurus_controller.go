@@ -43,6 +43,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 )
 
@@ -72,6 +73,8 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	metrics.ObserveClusterState(ytsaurus.GetName(), ytsaurus.GetNamespace(), ytsaurus.Status.State)
 
 	if !ptr.Deref(ytsaurus.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, &ytsaurus) {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
