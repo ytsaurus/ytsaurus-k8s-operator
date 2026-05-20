@@ -17,6 +17,7 @@ const (
 	UICustomConfigMountPoint   = "/opt/app/dist/server/configs/custom"
 	UISecretsMountPoint        = "/opt/app/secrets"
 	UIVaultMountPoint          = "/vault"
+	SecretsMountBase           = "/var/run/secrets"
 )
 
 const (
@@ -49,7 +50,9 @@ const (
 	SSLCertFileKey      = "SSL_CERT_FILE"
 	SSLCertDirKey       = "SSL_CERT_DIR"
 	RequestsCABundleKey = "REQUESTS_CA_BUNDLE"
-	TokenSecretKey      = "YT_TOKEN"
+
+	TokenSecretKey = "YT_TOKEN"
+	TokenFileName  = "token"
 )
 
 const (
@@ -89,6 +92,7 @@ const (
 	UIVaultVolumeName         = "vault"
 	UISecretsVolumeName       = "secrets"
 	TimbertruckWorkDirName    = "timbertruck"
+	YQLAgentTokenVolumeName   = "yql-agent-secret"
 )
 
 const (

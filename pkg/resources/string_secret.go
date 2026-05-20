@@ -1,9 +1,15 @@
 package resources
 
 import (
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
+	"path"
+
+	"k8s.io/utils/ptr"
+
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
 
 type StringSecret struct {
@@ -40,6 +46,30 @@ func (s *StringSecret) GetEnvSource() corev1.EnvFromSource {
 				Name: s.Name(),
 			},
 		},
+	}
+}
+
+func (s *StringSecret) GetTokenVolume(name string) corev1.Volume {
+	return corev1.Volume{
+		Name: name,
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: s.Name(),
+				Items: []corev1.KeyToPath{{
+					Key:  consts.TokenSecretKey,
+					Path: consts.TokenFileName,
+					Mode: ptr.To(int32(0o400)),
+				}},
+			},
+		},
+	}
+}
+
+func (s *StringSecret) GetTokenVolumeMount(name string) corev1.VolumeMount {
+	return corev1.VolumeMount{
+		Name:      name,
+		MountPath: path.Join(consts.SecretsMountBase, name),
+		ReadOnly:  true,
 	}
 }
 

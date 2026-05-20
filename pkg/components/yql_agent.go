@@ -176,9 +176,12 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	if yqla.NeedSync() {
 		if !dry {
 			ss := yqla.server.buildStatefulSet()
-			container := &ss.Spec.Template.Spec.Containers[0]
-			container.Command = []string{"sh", "-c", fmt.Sprintf("echo -n $YT_TOKEN > %s; %s", consts.DefaultYqlTokenPath, strings.Join(container.Command, " "))}
-			container.EnvFrom = []corev1.EnvFromSource{yqla.secret.GetEnvSource()}
+
+			podSpec := &ss.Spec.Template.Spec
+			container := &podSpec.Containers[0]
+
+			podSpec.Volumes = append(podSpec.Volumes, yqla.secret.GetTokenVolume(consts.YQLAgentTokenVolumeName))
+			container.VolumeMounts = append(container.VolumeMounts, yqla.secret.GetTokenVolumeMount(consts.YQLAgentTokenVolumeName))
 
 			forceIPv4 := "0"
 			forceIPv6 := "0"

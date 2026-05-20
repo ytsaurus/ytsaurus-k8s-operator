@@ -106,3 +106,7 @@ func getVaultKeyring(commonSpec *ytv1.CommonSpec, transportSpec *ytv1.RPCTranspo
 
 	return &keyring
 }
+
+func getTokenVolumePath(name string) string {
+	return path.Join(consts.SecretsMountBase, name, consts.TokenFileName)
+}

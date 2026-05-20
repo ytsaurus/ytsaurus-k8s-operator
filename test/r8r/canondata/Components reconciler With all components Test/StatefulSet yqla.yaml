@@ -49,10 +49,9 @@ spec:
     spec:
       containers:
       - command:
-        - sh
-        - -c
-        - echo -n $YT_TOKEN > /usr/yql_agent_token; /usr/bin/ytserver-yql-agent --config
-          /config/ytserver-yql-agent.yson
+        - /usr/bin/ytserver-yql-agent
+        - --config
+        - /config/ytserver-yql-agent.yson
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -76,9 +75,6 @@ spec:
           value: "0"
         - name: YT_FORCE_IPV6
           value: "0"
-        envFrom:
-        - secretRef:
-            name: yt-yql-agent-secret
         image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
         name: ytserver
         ports:
@@ -116,6 +112,9 @@ spec:
           readOnly: true
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
+          readOnly: true
+        - mountPath: /var/run/secrets/yql-agent-secret
+          name: yql-agent-secret
           readOnly: true
       dnsConfig:
         options:
@@ -233,6 +232,13 @@ spec:
       - name: bus-client-secret
         secret:
           secretName: native-client-cert
+      - name: yql-agent-secret
+        secret:
+          items:
+          - key: YT_TOKEN
+            mode: 256
+            path: token
+          secretName: yt-yql-agent-secret
   updateStrategy: {}
 status:
   availableReplicas: 0
