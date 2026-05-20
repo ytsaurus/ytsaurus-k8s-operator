@@ -58,8 +58,9 @@ spec:
               fieldPath: spec.nodeName
         - name: YT_PROXY
           value: http-proxies-lb.ytsaurus-components.svc.cluster.local
-        - name: YT_TOKEN
-          value: ytct-ytop-nVLf15tNdkKbYXoMn58NO6VbDMDWFEyIhTWEGsvg
+        envFrom:
+        - secretRef:
+            name: yt-chyt-test-ytsaurus-secret
         image: ghcr.io/ytsaurus/chyt:2.18.3
         name: ytsaurus-init
         resources: {}
