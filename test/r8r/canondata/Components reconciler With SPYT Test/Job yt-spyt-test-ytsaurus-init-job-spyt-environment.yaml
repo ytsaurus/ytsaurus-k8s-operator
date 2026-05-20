@@ -58,10 +58,11 @@ spec:
               fieldPath: spec.nodeName
         - name: YT_PROXY
           value: http-proxies-lb.ytsaurus-components.svc.cluster.local
-        - name: YT_TOKEN
-          value: ytct-ytop-nVLf15tNdkKbYXoMn58NO6VbDMDWFEyIhTWEGsvg
         - name: EXTRA_PUBLISH_CLUSTER_OPTIONS
           value: --ignore-existing
+        envFrom:
+        - secretRef:
+            name: yt-spyt-test-ytsaurus-secret
         name: ytsaurus-init
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError

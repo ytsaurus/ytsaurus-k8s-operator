@@ -155,15 +155,10 @@ func (s *Spyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		s.initEnvironment.SetInitScript(s.createInitScript())
 		job := s.initEnvironment.Build()
 		container := &job.Spec.Template.Spec.Containers[0]
-		token, _ := s.secret.GetValue(consts.TokenSecretKey)
 		env := []corev1.EnvVar{
 			{
 				Name:  "YT_PROXY",
 				Value: s.cfgen.GetHTTPProxiesAddress(&s.ytsaurus.Spec, consts.DefaultHTTPProxyRole),
-			},
-			{
-				Name:  "YT_TOKEN",
-				Value: token,
 			},
 			{
 				Name:  "EXTRA_PUBLISH_CLUSTER_OPTIONS",
@@ -186,6 +181,7 @@ func (s *Spyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 
 		container.Env = append(container.Env, env...)
+		container.EnvFrom = append(container.EnvFrom, s.secret.GetEnvSource())
 	}
 
 	status, err = s.initEnvironment.Sync(ctx, dry)
