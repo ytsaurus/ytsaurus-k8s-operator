@@ -182,6 +182,10 @@ func (l *Labeller) GetSecretName() string {
 	return fmt.Sprintf("%s-secret", l.GetFullComponentLabel())
 }
 
+func (l *Labeller) GetSidecarSecretName(name string) string {
+	return fmt.Sprintf("%s-%s-secret", l.GetFullComponentLabel(), name)
+}
+
 func (l *Labeller) GetMainConfigMapName() string {
 	return fmt.Sprintf("%s-config", l.GetFullComponentLabel())
 }

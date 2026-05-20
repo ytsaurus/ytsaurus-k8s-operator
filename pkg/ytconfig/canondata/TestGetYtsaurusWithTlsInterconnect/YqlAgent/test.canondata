@@ -137,6 +137,7 @@
                 };
             ];
         };
+        "enable_dq"=%false;
         "yt_token_path"="/var/run/secrets/yql-agent-secret/token";
         "yql_plugin_shared_library"="/usr/lib/yql/libyqlplugin.so";
         "additional_system_libs"=[

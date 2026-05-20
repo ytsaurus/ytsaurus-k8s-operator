@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/yt/go/yt"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -24,6 +26,7 @@ type YqlAgent struct {
 	ytsaurusClient  internalYtsaurusClient
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
+	execSecret      *resources.StringSecret
 }
 
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient, master Component) *YqlAgent {
@@ -49,6 +52,11 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 		}),
 	)
 
+	var execSecret *resources.StringSecret
+	if resource.Spec.YQLAgents.DQEngine != nil {
+		execSecret = resources.NewStringSecret(l.GetSidecarSecretName("exec"), l, ytsaurus)
+	}
+
 	return &YqlAgent{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
@@ -66,6 +74,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 			l.GetSecretName(),
 			l,
 			ytsaurus),
+		execSecret: execSecret,
 	}
 }
 
@@ -82,6 +91,7 @@ func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 		yqla.server,
 		yqla.initEnvironment,
 		yqla.secret,
+		yqla.execSecret,
 	)
 }
 
@@ -100,10 +110,37 @@ func (yqla *YqlAgent) GetCypressPatch() ypatch.PatchSet {
 func (yqla *YqlAgent) initUsers() string {
 	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand(consts.YQLAgentUserName, "", token, true)
+	if yqla.execSecret != nil {
+		execToken, _ := yqla.execSecret.GetValue(consts.TokenSecretKey)
+		commands = append(commands, createUserCommand(consts.YQLAgentExecUserName, "", execToken, false)...)
+	}
 	return strings.Join(commands, "\n")
 }
 
-func (yqla *YqlAgent) createInitScript() ([]string, error) {
+func (yqla *YqlAgent) scriptDQInit() TextGeneratorFunc {
+	if yqla.execSecret == nil {
+		return PlainTextGenerator()
+	}
+	dqDirectoryACE := yt.ACE{
+		Action:          yt.ActionAllow,
+		Subjects:        []string{consts.YQLAgentExecUserName},
+		Permissions:     []yt.Permission{yt.PermissionCreate, yt.PermissionRead, yt.PermissionRemove, yt.PermissionWrite},
+		InheritanceMode: yt.InheritanceModeObjectAndDescendants,
+	}
+	sysAccountACE := yt.ACE{
+		Action:          yt.ActionAllow,
+		Subjects:        []string{consts.YQLAgentExecUserName},
+		Permissions:     []yt.Permission{yt.PermissionUse},
+		InheritanceMode: yt.InheritanceModeObjectAndDescendants,
+	}
+	return JoinTextGenerators(
+		PlainTextGenerator("/usr/bin/yt create map_node //sys/yql_agent/dq --ignore-existing"),
+		CheckAndAppendPathACLGenerator("//sys/yql_agent/dq", dqDirectoryACE),
+		CheckAndAppendPathACLGenerator("//sys/accounts/sys", sysAccountACE),
+	)
+}
+
+func (yqla *YqlAgent) createInitScript() TextGeneratorFunc {
 	var sb strings.Builder
 	sb.WriteString("[")
 	for _, addr := range yqla.cfgen.GetYQLAgentAddresses() {
@@ -120,16 +157,22 @@ func (yqla *YqlAgent) createInitScript() ([]string, error) {
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%%false;addresses=%v}}}}'", yqlAgentAddrs),
 		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
 	}
-	return script, nil
+	return JoinTextGenerators(
+		PlainTextGenerator(script...),
+		yqla.scriptDQInit(),
+	)
 }
 
-func (yqla *YqlAgent) createUpdateScript() ([]string, error) {
+func (yqla *YqlAgent) createUpdateScript() TextGeneratorFunc {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 		yqla.initUsers(),
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address '%%false'"),
 	}
-	return script, nil
+	return JoinTextGenerators(
+		PlainTextGenerator(script...),
+		yqla.scriptDQInit(),
+	)
 }
 
 func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -146,7 +189,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 				return *status, err
 			}
 		case ytv1.UpdateStateWaitingForYqlaUpdate:
-			return yqla.initEnvironment.RunUpdateScript(ctx, dry, yqla.ytsaurus, updateState, yqla.createUpdateScript, nil)
+			return yqla.initEnvironment.RunUpdateScript(ctx, dry, yqla.ytsaurus, updateState, yqla.createUpdateScript(), nil)
 		default:
 			return ComponentStatusReady(), nil
 		}
@@ -167,8 +210,19 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor(yqla.secret.Name()), err
 	}
 
+	if yqla.execSecret != nil && yqla.execSecret.NeedSync(consts.TokenSecretKey, "") {
+		if !dry {
+			s := yqla.execSecret.Build()
+			s.StringData = map[string]string{
+				consts.TokenSecretKey: yqla.cfgen.GenerateToken(),
+			}
+			err = yqla.execSecret.Sync(ctx)
+		}
+		return ComponentStatusWaitingFor(yqla.execSecret.Name()), err
+	}
+
 	if (yqla.ytsaurus.IsInitializing() || yqla.ytsaurus.IsReadyToWork()) && !yqla.initEnvironment.IsCompleted() {
-		if status, err := yqla.initEnvironment.RunScript(ctx, dry, "YQLAgentInit", yqla.createInitScript, nil); err != nil || !status.IsReady() {
+		if status, err := yqla.initEnvironment.RunScript(ctx, dry, "YQLAgentInit", yqla.createInitScript(), nil); err != nil || !status.IsReady() {
 			return status, err
 		}
 	}
@@ -182,6 +236,11 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 			podSpec.Volumes = append(podSpec.Volumes, yqla.secret.GetTokenVolume(consts.YQLAgentTokenVolumeName))
 			container.VolumeMounts = append(container.VolumeMounts, yqla.secret.GetTokenVolumeMount(consts.YQLAgentTokenVolumeName))
+
+			if yqla.execSecret != nil {
+				podSpec.Volumes = append(podSpec.Volumes, yqla.execSecret.GetTokenVolume(consts.YQLExecTokenVolumeName))
+				container.VolumeMounts = append(container.VolumeMounts, yqla.execSecret.GetTokenVolumeMount(consts.YQLExecTokenVolumeName))
+			}
 
 			forceIPv4 := "0"
 			forceIPv6 := "0"

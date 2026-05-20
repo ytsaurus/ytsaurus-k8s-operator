@@ -666,6 +666,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithQueryTracker()
 			ytBuilder.WithQueueAgent()
 			ytBuilder.WithYqlAgent()
+			ytBuilder.WithYqlAgentDQ()
 			ytBuilder.WithHydraPersistenceUploader()
 			ytBuilder.WithTimbertruck()
 			ytBuilder.WithUI()

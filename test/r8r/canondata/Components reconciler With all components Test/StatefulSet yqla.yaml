@@ -90,8 +90,8 @@ spec:
             port: metrics
         resources:
           limits:
-            cpu: "1"
-            memory: 2Gi
+            cpu: "4"
+            memory: 8Gi
           requests:
             cpu: "0"
             memory: "0"
@@ -115,6 +115,9 @@ spec:
           readOnly: true
         - mountPath: /var/run/secrets/yql-agent-secret
           name: yql-agent-secret
+          readOnly: true
+        - mountPath: /var/run/secrets/yql-agent-exec-secret
+          name: yql-agent-exec-secret
           readOnly: true
       dnsConfig:
         options:
@@ -239,6 +242,13 @@ spec:
             mode: 256
             path: token
           secretName: yt-yql-agent-secret
+      - name: yql-agent-exec-secret
+        secret:
+          items:
+          - key: YT_TOKEN
+            mode: 256
+            path: token
+          secretName: yt-yql-agent-exec-secret
   updateStrategy: {}
 status:
   availableReplicas: 0

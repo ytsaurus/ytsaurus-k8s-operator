@@ -3202,6 +3202,51 @@ _Appears in:_
 | `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
 | `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `dqEngine` _[YQLDQEngineSpec](#yqldqenginespec)_ | YQL DQ engine executes simple requests using shared pool of vanilla jobs.<br />Tuning for unwired parameters could be done in config overrides and entrypoint wrapper. |  |  |
+
+
+#### YQLDQEngineSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YQLAgentSpec](#yqlagentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `maxJobs` _integer_ | DQ max jobs count |  |  |
+| `jobsPerOperation` _integer_ | DQ jobs per operation |  |  |
+| `workerCapacity` _integer_ | DQ requests per job |  |  |
+| `pool` _string_ | DQ operation pool |  |  |
+| `poolTrees` _string array_ | DQ operation pool_trees |  |  |
+| `schedulingTagFilter` _string_ | DQ operation scheduling_tag_filter |  |  |
+| `cpuLimit` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | DQ operation cpu_limit |  |  |
+| `memoryLimit` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | DQ operation memory_limit |  |  |
+| `cacheSize` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | DQ operation artifacts cache size |  |  |
+| `useTmpfs` _boolean_ | DQ operation use tmpfs for artifacts |  |  |
+| `uploadReplicationFactor` _integer_ | DQ artifacts replication_factor |  |  |
+| `gatewayDefaultSettings` _[YQLGatewayAttrSpec](#yqlgatewayattrspec) array_ | DQ gateway default settings |  |  |
+
+
+#### YQLGatewayAttrSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YQLDQEngineSpec](#yqldqenginespec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ |  |  |  |
+| `value` _string_ |  |  |  |
 
 
 #### Ytsaurus

@@ -36004,6 +36004,71 @@ spec:
                   dnsPolicy:
                     description: DNSPolicy defines how DNS will be configured.
                     type: string
+                  dqEngine:
+                    description: YQL DQ engine executes simple requests using shared
+                      pool of vanilla jobs.
+                    properties:
+                      cacheSize:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: DQ operation artifacts cache size
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      cpuLimit:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: DQ operation cpu_limit
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      gatewayDefaultSettings:
+                        description: DQ gateway default settings
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
+                      jobsPerOperation:
+                        description: DQ jobs per operation
+                        type: integer
+                      maxJobs:
+                        description: DQ max jobs count
+                        type: integer
+                      memoryLimit:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: DQ operation memory_limit
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      pool:
+                        description: DQ operation pool
+                        type: string
+                      poolTrees:
+                        description: DQ operation pool_trees
+                        items:
+                          type: string
+                        type: array
+                      schedulingTagFilter:
+                        description: DQ operation scheduling_tag_filter
+                        type: string
+                      uploadReplicationFactor:
+                        description: DQ artifacts replication_factor
+                        type: integer
+                      useTmpfs:
+                        description: DQ operation use tmpfs for artifacts
+                        type: boolean
+                      workerCapacity:
+                        description: DQ requests per job
+                        type: integer
+                    type: object
                   enableAntiAffinity:
                     description: 'Deprecated: use Affinity.PodAntiAffinity instead.'
                     type: boolean

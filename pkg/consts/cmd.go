@@ -93,6 +93,7 @@ const (
 	UISecretsVolumeName       = "secrets"
 	TimbertruckWorkDirName    = "timbertruck"
 	YQLAgentTokenVolumeName   = "yql-agent-secret"
+	YQLExecTokenVolumeName    = "yql-agent-exec-secret"
 )
 
 const (

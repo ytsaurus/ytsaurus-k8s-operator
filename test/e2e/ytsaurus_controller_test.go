@@ -736,8 +736,23 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			return
 		}
 
-		By("Checking YQL via query tracker")
-		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL, "SELECT 1")).To(HaveLen(1))
+		noCache := `PRAGMA yt.QueryCacheMode='disable';`
+		disableDQ := `PRAGMA DqEngine = 'disable';`
+		forceDQ := `PRAGMA DqEngine = 'force';`
+		requestSafe := `SELECT Digest::Md5Hex('test\n') || '  -' AS Data`
+		requestUnsafe := `PROCESS (SELECT 'test' AS Data) USING Streaming::Process(TableRows(), 'md5sum')`
+		beCorrect := HaveExactElements(HaveKeyWithValue("Data", "d8e8fca2dc0f896fd7cb4cb0031ba249  -"))
+
+		By("Checking YQL Agent via query tracker")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL, noCache+disableDQ+requestSafe)).To(beCorrect)
+
+		if ytsaurus.Spec.YQLAgents.DQEngine != nil {
+			By("Checking YQL DQ via query tracker")
+			Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL, noCache+forceDQ+requestSafe)).To(beCorrect)
+		}
+
+		By("Checking YQL MR via query tracker")
+		Expect(makeQuery(ctx, ytClient, yt.QueryEngineYQL, noCache+disableDQ+requestUnsafe)).To(beCorrect)
 
 		// FIXME(khlebnikov): CA Root Bundle handing is broken inside YQL DQ: https://github.com/ydb-platform/ydb/pull/30703
 		if !ytBuilder.WithHTTPSProxy {
@@ -1872,6 +1887,26 @@ exec "$@"`
 
 		}) // integration host-network
 
+		Context("With YQL", Label(ytVersion, "yql"), func() {
+
+			BeforeEach(func() {
+				By("Adding base components and rpc-proxy")
+				ytBuilder.WithBaseComponents()
+				ytBuilder.WithRPCProxies()
+
+				By("Adding query-tracker and yql-agent")
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
+				// FIXME(khlebnikov): DQ is still broken.
+				// ytBuilder.WithYqlAgentDQ()
+			})
+
+			It("Checking YQL", func(ctx context.Context) {
+				// Some queries are executed in JustBeforeEach.
+			})
+
+		}) // integration yql
+
 		Context("With CHYT", Label(ytVersion, "chyt"), func() {
 
 			BeforeEach(func() {
@@ -1937,6 +1972,8 @@ exec "$@"`
 					By("Adding query-tracker and yql-agent")
 					ytBuilder.WithQueryTracker()
 					ytBuilder.WithYqlAgent()
+					// FIXME(khlebnikov): YQL DQ is still broken for HTTPS-only.
+					// ytBuilder.WithYqlAgentDQ()
 				} else {
 					By("Skipping query-tracker and yql-agent")
 				}

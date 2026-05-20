@@ -66,6 +66,9 @@ const (
 	YQLAgentRPCPort        = 9019
 	YQLAgentMonitoringPort = 10019
 
+	YQLAgentDQInterconnectPort = 9035
+	YQLAgentDQgRPCPort         = 9036
+
 	QueueAgentRPCPort        = 9030
 	QueueAgentMonitoringPort = 10030
 

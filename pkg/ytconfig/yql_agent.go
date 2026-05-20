@@ -1,6 +1,7 @@
 package ytconfig
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 
 	"go.ytsaurus.tech/yt/go/yson"
@@ -451,4 +452,61 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.Logging = getYQLAgentLogging(spec)
 
 	return c, nil
+}
+
+func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec) {
+	// FIXME: In DQ "Cluster Name" is used both as YT proxy address and as cluster name in paths.
+	// Latter cannot handle "https://" prefix.
+	clusterHTTPAddress := g.GetHTTPProxiesBalancerHTTPAddress(consts.DefaultHTTPProxyRole)
+
+	cpuLimit := ptr.Deref(dq.CPULimit, resource.Quantity{})
+	memoryLimit := ptr.Deref(dq.MemoryLimit, resource.Quantity{})
+	cacheSize := ptr.Deref(dq.CacheSize, resource.Quantity{})
+
+	yql.DQGatewayConfig = &DQGatewayConfig{}
+	for _, attr := range dq.GatewayDefaultSettings {
+		yql.DQGatewayConfig.DefaultSettings = append(yql.DQGatewayConfig.DefaultSettings, YQLGatewayAttr{
+			Name:  attr.Name,
+			Value: attr.Value,
+		})
+	}
+
+	yql.DQManagerConfig = &DQManagerConfig{
+		InterconnectPort: ptr.To(consts.YQLAgentDQInterconnectPort),
+		GrpcPort:         ptr.To(consts.YQLAgentDQgRPCPort),
+		UseIPv4:          ptr.To(g.commonSpec.UseIPv4 && !g.commonSpec.UseIPv6),
+		YTCoordinator: &DQYTCoordinator{
+			ClusterName: clusterHTTPAddress,
+			User:        consts.YQLAgentUserName,
+			TokenFile:   getTokenVolumePath(consts.YQLAgentTokenVolumeName),
+		},
+		YTBackends: []DQYTBackend{
+			{
+				ClusterName:    clusterHTTPAddress,
+				User:           consts.YQLAgentExecUserName,
+				TokenFile:      getTokenVolumePath(consts.YQLExecTokenVolumeName),
+				VanillaJobLite: "/usr/bin/dq_vanilla_job.lite",
+				VanillaJobFiles: []VanillaJobFile{
+					{
+						Name:      "dq_vanilla_job",
+						LocalPath: "/usr/bin/dq_vanilla_job",
+					},
+				},
+
+				MaxJobs:          ptr.Deref(dq.MaxJobs, 0),
+				JobsPerOperation: ptr.Deref(dq.JobsPerOperation, 0),
+				WorkerCapacity:   ptr.Deref(dq.WorkerCapacity, 0),
+
+				Pool:                dq.Pool,
+				PoolTrees:           dq.PoolTrees,
+				SchedulingTagFilter: dq.SchedulingTagFilter,
+				CPULimit:            cpuLimit.Value(),
+				MemoryLimit:         memoryLimit.Value(),
+				CacheSize:           cacheSize.Value(),
+				UseTmpFS:            dq.UseTmpFS,
+
+				UploadReplicationFactor: ptr.Deref(dq.UploadReplicationFactor, min(10, int(g.GetMaxReplicationFactor()))),
+			},
+		},
+	}
 }

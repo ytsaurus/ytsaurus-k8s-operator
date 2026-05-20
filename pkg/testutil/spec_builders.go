@@ -201,6 +201,8 @@ var (
 			corev1.ResourceMemory: resource.MustParse("8Gi"),
 		},
 	}
+
+	yqlAgentResources = execNodeJobResources
 )
 
 type YtsaurusBuilder struct {
@@ -566,8 +568,25 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 			Image:                 ptr.To(b.Images.QueryTracker),
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
-			Resources:             *defaultNodeResources.DeepCopy(),
+			Resources:             *yqlAgentResources.DeepCopy(),
 			Loggers:               b.CreateLoggersSpec(),
+		},
+	}
+}
+
+func (b *YtsaurusBuilder) WithYqlAgentDQ() {
+	b.Ytsaurus.Spec.YQLAgents.DQEngine = &ytv1.YQLDQEngineSpec{
+		JobsPerOperation:        ptr.To(1),
+		MaxJobs:                 ptr.To(1),
+		WorkerCapacity:          ptr.To(128),
+		CPULimit:                ptr.To(resource.MustParse("1")),
+		MemoryLimit:             ptr.To(resource.MustParse("2Gi")),
+		CacheSize:               ptr.To(resource.MustParse("4Gi")),
+		UseTmpFS:                ptr.To(false),
+		UploadReplicationFactor: ptr.To(1),
+		GatewayDefaultSettings: []ytv1.YQLGatewayAttrSpec{
+			{Name: "MemoryLimit", Value: "1G"},
+			{Name: "ChannelBufferSize", Value: "33554432"},
 		},
 	}
 }

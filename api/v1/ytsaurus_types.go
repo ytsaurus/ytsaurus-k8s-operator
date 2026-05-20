@@ -798,6 +798,41 @@ type StrawberryControllerSpec struct {
 
 type YQLAgentSpec struct {
 	InstanceSpec `json:",inline"`
+	// YQL DQ engine executes simple requests using shared pool of vanilla jobs.
+	// Tuning for unwired parameters could be done in config overrides and entrypoint wrapper.
+	DQEngine *YQLDQEngineSpec `json:"dqEngine,omitempty"`
+}
+
+type YQLDQEngineSpec struct {
+	// DQ max jobs count
+	MaxJobs *int `json:"maxJobs,omitempty"`
+	// DQ jobs per operation
+	JobsPerOperation *int `json:"jobsPerOperation,omitempty"`
+	// DQ requests per job
+	WorkerCapacity *int `json:"workerCapacity,omitempty"`
+	// DQ operation pool
+	Pool string `json:"pool,omitempty"`
+	// DQ operation pool_trees
+	PoolTrees []string `json:"poolTrees,omitempty"`
+	// DQ operation scheduling_tag_filter
+	SchedulingTagFilter string `json:"schedulingTagFilter,omitempty"`
+	// DQ operation cpu_limit
+	CPULimit *resource.Quantity `json:"cpuLimit,omitempty"`
+	// DQ operation memory_limit
+	MemoryLimit *resource.Quantity `json:"memoryLimit,omitempty"`
+	// DQ operation artifacts cache size
+	CacheSize *resource.Quantity `json:"cacheSize,omitempty"`
+	// DQ operation use tmpfs for artifacts
+	UseTmpFS *bool `json:"useTmpfs,omitempty"`
+	// DQ artifacts replication_factor
+	UploadReplicationFactor *int `json:"uploadReplicationFactor,omitempty"`
+	// DQ gateway default settings
+	GatewayDefaultSettings []YQLGatewayAttrSpec `json:"gatewayDefaultSettings,omitempty"`
+}
+
+type YQLGatewayAttrSpec struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type QueueAgentSpec struct {

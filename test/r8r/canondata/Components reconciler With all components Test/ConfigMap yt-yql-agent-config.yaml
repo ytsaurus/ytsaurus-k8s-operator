@@ -129,6 +129,51 @@ data:
                     };
                 ];
             };
+            "enable_dq"=%true;
+            "dq_gateway_config"={
+                "default_settings"=[
+                    {
+                        name=MemoryLimit;
+                        value="1G";
+                    };
+                    {
+                        name=ChannelBufferSize;
+                        value="33554432";
+                    };
+                ];
+            };
+            "dq_manager_config"={
+                "interconnect_port"=9035;
+                "grpc_port"=9036;
+                "use_ipv4"=%false;
+                "yt_backends"=[
+                    {
+                        "cluster_name"="http-proxies-lb.ytsaurus-components.svc.cluster.local";
+                        "jobs_per_operation"=1;
+                        "max_jobs"=1;
+                        "vanilla_job_lite"="/usr/bin/dq_vanilla_job.lite";
+                        "vanilla_job_file"=[
+                            {
+                                name="dq_vanilla_job";
+                                "local_path"="/usr/bin/dq_vanilla_job";
+                            };
+                        ];
+                        "upload_replication_factor"=1;
+                        "token_file"="/var/run/secrets/yql-agent-exec-secret/token";
+                        user="yql_agent_exec";
+                        "cpu_limit"=1;
+                        "worker_capacity"=128;
+                        "memory_limit"=2147483648;
+                        "cache_size"=4294967296;
+                        "use_tmp_fs"=%false;
+                    };
+                ];
+                "yt_coordinator"={
+                    "cluster_name"="http-proxies-lb.ytsaurus-components.svc.cluster.local";
+                    "token_file"="/var/run/secrets/yql-agent-secret/token";
+                    user="yql_agent";
+                };
+            };
             "yt_token_path"="/var/run/secrets/yql-agent-secret/token";
             "yql_plugin_shared_library"="/usr/lib/yql/libyqlplugin.so";
             "additional_system_libs"=[

@@ -301,6 +301,15 @@ func (g *Generator) GetHTTPProxiesAddress(role string) string {
 	return g.NodeGenerator.GetHTTPProxiesAddress(&g.ytsaurus.Spec, role)
 }
 
+// FIXME: This is temporary solution for components which cannot handle "https://..." URLs.
+func (g *Generator) GetHTTPProxiesBalancerHTTPAddress(role string) string {
+	address := g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
+	if port := getHTTPProxyPort(&g.ytsaurus.Spec, role, consts.HTTPPortName); port != consts.HTTPProxyHTTPPort {
+		address += fmt.Sprintf(":%v", port)
+	}
+	return address
+}
+
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
 	return g.GetComponentLabeller(consts.RpcProxyType, role).GetBalancerServiceName()
 }
@@ -1150,6 +1159,13 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServ
 		clusterName: clusterAddress,
 	}
 	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
+
+	if dq := spec.DQEngine; dq != nil {
+		c.YQLAgent.EnableDQ = ptr.To(true)
+		g.fillYQLAgentDQEngine(&c.YQLAgent, dq)
+	} else {
+		c.YQLAgent.EnableDQ = ptr.To(false)
+	}
 
 	return c, nil
 }

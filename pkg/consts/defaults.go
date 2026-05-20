@@ -24,6 +24,7 @@ const StrawberryControllerUserName = "robot-strawberry-controller"
 const YtsaurusOperatorUserName = "robot-ytsaurus-k8s-operator"
 
 const YQLAgentUserName = "yql_agent"
+const YQLAgentExecUserName = "yql_agent_exec"
 
 const StartUID = 19500
 
