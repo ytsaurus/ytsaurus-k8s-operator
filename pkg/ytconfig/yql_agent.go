@@ -54,7 +54,7 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	c.RPCPort = consts.YQLAgentRPCPort
 	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.YQLAgentMonitoringPort)
 
-	c.User = "yql_agent"
+	c.User = consts.YQLAgentUserName
 
 	c.YQLAgent.GatewayConfig.UDFDirectory = "/usr/lib/yql"
 	c.YQLAgent.AdditionalSystemLibs = []AdditionalSystemLib{

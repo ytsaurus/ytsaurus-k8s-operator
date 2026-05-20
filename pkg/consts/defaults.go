@@ -23,7 +23,7 @@ const UIUserName = "robot-ui"
 const StrawberryControllerUserName = "robot-strawberry-controller"
 const YtsaurusOperatorUserName = "robot-ytsaurus-k8s-operator"
 
-const YqlUserName = "yql_agent"
+const YQLAgentUserName = "yql_agent"
 const DefaultYqlTokenPath = "/usr/yql_agent_token"
 
 const StartUID = 19500
