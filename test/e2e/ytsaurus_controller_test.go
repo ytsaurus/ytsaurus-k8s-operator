@@ -435,13 +435,19 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		}
 
 		DeferCleanup(AttachProgressReporter(func() string {
+			report := &strings.Builder{}
+			fmt.Fprintf(report, "state: %v", ytsaurus.Status.State)
+			if updateState := ytsaurus.Status.UpdateStatus.State; updateState != ytv1.UpdateStateUndefined {
+				fmt.Fprintf(report, " update: %v", updateState)
+			}
 			falseConditions := make(map[string]string)
 			for _, condition := range ytsaurus.Status.Conditions {
 				if condition.Status == metav1.ConditionFalse {
 					falseConditions[condition.Type] = condition.Reason
 				}
 			}
-			return fmt.Sprintf("ytsaurus false conditions: %v", falseConditions)
+			fmt.Fprintf(report, " ytsaurus false conditions: %v", falseConditions)
+			return report.String()
 		}))
 
 		By("Starting cluster health reporter")
