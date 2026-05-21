@@ -198,7 +198,7 @@ func (m *Master) initUploaderUser() (string, error) {
 	login := consts.HydraPersistenceUploaderUserName
 	token, _ := m.uploaderSecret.GetValue(consts.TokenSecretKey)
 	commands := []string{
-		strings.Join(createUserCommand(login, token, token, false), "\n"),
+		strings.Join(createUserCommand(login, "", token, false), "\n"),
 	}
 
 	setPathAclCommand, err := SetPathAcl("//sys/admin/snapshots", []yt.ACE{

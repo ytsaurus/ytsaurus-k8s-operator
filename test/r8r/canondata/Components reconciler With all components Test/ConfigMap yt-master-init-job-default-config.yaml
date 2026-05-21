@@ -198,7 +198,6 @@ data:
     if [ 'true' = 'true' ]; then
     if [ $(/usr/bin/yt exists //sys/users/robot-hydra-persistence-uploader) = 'false' ]; then
     /usr/bin/yt create user --attributes '{name="robot-hydra-persistence-uploader"}' --ignore-existing
-    /usr/bin/yt execute set_user_password '{user=robot-hydra-persistence-uploader;new_password_sha256="885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef"}'
     /usr/bin/yt create map_node '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef/@user' 'robot-hydra-persistence-uploader'
     /usr/bin/yt create map_node //sys/admin/snapshots -r -i
