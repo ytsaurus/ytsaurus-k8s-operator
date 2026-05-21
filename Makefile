@@ -403,6 +403,7 @@ helm-install: ## Install helm chart from sources.
 	$(KUBECTL) label namespace $(OPERATOR_NAMESPACE) app.kubernetes.io/part-of=ytsaurus-dev
 	$(HELM) upgrade -n $(OPERATOR_NAMESPACE) --install --wait $(HELM_INSTALL_ARGS)
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
+	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout status -w deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install
 helm-kind-install: helm-chart docker-build ## Build docker image, load into kind and install helm chart.
