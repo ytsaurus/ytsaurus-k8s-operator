@@ -2821,6 +2821,7 @@ func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
 			log.Info("Operation progress",
 				"id", opStatus.ID,
 				"state", opStatus.State,
+				"result", opStatus.Result,
 				"running", jobs.Running,
 				"completed", jobs.Completed,
 				"total", jobs.Total,
@@ -2836,16 +2837,22 @@ func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
 func (o *TestOperation) Wait(ctx context.Context) *yt.OperationStatus {
 	var opStatus *yt.OperationStatus
 	trackStatus := NewOprationStatusTracker()
-	Eventually(ctx, func(ctx context.Context) bool {
+	Eventually(ctx, func(ctx context.Context) (bool, error) {
 		var err error
 		opStatus, err = o.Status(ctx)
-		Expect(err).NotTo(HaveOccurred())
-		trackStatus(opStatus)
-		if opStatus.State.IsFinished() {
-			Expect(opStatus.State).Should(Equal(yt.StateCompleted))
-			return true
+		if err != nil {
+			return false, StopTrying("get operation failed").Wrap(err)
 		}
-		return false
+		trackStatus(opStatus)
+		switch opStatus.State {
+		case yt.StateCompleted:
+			return true, nil
+		case yt.StateFailed, yt.StateAborted:
+			err = ptr.Deref(opStatus.Result, yt.OperationResult{}).Error
+			return false, StopTrying(fmt.Sprintf("operation state %v", opStatus.State)).Wrap(err)
+		default:
+			return false, nil
+		}
 	}, operationTimeout, operationPollInterval, specCtx).Should(BeTrueBecause("operation %s should complete", o.Id))
 	return opStatus
 }
