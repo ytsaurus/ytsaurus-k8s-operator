@@ -51,9 +51,8 @@ import (
 const (
 	pollInterval     = time.Millisecond * 250
 	reactionTimeout  = time.Second * 150
-	bootstrapTimeout = time.Minute * 5
-	upgradeTimeout   = time.Minute * 10
-	imagePullTimeout = time.Minute * 10
+	bootstrapTimeout = time.Minute * 10
+	upgradeTimeout   = time.Minute * 20
 
 	consistencyTimeout = time.Second * 10
 
