@@ -146,14 +146,10 @@ func (j *InitJob) Restart() {
 	j.owner.RemoveStatusCondition(j.statusCondition)
 }
 
-func (j *InitJob) IsStarted() bool {
-	condition := j.owner.GetStatusCondition(j.statusCondition)
-	return condition != nil && condition.Reason == j.reason
-}
-
+// IsCompleted returns true if job exists and finished for any reason.
+// Removing either job spec or condition returns job into non-completed state.
 func (j *InitJob) IsCompleted() bool {
-	condition := j.owner.GetStatusCondition(j.statusCondition)
-	return condition != nil && condition.Reason == j.reason && condition.Status == metav1.ConditionTrue
+	return j.Exists() && j.owner.IsStatusConditionTrue(j.statusCondition)
 }
 
 func (j *InitJob) SetInitScript(script string) {

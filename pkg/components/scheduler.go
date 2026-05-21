@@ -151,20 +151,20 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		return status, err
 	}
 
-	// FIXME: Refactor this mess. During update flow sync must do only actions for current update phase.
-	if s.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && s.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
-		return ComponentStatusReady(), nil
+	if s.ytsaurus.IsInitializing() || s.ytsaurus.IsReadyToWork() {
+		if status, err := s.initOpArchive(ctx, dry); !status.IsReady() || err != nil {
+			return status, err
+		}
 	}
 
-	if !s.needOpArchiveInit() {
-		// Don't initialize operations archive.
-		return ComponentStatusReady(), err
-	}
-
-	return s.initOpArchive(ctx, dry)
+	return ComponentStatusReady(), nil
 }
 
 func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatus, error) {
+	if len(s.tabletNodes) == 0 || s.initOpArchiveJob.IsCompleted() {
+		return ComponentStatusReady(), nil
+	}
+
 	if !dry {
 		s.initUserJob.SetInitScript(s.createInitUserScript())
 	}
@@ -182,10 +182,6 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	return s.initOpArchiveJob.RunScript(ctx, dry, "InitOperationsArchive", s.scriptInitOperationsArchive, nil)
-}
-
-func (s *Scheduler) needOpArchiveInit() bool {
-	return len(s.tabletNodes) > 0
 }
 
 func (s *Scheduler) createInitUserScript() string {
