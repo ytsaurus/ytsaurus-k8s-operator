@@ -128,20 +128,38 @@ jobs:
           make helm-uninstall
           make kind-delete-cluster
 
+      # https://github.com/actions/upload-artifact
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: "Report for E2E tests ${{ matrix.e2e.name }}"
+          path: "report.xml"
+          retention-days: 10
+
+      # https://github.com/actions/upload-artifact
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: "Logs from E2E tests ${{ matrix.e2e.name }}"
+          path: "logs/"
+          retention-days: 10
+
+  report:
+    name: "Report test results"
+    if: always()
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
       # https://github.com/dorny/test-reporter
       - name: Report results
         if: always()
         uses: dorny/test-reporter@v3
         with:
-          name: "E2E tests"
+          artifact: "/Report (.*)/"
+          name: "Results $1"
           path: "report.xml"
-          reporter: java-junit
-
-      # https://github.com/actions/upload-artifact
-      - name: Upload logs snapshot
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: "logs E2E tests ${{ matrix.e2e.name }}"
-          path: "logs/"
-          retention-days: 10
+          reporter: "java-junit"
+          list-tests: "failed"
+          collapsed: "never"
