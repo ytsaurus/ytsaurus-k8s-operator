@@ -33,6 +33,53 @@ const (
 	OnDeleteUpdateModeWarningTimeout = 15 * 60 // 15 minutes in seconds
 )
 
+func PlainTextGenerator(text ...string) TextGeneratorFunc {
+	return func() ([]string, error) {
+		return text, nil
+	}
+}
+
+func SprintfYsonGenerator(format string, args ...any) TextGeneratorFunc {
+	return func() ([]string, error) {
+		ysons := make([]any, 0, len(args))
+		for _, arg := range args {
+			text, err := yson.MarshalFormat(arg, yson.FormatText)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal YSON: %w", err)
+			}
+			ysons = append(ysons, string(text))
+		}
+		return []string{fmt.Sprintf(format, ysons...)}, nil
+	}
+}
+
+func CheckAndAppendPathACLGenerator(path string, acl yt.ACE) TextGeneratorFunc {
+	return func() ([]string, error) {
+		// FIXME: "set .../@acl/end" is non-idempotent.
+		// Branch on first permissions for first subject until we have better solution.
+		testCmd := CheckPathPermission(path, acl.Subjects[0], acl.Permissions[0])
+		appendCmd, err := AppendPathAcl(path, acl)
+		if err != nil {
+			return nil, err
+		}
+		return []string{testCmd + " || " + appendCmd}, nil
+	}
+}
+
+func JoinTextGenerators(generators ...TextGeneratorFunc) TextGeneratorFunc {
+	return func() ([]string, error) {
+		var result []string
+		for _, generator := range generators {
+			text, err := generator()
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, text...)
+		}
+		return result, nil
+	}
+}
+
 func CreateTabletCells(ctx context.Context, ytClient yt.Client, bundle string, tabletCellCount int) error {
 	logger := log.FromContext(ctx)
 
@@ -510,6 +557,10 @@ func runPrechecks(ctx context.Context, ytsaurus *apiproxy.Ytsaurus, cmp Componen
 		Message: "pre-checks completed",
 	})
 	return nil, nil
+}
+
+func CheckPathPermission(path, subject, permission string) string {
+	return fmt.Sprintf("/usr/bin/yt check-permission %s %s %s | grep -q allow", subject, permission, path)
 }
 
 func SetPathAcl(path string, acl []yt.ACE) (string, error) {
