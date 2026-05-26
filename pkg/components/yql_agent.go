@@ -19,12 +19,11 @@ import (
 type YqlAgent struct {
 	serverComponent
 
-	cfgen             *ytconfig.Generator
-	master            Component
-	ytsaurusClient    internalYtsaurusClient
-	initEnvironment   *InitJob
-	updateEnvironment *InitJob
-	secret            *resources.StringSecret
+	cfgen           *ytconfig.Generator
+	master          Component
+	ytsaurusClient  internalYtsaurusClient
+	initEnvironment *InitJob
+	secret          *resources.StringSecret
 }
 
 func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient, master Component) *YqlAgent {
@@ -63,14 +62,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 			cfgen.GetNativeClientConfig,
 			&resource.Spec.YQLAgents.InstanceSpec,
 		),
-		updateEnvironment: NewInitJobForYtsaurus(
-			l,
-			ytsaurus,
-			"yql-agent-update-environment",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
-			&resource.Spec.YQLAgents.InstanceSpec,
-		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
@@ -90,7 +81,6 @@ func (yqla *YqlAgent) Fetch(ctx context.Context) error {
 	return resources.Fetch(ctx,
 		yqla.server,
 		yqla.initEnvironment,
-		yqla.updateEnvironment,
 		yqla.secret,
 	)
 }
@@ -113,7 +103,7 @@ func (yqla *YqlAgent) initUsers() string {
 	return strings.Join(commands, "\n")
 }
 
-func (yqla *YqlAgent) createInitScript() string {
+func (yqla *YqlAgent) createInitScript() ([]string, error) {
 	var sb strings.Builder
 	sb.WriteString("[")
 	for _, addr := range yqla.cfgen.GetYQLAgentAddresses() {
@@ -130,15 +120,16 @@ func (yqla *YqlAgent) createInitScript() string {
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%%false;addresses=%v}}}}'", yqlAgentAddrs),
 		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
 	}
-
-	return strings.Join(script, "\n")
+	return script, nil
 }
 
 func (yqla *YqlAgent) createUpdateScript() ([]string, error) {
-	return []string{
+	script := []string{
 		initJobWithNativeDriverPrologue(),
+		yqla.initUsers(),
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address '%%false'"),
-	}, nil
+	}
+	return script, nil
 }
 
 func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -155,7 +146,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 				return *status, err
 			}
 		case ytv1.UpdateStateWaitingForYqlaUpdate:
-			return yqla.updateEnvironment.RunUpdateScript(ctx, dry, yqla.ytsaurus, updateState, yqla.createUpdateScript, nil)
+			return yqla.initEnvironment.RunUpdateScript(ctx, dry, yqla.ytsaurus, updateState, yqla.createUpdateScript, nil)
 		default:
 			return ComponentStatusReady(), nil
 		}
@@ -176,9 +167,10 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor(yqla.secret.Name()), err
 	}
 
-	// TODO: Refactor this mess.
-	if status, err := yqla.setup(ctx, dry); !status.IsReady() || err != nil {
-		return status, err
+	if (yqla.ytsaurus.IsInitializing() || yqla.ytsaurus.IsReadyToWork()) && !yqla.initEnvironment.IsCompleted() {
+		if status, err := yqla.initEnvironment.RunScript(ctx, dry, "YQLAgentInit", yqla.createInitScript, nil); err != nil || !status.IsReady() {
+			return status, err
+		}
 	}
 
 	if yqla.NeedSync() {
@@ -215,19 +207,6 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	}
 
 	return ComponentStatusReady(), nil
-}
-
-func (yqla *YqlAgent) setup(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if !dry {
-		yqla.initEnvironment.SetInitScript(yqla.createInitScript())
-	}
-
-	status, err := yqla.initEnvironment.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
-		return status, err
-	}
-
-	return yqla.updateEnvironment.RunScript(ctx, dry, "YQLAgentSetup", yqla.createUpdateScript, nil)
 }
 
 func (yqla *YqlAgent) UpdatePreCheck(ctx context.Context) ComponentStatus {

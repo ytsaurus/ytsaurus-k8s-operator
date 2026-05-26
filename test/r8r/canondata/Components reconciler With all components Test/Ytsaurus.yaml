@@ -474,7 +474,7 @@ status:
   - lastTransitionTime: null
     message: Job yt-yql-agent-init-job-yql-agent-environment completed in -1ns
     observedGeneration: 1
-    reason: InitJob
+    reason: YQLAgentInit
     status: "True"
     type: yql-agent-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
@@ -490,6 +490,12 @@ status:
     status: "True"
     type: userYtsaurusClientInitJobCompleted
   - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: YqlAgentReady
+  - lastTransitionTime: null
     message: Job yt-strawberry-controller-init-job-user completed in -1ns
     observedGeneration: 1
     reason: InitJob
@@ -501,12 +507,6 @@ status:
     reason: HealthChecks
     status: "True"
     type: UpdateIsPossible
-  - lastTransitionTime: null
-    message: Job yt-yql-agent-init-job-yql-agent-update-environment completed in -1ns
-    observedGeneration: 1
-    reason: YQLAgentSetup
-    status: "True"
-    type: yql-agent-update-environmentYqlAgentInitJobCompleted
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
@@ -525,12 +525,6 @@ status:
     reason: InitJob
     status: "True"
     type: clusterStrawberryControllerInitJobCompleted
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: YqlAgentReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1
