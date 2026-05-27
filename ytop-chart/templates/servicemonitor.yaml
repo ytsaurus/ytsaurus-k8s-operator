@@ -1,0 +1,22 @@
+{{- if .Values.monitoring.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "ytop-chart.fullname" . }}
+  labels:
+    {{- include "ytop-chart.labels" . | nindent 4 }}
+    {{- with .Values.monitoring.serviceMonitor.labels }}
+    {{ . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  jobLabel: "app.kubernetes.io/name"
+  podMetricsEndpoints:
+    - port: metrics
+      path: "/metrics"
+      scrapeTimeout: 10s
+      honorLabels: true
+      honorTimestamps: true
+  selector:
+    matchLabels:
+      {{- include "ytop-chart.selectorLabels" . | nindent 6 }}
+{{ end }}
