@@ -466,6 +466,12 @@ kind-yt-info:
 	@printf "YTsaurus UI: http://%s:%s\nlogin/password: admin/password\nto setup env for yt cli run: . <(make kind-yt-env)\n" \
 		$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane) \
 		$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},ytsaurus-ui,0)
+	@printf "Forwarding: YT_PROXY=localhost:8081 YT_USE_HOSTS=0 YT_TOKEN=password UI http://localhost:8080\n# ssh -N -L localhost:8081:%s:%s -L localhost:8080:%s:%s %s\n" \
+		$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane) \
+		$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},http-proxies-lb,0) \
+		$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane) \
+		$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},ytsaurus-ui,0) \
+		$(shell hostname -f)
 
 ##@ Build
 
