@@ -6552,6 +6552,10 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
+                    class:
+                      description: Class defines a reusable template within a repeated
+                        component list.
+                      type: string
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
                       properties:
@@ -6597,6 +6601,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    from:
+                      description: From references a reusable template class from
+                        the same component list.
+                      type: string
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean
@@ -10363,6 +10371,10 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
+                    class:
+                      description: Class defines a reusable template within a repeated
+                        component list.
+                      type: string
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
                       properties:
@@ -10408,6 +10420,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    from:
+                      description: From references a reusable template class from
+                        the same component list.
+                      type: string
                     gpuManager:
                       properties:
                         gpuInfoProvider:
@@ -12530,6 +12546,10 @@ spec:
                           format: int32
                           type: integer
                       type: object
+                    class:
+                      description: Class defines a reusable template within a repeated
+                        component list.
+                      type: string
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
                       properties:
@@ -12575,6 +12595,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    from:
+                      description: From references a reusable template class from
+                        the same component list.
+                      type: string
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean
@@ -14476,6 +14500,10 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
+                    class:
+                      description: Class defines a reusable template within a repeated
+                        component list.
+                      type: string
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
                       properties:
@@ -14521,6 +14549,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    from:
+                      description: From references a reusable template class from
+                        the same component list.
+                      type: string
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean
@@ -24014,6 +24046,10 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
+                    class:
+                      description: Class defines a reusable template within a repeated
+                        component list.
+                      type: string
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
                       properties:
@@ -24059,6 +24095,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    from:
+                      description: From references a reusable template class from
+                        the same component list.
+                      type: string
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean
@@ -31795,6 +31835,10 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
+                    class:
+                      description: Class defines a reusable template within a repeated
+                        component list.
+                      type: string
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
                       properties:
@@ -31840,6 +31884,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    from:
+                      description: From references a reusable template class from
+                        the same component list.
+                      type: string
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean
@@ -33693,6 +33741,10 @@ spec:
                               x-kubernetes-list-type: atomic
                           type: object
                       type: object
+                    class:
+                      description: Class defines a reusable template within a repeated
+                        component list.
+                      type: string
                     dnsConfig:
                       description: DNSConfig allows customizing the DNS settings.
                       properties:
@@ -33738,6 +33790,10 @@ spec:
                       items:
                         type: string
                       type: array
+                    from:
+                      description: From references a reusable template class from
+                        the same component list.
+                      type: string
                     hostNetwork:
                       description: Use the host's network namespace.
                       type: boolean
