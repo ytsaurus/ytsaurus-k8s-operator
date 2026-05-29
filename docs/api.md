@@ -750,6 +750,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -915,6 +917,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1026,6 +1030,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1137,6 +1143,34 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `image` _string_ |  |  |  |
+
+
+
+
+#### InstanceGroupTemplateSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [DataNodesSpec](#datanodesspec)
+- [ExecNodesSpec](#execnodesspec)
+- [HTTPProxiesSpec](#httpproxiesspec)
+- [KafkaProxiesSpec](#kafkaproxiesspec)
+- [RPCProxiesSpec](#rpcproxiesspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [TCPProxiesSpec](#tcpproxiesspec)
+- [TabletNodesSpec](#tabletnodesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 
 
 #### InstanceSpec
@@ -1255,6 +1289,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2053,6 +2089,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2200,6 +2238,8 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2300,6 +2340,8 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2447,6 +2489,8 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2757,6 +2801,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2863,6 +2909,8 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `class` _string_ | Class defines a reusable template within a repeated component list.<br />Entries with class are not reconciled as components directly. |  |  |
+| `from` _string_ | From references a reusable template class from the same component list. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |

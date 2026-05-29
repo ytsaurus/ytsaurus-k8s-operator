@@ -18,6 +18,7 @@ package validators
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -823,7 +824,8 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 }
 
 func (r *ytsaurusValidator) instanceGroupTemplateError(err error) *field.Error {
-	templateErr, ok := err.(*ytv1.InstanceGroupTemplateError)
+	var templateErr *ytv1.InstanceGroupTemplateError
+	ok := errors.As(err, &templateErr)
 	if !ok {
 		return field.InternalError(field.NewPath("spec"), err)
 	}

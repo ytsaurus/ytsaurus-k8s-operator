@@ -7555,6 +7555,10 @@
                   }
                 }
               },
+              "class": {
+                "description": "Class defines a reusable template within a repeated component list.",
+                "type": "string"
+              },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
@@ -7610,6 +7614,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "from": {
+                "description": "From references a reusable template class from the same component list.",
+                "type": "string"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",
@@ -11994,6 +12002,10 @@
                   }
                 }
               },
+              "class": {
+                "description": "Class defines a reusable template within a repeated component list.",
+                "type": "string"
+              },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
@@ -12049,6 +12061,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "from": {
+                "description": "From references a reusable template class from the same component list.",
+                "type": "string"
               },
               "gpuManager": {
                 "type": "object",
@@ -14554,6 +14570,10 @@
                   }
                 }
               },
+              "class": {
+                "description": "Class defines a reusable template within a repeated component list.",
+                "type": "string"
+              },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
@@ -14609,6 +14629,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "from": {
+                "description": "From references a reusable template class from the same component list.",
+                "type": "string"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",
@@ -16815,6 +16839,10 @@
                   }
                 }
               },
+              "class": {
+                "description": "Class defines a reusable template within a repeated component list.",
+                "type": "string"
+              },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
@@ -16870,6 +16898,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "from": {
+                "description": "From references a reusable template class from the same component list.",
+                "type": "string"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",
@@ -27957,6 +27989,10 @@
                   }
                 }
               },
+              "class": {
+                "description": "Class defines a reusable template within a repeated component list.",
+                "type": "string"
+              },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
@@ -28012,6 +28048,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "from": {
+                "description": "From references a reusable template class from the same component list.",
+                "type": "string"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",
@@ -37038,6 +37078,10 @@
                   }
                 }
               },
+              "class": {
+                "description": "Class defines a reusable template within a repeated component list.",
+                "type": "string"
+              },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
@@ -37093,6 +37137,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "from": {
+                "description": "From references a reusable template class from the same component list.",
+                "type": "string"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",
@@ -39246,6 +39294,10 @@
                   }
                 }
               },
+              "class": {
+                "description": "Class defines a reusable template within a repeated component list.",
+                "type": "string"
+              },
               "dnsConfig": {
                 "description": "DNSConfig allows customizing the DNS settings.",
                 "type": "object",
@@ -39301,6 +39353,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "from": {
+                "description": "From references a reusable template class from the same component list.",
+                "type": "string"
               },
               "hostNetwork": {
                 "description": "Use the host's network namespace.",

@@ -803,6 +803,10 @@ spec:
                     description: Name is the name of resource being referenced
                     type: string
                 type: object
+              class:
+                description: Class defines a reusable template within a repeated component
+                  list.
+                type: string
               clusterFeatures:
                 properties:
                   enableAnchorProfilingByDefault:
@@ -911,6 +915,10 @@ spec:
                 type: object
               forceTcp:
                 type: boolean
+              from:
+                description: From references a reusable template class from the same
+                  component list.
+                type: string
               gpuManager:
                 properties:
                   gpuInfoProvider:

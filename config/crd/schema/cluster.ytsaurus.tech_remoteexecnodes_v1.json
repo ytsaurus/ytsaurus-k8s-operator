@@ -873,6 +873,10 @@
             }
           }
         },
+        "class": {
+          "description": "Class defines a reusable template within a repeated component list.",
+          "type": "string"
+        },
         "clusterFeatures": {
           "type": "object",
           "properties": {
@@ -1006,6 +1010,10 @@
         },
         "forceTcp": {
           "type": "boolean"
+        },
+        "from": {
+          "description": "From references a reusable template class from the same component list.",
+          "type": "string"
         },
         "gpuManager": {
           "type": "object",
