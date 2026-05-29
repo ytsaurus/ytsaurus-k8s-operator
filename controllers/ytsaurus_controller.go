@@ -149,6 +149,11 @@ func (r *YtsaurusReconciler) findObjectsForConfigMap(ctx context.Context, config
 
 //nolint:cyclop //ok
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
+	resource = resource.DeepCopy()
+	if err := resource.Spec.ResolveInstanceGroupTemplates(); err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	logger := log.FromContext(ctx, "ytsaurusState", resource.Status.State)
 	ctx = log.IntoContext(ctx, logger)
 

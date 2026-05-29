@@ -442,6 +442,16 @@ type InstanceSpec struct {
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
+type InstanceGroupTemplateSpec struct {
+	// Class defines a reusable template within a repeated component list.
+	// Entries with class are not reconciled as components directly.
+	// +optional
+	Class string `json:"class,omitempty"`
+	// From references a reusable template class from the same component list.
+	// +optional
+	From string `json:"from,omitempty"`
+}
+
 type HydraPersistenceUploaderSpec struct {
 	Image *string `json:"image,omitempty"`
 }
@@ -490,7 +500,8 @@ type CHYTProxySpec struct {
 }
 
 type HTTPProxiesSpec struct {
-	InstanceSpec `json:",inline"`
+	InstanceGroupTemplateSpec `json:",inline"`
+	InstanceSpec              `json:",inline"`
 	//+kubebuilder:default:=NodePort
 	ServiceType corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=80
@@ -526,9 +537,10 @@ type RPCTransportSpec struct {
 }
 
 type RPCProxiesSpec struct {
-	InstanceSpec `json:",inline"`
-	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
-	NodePort     *int32              `json:"nodePort,omitempty"`
+	InstanceGroupTemplateSpec `json:",inline"`
+	InstanceSpec              `json:",inline"`
+	ServiceType               *corev1.ServiceType `json:"serviceType,omitempty"`
+	NodePort                  *int32              `json:"nodePort,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -537,8 +549,9 @@ type RPCProxiesSpec struct {
 }
 
 type TCPProxiesSpec struct {
-	InstanceSpec `json:",inline"`
-	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+	InstanceGroupTemplateSpec `json:",inline"`
+	InstanceSpec              `json:",inline"`
+	ServiceType               *corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=32000
 	MinPort int32 `json:"minPort"`
 	// Number of ports to allocate for balancing service.
@@ -550,8 +563,9 @@ type TCPProxiesSpec struct {
 }
 
 type KafkaProxiesSpec struct {
-	InstanceSpec `json:",inline"`
-	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
+	InstanceGroupTemplateSpec `json:",inline"`
+	InstanceSpec              `json:",inline"`
+	ServiceType               *corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -566,7 +580,8 @@ type ClusterNodesSpec struct {
 }
 
 type DataNodesSpec struct {
-	InstanceSpec `json:",inline"`
+	InstanceGroupTemplateSpec `json:",inline"`
+	InstanceSpec              `json:",inline"`
 	// Common part of the cluster node spec.
 	ClusterNodesSpec `json:",inline"`
 	//+kubebuilder:default:=default
@@ -676,7 +691,8 @@ type JobEnvironmentSpec struct {
 
 type ExecNodesSpec struct {
 	// label filter (for daemonset)
-	InstanceSpec `json:",inline"`
+	InstanceGroupTemplateSpec `json:",inline"`
+	InstanceSpec              `json:",inline"`
 	// Common part of the cluster node spec.
 	ClusterNodesSpec `json:",inline"`
 	//+kubebuilder:default:=default
@@ -701,7 +717,8 @@ type ExecNodesSpec struct {
 
 type TabletNodesSpec struct {
 	// label filter (for daemonset)
-	InstanceSpec `json:",inline"`
+	InstanceGroupTemplateSpec `json:",inline"`
+	InstanceSpec              `json:",inline"`
 	// Common part of the cluster node spec.
 	ClusterNodesSpec `json:",inline"`
 	//+kubebuilder:default:=default

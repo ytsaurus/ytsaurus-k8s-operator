@@ -241,6 +241,39 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[1].name: Duplicate value: \"default\"")))
 		})
 
+		It("Should accept instance-group templates", func() {
+			template := ytsaurus.Spec.DataNodes[0]
+			template.InstanceGroupTemplateSpec = ytv1.InstanceGroupTemplateSpec{Class: "common-data"}
+			template.Name = ""
+			template.Rack = ""
+
+			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
+				template,
+				{
+					InstanceGroupTemplateSpec: ytv1.InstanceGroupTemplateSpec{From: "common-data"},
+					Name:                      "rack-a",
+					ClusterNodesSpec: ytv1.ClusterNodesSpec{
+						Rack: "rack-a",
+					},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		It("Should not accept unknown instance-group templates", func() {
+			ytsaurus.Spec.DataNodes = []ytv1.DataNodesSpec{
+				{
+					InstanceGroupTemplateSpec: ytv1.InstanceGroupTemplateSpec{From: "missing"},
+					Name:                      "rack-a",
+					InstanceSpec:              ytsaurus.Spec.DataNodes[0].InstanceSpec,
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.dataNodes[0].from: Invalid value: \"missing\": unknown template class \"missing\"")))
+		})
+
 		It("Should not accept a cell tag update", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			Expect(k8sClient.Get(ctx, types.NamespacedName{

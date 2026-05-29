@@ -779,6 +779,19 @@ func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.Com
 func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
+	newYtsaurus = newYtsaurus.DeepCopy()
+	if err := newYtsaurus.Spec.ResolveInstanceGroupTemplates(); err != nil {
+		allErrors = append(allErrors, r.instanceGroupTemplateError(err))
+		return allErrors
+	}
+	if oldYtsaurus != nil {
+		oldYtsaurus = oldYtsaurus.DeepCopy()
+		if err := oldYtsaurus.Spec.ResolveInstanceGroupTemplates(); err != nil {
+			allErrors = append(allErrors, r.instanceGroupTemplateError(err))
+			return allErrors
+		}
+	}
+
 	if err := ValidateVersionConstraint(newYtsaurus.Spec.RequiresOperatorVersion); err != nil {
 		allErrors = append(allErrors, err)
 	}
@@ -807,6 +820,18 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	allErrors = append(allErrors, r.validateUpdatePlan(newYtsaurus)...)
 
 	return allErrors
+}
+
+func (r *ytsaurusValidator) instanceGroupTemplateError(err error) *field.Error {
+	templateErr, ok := err.(*ytv1.InstanceGroupTemplateError)
+	if !ok {
+		return field.InternalError(field.NewPath("spec"), err)
+	}
+	return field.Invalid(
+		field.NewPath("spec").Child(templateErr.List).Index(templateErr.Index).Child(templateErr.Field),
+		templateErr.Value,
+		templateErr.Message,
+	)
 }
 
 func (r *ytsaurusValidator) evaluateYtsaurusValidation(ctx context.Context, newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) (admission.Warnings, error) {
