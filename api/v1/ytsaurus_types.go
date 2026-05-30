@@ -411,8 +411,8 @@ type InstanceSpec struct {
 	// Specifies wrapper for component container command.
 	//+optional
 	EntrypointWrapper []string             `json:"entrypointWrapper,omitempty"`
-	Volumes           []Volume             `json:"volumes,omitempty"`
-	VolumeMounts      []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+	Volumes           []Volume             `json:"volumes,omitempty" patchStrategy:"merge,retainKeys" patchMergeKey:"name"`
+	VolumeMounts      []corev1.VolumeMount `json:"volumeMounts,omitempty" patchStrategy:"merge" patchMergeKey:"mountPath"`
 	//+optional
 	ReadinessProbeParams *HealthcheckProbeParams `json:"readinessProbeParams,omitempty"`
 	// Resources dedicated for component. Capacity is defined by requests, or limits for zero requests.

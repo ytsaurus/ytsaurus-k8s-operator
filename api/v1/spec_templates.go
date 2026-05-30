@@ -1,11 +1,12 @@
 package v1
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 
-	"dario.cat/mergo"
 	"github.com/mohae/deepcopy"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
 type InstanceGroupTemplateError struct {
@@ -116,12 +117,24 @@ func resolveInstanceGroupTemplates[T any](listName string, items []T) ([]T, erro
 }
 
 func mergeInstanceGroupTemplate[T any](base, overlay T) (T, error) {
-	item, ok := deepcopy.Copy(overlay).(T)
-	if !ok {
-		return *new(T), fmt.Errorf("failed to deep-copy template")
+	baseJSON, err := json.Marshal(base)
+	if err != nil {
+		return *new(T), fmt.Errorf("failed to marshal base template: %w", err)
 	}
-	if err := mergo.Merge(&item, deepcopy.Copy(base)); err != nil {
-		return *new(T), err
+
+	overlayJSON, err := json.Marshal(overlay)
+	if err != nil {
+		return *new(T), fmt.Errorf("failed to marshal overlay template: %w", err)
+	}
+
+	itemJSON, err := strategicpatch.StrategicMergePatch(baseJSON, overlayJSON, new(T))
+	if err != nil {
+		return *new(T), fmt.Errorf("failed to merge template: %w", err)
+	}
+
+	var item T
+	if err := json.Unmarshal(itemJSON, &item); err != nil {
+		return *new(T), fmt.Errorf("failed to unmarshal merged template: %w", err)
 	}
 	return item, nil
 }
