@@ -21,7 +21,9 @@ func (e *InstanceGroupTemplateError) Error() string {
 	return fmt.Sprintf("%s[%d].%s: %s", e.List, e.Index, e.Field, e.Message)
 }
 
-func resolveInstanceGroupTemplates[T any](listName string, items []T) ([]T, error) {
+func resolveInstanceGroupTemplates[T interface {
+	Merge(base T) (T, error)
+}](listName string, items []T) ([]T, error) {
 	classes := make(map[string]int, len(items))
 	resolved := make(map[int]T, len(items))
 	state := make(map[int]bool, len(items))
@@ -76,7 +78,7 @@ func resolveInstanceGroupTemplates[T any](listName string, items []T) ([]T, erro
 			if err != nil {
 				return *new(T), err
 			}
-			item, err = mergeInstanceGroupTemplate(base, item)
+			item, err = item.Merge(base)
 			if err != nil {
 				return *new(T), &InstanceGroupTemplateError{
 					List:    listName,
@@ -84,6 +86,34 @@ func resolveInstanceGroupTemplates[T any](listName string, items []T) ([]T, erro
 					Field:   "from",
 					Value:   from,
 					Message: err.Error(),
+				}
+
+				func (s HTTPProxiesSpec) Merge(base HTTPProxiesSpec) (HTTPProxiesSpec, error) {
+					return mergeInstanceGroupTemplate(base, s)
+				}
+
+				func (s RPCProxiesSpec) Merge(base RPCProxiesSpec) (RPCProxiesSpec, error) {
+					return mergeInstanceGroupTemplate(base, s)
+				}
+
+				func (s TCPProxiesSpec) Merge(base TCPProxiesSpec) (TCPProxiesSpec, error) {
+					return mergeInstanceGroupTemplate(base, s)
+				}
+
+				func (s KafkaProxiesSpec) Merge(base KafkaProxiesSpec) (KafkaProxiesSpec, error) {
+					return mergeInstanceGroupTemplate(base, s)
+				}
+
+				func (s DataNodesSpec) Merge(base DataNodesSpec) (DataNodesSpec, error) {
+					return mergeInstanceGroupTemplate(base, s)
+				}
+
+				func (s ExecNodesSpec) Merge(base ExecNodesSpec) (ExecNodesSpec, error) {
+					return mergeInstanceGroupTemplate(base, s)
+				}
+
+				func (s TabletNodesSpec) Merge(base TabletNodesSpec) (TabletNodesSpec, error) {
+					return mergeInstanceGroupTemplate(base, s)
 				}
 			}
 		} else {

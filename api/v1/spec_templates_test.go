@@ -7,6 +7,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+var (
+	_ interface{ Merge(HTTPProxiesSpec) (HTTPProxiesSpec, error) }   = HTTPProxiesSpec{}
+	_ interface{ Merge(RPCProxiesSpec) (RPCProxiesSpec, error) }     = RPCProxiesSpec{}
+	_ interface{ Merge(TCPProxiesSpec) (TCPProxiesSpec, error) }     = TCPProxiesSpec{}
+	_ interface{ Merge(KafkaProxiesSpec) (KafkaProxiesSpec, error) } = KafkaProxiesSpec{}
+	_ interface{ Merge(DataNodesSpec) (DataNodesSpec, error) }       = DataNodesSpec{}
+	_ interface{ Merge(ExecNodesSpec) (ExecNodesSpec, error) }       = ExecNodesSpec{}
+	_ interface{ Merge(TabletNodesSpec) (TabletNodesSpec, error) }   = TabletNodesSpec{}
+)
+
 func TestResolveInstanceGroupTemplates_DataNodes(t *testing.T) {
 	t.Parallel()
 
