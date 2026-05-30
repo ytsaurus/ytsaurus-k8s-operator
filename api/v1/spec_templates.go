@@ -87,34 +87,6 @@ func resolveInstanceGroupTemplates[T interface {
 					Value:   from,
 					Message: err.Error(),
 				}
-
-				func (s HTTPProxiesSpec) Merge(base HTTPProxiesSpec) (HTTPProxiesSpec, error) {
-					return mergeInstanceGroupTemplate(base, s)
-				}
-
-				func (s RPCProxiesSpec) Merge(base RPCProxiesSpec) (RPCProxiesSpec, error) {
-					return mergeInstanceGroupTemplate(base, s)
-				}
-
-				func (s TCPProxiesSpec) Merge(base TCPProxiesSpec) (TCPProxiesSpec, error) {
-					return mergeInstanceGroupTemplate(base, s)
-				}
-
-				func (s KafkaProxiesSpec) Merge(base KafkaProxiesSpec) (KafkaProxiesSpec, error) {
-					return mergeInstanceGroupTemplate(base, s)
-				}
-
-				func (s DataNodesSpec) Merge(base DataNodesSpec) (DataNodesSpec, error) {
-					return mergeInstanceGroupTemplate(base, s)
-				}
-
-				func (s ExecNodesSpec) Merge(base ExecNodesSpec) (ExecNodesSpec, error) {
-					return mergeInstanceGroupTemplate(base, s)
-				}
-
-				func (s TabletNodesSpec) Merge(base TabletNodesSpec) (TabletNodesSpec, error) {
-					return mergeInstanceGroupTemplate(base, s)
-				}
 			}
 		} else {
 			copied, ok := deepcopy.Copy(item).(T)
@@ -144,6 +116,34 @@ func resolveInstanceGroupTemplates[T interface {
 	}
 
 	return out, nil
+}
+
+func (s HTTPProxiesSpec) Merge(base HTTPProxiesSpec) (HTTPProxiesSpec, error) {
+	return mergeInstanceGroupTemplate(base, s)
+}
+
+func (s RPCProxiesSpec) Merge(base RPCProxiesSpec) (RPCProxiesSpec, error) {
+	return mergeInstanceGroupTemplate(base, s)
+}
+
+func (s TCPProxiesSpec) Merge(base TCPProxiesSpec) (TCPProxiesSpec, error) {
+	return mergeInstanceGroupTemplate(base, s)
+}
+
+func (s KafkaProxiesSpec) Merge(base KafkaProxiesSpec) (KafkaProxiesSpec, error) {
+	return mergeInstanceGroupTemplate(base, s)
+}
+
+func (s DataNodesSpec) Merge(base DataNodesSpec) (DataNodesSpec, error) {
+	return mergeInstanceGroupTemplate(base, s)
+}
+
+func (s ExecNodesSpec) Merge(base ExecNodesSpec) (ExecNodesSpec, error) {
+	return mergeInstanceGroupTemplate(base, s)
+}
+
+func (s TabletNodesSpec) Merge(base TabletNodesSpec) (TabletNodesSpec, error) {
+	return mergeInstanceGroupTemplate(base, s)
 }
 
 func mergeInstanceGroupTemplate[T any](base, overlay T) (T, error) {
