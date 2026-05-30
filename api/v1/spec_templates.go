@@ -119,45 +119,111 @@ func resolveInstanceGroupTemplates[T interface {
 }
 
 func (s HTTPProxiesSpec) Merge(base HTTPProxiesSpec) (HTTPProxiesSpec, error) {
-	return mergeInstanceGroupTemplate(base, s)
+	item, err := mergeInstanceGroupTemplate(base, s)
+	if err != nil {
+		return HTTPProxiesSpec{}, err
+	}
+	merged, ok := item.(HTTPProxiesSpec)
+	if !ok {
+		return HTTPProxiesSpec{}, fmt.Errorf("failed to merge HTTPProxiesSpec template")
+	}
+	return merged, nil
 }
 
 func (s RPCProxiesSpec) Merge(base RPCProxiesSpec) (RPCProxiesSpec, error) {
-	return mergeInstanceGroupTemplate(base, s)
+	item, err := mergeInstanceGroupTemplate(base, s)
+	if err != nil {
+		return RPCProxiesSpec{}, err
+	}
+	merged, ok := item.(RPCProxiesSpec)
+	if !ok {
+		return RPCProxiesSpec{}, fmt.Errorf("failed to merge RPCProxiesSpec template")
+	}
+	return merged, nil
 }
 
 func (s TCPProxiesSpec) Merge(base TCPProxiesSpec) (TCPProxiesSpec, error) {
-	return mergeInstanceGroupTemplate(base, s)
+	item, err := mergeInstanceGroupTemplate(base, s)
+	if err != nil {
+		return TCPProxiesSpec{}, err
+	}
+	merged, ok := item.(TCPProxiesSpec)
+	if !ok {
+		return TCPProxiesSpec{}, fmt.Errorf("failed to merge TCPProxiesSpec template")
+	}
+	return merged, nil
 }
 
 func (s KafkaProxiesSpec) Merge(base KafkaProxiesSpec) (KafkaProxiesSpec, error) {
-	return mergeInstanceGroupTemplate(base, s)
+	item, err := mergeInstanceGroupTemplate(base, s)
+	if err != nil {
+		return KafkaProxiesSpec{}, err
+	}
+	merged, ok := item.(KafkaProxiesSpec)
+	if !ok {
+		return KafkaProxiesSpec{}, fmt.Errorf("failed to merge KafkaProxiesSpec template")
+	}
+	return merged, nil
 }
 
 func (s DataNodesSpec) Merge(base DataNodesSpec) (DataNodesSpec, error) {
-	return mergeInstanceGroupTemplate(base, s)
+	item, err := mergeInstanceGroupTemplate(base, s)
+	if err != nil {
+		return DataNodesSpec{}, err
+	}
+	merged, ok := item.(DataNodesSpec)
+	if !ok {
+		return DataNodesSpec{}, fmt.Errorf("failed to merge DataNodesSpec template")
+	}
+	return merged, nil
 }
 
 func (s ExecNodesSpec) Merge(base ExecNodesSpec) (ExecNodesSpec, error) {
-	return mergeInstanceGroupTemplate(base, s)
+	item, err := mergeInstanceGroupTemplate(base, s)
+	if err != nil {
+		return ExecNodesSpec{}, err
+	}
+	merged, ok := item.(ExecNodesSpec)
+	if !ok {
+		return ExecNodesSpec{}, fmt.Errorf("failed to merge ExecNodesSpec template")
+	}
+	return merged, nil
 }
 
 func (s TabletNodesSpec) Merge(base TabletNodesSpec) (TabletNodesSpec, error) {
-	return mergeInstanceGroupTemplate(base, s)
+	item, err := mergeInstanceGroupTemplate(base, s)
+	if err != nil {
+		return TabletNodesSpec{}, err
+	}
+	merged, ok := item.(TabletNodesSpec)
+	if !ok {
+		return TabletNodesSpec{}, fmt.Errorf("failed to merge TabletNodesSpec template")
+	}
+	return merged, nil
 }
 
-func mergeInstanceGroupTemplate[T any](base, overlay T) (T, error) {
-	item, ok := deepcopy.Copy(overlay).(T)
-	if !ok {
-		return *new(T), fmt.Errorf("failed to deep-copy template")
+func mergeInstanceGroupTemplate(base, patch any) (any, error) {
+	item := deepcopy.Copy(patch)
+	if item == nil {
+		return nil, fmt.Errorf("failed to deep-copy template")
 	}
-	if err := mergo.Merge(&item, deepcopy.Copy(base)); err != nil {
-		return *new(T), err
+
+	itemValue := reflect.ValueOf(item)
+	if !itemValue.IsValid() {
+		return nil, fmt.Errorf("failed to deep-copy template")
 	}
-	if err := mergeNamedListFields(reflect.ValueOf(&item).Elem(), reflect.ValueOf(base), reflect.ValueOf(overlay)); err != nil {
-		return *new(T), err
+
+	itemPtr := reflect.New(itemValue.Type())
+	itemPtr.Elem().Set(itemValue)
+
+	if err := mergo.Merge(itemPtr.Interface(), deepcopy.Copy(base)); err != nil {
+		return nil, err
 	}
-	return item, nil
+	if err := mergeNamedListFields(itemPtr.Elem(), reflect.ValueOf(base), reflect.ValueOf(patch)); err != nil {
+		return nil, err
+	}
+
+	return itemPtr.Elem().Interface(), nil
 }
 
 func mergeNamedListFields(dst, base, overlay reflect.Value) error {
