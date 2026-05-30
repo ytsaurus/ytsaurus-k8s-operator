@@ -1,12 +1,12 @@
 package v1
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
+	"dario.cat/mergo"
 	"github.com/mohae/deepcopy"
-	"k8s.io/apimachinery/pkg/util/strategicpatch"
 )
 
 type InstanceGroupTemplateError struct {
@@ -117,26 +117,154 @@ func resolveInstanceGroupTemplates[T any](listName string, items []T) ([]T, erro
 }
 
 func mergeInstanceGroupTemplate[T any](base, overlay T) (T, error) {
-	baseJSON, err := json.Marshal(base)
-	if err != nil {
-		return *new(T), fmt.Errorf("failed to marshal base template: %w", err)
+	item, ok := deepcopy.Copy(overlay).(T)
+	if !ok {
+		return *new(T), fmt.Errorf("failed to deep-copy template")
 	}
-
-	overlayJSON, err := json.Marshal(overlay)
-	if err != nil {
-		return *new(T), fmt.Errorf("failed to marshal overlay template: %w", err)
+	if err := mergo.Merge(&item, deepcopy.Copy(base)); err != nil {
+		return *new(T), err
 	}
-
-	itemJSON, err := strategicpatch.StrategicMergePatch(baseJSON, overlayJSON, new(T))
-	if err != nil {
-		return *new(T), fmt.Errorf("failed to merge template: %w", err)
-	}
-
-	var item T
-	if err := json.Unmarshal(itemJSON, &item); err != nil {
-		return *new(T), fmt.Errorf("failed to unmarshal merged template: %w", err)
+	if err := mergeNamedListFields(reflect.ValueOf(&item).Elem(), reflect.ValueOf(base), reflect.ValueOf(overlay)); err != nil {
+		return *new(T), err
 	}
 	return item, nil
+}
+
+func mergeNamedListFields(dst, base, overlay reflect.Value) error {
+	dst = indirectValue(dst)
+	base = indirectValue(base)
+	overlay = indirectValue(overlay)
+	if !dst.IsValid() || !base.IsValid() || !overlay.IsValid() || dst.Kind() != reflect.Struct || base.Kind() != reflect.Struct || overlay.Kind() != reflect.Struct {
+		return nil
+	}
+
+	for i := 0; i < dst.NumField(); i++ {
+		structField := dst.Type().Field(i)
+		dstField := dst.Field(i)
+		baseField := base.Field(i)
+		overlayField := overlay.Field(i)
+
+		if dstField.Kind() == reflect.Struct {
+			if err := mergeNamedListFields(dstField, baseField, overlayField); err != nil {
+				return err
+			}
+		}
+
+		if dstField.Kind() != reflect.Slice || !dstField.CanSet() {
+			continue
+		}
+
+		mergeKey := structField.Tag.Get("patchMergeKey")
+		if mergeKey == "" || !strings.Contains(structField.Tag.Get("patchStrategy"), "merge") {
+			continue
+		}
+
+		merged, err := mergeNamedSlice(baseField, overlayField, mergeKey)
+		if err != nil {
+			return fmt.Errorf("failed to merge %s: %w", structField.Name, err)
+		}
+		dstField.Set(merged)
+	}
+
+	return nil
+}
+
+func mergeNamedSlice(base, overlay reflect.Value, mergeKey string) (reflect.Value, error) {
+	base = indirectValue(base)
+	overlay = indirectValue(overlay)
+
+	switch {
+	case !overlay.IsValid():
+		return base, nil
+	case !base.IsValid():
+		return overlay, nil
+	case overlay.Len() == 0:
+		return base, nil
+	case base.Len() == 0:
+		return overlay, nil
+	}
+
+	overlayByKey := make(map[string]reflect.Value, overlay.Len())
+	for i := 0; i < overlay.Len(); i++ {
+		key, err := getMergeKey(overlay.Index(i), mergeKey)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		overlayByKey[key] = overlay.Index(i)
+	}
+
+	result := reflect.MakeSlice(base.Type(), 0, base.Len()+overlay.Len())
+	used := make(map[string]struct{}, overlay.Len())
+	for i := 0; i < base.Len(); i++ {
+		key, err := getMergeKey(base.Index(i), mergeKey)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		if value, ok := overlayByKey[key]; ok {
+			result = reflect.Append(result, value)
+			used[key] = struct{}{}
+			continue
+		}
+		result = reflect.Append(result, base.Index(i))
+	}
+
+	for i := 0; i < overlay.Len(); i++ {
+		key, err := getMergeKey(overlay.Index(i), mergeKey)
+		if err != nil {
+			return reflect.Value{}, err
+		}
+		if _, ok := used[key]; ok {
+			continue
+		}
+		result = reflect.Append(result, overlay.Index(i))
+	}
+
+	return result, nil
+}
+
+func getMergeKey(value reflect.Value, mergeKey string) (string, error) {
+	value = indirectValue(value)
+	if !value.IsValid() || value.Kind() != reflect.Struct {
+		return "", fmt.Errorf("merge-by-key requires struct list items")
+	}
+	field := findMergeKeyField(value, mergeKey)
+	if !field.IsValid() || field.Kind() != reflect.String {
+		return "", fmt.Errorf("merge key %q not found", mergeKey)
+	}
+	return field.String(), nil
+}
+
+func findMergeKeyField(value reflect.Value, mergeKey string) reflect.Value {
+	value = indirectValue(value)
+	if !value.IsValid() || value.Kind() != reflect.Struct {
+		return reflect.Value{}
+	}
+	valueType := value.Type()
+	for i := 0; i < value.NumField(); i++ {
+		structField := valueType.Field(i)
+		field := value.Field(i)
+		if structField.Anonymous {
+			if nested := findMergeKeyField(field, mergeKey); nested.IsValid() {
+				return nested
+			}
+		}
+
+		jsonName := strings.Split(structField.Tag.Get("json"), ",")[0]
+		if jsonName == mergeKey || strings.EqualFold(structField.Name, mergeKey) {
+			return field
+		}
+	}
+	return reflect.Value{}
+}
+
+func indirectValue(value reflect.Value) reflect.Value {
+	for value.IsValid() && value.Kind() == reflect.Pointer {
+		if value.IsNil() {
+			return reflect.Value{}
+		}
+		value = value.Elem()
+	}
+	return value
 }
 
 func (s *YtsaurusSpec) ResolveInstanceGroupTemplates() error {
