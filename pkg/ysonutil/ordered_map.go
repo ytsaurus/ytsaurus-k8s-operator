@@ -62,14 +62,6 @@ func (m *OrderedMap) MarshalYSON(w *yson.Writer) error {
 // UnmarshalYSON implements yson.StreamUnmarshaler.
 // Keys are stored in the order they appear in the YSON stream.
 func (m *OrderedMap) UnmarshalYSON(r *yson.Reader) error {
-	event, err := r.Next(true)
-	if err != nil {
-		return err
-	}
-	if event != yson.EventBeginMap {
-		return fmt.Errorf("ysonutil: expected map, got event %v", event)
-	}
-
 	m.keys = m.keys[:0]
 	if m.values == nil {
 		m.values = make(map[string]any)
@@ -79,33 +71,143 @@ func (m *OrderedMap) UnmarshalYSON(r *yson.Reader) error {
 		}
 	}
 
-	for {
-		ok, err := r.NextKey()
-		if err != nil {
-			return err
-		}
-		if !ok {
-			break
-		}
-		key := r.String()
+	parsed, err := unmarshalValueFromReader(r)
+	if err != nil {
+		return err
+	}
 
-		raw, err := r.NextRawValue()
-		if err != nil {
-			return err
-		}
-		// Copy raw bytes because NextRawValue returns a slice valid only
-		// until the next call to the reader.
-		rawCopy := make([]byte, len(raw))
-		copy(rawCopy, raw)
+	ordered, ok := parsed.(*OrderedMap)
+	if !ok {
+		return fmt.Errorf("ysonutil: expected map, got %T", parsed)
+	}
 
-		var value any
-		if err := yson.Unmarshal(rawCopy, &value); err != nil {
-			return err
-		}
-
-		m.keys = append(m.keys, key)
+	m.keys = append(m.keys, ordered.keys...)
+	for key, value := range ordered.values {
 		m.values[key] = value
 	}
 
 	return nil
+}
+
+func unmarshalValueFromReader(r *yson.Reader) (any, error) {
+	event, err := r.Next(false)
+	if err != nil {
+		return nil, err
+	}
+
+	if event == yson.EventBeginAttrs {
+		attrs := make(map[string]any)
+		for {
+			ok, err := r.NextKey()
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				break
+			}
+
+			key := r.String()
+			value, err := unmarshalValueFromReader(r)
+			if err != nil {
+				return nil, err
+			}
+			attrs[key] = value
+		}
+
+		event, err = r.Next(false)
+		if err != nil {
+			return nil, err
+		}
+		if event != yson.EventEndAttrs {
+			return nil, fmt.Errorf("ysonutil: expected end attrs, got %v", event)
+		}
+
+		value, err := unmarshalValueFromReader(r)
+		if err != nil {
+			return nil, err
+		}
+
+		return &yson.ValueWithAttrs{
+			Attrs: attrs,
+			Value: value,
+		}, nil
+	}
+
+	switch event {
+	case yson.EventBeginMap:
+		result := NewOrderedMap()
+		for {
+			ok, err := r.NextKey()
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				break
+			}
+
+			key := r.String()
+			value, err := unmarshalValueFromReader(r)
+			if err != nil {
+				return nil, err
+			}
+			result.keys = append(result.keys, key)
+			result.values[key] = value
+		}
+
+		event, err = r.Next(false)
+		if err != nil {
+			return nil, err
+		}
+		if event != yson.EventEndMap {
+			return nil, fmt.Errorf("ysonutil: expected end map, got %v", event)
+		}
+
+		return result, nil
+	case yson.EventBeginList:
+		var result []any
+		for {
+			ok, err := r.NextListItem()
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				break
+			}
+
+			value, err := unmarshalValueFromReader(r)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, value)
+		}
+
+		event, err = r.Next(false)
+		if err != nil {
+			return nil, err
+		}
+		if event != yson.EventEndList {
+			return nil, fmt.Errorf("ysonutil: expected end list, got %v", event)
+		}
+
+		return result, nil
+	case yson.EventLiteral:
+		switch r.Type() {
+		case yson.TypeString:
+			return r.String(), nil
+		case yson.TypeInt64:
+			return r.Int64(), nil
+		case yson.TypeUint64:
+			return r.Uint64(), nil
+		case yson.TypeFloat64:
+			return r.Float64(), nil
+		case yson.TypeBool:
+			return r.Bool(), nil
+		case yson.TypeEntity:
+			return nil, nil
+		default:
+			return nil, fmt.Errorf("ysonutil: unsupported literal type %v", r.Type())
+		}
+	default:
+		return nil, fmt.Errorf("ysonutil: unexpected event %v", event)
+	}
 }

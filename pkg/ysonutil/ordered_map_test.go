@@ -72,6 +72,13 @@ func TestOrderedMapNestedValues(t *testing.T) {
 	require.NoError(t, yson.Unmarshal(raw, m))
 
 	require.Equal(t, []string{"x", "y"}, m.Keys())
+
+	nestedValue, ok := m.Get("x")
+	require.True(t, ok)
+
+	nestedMap, ok := nestedValue.(*OrderedMap)
+	require.True(t, ok)
+	require.Equal(t, []string{"nested"}, nestedMap.Keys())
 }
 
 func TestOrderedMapSetOverwrite(t *testing.T) {
@@ -99,4 +106,47 @@ func TestOrderedMapNotFound(t *testing.T) {
 	m := NewOrderedMap()
 	_, ok := m.Get("missing")
 	require.False(t, ok)
+}
+
+func TestOrderedMapNestedMapOrder(t *testing.T) {
+	raw := []byte(`{outer={z=1;a={c=3;b=2};m=4}}`)
+
+	m := NewOrderedMap()
+	require.NoError(t, yson.Unmarshal(raw, m))
+
+	outerValue, ok := m.Get("outer")
+	require.True(t, ok)
+
+	outer, ok := outerValue.(*OrderedMap)
+	require.True(t, ok)
+	require.Equal(t, []string{"z", "a", "m"}, outer.Keys())
+
+	innerValue, ok := outer.Get("a")
+	require.True(t, ok)
+
+	inner, ok := innerValue.(*OrderedMap)
+	require.True(t, ok)
+	require.Equal(t, []string{"c", "b"}, inner.Keys())
+}
+
+func TestOrderedMapListContainsOrderedMaps(t *testing.T) {
+	raw := []byte(`{items=[{b=2;a=1};{d=4;c=3}]}`)
+
+	m := NewOrderedMap()
+	require.NoError(t, yson.Unmarshal(raw, m))
+
+	itemsValue, ok := m.Get("items")
+	require.True(t, ok)
+
+	items, ok := itemsValue.([]any)
+	require.True(t, ok)
+	require.Len(t, items, 2)
+
+	first, ok := items[0].(*OrderedMap)
+	require.True(t, ok)
+	require.Equal(t, []string{"b", "a"}, first.Keys())
+
+	second, ok := items[1].(*OrderedMap)
+	require.True(t, ok)
+	require.Equal(t, []string{"d", "c"}, second.Keys())
 }
