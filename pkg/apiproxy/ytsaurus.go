@@ -100,6 +100,19 @@ func (c *Ytsaurus) IsReadyToUpdate() bool {
 	return false
 }
 
+func (c *Ytsaurus) IsReadyForInitJobs() bool {
+	switch c.GetClusterState() {
+	case ytv1.ClusterStateInitializing,
+		ytv1.ClusterStatePreparing,
+		ytv1.ClusterStateRunning,
+		ytv1.ClusterStateReconfiguration,
+		ytv1.ClusterStateMaintenance,
+		ytv1.ClusterStateUpdateBlocked:
+		return true
+	}
+	return false
+}
+
 func (c *Ytsaurus) IsUpdating() bool {
 	return c.GetClusterState() == ytv1.ClusterStateUpdating
 }

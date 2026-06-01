@@ -117,7 +117,6 @@ spec:
       - name: bus-client-secret
         secret:
           secretName: native-client-cert
-  ttlSecondsAfterFinished: 3600
 status:
   conditions:
   - lastProbeTime: null

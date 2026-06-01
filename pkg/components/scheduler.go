@@ -151,7 +151,7 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		return status, err
 	}
 
-	if s.ytsaurus.IsInitializing() || s.ytsaurus.IsReadyToWork() {
+	if s.ytsaurus.IsReadyForInitJobs() && !s.initOpArchiveJob.IsCompleted() {
 		if status, err := s.initOpArchive(ctx, dry); !status.IsReady() || err != nil {
 			return status, err
 		}
@@ -161,7 +161,7 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 }
 
 func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatus, error) {
-	if len(s.tabletNodes) == 0 || s.initOpArchiveJob.IsCompleted() {
+	if len(s.tabletNodes) == 0 {
 		return ComponentStatusReady(), nil
 	}
 

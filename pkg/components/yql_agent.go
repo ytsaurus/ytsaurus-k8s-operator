@@ -221,7 +221,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusWaitingFor(yqla.execSecret.Name()), err
 	}
 
-	if (yqla.ytsaurus.IsInitializing() || yqla.ytsaurus.IsReadyToWork()) && !yqla.initEnvironment.IsCompleted() {
+	if yqla.ytsaurus.IsReadyForInitJobs() && !yqla.initEnvironment.IsCompleted() {
 		if status, err := yqla.initEnvironment.RunScript(ctx, dry, "YQLAgentInit", yqla.createInitScript(), nil); err != nil || !status.IsReady() {
 			return status, err
 		}

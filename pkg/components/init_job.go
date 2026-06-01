@@ -146,8 +146,9 @@ func (j *InitJob) Restart() {
 	j.owner.RemoveStatusCondition(j.statusCondition)
 }
 
-// IsCompleted returns true if job exists and finished for any reason.
-// Removing either job spec or condition returns job into non-completed state.
+// IsCompleted returns true if job spec and config exist and job status condition is "True".
+// NOTE: Not checking job success to allow manual setting condition for failing jobs.
+// NOTE: Removing either job spec, config or condition triggers job restart.
 func (j *InitJob) IsCompleted() bool {
 	return j.Exists() && j.owner.IsStatusConditionTrue(j.statusCondition)
 }
@@ -222,10 +223,10 @@ func (j *InitJob) Build() *batchv1.Job {
 	}
 	job := j.initJob.Build()
 	job.Spec = batchv1.JobSpec{
+		// NOTE: Jobs are not deleted automatically. Delete triggers job restart.
 		// NOTE: Job fails and retries after reaching backoff limit.
-		BackoffLimit:            ptr.To(int32(3)),
-		ActiveDeadlineSeconds:   ptr.To(int64(60 * 60)),
-		TTLSecondsAfterFinished: ptr.To(int32(60 * 60)),
+		BackoffLimit:          ptr.To(int32(3)),
+		ActiveDeadlineSeconds: ptr.To(int64(60 * 60)),
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: j.labeller.GetInitJobObjectMeta(),
 			Spec: corev1.PodSpec{
@@ -314,6 +315,7 @@ func (j *InitJob) start(ctx context.Context, dry bool, isRestarted bool) (Compon
 	if _, err := j.configs.Build(); err != nil {
 		return ComponentStatusWaitingFor("job %v configmap %v", j.Name(), j.configs.GetConfigMapName()), err
 	}
+
 	// NOTE: Track job reason in configmap annotation but not recreate to allow manual fixes for failing job.
 	if isRestarted || !j.configs.Exists() || j.configs.getAnnotation(consts.InitJobReasonAnnotationName) != j.reason {
 		j.configs.setAnnotation(consts.InitJobReasonAnnotationName, j.reason)
@@ -339,12 +341,14 @@ func (j *InitJob) start(ctx context.Context, dry bool, isRestarted bool) (Compon
 func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	condition := j.owner.GetStatusCondition(j.statusCondition)
 	isCompleted := condition != nil && condition.Reason == j.reason && condition.Status == metav1.ConditionTrue
-	if isCompleted {
+	isExists := j.Exists()
+	if isExists && isCompleted {
+		// NOTE: Not checking init job status to allow manual setting condition to "True".
 		return ComponentStatusReadyAfter("Job %v completed in %v", j.Name(), j.initJob.Duration()), nil
 	}
 
 	isStarted := condition != nil && condition.Reason == j.reason
-	if !j.Exists() || !isStarted || j.initJob.IsFailed() {
+	if !isExists || !isStarted || j.initJob.IsFailed() {
 		isRestarted := condition == nil
 		return j.start(ctx, dry, isRestarted)
 	}

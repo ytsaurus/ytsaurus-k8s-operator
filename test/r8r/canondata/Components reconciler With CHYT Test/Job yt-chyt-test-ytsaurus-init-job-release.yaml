@@ -76,7 +76,6 @@ spec:
           defaultMode: 320
           name: yt-chyt-test-ytsaurus-init-job-release-config
         name: init-script
-  ttlSecondsAfterFinished: 3600
 status:
   conditions:
   - lastProbeTime: null
