@@ -432,6 +432,40 @@ func requireLocations(
 	return allErrors
 }
 
+// validateExtraTimbertruckComponents validates timbertruck log delivery for the server components
+// that are not covered by a dedicated validateInstanceSpec call but can still opt into delivery via
+// a per-log enableDelivery flag. It mirrors the runtime enumeration in components so the webhook and
+// the operator agree on which components may deliver logs. componentTimbertruck is always nil here
+// because only masters carry a component-level timbertruck spec.
+func (r *ytsaurusValidator) validateExtraTimbertruckComponents(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
+	var allErrors field.ErrorList
+	commonTimbertruck := newYtsaurus.Spec.Timbertruck
+	specPath := field.NewPath("spec")
+
+	validate := func(instanceSpec *ytv1.InstanceSpec, path *field.Path) {
+		allErrors = append(allErrors, r.validateTimbertruckSpec(nil, commonTimbertruck,
+			instanceSpec.StructuredLoggers, instanceSpec.Locations, path)...)
+	}
+
+	if mc := newYtsaurus.Spec.MasterCaches; mc != nil {
+		validate(&mc.InstanceSpec, specPath.Child("masterCaches"))
+	}
+	for i := range newYtsaurus.Spec.KafkaProxies {
+		validate(&newYtsaurus.Spec.KafkaProxies[i].InstanceSpec, specPath.Child("kafkaProxies").Index(i))
+	}
+	if cp := newYtsaurus.Spec.CypressProxies; cp != nil {
+		validate(&cp.InstanceSpec, specPath.Child("cypressProxies"))
+	}
+	if bc := newYtsaurus.Spec.BundleController; bc != nil {
+		validate(&bc.InstanceSpec, specPath.Child("bundleController"))
+	}
+	if tb := newYtsaurus.Spec.TabletBalancer; tb != nil {
+		validate(&tb.InstanceSpec, specPath.Child("tabletBalancers"))
+	}
+
+	return allErrors
+}
+
 func (r *baseValidator) validateSidecars(sidecars []string, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
@@ -873,6 +907,7 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	allErrors = append(allErrors, r.validateSpyt(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateYQLAgents(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateUi(newYtsaurus)...)
+	allErrors = append(allErrors, r.validateExtraTimbertruckComponents(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateExistsYtsaurus(ctx, newYtsaurus)...)
 	allErrors = append(allErrors, r.validateUpdatePlan(newYtsaurus)...)
 

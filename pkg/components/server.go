@@ -213,16 +213,14 @@ func newServerConfigured(
 	var timbertruckDelivery *timbertruckDelivery
 	var timbertruckConfigs *ConfigMapBuilder
 	if cfgen != nil {
-		if delivery := resolveTimbertruckDelivery(opts.timbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers); delivery != nil {
-			if logsLocation := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeLogs); logsLocation != nil {
-				if configs := buildTimbertruckConfigMap(proxy, commonSpec.ConfigOverrides, delivery, logsLocation.Path, l, cfgen); configs != nil {
-					timbertruckDelivery = delivery
-					timbertruckConfigs = configs
-					if opts.sidecarImages == nil {
-						opts.sidecarImages = make(map[string]string)
-					}
-					opts.sidecarImages[consts.TimbertruckContainerName] = delivery.Image
+		if delivery := resolveTimbertruckDelivery(opts.timbertruck, commonSpec.Timbertruck, instanceSpec); delivery != nil {
+			if configs := buildTimbertruckConfigMap(proxy, commonSpec.ConfigOverrides, delivery, l, cfgen); configs != nil {
+				timbertruckDelivery = delivery
+				timbertruckConfigs = configs
+				if opts.sidecarImages == nil {
+					opts.sidecarImages = make(map[string]string)
 				}
+				opts.sidecarImages[consts.TimbertruckContainerName] = delivery.Image
 			}
 		}
 	}
@@ -332,6 +330,10 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	)
 }
 
+// podsImageCorrespondsToSpec reports whether the running pods' container images match the spec.
+// Invariant: every key in s.sidecarImages must have a matching case in the switch below; otherwise
+// `found` can never reach len(s.sidecarImages) and the component would be stuck reporting a needed
+// image update forever. Add a case here when introducing a new tracked sidecar image.
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 	found := 0
 	for _, container := range s.statefulSet.OldObject().Spec.Template.Spec.Containers {
@@ -628,10 +630,13 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	// Native transport certificates are required only in server container.
 	s.addTlsSecretMount(serverContainer)
 
-	// Append the timbertruck log-delivery sidecar when enabled for this component. A missing or
-	// uncovered logs location is rejected by the webhook, so here we just skip the sidecar instead
-	// of failing the whole pod spec.
-	if s.timbertruckConfigs != nil {
+	// Append the timbertruck log-delivery sidecar when enabled for this component. Both
+	// timbertruckConfigs and timbertruckDelivery are set together (resolveTimbertruckDelivery
+	// already required a logs location). The log mount itself is resolved from instanceSpec, so
+	// the sidecar sees the same volume and subPath as the server container; a logs location not
+	// covered by any volume mount is rejected by the webhook, so here we just skip the sidecar
+	// instead of failing the whole pod spec.
+	if s.timbertruckDelivery != nil {
 		_ = addTimbertruckSidecar(
 			podSpec,
 			s.timbertruckDelivery.Image,

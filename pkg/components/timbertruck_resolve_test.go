@@ -78,24 +78,38 @@ func TestEffectiveLogsDeliveryPath(t *testing.T) {
 	require.Equal(t, consts.DefaultTimbertruckDirectoryPath, effectiveLogsDeliveryPath(nil, nil))
 }
 
+func instanceSpec(loggers []ytv1.StructuredLoggerSpec, withLogsLocation bool) *ytv1.InstanceSpec {
+	spec := &ytv1.InstanceSpec{StructuredLoggers: loggers}
+	if withLogsLocation {
+		spec.Locations = []ytv1.LocationSpec{{LocationType: ytv1.LocationTypeLogs, Path: "/yt/logs"}}
+	}
+	return spec
+}
+
 func TestResolveTimbertruckDelivery(t *testing.T) {
 	loggers := []ytv1.StructuredLoggerSpec{structuredLogger("access", ptr.To(true))}
 
 	t.Run("disabled without image", func(t *testing.T) {
-		require.Nil(t, resolveTimbertruckDelivery(nil, nil, loggers))
+		require.Nil(t, resolveTimbertruckDelivery(nil, nil, instanceSpec(loggers, true)))
+	})
+
+	t.Run("disabled without logs location", func(t *testing.T) {
+		require.Nil(t, resolveTimbertruckDelivery(nil, &ytv1.TimbertruckSpec{Image: ptr.To("common-img")},
+			instanceSpec(loggers, false)))
 	})
 
 	t.Run("enabled via cluster-wide image", func(t *testing.T) {
-		delivery := resolveTimbertruckDelivery(nil, &ytv1.TimbertruckSpec{Image: ptr.To("common-img")}, loggers)
+		delivery := resolveTimbertruckDelivery(nil, &ytv1.TimbertruckSpec{Image: ptr.To("common-img")}, instanceSpec(loggers, true))
 		require.NotNil(t, delivery)
 		require.Equal(t, "common-img", delivery.Image)
+		require.Equal(t, "/yt/logs", delivery.LogsDirectory)
 		require.Equal(t, consts.DefaultTimbertruckDirectoryPath, delivery.LogsDeliveryPath)
 		require.Equal(t, []string{"access"}, loggerNames(delivery.Loggers))
 	})
 
 	t.Run("master legacy with component image", func(t *testing.T) {
 		component := &ytv1.TimbertruckSpec{Image: ptr.To("master-img"), DirectoryPath: ptr.To("//custom")}
-		delivery := resolveTimbertruckDelivery(component, nil, []ytv1.StructuredLoggerSpec{structuredLogger("access", nil)})
+		delivery := resolveTimbertruckDelivery(component, nil, instanceSpec([]ytv1.StructuredLoggerSpec{structuredLogger("access", nil)}, true))
 		require.NotNil(t, delivery)
 		require.Equal(t, "master-img", delivery.Image)
 		require.Equal(t, "//custom", delivery.LogsDeliveryPath)
@@ -103,6 +117,6 @@ func TestResolveTimbertruckDelivery(t *testing.T) {
 
 	t.Run("disabled when no loggers to deliver", func(t *testing.T) {
 		require.Nil(t, resolveTimbertruckDelivery(nil, &ytv1.TimbertruckSpec{Image: ptr.To("img")},
-			[]ytv1.StructuredLoggerSpec{structuredLogger("access", nil)}))
+			instanceSpec([]ytv1.StructuredLoggerSpec{structuredLogger("access", nil)}, true)))
 	})
 }

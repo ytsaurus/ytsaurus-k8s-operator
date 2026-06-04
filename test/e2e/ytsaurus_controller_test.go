@@ -1672,9 +1672,12 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				}
 				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount /etc/timbertruck"))
 
-				Expect(ytsaurus).Should(HaveStatusConditionTrue(consts.ConditionTimbertruckPrepared))
+				By("Checking timbertruck was prepared")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveStatusConditionTrue(consts.ConditionTimbertruckPrepared))
 			})
 
+			// NOTE: this exercises that http-proxy delivery survives a full cluster update; it does not
+			// change the timbertruck image specifically (the test env has a single valid sidecar image).
 			It("Should keep timbertruck delivery after a cluster update", func(ctx context.Context) {
 				hpLabeller := generator.GetComponentLabeller(consts.HttpProxyType, ytsaurus.Spec.HTTPProxies[0].Role)
 
