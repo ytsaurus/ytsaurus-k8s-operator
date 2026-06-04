@@ -44,6 +44,7 @@ func NewQueueAgent(
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
+		cfgen,
 		l,
 		ytsaurus,
 		&resource.Spec.QueueAgents.InstanceSpec,

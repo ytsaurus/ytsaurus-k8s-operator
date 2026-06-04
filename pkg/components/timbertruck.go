@@ -234,22 +234,210 @@ type ComponentLoggers struct {
 	LogsDeliveryPath  string
 }
 
-func (tt *Timbertruck) GetDeliveryLoggers() []ComponentLoggers {
-	spec := tt.ytsaurus.GetResource().Spec
-	allDeliveryLoggers := []ComponentLoggers{}
+// timbertruckDelivery holds the resolved timbertruck delivery settings for a single component.
+type timbertruckDelivery struct {
+	Image            string
+	LogsDeliveryPath string
+	Loggers          []ytv1.StructuredLoggerSpec
+}
 
-	extractDeliveryLoggers := func(componentName string, timbertruck *ytv1.TimbertruckSpec, structuredLoggers []ytv1.StructuredLoggerSpec) {
-		if timbertruck == nil || timbertruck.Image == nil || len(structuredLoggers) == 0 {
-			return
+// effectiveTimbertruckImage resolves the timbertruck image for a component: the component-level
+// override wins, then the cluster-wide CommonSpec default. Returns "" if neither is set.
+func effectiveTimbertruckImage(componentTT, commonTT *ytv1.TimbertruckSpec) string {
+	for _, tt := range []*ytv1.TimbertruckSpec{componentTT, commonTT} {
+		if tt != nil && tt.Image != nil && *tt.Image != "" {
+			return *tt.Image
 		}
-		allDeliveryLoggers = append(allDeliveryLoggers, ComponentLoggers{
-			ComponentName:     componentName,
-			StructuredLoggers: structuredLoggers,
-			LogsDeliveryPath:  getLogsDirectoryPath(timbertruck),
+	}
+	return ""
+}
+
+// effectiveLogsDeliveryPath resolves the cypress path logs are delivered to, with the same
+// component-then-cluster precedence, falling back to the default path.
+func effectiveLogsDeliveryPath(componentTT, commonTT *ytv1.TimbertruckSpec) string {
+	for _, tt := range []*ytv1.TimbertruckSpec{componentTT, commonTT} {
+		if tt != nil && tt.DirectoryPath != nil && *tt.DirectoryPath != "" {
+			return *tt.DirectoryPath
+		}
+	}
+	return consts.DefaultTimbertruckDirectoryPath
+}
+
+// deliveredStructuredLoggers returns the structured loggers timbertruck should deliver for a
+// component. Per-log enableDelivery flags take precedence; when none of the loggers set the flag
+// the legacy behaviour applies: if a component-level timbertruck spec is present (masters), all
+// structured loggers are delivered.
+func deliveredStructuredLoggers(componentTT *ytv1.TimbertruckSpec, loggers []ytv1.StructuredLoggerSpec) []ytv1.StructuredLoggerSpec {
+	var explicit []ytv1.StructuredLoggerSpec
+	anyExplicit := false
+	for _, logger := range loggers {
+		if logger.EnableDelivery == nil {
+			continue
+		}
+		anyExplicit = true
+		if *logger.EnableDelivery {
+			explicit = append(explicit, logger)
+		}
+	}
+	if anyExplicit {
+		return explicit
+	}
+	if componentTT != nil {
+		return loggers
+	}
+	return nil
+}
+
+// resolveTimbertruckDelivery returns the resolved delivery settings for a component, or nil if
+// timbertruck delivery is not enabled for it (no loggers to deliver or no image configured).
+func resolveTimbertruckDelivery(componentTT, commonTT *ytv1.TimbertruckSpec, loggers []ytv1.StructuredLoggerSpec) *timbertruckDelivery {
+	delivered := deliveredStructuredLoggers(componentTT, loggers)
+	if len(delivered) == 0 {
+		return nil
+	}
+	image := effectiveTimbertruckImage(componentTT, commonTT)
+	if image == "" {
+		return nil
+	}
+	return &timbertruckDelivery{
+		Image:            image,
+		LogsDeliveryPath: effectiveLogsDeliveryPath(componentTT, commonTT),
+		Loggers:          delivered,
+	}
+}
+
+// timbertruckComponentName is the per-component name used to build delivery names and the
+// corresponding YT queue paths. It must be identical between the sidecar config (built in
+// serverImpl) and the YT-side table preparation (GetDeliveryLoggers), so it is derived solely
+// from the labeller. For single-group components (e.g. primary master) it equals the service
+// kebab-case name, preserving the original master paths.
+func timbertruckComponentName(l *labeller.Labeller) string {
+	name := consts.GetServiceKebabCase(l.ComponentType)
+	if l.InstanceGroup != "" && l.InstanceGroup != consts.DefaultName {
+		name += "-" + l.InstanceGroup
+	}
+	return name
+}
+
+// timbertruckLoggerSource describes one server component that may deliver structured logs.
+type timbertruckLoggerSource struct {
+	componentTT *ytv1.TimbertruckSpec
+	loggers     []ytv1.StructuredLoggerSpec
+	// buildLabeller produces the component labeller; needed only to compute delivery names.
+	buildLabeller func(cfgen *ytconfig.Generator) *labeller.Labeller
+}
+
+// timbertruckLoggerSources enumerates every server component that may deliver logs, pairing each
+// with its component-level timbertruck override (nil for non-masters) and its structured loggers.
+// This is the single source of truth for which components participate in timbertruck delivery.
+func timbertruckLoggerSources(spec *ytv1.YtsaurusSpec) []timbertruckLoggerSource {
+	var sources []timbertruckLoggerSource
+	addMaster := func(componentTT *ytv1.TimbertruckSpec, loggers []ytv1.StructuredLoggerSpec, cellTag uint16) {
+		sources = append(sources, timbertruckLoggerSource{componentTT, loggers, func(cfgen *ytconfig.Generator) *labeller.Labeller {
+			return cfgen.GetMasterLabeller(cellTag)
+		}})
+	}
+	add := func(componentType consts.ComponentType, instanceGroup string, loggers []ytv1.StructuredLoggerSpec) {
+		sources = append(sources, timbertruckLoggerSource{nil, loggers, func(cfgen *ytconfig.Generator) *labeller.Labeller {
+			return cfgen.GetComponentLabeller(componentType, instanceGroup)
+		}})
+	}
+
+	// Masters keep a per-component timbertruck override for backward compatibility.
+	addMaster(spec.PrimaryMasters.Timbertruck, spec.PrimaryMasters.StructuredLoggers, spec.PrimaryMasters.CellTag)
+	for i := range spec.SecondaryMasters {
+		sm := &spec.SecondaryMasters[i]
+		addMaster(sm.Timbertruck, sm.StructuredLoggers, sm.CellTag)
+	}
+
+	// All other server components rely on the cluster-wide spec.timbertruck plus per-log enableDelivery.
+	if spec.MasterCaches != nil {
+		add(consts.MasterCacheType, "", spec.MasterCaches.StructuredLoggers)
+	}
+	add(consts.DiscoveryType, "", spec.Discovery.StructuredLoggers)
+	for i := range spec.HTTPProxies {
+		add(consts.HttpProxyType, spec.HTTPProxies[i].Role, spec.HTTPProxies[i].StructuredLoggers)
+	}
+	for i := range spec.RPCProxies {
+		add(consts.RpcProxyType, spec.RPCProxies[i].Role, spec.RPCProxies[i].StructuredLoggers)
+	}
+	for i := range spec.TCPProxies {
+		add(consts.TcpProxyType, spec.TCPProxies[i].Role, spec.TCPProxies[i].StructuredLoggers)
+	}
+	for i := range spec.KafkaProxies {
+		add(consts.KafkaProxyType, spec.KafkaProxies[i].Role, spec.KafkaProxies[i].StructuredLoggers)
+	}
+	for i := range spec.DataNodes {
+		add(consts.DataNodeType, spec.DataNodes[i].Name, spec.DataNodes[i].StructuredLoggers)
+	}
+	for i := range spec.ExecNodes {
+		add(consts.ExecNodeType, spec.ExecNodes[i].Name, spec.ExecNodes[i].StructuredLoggers)
+	}
+	for i := range spec.TabletNodes {
+		add(consts.TabletNodeType, spec.TabletNodes[i].Name, spec.TabletNodes[i].StructuredLoggers)
+	}
+	if spec.Schedulers != nil {
+		add(consts.SchedulerType, "", spec.Schedulers.StructuredLoggers)
+	}
+	if spec.ControllerAgents != nil {
+		add(consts.ControllerAgentType, "", spec.ControllerAgents.StructuredLoggers)
+	}
+	if spec.QueryTrackers != nil {
+		add(consts.QueryTrackerType, "", spec.QueryTrackers.StructuredLoggers)
+	}
+	if spec.YQLAgents != nil {
+		add(consts.YqlAgentType, "", spec.YQLAgents.StructuredLoggers)
+	}
+	if spec.QueueAgents != nil {
+		add(consts.QueueAgentType, "", spec.QueueAgents.StructuredLoggers)
+	}
+	if spec.CypressProxies != nil {
+		add(consts.CypressProxyType, "", spec.CypressProxies.StructuredLoggers)
+	}
+	if spec.BundleController != nil {
+		add(consts.BundleControllerType, "", spec.BundleController.StructuredLoggers)
+	}
+	if spec.TabletBalancer != nil {
+		add(consts.TabletBalancerType, "", spec.TabletBalancer.StructuredLoggers)
+	}
+
+	return sources
+}
+
+// TimbertruckDeliveryEnabled reports whether any server component in the cluster has timbertruck log
+// delivery enabled. It mirrors the per-component resolution used by serverImpl, so the virtual
+// Timbertruck component (user/queue/export setup) and its update-flow step are created exactly when
+// at least one component will run a timbertruck sidecar.
+func TimbertruckDeliveryEnabled(spec *ytv1.YtsaurusSpec) bool {
+	for _, source := range timbertruckLoggerSources(spec) {
+		if resolveTimbertruckDelivery(source.componentTT, spec.Timbertruck, source.loggers) != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// GetDeliveryLoggers enumerates every component that has timbertruck delivery enabled, so the
+// virtual Timbertruck component can prepare the YT-side user, queues, producers and exports.
+// The component name and delivery path must match what serverImpl writes into each sidecar config.
+func (tt *Timbertruck) GetDeliveryLoggers() []ComponentLoggers {
+	spec := &tt.ytsaurus.GetResource().Spec
+	commonTT := spec.Timbertruck
+	var result []ComponentLoggers
+
+	for _, source := range timbertruckLoggerSources(spec) {
+		delivery := resolveTimbertruckDelivery(source.componentTT, commonTT, source.loggers)
+		if delivery == nil {
+			continue
+		}
+		result = append(result, ComponentLoggers{
+			ComponentName:     timbertruckComponentName(source.buildLabeller(tt.cfgen)),
+			StructuredLoggers: delivery.Loggers,
+			LogsDeliveryPath:  delivery.LogsDeliveryPath,
 		})
 	}
-	extractDeliveryLoggers(consts.GetServiceKebabCase(consts.MasterType), spec.PrimaryMasters.Timbertruck, spec.PrimaryMasters.InstanceSpec.StructuredLoggers)
-	return allDeliveryLoggers
+
+	return result
 }
 
 func (tt *Timbertruck) prepareTimbertruckTables(ctx context.Context) error {
@@ -385,126 +573,61 @@ func prepareExportDestination(ctx context.Context, ytClient yt.Client, queuePath
 	return nil
 }
 
-func getLogsDirectoryPath(timbertruck *ytv1.TimbertruckSpec) string {
-	if timbertruck != nil && timbertruck.DirectoryPath != nil && *timbertruck.DirectoryPath != "" {
-		return *timbertruck.DirectoryPath
-	}
-	return consts.DefaultTimbertruckDirectoryPath
-}
-
-// newTimbertruckConfigBuilder returns a ConfigMapBuilder for the timbertruck
-// sidecar config, or nil if timbertruck is not enabled for this component.
-func newTimbertruckConfigBuilder(
+// buildTimbertruckConfigMap builds the ConfigMapBuilder for a component's timbertruck sidecar
+// config from already-resolved delivery settings. logsDirectory is the component's logs location
+// path. Callers must only invoke it when delivery is enabled and a logs location exists.
+func buildTimbertruckConfigMap(
 	proxy apiproxy.APIProxy,
 	configOverrides *corev1.LocalObjectReference,
-	timbertruck *ytv1.TimbertruckSpec,
-	instanceSpec *ytv1.InstanceSpec,
+	delivery *timbertruckDelivery,
+	logsDirectory string,
 	labeler *labeller.Labeller,
 	cfgen *ytconfig.Generator,
-) (*ConfigMapBuilder, error) {
-	if timbertruck == nil || timbertruck.Image == nil || *timbertruck.Image == "" {
-		return nil, nil
-	}
-	if len(instanceSpec.StructuredLoggers) == 0 {
-		return nil, nil
-	}
-
-	logsLocation := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeLogs)
-	if logsLocation == nil {
-		return nil, fmt.Errorf("you are trying to use Timbertruck, but no logs location is defined in the instance spec")
-	}
-	logsDirectory := logsLocation.Path
-	componentName := consts.GetServiceKebabCase(labeler.ComponentType)
+) *ConfigMapBuilder {
 	workDir := fmt.Sprintf("%s/%s", logsDirectory, consts.TimbertruckWorkDirName)
 	deliveryProxy := cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 
 	timbertruckConfig := ytconfig.NewTimbertruckConfig(
-		instanceSpec.StructuredLoggers,
+		delivery.Loggers,
 		workDir,
-		componentName,
+		timbertruckComponentName(labeler),
 		logsDirectory,
 		deliveryProxy,
-		getLogsDirectoryPath(timbertruck),
+		delivery.LogsDeliveryPath,
 	)
 	if timbertruckConfig == nil {
-		return nil, nil
+		return nil
 	}
 
-	configMapName := labeler.GetSidecarConfigMapName(consts.TimbertruckContainerName)
 	return NewConfigMapBuilder(
 		labeler,
 		proxy,
-		configMapName,
+		labeler.GetSidecarConfigMapName(consts.TimbertruckContainerName),
 		configOverrides,
 		ConfigGenerator{
 			FileName:  "config.yaml",
 			Format:    ConfigFormatYaml,
 			Generator: timbertruckConfig.ToYSON,
 		},
-	), nil
+	)
 }
 
-// timbertruckConfigMapNeedsSync reports whether the timbertruck configmap
-// content differs from what the operator would generate.
-func timbertruckConfigMapNeedsSync(
-	ctx context.Context,
-	proxy apiproxy.APIProxy,
-	configOverrides *corev1.LocalObjectReference,
-	timbertruck *ytv1.TimbertruckSpec,
-	instanceSpec *ytv1.InstanceSpec,
-	labeler *labeller.Labeller,
-	cfgen *ytconfig.Generator,
-) (bool, error) {
-	builder, err := newTimbertruckConfigBuilder(proxy, configOverrides, timbertruck, instanceSpec, labeler, cfgen)
-	if err != nil || builder == nil {
-		return false, err
-	}
-	if err := builder.Fetch(ctx); err != nil {
-		return false, fmt.Errorf("failed to fetch timbertruck configmap: %w", err)
-	}
-	if !builder.Exists() {
-		return true, nil
-	}
-	status, err := builder.needReload()
-	if err != nil {
-		return false, err
-	}
-	return status.IsNeedUpdate(), nil
-}
-
-func checkAndAddTimbertruckToPodSpec(ctx context.Context, proxy apiproxy.APIProxy, configOverrides *corev1.LocalObjectReference, timbertruck *ytv1.TimbertruckSpec, podSpec *corev1.PodSpec, instanceSpec *ytv1.InstanceSpec, labeler *labeller.Labeller, cfgen *ytconfig.Generator) error {
-	configBuilder, err := newTimbertruckConfigBuilder(proxy, configOverrides, timbertruck, instanceSpec, labeler, cfgen)
-	if err != nil {
-		return err
-	}
-	if configBuilder == nil {
-		return nil
-	}
-
-	if err := configBuilder.Fetch(ctx); err != nil {
-		return fmt.Errorf("failed to fetch timbertruck configmap: %w", err)
-	}
-	if _, err := configBuilder.Build(); err != nil {
-		return fmt.Errorf("failed to build timbertruck configmap: %w", err)
-	}
-	if err := configBuilder.Sync(ctx); err != nil {
-		return fmt.Errorf("failed to sync timbertruck configmap: %w", err)
-	}
-
-	deliveryProxy := cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
-	configMapName := configBuilder.GetConfigMapName()
-
+// addTimbertruckSidecar appends the timbertruck sidecar container and its config volume to podSpec.
+// The logs location mount is resolved from instanceSpec, so the sidecar sees the very same volume
+// (and subPath) as the server container.
+func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, instanceSpec *ytv1.InstanceSpec, configMapName, deliveryProxy string) error {
 	const configVolumeName = consts.TimbertruckContainerName + "-config"
-	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(configVolumeName, configMapName, nil))
 
 	volumeMounts, err := buildTimbertruckVolumeMounts(instanceSpec, configVolumeName)
 	if err != nil {
 		return err
 	}
 
+	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(configVolumeName, configMapName, nil))
+
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
 		Name:    consts.TimbertruckContainerName,
-		Image:   *timbertruck.Image,
+		Image:   image,
 		Command: []string{"/usr/bin/timbertruck_os", "-config", "/etc/timbertruck/config.yaml"},
 		Env: append([]corev1.EnvVar{
 			{
@@ -544,13 +667,4 @@ func buildTimbertruckVolumeMounts(instanceSpec *ytv1.InstanceSpec, configVolumeN
 		MountPath: "/etc/timbertruck",
 		ReadOnly:  true,
 	}), nil
-}
-
-func checkAndAddTimbertruckToServerOptions(options *[]Option, timbertruck *ytv1.TimbertruckSpec, structuredLoggers []ytv1.StructuredLoggerSpec) {
-	if timbertruck != nil && timbertruck.Image != nil && *timbertruck.Image != "" && len(structuredLoggers) > 0 {
-		*options = append(*options, WithSidecarImage(
-			consts.TimbertruckContainerName,
-			*timbertruck.Image,
-		))
-	}
 }

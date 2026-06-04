@@ -60,6 +60,7 @@ func NewRPCProxy(
 	}
 
 	srv := newServer(
+		cfgen,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,

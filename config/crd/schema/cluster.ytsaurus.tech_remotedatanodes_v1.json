@@ -1458,6 +1458,10 @@
               "enableAnchorProfiling": {
                 "type": "boolean"
               },
+              "enableDelivery": {
+                "description": "EnableDelivery turns on timbertruck delivery of this structured log to the...",
+                "type": "boolean"
+              },
               "format": {
                 "type": "string",
                 "default": "plain_text",
@@ -1538,6 +1542,18 @@
           "description": "Optional duration in seconds the pod needs to terminate gracefully.",
           "type": "integer",
           "format": "int64"
+        },
+        "timbertruck": {
+          "description": "Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by...",
+          "type": "object",
+          "properties": {
+            "directoryPath": {
+              "type": "string"
+            },
+            "image": {
+              "type": "string"
+            }
+          }
         },
         "tolerations": {
           "description": "Tolerations for instance and init job pods.",

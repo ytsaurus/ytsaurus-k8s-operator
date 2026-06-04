@@ -392,6 +392,14 @@ func (b *YtsaurusBuilder) WithTimbertruck() {
 	}
 }
 
+// WithTimbertruckImage sets the cluster-wide timbertruck sidecar image, used by any component that
+// enables log delivery via a structured logger's enableDelivery flag.
+func (b *YtsaurusBuilder) WithTimbertruckImage() {
+	b.Ytsaurus.Spec.Timbertruck = &ytv1.TimbertruckSpec{
+		Image: ptr.To(b.Images.Sidecars),
+	}
+}
+
 func (b *YtsaurusBuilder) WithNativeTransportTLS(serverCert, clientCert string) {
 	b.Ytsaurus.Spec.CABundle = &ytv1.FileObjectReference{
 		Name: TestCABundleName,

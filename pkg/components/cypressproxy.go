@@ -23,6 +23,7 @@ func NewCypressProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Cy
 
 	resource := ytsaurus.GetResource()
 	srv := newServer(
+		cfgen,
 		l,
 		ytsaurus,
 		&resource.Spec.CypressProxies.InstanceSpec,

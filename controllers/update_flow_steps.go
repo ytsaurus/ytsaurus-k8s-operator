@@ -8,6 +8,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	apiProxy "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
@@ -235,7 +236,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForMasterExitReadOnly: flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterExitReadOnly),
 	ytv1.UpdateStateWaitingForCypressPatch:       flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if ytsaurus.GetResource().Spec.PrimaryMasters.Timbertruck == nil || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
+		if !components.TimbertruckDeliveryEnabled(&ytsaurus.GetResource().Spec) || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied

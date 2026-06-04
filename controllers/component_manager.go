@@ -105,7 +105,7 @@ func NewComponentManager(
 	var dnds []components.Component
 	if len(resource.Spec.DataNodes) > 0 {
 		for _, dndSpec := range resource.Spec.DataNodes {
-			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, yc, dndSpec))
+			dnds = append(dnds, components.NewDataNode(cfgen, nodeCfgGen, ytsaurus, m, yc, dndSpec))
 		}
 	}
 	allComponents = append(allComponents, dnds...)
@@ -140,13 +140,13 @@ func NewComponentManager(
 	}
 
 	for _, endSpec := range resource.Spec.ExecNodes {
-		allComponents = append(allComponents, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec, yc))
+		allComponents = append(allComponents, components.NewExecNode(cfgen, nodeCfgGen, ytsaurus, m, endSpec, yc))
 	}
 
 	var tnds []components.Component
 	if len(resource.Spec.TabletNodes) > 0 {
 		for idx, tndSpec := range resource.Spec.TabletNodes {
-			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, m, tndSpec, idx == 0))
+			tnds = append(tnds, components.NewTabletNode(cfgen, nodeCfgGen, ytsaurus, yc, m, tndSpec, idx == 0))
 		}
 	}
 	allComponents = append(allComponents, tnds...)
@@ -204,7 +204,7 @@ func NewComponentManager(
 		allComponents = append(allComponents, tb)
 	}
 
-	if resource.Spec.PrimaryMasters.Timbertruck != nil {
+	if components.TimbertruckDeliveryEnabled(&resource.Spec) {
 		tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
 		allComponents = append(allComponents, tt)
 	}

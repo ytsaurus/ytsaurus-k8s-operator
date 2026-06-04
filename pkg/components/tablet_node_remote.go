@@ -29,6 +29,7 @@ func NewRemoteTabletNodes(
 	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)
 
 	srv := newServerConfigured(
+		nil, // no timbertruck delivery for remote nodes
 		l,
 		proxy,
 		&commonSpec,

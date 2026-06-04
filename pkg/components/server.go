@@ -20,6 +20,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 const (
@@ -70,6 +71,13 @@ type serverImpl struct {
 	busClientSecret   *resources.TLSSecret
 	configs           *ConfigMapBuilder
 
+	// cfgen is used to resolve the HTTP proxy address for the timbertruck sidecar. It may be nil
+	// for components that never deliver logs (e.g. remote nodes), in which case delivery is off.
+	cfgen *ytconfig.Generator
+	// timbertruckDelivery / timbertruckConfigs are non-nil only when this component delivers logs.
+	timbertruckDelivery *timbertruckDelivery
+	timbertruckConfigs  *ConfigMapBuilder
+
 	builtStatefulSet *appsv1.StatefulSet
 
 	updateStrategy *appsv1.StatefulSetUpdateStrategy
@@ -81,6 +89,7 @@ type serverImpl struct {
 }
 
 func newServer(
+	cfgen *ytconfig.Generator,
 	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
@@ -90,6 +99,7 @@ func newServer(
 	options ...Option,
 ) server {
 	return newServerConfigured(
+		cfgen,
 		l,
 		ytsaurus,
 		ytsaurus.GetCommonSpec(),
@@ -103,6 +113,7 @@ func newServer(
 }
 
 func newServerConfigured(
+	cfgen *ytconfig.Generator,
 	l *labeller.Labeller,
 	proxy apiproxy.APIProxy,
 	commonSpec *ytv1.CommonSpec,
@@ -197,17 +208,39 @@ func newServerConfigured(
 		generators...,
 	)
 
+	// Resolve timbertruck log delivery for this component. cfgen is required to compute the
+	// delivery proxy address; without it (e.g. remote nodes) delivery stays disabled.
+	var timbertruckDelivery *timbertruckDelivery
+	var timbertruckConfigs *ConfigMapBuilder
+	if cfgen != nil {
+		if delivery := resolveTimbertruckDelivery(opts.timbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers); delivery != nil {
+			if logsLocation := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeLogs); logsLocation != nil {
+				if configs := buildTimbertruckConfigMap(proxy, commonSpec.ConfigOverrides, delivery, logsLocation.Path, l, cfgen); configs != nil {
+					timbertruckDelivery = delivery
+					timbertruckConfigs = configs
+					if opts.sidecarImages == nil {
+						opts.sidecarImages = make(map[string]string)
+					}
+					opts.sidecarImages[consts.TimbertruckContainerName] = delivery.Image
+				}
+			}
+		}
+	}
+
 	return &serverImpl{
-		labeller:      l,
-		image:         image,
-		configs:       configs,
-		sidecarImages: opts.sidecarImages,
-		proxy:         proxy,
-		commonSpec:    commonSpec,
-		commonPodSpec: commonPodSpec,
-		instanceSpec:  instanceSpec,
-		instanceCount: instanceCount,
-		binaryPath:    binaryPath,
+		labeller:            l,
+		image:               image,
+		configs:             configs,
+		cfgen:               cfgen,
+		timbertruckDelivery: timbertruckDelivery,
+		timbertruckConfigs:  timbertruckConfigs,
+		sidecarImages:       opts.sidecarImages,
+		proxy:               proxy,
+		commonSpec:          commonSpec,
+		commonPodSpec:       commonPodSpec,
+		instanceSpec:        instanceSpec,
+		instanceCount:       instanceCount,
+		binaryPath:          binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			l.GetServerStatefulSetName(),
 			l,
@@ -237,11 +270,24 @@ func newServerConfigured(
 }
 
 func (s *serverImpl) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, s.statefulSet, s.configs, s.headlessService, s.monitoringService)
+	return resources.Fetch(ctx, s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService)
 }
 
 func (s *serverImpl) Exists() bool {
-	return resources.Exists(s.statefulSet, s.configs, s.headlessService, s.monitoringService)
+	return resources.Exists(s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService)
+}
+
+// timbertruckConfigNeedsReload reports whether the timbertruck sidecar configmap is missing or
+// its content has drifted from what the operator would generate.
+func (s *serverImpl) timbertruckConfigNeedsReload() bool {
+	if s.timbertruckConfigs == nil {
+		return false
+	}
+	if !s.timbertruckConfigs.Exists() {
+		return true
+	}
+	status, err := s.timbertruckConfigs.needReload()
+	return err == nil && status.IsNeedUpdate()
 }
 
 func (s *serverImpl) needSync(updating bool) bool {
@@ -251,6 +297,7 @@ func (s *serverImpl) needSync(updating bool) bool {
 		}
 	}
 	return !s.Exists() ||
+		s.timbertruckConfigNeedsReload() ||
 		s.statefulSet.GetReplicas() != s.getInstanceCount()
 }
 
@@ -258,6 +305,11 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	cm, err := s.configs.Build()
 	if err != nil {
 		return err
+	}
+	if s.timbertruckConfigs != nil {
+		if _, err := s.timbertruckConfigs.Build(); err != nil {
+			return err
+		}
 	}
 	_ = s.headlessService.Build()
 	_ = s.monitoringService.Build()
@@ -274,6 +326,7 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	return resources.Sync(ctx,
 		s.statefulSet,
 		s.configs,
+		s.timbertruckConfigs,
 		s.headlessService,
 		s.monitoringService,
 	)
@@ -314,6 +367,10 @@ func (s *serverImpl) needUpdate() ComponentStatus {
 	if status, err := s.configs.needReload(); err == nil && status.IsNeedUpdate() {
 		return status
 	}
+	// Note: timbertruck config-content drift is intentionally NOT reported here. Like the master's
+	// original behavior, it is handled by needSync as a local configmap re-sync (a "bypass"), so a
+	// timbertruck config change does not drag the component through the full update flow. The
+	// timbertruck sidecar image change IS caught above via podsImageCorrespondsToSpec (sidecarImages).
 	return ComponentStatusReady()
 }
 
@@ -570,6 +627,19 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	// Native transport certificates are required only in server container.
 	s.addTlsSecretMount(serverContainer)
+
+	// Append the timbertruck log-delivery sidecar when enabled for this component. A missing or
+	// uncovered logs location is rejected by the webhook, so here we just skip the sidecar instead
+	// of failing the whole pod spec.
+	if s.timbertruckConfigs != nil {
+		_ = addTimbertruckSidecar(
+			podSpec,
+			s.timbertruckDelivery.Image,
+			s.instanceSpec,
+			s.timbertruckConfigs.GetConfigMapName(),
+			s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+		)
+	}
 
 	s.builtStatefulSet = statefulSet
 	return statefulSet

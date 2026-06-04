@@ -69,6 +69,7 @@ func NewHTTPProxy(
 	}
 
 	srv := newServer(
+		cfgen,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,

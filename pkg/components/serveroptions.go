@@ -3,6 +3,8 @@ package components
 import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
 type options struct {
@@ -12,6 +14,11 @@ type options struct {
 	readinessProbeEndpointPath string
 
 	sidecarImages map[string]string
+
+	// timbertruck is a per-component override of the cluster-wide timbertruck settings.
+	// Only masters set it (for backward compatibility); other components rely on the
+	// cluster-wide spec.timbertruck plus per-log enableDelivery flags.
+	timbertruck *ytv1.TimbertruckSpec
 }
 
 type Option func(opts *options)
@@ -40,5 +47,12 @@ func WithSidecarImage(name, image string) Option {
 			opts.sidecarImages = make(map[string]string)
 		}
 		opts.sidecarImages[name] = image
+	}
+}
+
+// WithTimbertruck sets a per-component override of the cluster-wide timbertruck settings.
+func WithTimbertruck(timbertruck *ytv1.TimbertruckSpec) Option {
+	return func(opts *options) {
+		opts.timbertruck = timbertruck
 	}
 }

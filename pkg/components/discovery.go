@@ -33,6 +33,7 @@ func NewDiscovery(
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
+		cfgen,
 		l,
 		ytsaurus,
 		&resource.Spec.Discovery.InstanceSpec,

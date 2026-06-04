@@ -26,6 +26,7 @@ func NewRemoteExecNodes(
 	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
 
 	srv := newServerConfigured(
+		nil, // no timbertruck delivery for remote nodes
 		l,
 		proxy,
 		&commonSpec,

@@ -1246,6 +1246,10 @@ spec:
                       type: string
                     enableAnchorProfiling:
                       type: boolean
+                    enableDelivery:
+                      description: EnableDelivery turns on timbertruck delivery of
+                        this structured log to the...
+                      type: boolean
                     format:
                       default: plain_text
                       enum:
@@ -1303,6 +1307,15 @@ spec:
                   gracefully.
                 format: int64
                 type: integer
+              timbertruck:
+                description: Cluster-wide timbertruck sidecar settings (image, logs
+                  delivery path) used by...
+                properties:
+                  directoryPath:
+                    type: string
+                  image:
+                    type: string
+                type: object
               tolerations:
                 description: Tolerations for instance and init job pods.
                 items:

@@ -24,6 +24,7 @@ type ExecNode struct {
 }
 
 func NewExecNode(
+	clusterCfgen *ytconfig.Generator,
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
@@ -33,6 +34,7 @@ func NewExecNode(
 	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
 
 	srv := newServer(
+		clusterCfgen,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,

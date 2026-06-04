@@ -29,6 +29,7 @@ func NewRemoteDataNodes(
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
 	srv := newServerConfigured(
+		nil, // no timbertruck delivery for remote nodes
 		l,
 		proxy,
 		&commonSpec,

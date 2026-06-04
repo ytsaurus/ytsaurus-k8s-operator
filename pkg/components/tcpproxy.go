@@ -27,6 +27,7 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 	l := cfgen.GetComponentLabeller(consts.TcpProxyType, spec.Role)
 
 	srv := newServer(
+		cfgen,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,

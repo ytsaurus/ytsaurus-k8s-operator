@@ -28,6 +28,7 @@ func NewOffshoreDataGateways(
 	l := cfgen.GetComponentLabeller(consts.OffshoreDataGatewayType, "")
 
 	srv := newServerConfigured(
+		nil, // no timbertruck delivery for remote nodes
 		l,
 		proxy,
 		&commonSpec,

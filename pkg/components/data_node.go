@@ -29,6 +29,7 @@ type dataNodeCounterCheck struct {
 }
 
 func NewDataNode(
+	clusterCfgen *ytconfig.Generator,
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
@@ -38,6 +39,7 @@ func NewDataNode(
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
 	srv := newServer(
+		clusterCfgen,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
