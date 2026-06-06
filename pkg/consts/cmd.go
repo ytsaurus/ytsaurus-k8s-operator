@@ -77,6 +77,8 @@ const (
 	DockerSecretVolumeName = "image-pull-secret"
 	DockerSecretMountPath  = "/config/image-pull-secret"
 	DockerSecretFileName   = "config.json"
+
+	TimbertruckConfigMountPoint = "/etc/timbertruck"
 )
 
 const (

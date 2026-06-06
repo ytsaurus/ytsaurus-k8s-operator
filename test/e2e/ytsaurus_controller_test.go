@@ -1546,12 +1546,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should mount timbertruck configmap on master pods", func(ctx context.Context) {
 				masterLabeller := generator.GetComponentLabeller(consts.MasterType, "")
 				configMapName := masterLabeller.GetSidecarConfigMapName(consts.TimbertruckContainerName)
+				// Per-component file name so config overrides can target this component (see timbertruckConfigFileName).
+				configFileName := masterLabeller.GetFullComponentLabel() + "-timbertruck.yaml"
 
 				By("Checking timbertruck configmap exists with snake_case keys")
 				var configMap corev1.ConfigMap
 				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, &configMap)).Should(Succeed())
-				Expect(configMap.Data).To(HaveKey("config.yaml"))
-				configYaml := configMap.Data["config.yaml"]
+				Expect(configMap.Data).To(HaveKey(configFileName))
+				configYaml := configMap.Data[configFileName]
 				Expect(configYaml).To(ContainSubstring("work_dir:"))
 				Expect(configYaml).To(ContainSubstring("json_logs:"))
 				Expect(configYaml).To(ContainSubstring("queue_batch_size:"))
@@ -1575,17 +1577,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				}
 				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
 				Expect(ttContainer.Command).To(Equal([]string{
-					"/usr/bin/timbertruck_os", "-config", "/etc/timbertruck/config.yaml",
+					"/usr/bin/timbertruck_os", "-config", consts.TimbertruckConfigMountPoint + "/" + configFileName,
 				}))
 
 				configMounted := false
 				for _, m := range ttContainer.VolumeMounts {
-					if m.MountPath == "/etc/timbertruck" {
+					if m.MountPath == consts.TimbertruckConfigMountPoint {
 						configMounted = true
 						break
 					}
 				}
-				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount /etc/timbertruck"))
+				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.TimbertruckConfigMountPoint))
 			})
 
 		}) // update timbertruck
@@ -1633,12 +1635,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should mount timbertruck configmap on http-proxy pods", func(ctx context.Context) {
 				hpLabeller := generator.GetComponentLabeller(consts.HttpProxyType, ytsaurus.Spec.HTTPProxies[0].Role)
 				configMapName := hpLabeller.GetSidecarConfigMapName(consts.TimbertruckContainerName)
+				// Per-component file name so config overrides can target this component (see timbertruckConfigFileName).
+				configFileName := hpLabeller.GetFullComponentLabel() + "-timbertruck.yaml"
 
 				By("Checking timbertruck configmap exists with snake_case keys")
 				var configMap corev1.ConfigMap
 				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, &configMap)).Should(Succeed())
-				Expect(configMap.Data).To(HaveKey("config.yaml"))
-				configYaml := configMap.Data["config.yaml"]
+				Expect(configMap.Data).To(HaveKey(configFileName))
+				configYaml := configMap.Data[configFileName]
 				Expect(configYaml).To(ContainSubstring("work_dir:"))
 				Expect(configYaml).To(ContainSubstring("json_logs:"))
 				Expect(configYaml).To(ContainSubstring("queue_batch_size:"))
@@ -1660,17 +1664,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				}
 				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
 				Expect(ttContainer.Command).To(Equal([]string{
-					"/usr/bin/timbertruck_os", "-config", "/etc/timbertruck/config.yaml",
+					"/usr/bin/timbertruck_os", "-config", consts.TimbertruckConfigMountPoint + "/" + configFileName,
 				}))
 
 				configMounted := false
 				for _, m := range ttContainer.VolumeMounts {
-					if m.MountPath == "/etc/timbertruck" {
+					if m.MountPath == consts.TimbertruckConfigMountPoint {
 						configMounted = true
 						break
 					}
 				}
-				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount /etc/timbertruck"))
+				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.TimbertruckConfigMountPoint))
 
 				By("Checking timbertruck was prepared")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveStatusConditionTrue(consts.ConditionTimbertruckPrepared))

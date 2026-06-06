@@ -642,6 +642,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 			s.timbertruckDelivery.Image,
 			s.instanceSpec,
 			s.timbertruckConfigs.GetConfigMapName(),
+			timbertruckConfigFileName(s.labeller),
 			s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 		)
 	}
