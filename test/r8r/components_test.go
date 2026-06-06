@@ -678,6 +678,41 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithYqlAgentDQ()
 			ytBuilder.WithHydraPersistenceUploader()
 			ytBuilder.WithTimbertruck()
+			// Timbertruck delivery requires a logs location and at least one structured logger
+			// (see resolveTimbertruckDelivery); add them so the master actually gets a sidecar.
+			ytsaurus.Spec.PrimaryMasters.InstanceSpec.Locations = append(
+				ytsaurus.Spec.PrimaryMasters.InstanceSpec.Locations,
+				ytv1.LocationSpec{
+					LocationType: ytv1.LocationTypeLogs,
+					Path:         "/yt/logs",
+				},
+			)
+			ytsaurus.Spec.PrimaryMasters.InstanceSpec.Volumes = append(
+				ytsaurus.Spec.PrimaryMasters.InstanceSpec.Volumes,
+				ytv1.Volume{
+					Name: "logs",
+					VolumeSource: ytv1.VolumeSource{
+						EmptyDir: &corev1.EmptyDirVolumeSource{},
+					},
+				},
+			)
+			ytsaurus.Spec.PrimaryMasters.InstanceSpec.VolumeMounts = append(
+				ytsaurus.Spec.PrimaryMasters.InstanceSpec.VolumeMounts,
+				corev1.VolumeMount{
+					Name:      "logs",
+					MountPath: "/yt/logs",
+				},
+			)
+			ytsaurus.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers = append(
+				ytsaurus.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers,
+				ytv1.StructuredLoggerSpec{
+					Category: "Access",
+					BaseLoggerSpec: ytv1.BaseLoggerSpec{
+						Name:   "access",
+						Format: ytv1.LogFormatJson,
+					},
+				},
+			)
 			ytBuilder.WithUI()
 			ytBuilder.WithAllClusterFeatures()
 			ytBuilder.WithAllGlobalPodOptions()

@@ -419,6 +419,44 @@
     namespace: ytsaurus-components
     resourceVersion: "4"
   lastTimestamp: null
+  message: Config yt-master-timbertruck.yaml needs creation
+  metadata:
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "4"
+  lastTimestamp: null
+  message: Created YT object yt-master-timbertruck-config (*v1.ConfigMap)
+  metadata:
+    namespace: ytsaurus-components
+  reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "4"
+  lastTimestamp: null
   message: Created YT object masters (*v1.Service)
   metadata:
     namespace: ytsaurus-components

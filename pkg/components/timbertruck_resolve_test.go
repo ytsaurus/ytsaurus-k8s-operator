@@ -63,7 +63,7 @@ func TestEffectiveTimbertruckImage(t *testing.T) {
 	require.Equal(t, "component-img", effectiveTimbertruckImage(component, common))
 	require.Equal(t, "common-img", effectiveTimbertruckImage(nil, common))
 	require.Equal(t, "common-img", effectiveTimbertruckImage(&ytv1.TimbertruckSpec{}, common))
-	require.Equal(t, "", effectiveTimbertruckImage(nil, nil))
+	require.Empty(t, effectiveTimbertruckImage(nil, nil))
 }
 
 func TestEffectiveLogsDeliveryPath(t *testing.T) {
