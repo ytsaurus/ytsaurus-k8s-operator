@@ -2019,6 +2019,16 @@ exec "$@"`
 			})
 
 			It("Checks ClickHouse", func(ctx context.Context) {
+				By("Checking strawberry address in ui_config is a fully-qualified service name")
+				strawberryLabeller := generator.GetComponentLabeller(consts.StrawberryControllerType, "")
+				expectedBaseURL := fmt.Sprintf("http://strawberry-controller.%s.svc.%s:%d",
+					strawberryLabeller.GetNamespace(),
+					strawberryLabeller.GetClusterDomain(),
+					consts.StrawberryHTTPAPIPort)
+				var chytControllerBaseURL string
+				Expect(ytClient.GetNode(ctx, ypath.Path("//sys/@ui_config/chyt_controller_base_url"), &chytControllerBaseURL, nil)).To(Succeed())
+				Expect(chytControllerBaseURL).To(Equal(expectedBaseURL))
+
 				By("Creating table")
 				Expect(queryClickHouse(ctx, httpClient, ytProxyAddress,
 					"CREATE TABLE `//tmp/chyt_test` ENGINE = YtTable() AS SELECT 1",

@@ -158,8 +158,11 @@ func (c *StrawberryController) createInitUserAndUrlScript() string {
 		initJobWithNativeDriverPrologue(),
 		c.initUsers(),
 		RunIfNonexistent("//sys/@ui_config", "yt set //sys/@ui_config '{}'"),
-		fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v:%v\"'",
-			c.microservice.getHttpService().Name(), consts.StrawberryHTTPAPIPort),
+		fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v.%v.svc.%v:%v\"'",
+			c.microservice.getHttpService().Name(),
+			c.labeller.GetNamespace(),
+			c.labeller.GetClusterDomain(),
+			consts.StrawberryHTTPAPIPort),
 	}
 
 	return strings.Join(script, "\n")
