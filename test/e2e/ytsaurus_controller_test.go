@@ -2021,7 +2021,7 @@ exec "$@"`
 			It("Checks ClickHouse", func(ctx context.Context) {
 				By("Checking strawberry address in ui_config is a fully-qualified service name")
 				strawberryLabeller := generator.GetComponentLabeller(consts.StrawberryControllerType, "")
-				expectedBaseURL := fmt.Sprintf("http://strawberry-controller.%s.svc.%s:%d",
+				expectedBaseURL := fmt.Sprintf("http://strawberry.%s.svc.%s:%d",
 					strawberryLabeller.GetNamespace(),
 					strawberryLabeller.GetClusterDomain(),
 					consts.StrawberryHTTPAPIPort)
