@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"k8s.io/utils/ptr"
 
@@ -43,6 +44,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 )
 
@@ -73,6 +75,9 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	metrics.ObserveClusterState(ytsaurus.GetName(), ytsaurus.GetNamespace(), ytsaurus.Status.State)
+	metrics.ObserveUpdateState(ytsaurus.GetName(), ytsaurus.GetNamespace(), ytsaurus.Status.UpdateStatus.State)
+
 	if !ptr.Deref(ytsaurus.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, &ytsaurus) {
 		logger.Info("Ytsaurus cluster is not managed by controller, do nothing")
 		return ctrl.Result{RequeueAfter: consts.DefaultClusterStatusPollPeriod}, nil
@@ -83,7 +88,10 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, err
 	}
 
-	return r.Sync(ctx, &ytsaurus)
+	start := time.Now()
+	result, err := r.Sync(ctx, &ytsaurus)
+	metrics.ObserveReconcile(ytsaurus.GetName(), ytsaurus.GetNamespace(), time.Since(start), err)
+	return result, err
 }
 
 // SetupWithManager sets up the controller with the Manager.

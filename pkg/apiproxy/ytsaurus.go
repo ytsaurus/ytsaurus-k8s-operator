@@ -77,6 +77,7 @@ func (c *Ytsaurus) SetClusterState(clusterState ytv1.ClusterState) bool {
 		Reason:  string(clusterState),
 		Message: fmt.Sprintf("Cluster state is %v", clusterState),
 	})
+	metrics.ObserveClusterState(c.ytsaurus.GetName(), c.ytsaurus.GetNamespace(), clusterState)
 	return true
 }
 
@@ -233,6 +234,7 @@ func (c *Ytsaurus) SaveUpdateState(ctx context.Context, updateState ytv1.UpdateS
 		logger.Error(err, "unable to update Ytsaurus update state")
 		return err
 	}
+	metrics.ObserveUpdateState(c.ytsaurus.GetName(), c.ytsaurus.GetNamespace(), updateState)
 	return nil
 }
 
