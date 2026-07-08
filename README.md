@@ -12,7 +12,7 @@ You can install pre-built versions of operator via [helm chart](https://hub.dock
 
 Next you need to [choose release](https://ytsaurus.tech/docs/en/admin-guide/releases), [check compatibility](https://ytsaurus.tech/docs/en/admin-guide/compatibility), [prepare the Ytsaurus specification](https://ytsaurus.tech/docs/en/admin-guide/prepare-spec), see provided [samples](config/samples), [guide](docs/guide.md), and [API Reference](docs/api.md).
 
-Currently operator supports YTsaurus releases >= 24.2, releases >= 25.2 are recommended.
+Currently operator supports YTsaurus releases >= 25.1, releases >= 25.2 are recommended.
 
 ### Running on the cluster
 1. Build and push your image to the location specified by `IMG`:
