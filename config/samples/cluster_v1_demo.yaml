@@ -139,7 +139,7 @@ spec:
     instanceCount: 1
 
   strawberry:
-    image: ghcr.io/ytsaurus/strawberry:0.0.17
+    image: ghcr.io/ytsaurus/strawberry:0.0.18
     resources:
       limits:
         memory: 100Mi

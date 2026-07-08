@@ -616,7 +616,7 @@ spec:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#strawberrycontrollerspec
 
     # https://ytsaurus.tech/docs/en/admin-guide/releases#strawberry
-    image: ghcr.io/ytsaurus/strawberry:0.0.17
+    image: ghcr.io/ytsaurus/strawberry:0.0.18
 
     resources:
       limits:
