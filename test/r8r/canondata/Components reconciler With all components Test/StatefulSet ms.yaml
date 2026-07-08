@@ -164,7 +164,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/sidecars:0.0.1
+        image: ghcr.io/ytsaurus/sidecars:0.0.2
         imagePullPolicy: IfNotPresent
         name: timbertruck
         resources: {}
@@ -203,7 +203,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/sidecars:0.0.1
+        image: ghcr.io/ytsaurus/sidecars:0.0.2
         imagePullPolicy: IfNotPresent
         name: hydra-persistence-uploader
         resources: {}
