@@ -35121,6 +35121,46 @@ spec:
                       type: string
                     description: Node selector for instance and init job pods.
                     type: object
+                  oauth:
+                    description: OAuth settings for UI login button (ytOAuthSettings
+                      in common.js).
+                    properties:
+                      authPath:
+                        minLength: 1
+                        type: string
+                      baseURL:
+                        minLength: 1
+                        type: string
+                      buttonLabel:
+                        type: string
+                      callbackBaseUrl:
+                        minLength: 1
+                        type: string
+                      clientIdEnvName:
+                        description: Name of the UI container environment variable
+                          with OAuth client ID.
+                        pattern: ^[A-Za-z_][A-Za-z0-9_]*$
+                        type: string
+                      clientSecretEnvName:
+                        description: Name of the UI container environment variable
+                          with OAuth client secret.
+                        pattern: ^[A-Za-z_][A-Za-z0-9_]*$
+                        type: string
+                      logoutPath:
+                        type: string
+                      scope:
+                        type: string
+                      tokenPath:
+                        minLength: 1
+                        type: string
+                    required:
+                    - authPath
+                    - baseURL
+                    - callbackBaseUrl
+                    - clientIdEnvName
+                    - clientSecretEnvName
+                    - tokenPath
+                    type: object
                   odinBaseUrl:
                     description: Odin is a service for monitoring the availability
                       of YTsaurus clusters.

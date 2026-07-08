@@ -616,6 +616,14 @@ func TestGetUICustomConfigWithSettings(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetUICustomConfigWithOAuth(t *testing.T) {
+	g := NewGenerator(withUICustomOAuth(getYtsaurus()), testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	cfg, err := g.GetUICustomConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestResolverOptionsKeepSocketAndForceTCP(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	ytsaurus.Spec.CommonSpec.ForceTCP = ptr.To(true)
@@ -1058,6 +1066,24 @@ func withUICustomSettings(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.UI = &ytv1.UISpec{
 		OdinBaseUrl:    ptr.To(odinURL),
 		DirectDownload: nil,
+	}
+	return ytsaurus
+}
+
+func withUICustomOAuth(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.UI = &ytv1.UISpec{
+		OdinBaseUrl: ptr.To(odinURL),
+		OAuth: &ytv1.UIOAuthSettings{
+			BaseURL:             "https://id.example.com",
+			AuthPath:            "oauth/v2/authorize",
+			TokenPath:           "oauth/v2/token",
+			LogoutPath:          "oidc/v1/end_session",
+			ClientIDEnvName:     "OAUTH_CLIENT_ID",
+			ClientSecretEnvName: "OAUTH_CLIENT_SECRET",
+			Scope:               "openid profile email",
+			ButtonLabel:         "Login via SSO",
+			CallbackBaseURL:     "https://yt.example.com",
+		},
 	}
 	return ytsaurus
 }

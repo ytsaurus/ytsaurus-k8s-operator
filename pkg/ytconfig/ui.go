@@ -48,7 +48,20 @@ type UICustomSettings struct {
 	DirectDownload *bool `yson:"directDownload,omitempty"`
 }
 
+type UIOAuthSettings struct {
+	BaseURL             string `yson:"baseURL"`
+	AuthPath            string `yson:"authPath"`
+	TokenPath           string `yson:"tokenPath"`
+	LogoutPath          string `yson:"logoutPath,omitempty"`
+	ClientIDEnvName     string `yson:"clientIdEnvName"`
+	ClientSecretEnvName string `yson:"clientSecretEnvName"`
+	Scope               string `yson:"scope,omitempty"`
+	ButtonLabel         string `yson:"buttonLabel,omitempty"`
+	CallbackBaseURL     string `yson:"callbackBaseUrl"`
+}
+
 type UICustom struct {
 	OdinBaseUrl *string           `yson:"odinBaseUrl,omitempty"`
 	Settings    *UICustomSettings `yson:"uiSettings,omitempty"`
+	OAuth       *UIOAuthSettings  `yson:"ytOAuthSettings,omitempty"`
 }

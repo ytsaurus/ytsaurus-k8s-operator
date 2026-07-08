@@ -769,6 +769,31 @@ type UIClusterURLs struct {
 	IconBig *string `json:"iconbig,omitempty"`
 }
 
+type UIOAuthSettings struct {
+	//+kubebuilder:validation:MinLength=1
+	BaseURL string `json:"baseURL"`
+	//+kubebuilder:validation:MinLength=1
+	AuthPath string `json:"authPath"`
+	//+kubebuilder:validation:MinLength=1
+	TokenPath string `json:"tokenPath"`
+	//+optional
+	LogoutPath string `json:"logoutPath,omitempty"`
+	// Name of the UI container environment variable with OAuth client ID.
+	// It must also be provided in ui.extraEnvVariables.
+	//+kubebuilder:validation:Pattern=`^[A-Za-z_][A-Za-z0-9_]*$`
+	ClientIDEnvName string `json:"clientIdEnvName"`
+	// Name of the UI container environment variable with OAuth client secret.
+	// It must also be provided in ui.extraEnvVariables.
+	//+kubebuilder:validation:Pattern=`^[A-Za-z_][A-Za-z0-9_]*$`
+	ClientSecretEnvName string `json:"clientSecretEnvName"`
+	//+optional
+	Scope string `json:"scope,omitempty"`
+	//+optional
+	ButtonLabel string `json:"buttonLabel,omitempty"`
+	//+kubebuilder:validation:MinLength=1
+	CallbackBaseURL string `json:"callbackBaseUrl"`
+}
+
 type UISpec struct {
 	PodSpec `json:",inline"`
 
@@ -804,6 +829,9 @@ type UISpec struct {
 	Group       *string `json:"group,omitempty"`
 	//+optional
 	URLs *UIClusterURLs `json:"urls,omitempty"`
+	// OAuth settings for UI login button (ytOAuthSettings in common.js).
+	//+optional
+	OAuth *UIOAuthSettings `json:"oauth,omitempty"`
 	// When this is set to false, UI will use backend for downloading instead of proxy.
 	// If this is set to true or omitted, UI use proxies, which is a default behaviour.
 	//+optional

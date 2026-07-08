@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
+	"sort"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
@@ -32,9 +35,14 @@ const (
 	ConfigFormatYson               ConfigFormat = "yson"
 	ConfigFormatJson               ConfigFormat = "json"
 	ConfigFormatJsonWithJsPrologue ConfigFormat = "json_with_js_prologue"
+	ConfigFormatJsModule           ConfigFormat = "js_module"
 	ConfigFormatToml               ConfigFormat = "toml"
 	ConfigFormatYaml               ConfigFormat = "yaml"
 )
+
+type jsRawExpression string
+
+var jsIdentifierPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 
 type TextGeneratorFunc func() ([]string, error)
 
@@ -129,6 +137,103 @@ func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
 	return yson.MarshalFormat(merged, yson.FormatPretty)
 }
 
+func prepareUIModuleConfig(config map[string]interface{}) (map[string]interface{}, error) {
+	rawOAuth, ok := config["ytOAuthSettings"]
+	if !ok {
+		return config, nil
+	}
+
+	oauth, ok := rawOAuth.(map[string]interface{})
+	if !ok {
+		return config, nil
+	}
+
+	envFields := map[string]string{
+		"clientIdEnvName":     "clientId",
+		"clientSecretEnvName": "clientSecret",
+	}
+	for envNameKey, outputKey := range envFields {
+		rawEnvName, ok := oauth[envNameKey]
+		if !ok {
+			continue
+		}
+		envName, ok := rawEnvName.(string)
+		if !ok || !jsIdentifierPattern.MatchString(envName) {
+			return nil, fmt.Errorf("invalid UI OAuth environment variable name %q", rawEnvName)
+		}
+		oauth[outputKey] = jsRawExpression("process.env." + envName)
+		delete(oauth, envNameKey)
+	}
+
+	return config, nil
+}
+
+func renderJSModule(config map[string]interface{}) ([]byte, error) {
+	config, err := prepareUIModuleConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	var builder strings.Builder
+	builder.WriteString(JsPrologue)
+	if err := writeJSValue(&builder, config, 0); err != nil {
+		return nil, err
+	}
+	return []byte(builder.String()), nil
+}
+
+func writeJSValue(builder *strings.Builder, value interface{}, indent int) error {
+	switch v := value.(type) {
+	case jsRawExpression:
+		builder.WriteString(string(v))
+	case map[string]interface{}:
+		if err := writeJSObject(builder, v, indent); err != nil {
+			return err
+		}
+	default:
+		data, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		builder.Write(data)
+	}
+	return nil
+}
+
+func writeJSObject(builder *strings.Builder, value map[string]interface{}, indent int) error {
+	builder.WriteString("{")
+	if len(value) == 0 {
+		builder.WriteString("}")
+		return nil
+	}
+
+	keys := make([]string, 0, len(value))
+	for key := range value {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		builder.WriteString("\n")
+		builder.WriteString(strings.Repeat(" ", indent+2))
+		if jsIdentifierPattern.MatchString(key) {
+			builder.WriteString(key)
+		} else {
+			encodedKey, _ := json.Marshal(key)
+			builder.Write(encodedKey)
+		}
+		builder.WriteString(": ")
+		if err := writeJSValue(builder, value[key], indent+2); err != nil {
+			return err
+		}
+		builder.WriteString(",")
+	}
+	builder.WriteString("\n")
+	builder.WriteString(strings.Repeat(" ", indent))
+	builder.WriteString("}")
+	return nil
+}
+
 func (h *ConfigMapBuilder) GetConfigMapName() string {
 	return h.configMap.Name()
 }
@@ -176,6 +281,15 @@ func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error)
 		}
 		if descriptor.Format == ConfigFormatJsonWithJsPrologue {
 			serializedConfig = append([]byte(JsPrologue), serializedConfig...)
+		}
+	case ConfigFormatJsModule:
+		config := map[string]interface{}{}
+		if err := yson.Unmarshal(serializedConfig, &config); err != nil {
+			return nil, err
+		}
+		serializedConfig, err = renderJSModule(config)
+		if err != nil {
+			return nil, err
 		}
 	case ConfigFormatToml:
 		var config any
