@@ -7,7 +7,7 @@ metadata:
 spec:
   # https://ytsaurus.tech/docs/en/admin-guide/releases#ytsaurus-server
   # remove "-relwithdebinfo" for image without debug symbols
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1-relwithdebinfo
 
   # Allow updating everything at once
   updatePlan:
@@ -168,7 +168,7 @@ spec:
     resources:
       limits:
         memory: 100Mi
-    image: ghcr.io/ytsaurus/strawberry:0.0.17
+    image: ghcr.io/ytsaurus/strawberry:0.0.18
 
   tabletNodes:
     - instanceCount: 1
