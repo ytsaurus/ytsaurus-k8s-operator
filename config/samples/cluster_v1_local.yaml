@@ -161,7 +161,7 @@ spec:
     resources:
       limits:
         memory: 100Mi
-    image: ghcr.io/ytsaurus/strawberry:0.0.17
+    image: ghcr.io/ytsaurus/strawberry:0.0.18
 
   tabletNodes:
     - instanceCount: 1
