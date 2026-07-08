@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
+	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 type PatchTarget interface {
@@ -25,6 +27,39 @@ func ypathIsAbsolute(path ypath.Path) bool {
 	return err == nil && tokens[0] == string(ypath.Root)
 }
 
+func (t *CypressPatchTarget) SetNode(ctx context.Context, dst ypath.YPath, value any, options *yt.SetNodeOptions) error {
+retry:
+	err := t.Client.SetNode(ctx, dst, value, options)
+
+	// Handle recursion when setting nested attributes without parents.
+	// Workaround for bug: https://github.com/ytsaurus/ytsaurus/issues/1729
+	// NOTE: Does not handle setting all attributes at once "/@", "/begin", "/end", etc.
+	// NOTE: Will loose path attributes for Rich path argument due to ypath design flaw.
+	if err != nil && yterrors.ContainsResolveError(err) && options != nil && options.Recursive && strings.Contains(string(dst.YPath()), "/@") {
+		parent, child, err2 := ypath.Split(dst.YPath())
+		if err2 != nil {
+			return err2
+		}
+		// SetNode node/@parent/child value -> SetNode node/@parent {child=value}
+		if !strings.HasPrefix(child, "/@") {
+			dst = parent
+			value = map[string]any{child[1:]: value}
+			goto retry
+		}
+		// SetNode parent/@child value -> CreateNode parent {child=value}
+		_, err = t.Client.CreateNode(ctx, parent, yt.NodeMap, &yt.CreateNodeOptions{
+			Recursive:             true,
+			Attributes:            map[string]any{child[2:]: value},
+			TransactionOptions:    options.TransactionOptions,
+			AccessTrackingOptions: options.AccessTrackingOptions,
+			MutatingOptions:       options.MutatingOptions,
+			PrerequisiteOptions:   options.PrerequisiteOptions,
+		})
+	}
+
+	return err
+}
+
 func (t *CypressPatchTarget) ApplyPatch(ctx context.Context, path ypath.Path, patch Patch) error {
 	setOpts := &yt.SetNodeOptions{
 		Recursive: true,  // Create parents
@@ -40,8 +75,8 @@ func (t *CypressPatchTarget) ApplyPatch(ctx context.Context, path ypath.Path, pa
 		switch op.Op {
 		case PatchOpAdd, PatchOpReplace:
 			if !t.DryRun {
-				// FIXME: check non existence or add.
-				err = t.Client.SetNode(ctx, dst, op.Value, setOpts)
+				// FIXME: check non existence on add.
+				err = t.SetNode(ctx, dst, op.Value, setOpts)
 			}
 		case PatchOpCopy, PatchOpMove:
 			src := op.From
@@ -53,7 +88,7 @@ func (t *CypressPatchTarget) ApplyPatch(ctx context.Context, path ypath.Path, pa
 				break
 			}
 			if !t.DryRun {
-				if err = t.Client.SetNode(ctx, dst, tmp, setOpts); err != nil {
+				if err = t.SetNode(ctx, dst, tmp, setOpts); err != nil {
 					break
 				}
 				if op.Op == PatchOpMove {
