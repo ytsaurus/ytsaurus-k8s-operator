@@ -52,7 +52,7 @@ spec:
       - command:
         - sleep
         - inf
-        image: ghcr.io/ytsaurus/sidecars:0.0.1
+        image: ghcr.io/ytsaurus/sidecars:0.0.2
         imagePullPolicy: Always
         name: hydra-persistence-uploader
         resources:
@@ -92,7 +92,7 @@ spec:
       - command:
         - sleep
         - inf
-        image: ghcr.io/ytsaurus/sidecars:0.0.1
+        image: ghcr.io/ytsaurus/sidecars:0.0.2
         imagePullPolicy: Always
         name: timbertruck
         resources:

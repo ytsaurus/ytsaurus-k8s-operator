@@ -60,7 +60,7 @@ spec:
         envFrom:
         - secretRef:
             name: yt-chyt-test-ytsaurus-secret
-        image: ghcr.io/ytsaurus/chyt:2.18.3
+        image: ghcr.io/ytsaurus/chyt:2.18.6
         name: ytsaurus-init
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
