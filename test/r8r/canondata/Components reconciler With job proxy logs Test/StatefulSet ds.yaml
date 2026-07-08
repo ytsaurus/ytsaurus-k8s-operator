@@ -1,10 +1,7 @@
-apiVersion: apps/v1
-kind: StatefulSet
 metadata:
   annotations:
     ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
-  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-discovery
@@ -34,7 +31,6 @@ spec:
     metadata:
       annotations:
         ytsaurus.tech/config-hash: <censored>
-      creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-discovery
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator

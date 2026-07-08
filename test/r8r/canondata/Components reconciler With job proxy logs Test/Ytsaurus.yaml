@@ -1,7 +1,4 @@
-apiVersion: cluster.ytsaurus.tech/v1
-kind: Ytsaurus
 metadata:
-  creationTimestamp: null
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components

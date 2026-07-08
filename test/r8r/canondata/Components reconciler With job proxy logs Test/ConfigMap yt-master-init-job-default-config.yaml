@@ -1,4 +1,3 @@
-apiVersion: v1
 data:
   client.yson: |-
     {
@@ -123,13 +122,11 @@ data:
     fi
 
     /usr/bin/yt remove //sys/@provision_lock -f
-kind: ConfigMap
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/init-job-reason: ClusterInitialization
     ytsaurus.tech/observed-generation: "1"
-  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master

@@ -1,9 +1,6 @@
-apiVersion: batch/v1
-kind: Job
 metadata:
   annotations:
     ytsaurus.tech/observed-generation: "1"
-  creationTimestamp: null
   generation: 1
   labels:
     app.kubernetes.io/component: yt-master
@@ -27,7 +24,6 @@ spec:
   backoffLimit: 3
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app.kubernetes.io/component: yt-master
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
