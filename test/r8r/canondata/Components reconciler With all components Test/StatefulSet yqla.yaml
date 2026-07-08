@@ -71,7 +71,7 @@ spec:
           value: "0"
         - name: YT_FORCE_IPV6
           value: "0"
-        image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+        image: ghcr.io/ytsaurus/query-tracker:0.1.2
         name: ytserver
         ports:
         - containerPort: 10019
@@ -149,7 +149,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+        image: ghcr.io/ytsaurus/query-tracker:0.1.2
         name: prepare-locations
         resources:
           limits:
@@ -200,7 +200,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+        image: ghcr.io/ytsaurus/query-tracker:0.1.2
         name: postprocess-config
         resources:
           limits:
