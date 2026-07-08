@@ -78,10 +78,10 @@ func init() {
 
 	// Seed some default versions if nothing is set in environment.
 	defaultVersions := map[string]string{
-		"YTSAURUS_VERSION_LATEST":      "25.3.1",
-		"SIDECARS_VERSION_LATEST":      "0.0.1",
-		"STRAWBERRY_VERSION_LATEST":    "0.0.16",
-		"CHYT_VERSION_LATEST":          "2.18.2",
+		"YTSAURUS_VERSION_LATEST":      "25.4.0",
+		"SIDECARS_VERSION_LATEST":      "0.0.2",
+		"STRAWBERRY_VERSION_LATEST":    "0.0.18",
+		"CHYT_VERSION_LATEST":          "2.19.0",
 		"QUERY_TRACKER_VERSION_LATEST": "0.1.2",
 	}
 
