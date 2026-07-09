@@ -17,9 +17,16 @@ type MasterCache struct {
 
 	cfgen          *ytconfig.Generator
 	ytsaurusClient internalYtsaurusClient
+
+	master Component
 }
 
-func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient) *MasterCache {
+func NewMasterCache(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	yc internalYtsaurusClient,
+	master Component,
+) *MasterCache {
 	l := cfgen.GetComponentLabeller(consts.MasterCacheType, "")
 
 	resource := ytsaurus.GetResource()
@@ -45,6 +52,7 @@ func NewMasterCache(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc i
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		ytsaurusClient:  yc,
+		master:          master,
 	}
 }
 
@@ -62,6 +70,11 @@ func (mc *MasterCache) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 		if mc.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			return ComponentStatusReady(), nil
 		}
+	}
+
+	// Do not start until masters are running, otherwise may cache incomplete ClusterMeta.
+	if masterStatus := mc.master.GetStatus(); !masterStatus.IsRunning() {
+		return masterStatus.Blocker(), nil
 	}
 
 	if mc.NeedSync() {
