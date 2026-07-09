@@ -15,6 +15,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -22,7 +23,6 @@ type StrawberryController struct {
 	microserviceComponent
 
 	cfgen              *ytconfig.Generator
-	initUserAndUrlJob  *InitJob
 	initChytClusterJob *InitJob
 	secret             *resources.StringSecret
 	caRootBundle       *resources.CABundle
@@ -30,9 +30,9 @@ type StrawberryController struct {
 	busClientSecret    *resources.TLSSecret
 	busServerSecret    *resources.TLSSecret
 
-	master    Component
-	scheduler Component
-	dataNodes []Component
+	ytsaurusClient *YtsaurusClient
+	scheduler      Component
+	dataNodes      []Component
 
 	name string
 	spec *ytv1.StrawberryControllerSpec
@@ -44,7 +44,7 @@ const ChytInitClusterJobConfigFileName = "chyt-init-cluster.yson"
 func NewStrawberryController(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
-	master Component,
+	client *YtsaurusClient,
 	scheduler Component,
 	dataNodes []Component,
 ) *StrawberryController {
@@ -102,16 +102,6 @@ func NewStrawberryController(
 		},
 
 		cfgen: cfgen,
-		initUserAndUrlJob: NewInitJobForYtsaurus(
-			l,
-			ytsaurus,
-			"user",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
-			&ytv1.InstanceSpec{
-				PodSpec: resource.Spec.StrawberryController.PodSpec,
-			},
-		),
 		initChytClusterJob: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
@@ -133,39 +123,32 @@ func NewStrawberryController(
 		busServerSecret: busServerSecret,
 		name:            "strawberry",
 		spec:            resource.Spec.StrawberryController,
-		master:          master,
+		ytsaurusClient:  client,
 		scheduler:       scheduler,
 		dataNodes:       dataNodes,
 	}
 }
 
 func (c *StrawberryController) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, c.microservice, c.initUserAndUrlJob, c.initChytClusterJob, c.secret)
+	return resources.Fetch(ctx, c.microservice, c.initChytClusterJob, c.secret)
 }
 
 func (c *StrawberryController) Exists() bool {
-	return resources.Exists(c.microservice, c.initUserAndUrlJob, c.initChytClusterJob, c.secret)
+	return resources.Exists(c.microservice, c.initChytClusterJob, c.secret)
 }
 
-func (c *StrawberryController) initUsers() string {
-	token, _ := c.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.StrawberryControllerUserName, "", token, true)
-	return strings.Join(commands, "\n")
-}
-
-func (c *StrawberryController) createInitUserAndUrlScript() string {
-	script := []string{
-		initJobWithNativeDriverPrologue(),
-		c.initUsers(),
-		RunIfNonexistent("//sys/@ui_config", "yt set //sys/@ui_config '{}'"),
-		fmt.Sprintf("yt set //sys/@ui_config/chyt_controller_base_url '\"http://%v.%v.svc.%v:%v\"'",
-			c.microservice.getHttpService().Name(),
-			c.labeller.GetNamespace(),
-			c.labeller.GetClusterDomain(),
-			consts.StrawberryHTTPAPIPort),
+func (c *StrawberryController) GetCypressPatch() ypatch.PatchSet {
+	// FIXME(khlebnikov): This must be HTTPS.
+	baseUrl := fmt.Sprintf("http://%v.%v.svc.%v:%v",
+		c.microservice.getHttpService().Name(),
+		c.labeller.GetNamespace(),
+		c.labeller.GetClusterDomain(),
+		consts.StrawberryHTTPAPIPort)
+	return ypatch.PatchSet{
+		"//sys/@ui_config": {
+			ypatch.Replace("/chyt_controller_base_url", baseUrl),
+		},
 	}
-
-	return strings.Join(script, "\n")
 }
 
 func (c *StrawberryController) getCommand(action, config string) []string {
@@ -285,10 +268,6 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 		}
 	}
 
-	if masterStatus := c.master.GetStatus(); !masterStatus.IsRunning() {
-		return masterStatus.Blocker(), nil
-	}
-
 	if schStatus := c.scheduler.GetStatus(); !schStatus.IsRunning() {
 		return schStatus.Blocker(), err
 	}
@@ -299,30 +278,14 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 		}
 	}
 
-	if c.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := c.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: c.cfgen.GenerateToken(),
-			}
-			err = c.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(c.secret.Name()), err
-	}
-
-	if !dry {
-		c.initUserAndUrlJob.SetInitScript(c.createInitUserAndUrlScript())
-	}
-	status, err := c.initUserAndUrlJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
+	if status, err := SyncUserToken(ctx, c.ytsaurusClient, c.secret, consts.StrawberryControllerUserName, consts.SuperusersGroupName, dry); err != nil || !status.IsRunning() {
 		return status, err
 	}
 
 	if !dry {
 		c.prepareInitChytClusterJob()
 	}
-	status, err = c.initChytClusterJob.Sync(ctx, dry)
-	if err != nil || status.SyncStatus != SyncStatusReady {
+	if status, err := c.initChytClusterJob.Sync(ctx, dry); err != nil || !status.IsReady() {
 		return status, err
 	}
 

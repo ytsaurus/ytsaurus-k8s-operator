@@ -31,7 +31,7 @@ func getQueueAgentServerCarcass(spec *ytv1.QueueAgentSpec) (QueueAgentServer, er
 	c.RPCPort = consts.QueueAgentRPCPort
 
 	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.QueueAgentMonitoringPort)
-	c.User = "queue_agent"
+	c.User = consts.QueueAgentUserName
 	c.QueueAgent.Stage = "production"
 
 	c.Logging = getQueueAgentLogging(spec)

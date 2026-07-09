@@ -16,7 +16,6 @@ import (
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
 	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yterrors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -151,50 +150,6 @@ func WaitTabletCellHealth(ctx context.Context, ytClient yt.Client, cellID yt.Nod
 		return true, nil
 	}
 	return false, nil
-}
-
-func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string, isSuperuser bool) error {
-	var err error
-
-	_, err = ytClient.CreateObject(ctx, yt.NodeUser, &yt.CreateObjectOptions{
-		IgnoreExisting: true,
-		Attributes: map[string]interface{}{
-			"name": userName,
-		}})
-	if err != nil {
-		return err
-	}
-
-	if token != "" {
-		tokenHash := sha256String(token)
-		tokenPath := fmt.Sprintf("//sys/cypress_tokens/%s", tokenHash)
-
-		_, err := ytClient.CreateNode(
-			ctx,
-			ypath.Path(tokenPath),
-			yt.NodeMap,
-			&yt.CreateNodeOptions{
-				IgnoreExisting: true,
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		err = ytClient.SetNode(ctx, ypath.Path(tokenPath).Attr("user"), userName, nil)
-		if err != nil {
-			return err
-		}
-	}
-
-	if isSuperuser {
-		err = ytClient.AddMember(ctx, "superusers", userName, nil)
-		if err != nil && !yterrors.ContainsErrorCode(err, yterrors.CodeAlreadyPresentInGroup) {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
@@ -700,8 +655,4 @@ func getNodeSelectorWithDefault(componentNodeSelector, defaultNodeSelector map[s
 		return componentNodeSelector
 	}
 	return defaultNodeSelector
-}
-
-func buildUserCredentialsSecretname(username string) string {
-	return fmt.Sprintf("%s-secret", username)
 }

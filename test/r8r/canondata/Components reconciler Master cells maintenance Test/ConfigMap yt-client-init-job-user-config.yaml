@@ -71,7 +71,7 @@ data:
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>
-    ytsaurus.tech/init-job-reason: InitJob
+    ytsaurus.tech/init-job-reason: BootstrapToken
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:

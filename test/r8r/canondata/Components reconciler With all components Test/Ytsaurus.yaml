@@ -2,7 +2,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "18"
+  resourceVersion: "20"
 spec:
   adminCredentials:
     name: test-ytsaurus-admin
@@ -473,47 +473,11 @@ status:
     status: "True"
     type: RpcProxyReady
   - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: SchedulerReady
-  - lastTransitionTime: null
-    message: Job yt-ui-init-job-default completed in -1ns
-    observedGeneration: 1
-    reason: InitJob
-    status: "True"
-    type: defaultUIInitJobCompleted
-  - lastTransitionTime: null
-    message: Job yt-yql-agent-init-job-yql-agent-environment completed in -1ns
-    observedGeneration: 1
-    reason: YQLAgentInit
-    status: "True"
-    type: yql-agent-environmentYqlAgentInitJobCompleted
-  - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 0, running 0, need 0'
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: UIReady
-  - lastTransitionTime: null
     message: Job yt-client-init-job-user completed in -1ns
     observedGeneration: 1
-    reason: InitJob
+    reason: BootstrapToken
     status: "True"
     type: userYtsaurusClientInitJobCompleted
-  - lastTransitionTime: null
-    message: Ready
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: YqlAgentReady
-  - lastTransitionTime: null
-    message: Job yt-strawberry-controller-init-job-user completed in -1ns
-    observedGeneration: 1
-    reason: InitJob
-    status: "True"
-    type: userStrawberryControllerInitJobCompleted
   - lastTransitionTime: null
     message: Cypress operations skipped
     observedGeneration: 1
@@ -533,11 +497,35 @@ status:
     status: "True"
     type: TimbertruckReady
   - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 0, running 0, need 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: UIReady
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: SchedulerReady
+  - lastTransitionTime: null
+    message: Job yt-yql-agent-init-job-yql-agent-environment completed in -1ns
+    observedGeneration: 1
+    reason: YQLAgentInit
+    status: "True"
+    type: yql-agent-environmentYqlAgentInitJobCompleted
+  - lastTransitionTime: null
     message: Job yt-strawberry-controller-init-job-cluster completed in -1ns
     observedGeneration: 1
     reason: InitJob
     status: "True"
     type: clusterStrawberryControllerInitJobCompleted
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: YqlAgentReady
   - lastTransitionTime: null
     message: Ready
     observedGeneration: 1

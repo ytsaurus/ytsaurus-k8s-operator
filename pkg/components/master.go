@@ -114,7 +114,11 @@ func NewMaster(
 
 	var uploaderSecret *resources.StringSecret
 	if mastersSpec.HydraPersistenceUploader != nil {
-		uploaderSecret = resources.NewStringSecret(buildUserCredentialsSecretname(consts.HydraPersistenceUploaderUserName), l, ytsaurus)
+		uploaderSecret = resources.NewStringSecret(
+			l.GetSecretNameForUser(consts.HydraPersistenceUploaderUserName),
+			l,
+			ytsaurus,
+		)
 	}
 
 	return &Master{

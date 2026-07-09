@@ -78,14 +78,6 @@ data:
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
-    /usr/bin/yt create user --attributes '{name="yql_agent"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/681aebf18d40db2dfb4a6cc03678492e3abc6d2a004f5312c53a6a2cfd0bdee8' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/681aebf18d40db2dfb4a6cc03678492e3abc6d2a004f5312c53a6a2cfd0bdee8/@user' 'yql_agent'
-    /usr/bin/yt add-member yql_agent superusers || true
-    while [ "$(/usr/bin/yt check-permission --format json yql_agent administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
-    /usr/bin/yt create user --attributes '{name="yql_agent_exec"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/15930b4157092c4b204d525793a12838421eb855877ff25a2b0332c53aa2256b' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/15930b4157092c4b204d525793a12838421eb855877ff25a2b0332c53aa2256b/@user' 'yql_agent_exec'
     /usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing
     /usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%false;addresses=["yqla-0.yql-agents.ytsaurus-components.svc.cluster.local:9019";]}}}}'
     /usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/test-ytsaurus

@@ -22,14 +22,13 @@ type YqlAgent struct {
 	serverComponent
 
 	cfgen           *ytconfig.Generator
-	master          Component
 	ytsaurusClient  internalYtsaurusClient
 	initEnvironment *InitJob
 	secret          *resources.StringSecret
 	execSecret      *resources.StringSecret
 }
 
-func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient, master Component) *YqlAgent {
+func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient) *YqlAgent {
 	l := cfgen.GetComponentLabeller(consts.YqlAgentType, "")
 
 	resource := ytsaurus.GetResource()
@@ -60,7 +59,6 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 	return &YqlAgent{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
-		master:          master,
 		ytsaurusClient:  yc,
 		initEnvironment: NewInitJobForYtsaurus(
 			l,
@@ -107,16 +105,6 @@ func (yqla *YqlAgent) GetCypressPatch() ypatch.PatchSet {
 	}
 }
 
-func (yqla *YqlAgent) initUsers() string {
-	token, _ := yqla.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand(consts.YQLAgentUserName, "", token, true)
-	if yqla.execSecret != nil {
-		execToken, _ := yqla.execSecret.GetValue(consts.TokenSecretKey)
-		commands = append(commands, createUserCommand(consts.YQLAgentExecUserName, "", execToken, false)...)
-	}
-	return strings.Join(commands, "\n")
-}
-
 func (yqla *YqlAgent) scriptDQInit() TextGeneratorFunc {
 	if yqla.execSecret == nil {
 		return PlainTextGenerator()
@@ -152,7 +140,6 @@ func (yqla *YqlAgent) createInitScript() TextGeneratorFunc {
 	yqlAgentAddrs := sb.String()
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		yqla.initUsers(),
 		"/usr/bin/yt create document //sys/yql_agent/config --attributes '{value={}}' --recursive --ignore-existing",
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent '{stages={production={channel={disable_balancing_on_single_address=%%false;addresses=%v}}}}'", yqlAgentAddrs),
 		fmt.Sprintf("/usr/bin/yt get //sys/@cluster_connection | /usr/bin/yt set //sys/clusters/%s", yqla.labeller.GetClusterName()),
@@ -166,7 +153,6 @@ func (yqla *YqlAgent) createInitScript() TextGeneratorFunc {
 func (yqla *YqlAgent) createUpdateScript() TextGeneratorFunc {
 	script := []string{
 		initJobWithNativeDriverPrologue(),
-		yqla.initUsers(),
 		fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/yql_agent/stages/production/channel/disable_balancing_on_single_address '%%false'"),
 	}
 	return JoinTextGenerators(
@@ -195,30 +181,14 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		}
 	}
 
-	if masterStatus := yqla.master.GetStatus(); !masterStatus.IsRunning() {
-		return masterStatus.Blocker(), nil
+	if status, err := SyncUserToken(ctx, yqla.ytsaurusClient, yqla.secret, consts.YQLAgentUserName, consts.SuperusersGroupName, dry); err != nil || !status.IsRunning() {
+		return status, err
 	}
 
-	if yqla.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := yqla.secret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: yqla.cfgen.GenerateToken(),
-			}
-			err = yqla.secret.Sync(ctx)
+	if yqla.execSecret != nil {
+		if status, err := SyncUserToken(ctx, yqla.ytsaurusClient, yqla.execSecret, consts.YQLAgentExecUserName, "", dry); err != nil || !status.IsRunning() {
+			return status, err
 		}
-		return ComponentStatusWaitingFor(yqla.secret.Name()), err
-	}
-
-	if yqla.execSecret != nil && yqla.execSecret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			s := yqla.execSecret.Build()
-			s.StringData = map[string]string{
-				consts.TokenSecretKey: yqla.cfgen.GenerateToken(),
-			}
-			err = yqla.execSecret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(yqla.execSecret.Name()), err
 	}
 
 	if yqla.ytsaurus.IsReadyForInitJobs() && !yqla.initEnvironment.IsCompleted() {

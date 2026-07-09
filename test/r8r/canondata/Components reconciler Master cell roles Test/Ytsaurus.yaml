@@ -234,7 +234,7 @@ status:
   - lastTransitionTime: null
     message: Job yt-client-init-job-user completed in -1ns
     observedGeneration: 1
-    reason: InitJob
+    reason: BootstrapToken
     status: "True"
     type: userYtsaurusClientInitJobCompleted
   - lastTransitionTime: null

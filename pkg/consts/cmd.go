@@ -51,6 +51,9 @@ const (
 	SSLCertDirKey       = "SSL_CERT_DIR"
 	RequestsCABundleKey = "REQUESTS_CA_BUNDLE"
 
+	// Bootstrap token is used only for issuing normal token via YT HTTP API
+	BootstrapTokenSecretKey = "YT_BOOTSTRAP_TOKEN"
+
 	TokenSecretKey = "YT_TOKEN"
 	TokenFileName  = "token"
 )
@@ -106,6 +109,8 @@ const (
 
 	SecureVaultEnvPrefix = "YT_SECURE_VAULT_"
 )
+
+const DefaultCABundlePath = "/etc/ssl/certs/ca-certificates.crt"
 
 const (
 	HTTPSSecretUpdatePeriod = time.Second * 60

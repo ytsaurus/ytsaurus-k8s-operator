@@ -22,6 +22,8 @@ const (
 
 	InitJobReasonAnnotationName = "ytsaurus.tech/init-job-reason"
 
+	UserNameAnnotationName = "ytsaurus.tech/user-name"
+
 	// Instance hash is computed from template of pod spec.
 	InstanceHashAnnotationName = "ytsaurus.tech/instance-hash"
 

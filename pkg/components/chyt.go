@@ -81,7 +81,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 
 func (c *Chyt) createInitUserScript() string {
 	token, _ := c.secret.GetValue(consts.TokenSecretKey)
-	commands := createUserCommand("chyt_releaser", "", token, true)
+	commands := createUserCommand(consts.ChytReleaserUserName, "", token, true)
 	script := []string{
 		initJobWithNativeDriverPrologue(),
 	}

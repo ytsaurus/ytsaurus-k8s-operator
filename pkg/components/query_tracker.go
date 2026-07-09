@@ -110,15 +110,8 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 		}
 	}
 
-	if qt.secret.NeedSync(consts.TokenSecretKey, "") {
-		if !dry {
-			secretSpec := qt.secret.Build()
-			secretSpec.StringData = map[string]string{
-				consts.TokenSecretKey: qt.cfgen.GenerateToken(),
-			}
-			err = qt.secret.Sync(ctx)
-		}
-		return ComponentStatusWaitingFor(qt.secret.Name()), err
+	if status, err := SyncUserToken(ctx, qt.ytsaurusClient, qt.secret, consts.QueryTrackerUserName, consts.SuperusersGroupName, dry); err != nil || !status.IsRunning() {
+		return status, err
 	}
 
 	// TODO: Refactor this mess.
@@ -168,15 +161,6 @@ func (qt *QueryTracker) setup(ctx context.Context, dry bool) (ComponentStatus, e
 		}
 	}
 
-	if qt.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
-		if !dry {
-			err = qt.createUser(ctx, ytClient)
-			if err != nil {
-				return ComponentStatusWaitingFor("create qt user"), err
-			}
-		}
-	}
-
 	if !dry {
 		err = qt.init(ctx, ytClient)
 		if err != nil {
@@ -203,19 +187,6 @@ func (qt *QueryTracker) setup(ctx context.Context, dry bool) (ComponentStatus, e
 		return ComponentStatusReady(), err
 	}
 	return ComponentStatusWaitingFor("setting %s condition", qt.initCondition), err
-}
-
-func (qt *QueryTracker) createUser(ctx context.Context, ytClient yt.Client) (err error) {
-	logger := log.FromContext(ctx)
-
-	token, _ := qt.secret.GetValue(consts.TokenSecretKey)
-	err = CreateUser(ctx, ytClient, "query_tracker", token, true)
-	if err != nil {
-		logger.Error(err, "Creating user 'query_tracker' failed")
-		return err
-	}
-
-	return nil
 }
 
 func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error) {
@@ -257,7 +228,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 			"stages": map[string]interface{}{
 				"production": map[string]interface{}{
 					"root":    "//sys/query_tracker",
-					"user":    "query_tracker",
+					"user":    consts.QueryTrackerUserName,
 					"channel": map[string]interface{}{"addresses": qt.cfgen.GetQueryTrackerAddresses()},
 				},
 			},

@@ -369,6 +369,25 @@
     namespace: ytsaurus-components
     resourceVersion: "9"
   lastTimestamp: null
+  message: Issuing bootstrap token for robot-ytsaurus-k8s-operator
+  metadata:
+    namespace: ytsaurus-components
+  reason: Bootstrap
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "9"
+  lastTimestamp: null
   message: Created YT object yt-client-secret (*v1.Secret)
   metadata:
     namespace: ytsaurus-components

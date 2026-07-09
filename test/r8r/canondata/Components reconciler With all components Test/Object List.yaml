@@ -505,25 +505,10 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: robot-timbertruck
   generation: 1
-  labels:
-    app.kubernetes.io/component: yt-timbertruck
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-timbertruck
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-timbertruck
-    ytsaurus.tech/cluster-name: test-ytsaurus
   name: robot-timbertruck-secret
   namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
@@ -750,7 +735,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
-    ytsaurus.tech/init-job-reason: InitJob
+    ytsaurus.tech/init-job-reason: BootstrapToken
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
@@ -773,6 +758,7 @@
 - annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: robot-ytsaurus-k8s-operator
   generation: 1
   labels:
     app.kubernetes.io/component: yt-client
@@ -1235,6 +1221,18 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
+    ytsaurus.tech/user-name: query_tracker
+  generation: 1
+  name: yt-query-tracker-secret
+  namespace: ytsaurus-components
+  resourceVersion: "1"
+- annotations:
+    ytsaurus.tech/user-name: queue_agent
+  generation: 1
+  name: yt-queue-agent-secret
+  namespace: ytsaurus-components
+  resourceVersion: "1"
+- annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
     ytsaurus.tech/config-overrides-version: "1"
@@ -1323,25 +1321,10 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: operation_archivarius
   generation: 1
-  labels:
-    app.kubernetes.io/component: yt-scheduler
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-scheduler
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-scheduler
-    ytsaurus.tech/cluster-name: test-ytsaurus
   name: yt-scheduler-secret
   namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
@@ -1411,69 +1394,10 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: robot-strawberry-controller
   generation: 1
-  labels:
-    app.kubernetes.io/component: yt-strawberry-controller
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-strawberry-controller
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-strawberry-controller
-    ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-strawberry-controller-init-job-user
-  namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
-  resourceVersion: "2"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-hash: <censored>
-    ytsaurus.tech/init-job-reason: InitJob
-    ytsaurus.tech/observed-generation: "1"
-  generation: 1
-  labels:
-    app.kubernetes.io/component: yt-strawberry-controller
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-strawberry-controller
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-strawberry-controller
-    ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-strawberry-controller-init-job-user-config
-  namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
-  resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
-  generation: 1
-  labels:
-    app.kubernetes.io/component: yt-strawberry-controller
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-strawberry-controller
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-strawberry-controller
-    ytsaurus.tech/cluster-name: test-ytsaurus
   name: yt-strawberry-controller-secret
   namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
@@ -1499,69 +1423,10 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: robot-ui
   generation: 1
-  labels:
-    app.kubernetes.io/component: yt-ui
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-ui
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-ui
-    ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-ui-init-job-default
-  namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
-  resourceVersion: "2"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/config-hash: <censored>
-    ytsaurus.tech/init-job-reason: InitJob
-    ytsaurus.tech/observed-generation: "1"
-  generation: 1
-  labels:
-    app.kubernetes.io/component: yt-ui
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-ui
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-ui
-    ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-ui-init-job-default-config
-  namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
-  resourceVersion: "1"
-- annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
-  generation: 1
-  labels:
-    app.kubernetes.io/component: yt-ui
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-ui
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-ui
-    ytsaurus.tech/cluster-name: test-ytsaurus
   name: yt-ui-secret
   namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
@@ -1587,25 +1452,10 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: yql_agent_exec
   generation: 1
-  labels:
-    app.kubernetes.io/component: yt-yql-agent
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-yql-agent
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-yql-agent
-    ytsaurus.tech/cluster-name: test-ytsaurus
   name: yt-yql-agent-exec-secret
   namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"
@@ -1673,25 +1523,10 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
-    extra-pod-annotation: "true"
-    ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: yql_agent
   generation: 1
-  labels:
-    app.kubernetes.io/component: yt-yql-agent
-    app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-yql-agent
-    app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-yql-agent
-    ytsaurus.tech/cluster-name: test-ytsaurus
   name: yt-yql-agent-secret
   namespace: ytsaurus-components
-  ownerReferences:
-  - apiVersion: cluster.ytsaurus.tech/v1
-    blockOwnerDeletion: true
-    controller: true
-    kind: Ytsaurus
-    name: test-ytsaurus
-    uid: ""
   resourceVersion: "1"
 - annotations:
     extra-pod-annotation: "true"

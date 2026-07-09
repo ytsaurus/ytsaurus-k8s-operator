@@ -24,7 +24,7 @@ func getQueryTrackerServerCarcass(spec *ytv1.QueryTrackerSpec) (QueryTrackerServ
 	var c QueryTrackerServer
 	c.RPCPort = consts.QueryTrackerRPCPort
 	c.MonitoringPort = ptr.Deref(spec.InstanceSpec.MonitoringPort, consts.QueryTrackerMonitoringPort)
-	c.User = "query_tracker"
+	c.User = consts.QueryTrackerUserName
 	c.CreateStateTablesOnStartup = true
 
 	c.Logging = getQueryTrackerLogging(spec)

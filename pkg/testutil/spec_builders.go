@@ -231,6 +231,37 @@ type YtsaurusBuilder struct {
 	YtsaurusAdminSecret *corev1.Secret
 }
 
+func (b *YtsaurusBuilder) ExpectedTokenSecrets() map[string]string {
+	tokens := map[string]string{
+		"yt-client-secret": consts.YtsaurusOperatorUserName,
+	}
+	if b.Ytsaurus.Spec.PrimaryMasters.Timbertruck != nil {
+		tokens["robot-timbertruck-secret"] = consts.TimbertruckUserName
+	}
+	if b.Ytsaurus.Spec.Schedulers != nil {
+		tokens["yt-scheduler-secret"] = consts.OperationArchivariusUserName
+	}
+	if b.Ytsaurus.Spec.QueryTrackers != nil {
+		tokens["yt-query-tracker-secret"] = consts.QueryTrackerUserName
+	}
+	if b.Ytsaurus.Spec.QueueAgents != nil {
+		tokens["yt-queue-agent-secret"] = consts.QueueAgentUserName
+	}
+	if b.Ytsaurus.Spec.YQLAgents != nil {
+		tokens["yt-yql-agent-secret"] = consts.YQLAgentUserName
+		if b.Ytsaurus.Spec.YQLAgents.DQEngine != nil {
+			tokens["yt-yql-agent-exec-secret"] = consts.YQLAgentExecUserName
+		}
+	}
+	if b.Ytsaurus.Spec.StrawberryController != nil {
+		tokens["yt-strawberry-controller-secret"] = consts.StrawberryControllerUserName
+	}
+	if b.Ytsaurus.Spec.UI != nil {
+		tokens["yt-ui-secret"] = consts.UIUserName
+	}
+	return tokens
+}
+
 func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
 	return ytv1.EmbeddedPersistentVolumeClaim{
 		EmbeddedObjectMetadata: ytv1.EmbeddedObjectMetadata{

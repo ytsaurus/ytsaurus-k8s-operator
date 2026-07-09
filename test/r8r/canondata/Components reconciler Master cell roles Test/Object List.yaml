@@ -286,7 +286,7 @@
   resourceVersion: "2"
 - annotations:
     ytsaurus.tech/config-hash: <censored>
-    ytsaurus.tech/init-job-reason: InitJob
+    ytsaurus.tech/init-job-reason: BootstrapToken
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
@@ -308,6 +308,7 @@
   resourceVersion: "1"
 - annotations:
     ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/user-name: robot-ytsaurus-k8s-operator
   generation: 1
   labels:
     app.kubernetes.io/component: yt-client
