@@ -90,6 +90,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/node-data
           name: node-data
+        - mountPath: /yt/data-node-logs
+          name: data-node-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -119,7 +121,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-store; '
+        - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-store; mkdir -p /yt/data-node-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -151,6 +153,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/node-data
           name: node-data
+        - mountPath: /yt/data-node-logs
+          name: data-node-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -202,6 +206,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/node-data
           name: node-data
+        - mountPath: /yt/data-node-logs
+          name: data-node-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -249,6 +255,15 @@ spec:
       resources:
         requests:
           storage: 10Gi
+    status: {}
+  - metadata:
+      name: data-node-logs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
     status: {}
 status:
   availableReplicas: 0

@@ -88,6 +88,8 @@ spec:
             cpu: "0"
             memory: "0"
         volumeMounts:
+        - mountPath: /yt/master-cache-logs
+          name: master-cache-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -117,7 +119,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; '
+        - 'echo ''Init locations''; mkdir -p /yt/master-cache-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -147,6 +149,8 @@ spec:
             cpu: "0"
             memory: "0"
         volumeMounts:
+        - mountPath: /yt/master-cache-logs
+          name: master-cache-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -196,6 +200,8 @@ spec:
             cpu: "0"
             memory: "0"
         volumeMounts:
+        - mountPath: /yt/master-cache-logs
+          name: master-cache-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -234,6 +240,16 @@ spec:
         secret:
           secretName: native-client-cert
   updateStrategy: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: master-cache-logs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+    status: {}
 status:
   availableReplicas: 0
   replicas: 0

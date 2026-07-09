@@ -112,6 +112,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/master-data
           name: master-data
+        - mountPath: /yt/master-logs
+          name: master-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -181,7 +183,7 @@ spec:
         - bash
         - -xc
         - 'echo ''Init locations''; mkdir -p /yt/master-data/master-changelogs; mkdir
-          -p /yt/master-data/master-snapshots; '
+          -p /yt/master-data/master-snapshots; mkdir -p /yt/master-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -213,6 +215,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/master-data
           name: master-data
+        - mountPath: /yt/master-logs
+          name: master-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -264,6 +268,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/master-data
           name: master-data
+        - mountPath: /yt/master-logs
+          name: master-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -313,6 +319,15 @@ spec:
       resources:
         requests:
           storage: 5Gi
+    status: {}
+  - metadata:
+      name: master-logs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
     status: {}
 status:
   availableReplicas: 0

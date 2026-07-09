@@ -654,6 +654,10 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	Context("With all components", func() {
 		BeforeEach(func() {
+			ytBuilder.DebugLogs = true
+			ytBuilder.CreateMinimal()
+			ytsaurus = ytBuilder.Ytsaurus
+
 			ytBuilder.WithAdminUser()
 			ytBuilder.WithOverrides()
 			ytBuilder.WithSecondaryMaster()

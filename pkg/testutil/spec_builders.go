@@ -179,6 +179,8 @@ var (
 	masterVolumeSize   = resource.MustParse("5Gi")
 	dataNodeVolumeSize = resource.MustParse("10Gi")
 	execNodeVolumeSize = resource.MustParse("5Gi")
+	logsVolumeSize     = resource.MustParse("1Gi")
+	logsSegmentSize    = resource.MustParse("100Mi")
 
 	defaultNodeResources = corev1.ResourceRequirements{
 		Requests: corev1.ResourceList{
@@ -218,6 +220,8 @@ type YtsaurusBuilder struct {
 	Chyt         *ytv1.Chyt
 	Spyt         *ytv1.Spyt
 
+	DebugLogs bool
+
 	// Set MinReadyInstanceCount for all components
 	MinReadyInstanceCount *int32
 
@@ -247,8 +251,18 @@ func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity)
 	}
 }
 
+func (b *YtsaurusBuilder) addLogsVolume(spec *ytv1.InstanceSpec, name string) {
+	if !b.DebugLogs {
+		return
+	}
+	path := fmt.Sprintf("/yt/%s", name)
+	spec.VolumeClaimTemplates = append(spec.VolumeClaimTemplates, b.CreateVolumeClaim(name, logsVolumeSize))
+	spec.VolumeMounts = append(spec.VolumeMounts, corev1.VolumeMount{Name: name, MountPath: path})
+	spec.Locations = append(spec.Locations, ytv1.LocationSpec{LocationType: ytv1.LocationTypeLogs, Path: path})
+}
+
 func (b *YtsaurusBuilder) CreateLoggersSpec() []ytv1.TextLoggerSpec {
-	return []ytv1.TextLoggerSpec{
+	loggers := []ytv1.TextLoggerSpec{
 		{
 			BaseLoggerSpec: ytv1.BaseLoggerSpec{
 				MinLogLevel: ytv1.LogLevelInfo,
@@ -257,6 +271,26 @@ func (b *YtsaurusBuilder) CreateLoggersSpec() []ytv1.TextLoggerSpec {
 			WriterType: ytv1.LogWriterTypeStderr,
 		},
 	}
+	if b.DebugLogs {
+		loggers = append(loggers, ytv1.TextLoggerSpec{
+			BaseLoggerSpec: ytv1.BaseLoggerSpec{
+				MinLogLevel: ytv1.LogLevelDebug,
+				Name:        "debug",
+				Format:      ytv1.LogFormatPlainText,
+				Compression: ytv1.LogCompressionZstd,
+				RotationPolicy: &ytv1.LogRotationPolicy{
+					MaxTotalSizeToKeep: ptr.To(logsVolumeSize),
+					MaxSegmentSize:     ptr.To(logsSegmentSize),
+				},
+			},
+			WriterType: ytv1.LogWriterTypeFile,
+			CategoriesFilter: &ytv1.CategoriesFilter{
+				Type:   ytv1.CategoriesFilterTypeExclude,
+				Values: []string{"Bus", "Concurrency"},
+			},
+		})
+	}
+	return loggers
 }
 
 func (b *YtsaurusBuilder) CreateMinimal() {
@@ -316,6 +350,8 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 			},
 		},
 	}
+	b.addLogsVolume(&b.Ytsaurus.Spec.Discovery.InstanceSpec, "discovery-logs")
+	b.addLogsVolume(&b.Ytsaurus.Spec.PrimaryMasters.InstanceSpec, "master-logs")
 }
 
 func (b *YtsaurusBuilder) WithAdminUser() {
@@ -444,6 +480,7 @@ func (b *YtsaurusBuilder) WithMasterCaches() {
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
+	b.addLogsVolume(&b.Ytsaurus.Spec.MasterCaches.InstanceSpec, "master-cache-logs")
 }
 
 func (b *YtsaurusBuilder) WithAllClusterFeatures() {
@@ -543,6 +580,7 @@ func (b *YtsaurusBuilder) WithScheduler() {
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
+	b.addLogsVolume(&b.Ytsaurus.Spec.Schedulers.InstanceSpec, "scheduler-logs")
 }
 
 func (b *YtsaurusBuilder) WithControllerAgents() {
@@ -554,6 +592,7 @@ func (b *YtsaurusBuilder) WithControllerAgents() {
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
+	b.addLogsVolume(&b.Ytsaurus.Spec.ControllerAgents.InstanceSpec, "controller-agent-logs")
 }
 
 func (b *YtsaurusBuilder) WithBootstrap() {
@@ -583,6 +622,7 @@ func (b *YtsaurusBuilder) WithQueryTracker() {
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
+	b.addLogsVolume(&b.Ytsaurus.Spec.QueryTrackers.InstanceSpec, "query-tracker-logs")
 }
 
 func (b *YtsaurusBuilder) WithYqlAgent() {
@@ -595,6 +635,7 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
+	b.addLogsVolume(&b.Ytsaurus.Spec.YQLAgents.InstanceSpec, "yql-agent-logs")
 }
 
 func (b *YtsaurusBuilder) WithYqlAgentDQ() {
@@ -623,6 +664,7 @@ func (b *YtsaurusBuilder) WithQueueAgent() {
 			Loggers:               b.CreateLoggersSpec(),
 		},
 	}
+	b.addLogsVolume(&b.Ytsaurus.Spec.QueueAgents.InstanceSpec, "queue-agent-logs")
 }
 
 func (b *YtsaurusBuilder) WithRPCProxies() {
@@ -634,7 +676,7 @@ func (b *YtsaurusBuilder) WithRPCProxies() {
 }
 
 func (b *YtsaurusBuilder) CreateHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
-	return ytv1.HTTPProxiesSpec{
+	spec := ytv1.HTTPProxiesSpec{
 		ServiceType: "NodePort",
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
@@ -644,11 +686,13 @@ func (b *YtsaurusBuilder) CreateHTTPProxiesSpec() ytv1.HTTPProxiesSpec {
 		},
 		HttpNodePort: getPortFromEnv("E2E_HTTP_PROXY_INTERNAL_PORT"),
 	}
+	b.addLogsVolume(&spec.InstanceSpec, "http-proxy-logs")
+	return spec
 }
 
 func (b *YtsaurusBuilder) CreateRPCProxiesSpec() ytv1.RPCProxiesSpec {
 	stype := corev1.ServiceTypeNodePort
-	return ytv1.RPCProxiesSpec{
+	spec := ytv1.RPCProxiesSpec{
 		ServiceType: &stype,
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
@@ -658,6 +702,8 @@ func (b *YtsaurusBuilder) CreateRPCProxiesSpec() ytv1.RPCProxiesSpec {
 		},
 		NodePort: getPortFromEnv("E2E_RPC_PROXY_INTERNAL_PORT"),
 	}
+	b.addLogsVolume(&spec.InstanceSpec, "rpc-proxy-logs")
+	return spec
 }
 
 func getPortFromEnv(envvar string) *int32 {
@@ -673,7 +719,7 @@ func getPortFromEnv(envvar string) *int32 {
 }
 
 func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
-	return ytv1.ExecNodesSpec{
+	spec := ytv1.ExecNodesSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			InstanceCount:         1,
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
@@ -701,6 +747,8 @@ func (b *YtsaurusBuilder) CreateExecNodeSpec() ytv1.ExecNodesSpec {
 		},
 		JobResources: execNodeJobResources.DeepCopy(),
 	}
+	b.addLogsVolume(&spec.InstanceSpec, "exec-node-logs")
+	return spec
 }
 
 func (b *YtsaurusBuilder) WithJobProxyLogs() {
@@ -757,7 +805,7 @@ func (b *YtsaurusBuilder) WithMetaxContainerRuntime() {
 }
 
 func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
-	return ytv1.InstanceSpec{
+	spec := ytv1.InstanceSpec{
 		InstanceCount:         instanceCount,
 		MinReadyInstanceCount: b.MinReadyInstanceCount,
 		Resources:             *dataNodeResources.DeepCopy(),
@@ -778,24 +826,30 @@ func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.I
 			},
 		},
 	}
+	b.addLogsVolume(&spec, "data-node-logs")
+	return spec
 }
 
 func (b *YtsaurusBuilder) CreateTabletNodeSpec(instanceCount int32) ytv1.InstanceSpec {
-	return ytv1.InstanceSpec{
+	spec := ytv1.InstanceSpec{
 		InstanceCount:         instanceCount,
 		MinReadyInstanceCount: b.MinReadyInstanceCount,
 		Resources:             *tabletNodeResources.DeepCopy(),
 		Loggers:               b.CreateLoggersSpec(),
 	}
+	b.addLogsVolume(&spec, "tablet-node-logs")
+	return spec
 }
 
 func (b *YtsaurusBuilder) CreateOffshoreInstanceSpec(instanceCount int32) ytv1.InstanceSpec {
-	return ytv1.InstanceSpec{
+	spec := ytv1.InstanceSpec{
 		InstanceCount:         instanceCount,
 		MinReadyInstanceCount: b.MinReadyInstanceCount,
 		Resources:             *defaultNodeResources.DeepCopy(),
 		Loggers:               b.CreateLoggersSpec(),
 	}
+	b.addLogsVolume(&spec, "offshore-data-gateway-logs")
+	return spec
 }
 
 func (b *YtsaurusBuilder) WithStrawberryController() {

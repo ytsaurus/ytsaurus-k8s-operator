@@ -11,6 +11,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -312,11 +313,16 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		namespaceWatcher.Start()
 		DeferCleanup(namespaceWatcher.Stop)
 
-		By("Creating minimal Ytsaurus spec")
 		ytBuilder = &testutil.YtsaurusBuilder{
 			Images:    testutil.CurrImages,
 			Namespace: namespace,
 		}
+		if debug, err := strconv.ParseBool(os.Getenv("E2E_DEBUG_LOGS")); err == nil && debug {
+			By("Enabling debug logs")
+			ytBuilder.DebugLogs = true
+		}
+
+		By("Creating minimal Ytsaurus spec")
 		ytBuilder.CreateMinimal()
 		ytBuilder.WithAdminUser()
 		ytsaurus = ytBuilder.Ytsaurus
