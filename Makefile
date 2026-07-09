@@ -102,7 +102,7 @@ SHELL = /usr/bin/env bash -o pipefail
 TEST_ENV ?= test-env.inc
 include ${TEST_ENV}
 
-## Debug options: 1|asan|msan|race, disable test parallelism, fail fast, keep artifacts.
+## Debug options: 1|asan|msan|race, disable test parallelism, fail fast, keep artifacts, fail - repeat until failure.
 DEBUG ?=
 
 ## Enable YTserver debug logs in e2e tests.
@@ -167,6 +167,10 @@ endif
 
 ifneq ($(DEBUG),)
 	GINKGO_FLAGS += --fail-fast
+endif
+
+ifeq ($(DEBUG),fail)
+	GINKGO_FLAGS += --until-it-fails
 endif
 
 ifeq ($(DRYRUN),)
