@@ -103,6 +103,10 @@ type AddressResolver struct {
 	LocalhostNameOverride *string `yson:"localhost_name_override,omitempty"`
 }
 
+type Stockpile struct {
+	ThreadCount *int `yson:"thread_count,omitempty"`
+}
+
 type StrawberryControllerFamiliesConfig struct {
 	ControllerFamilies []string `yson:"controller_families,omitempty"`
 	DefaultRouteFamily string   `yson:"default_route_family,omitempty"`
@@ -167,6 +171,7 @@ type BusServer struct {
 // BasicServer is used as a basic config for basic components, such as clocks or discovery.
 type BasicServer struct {
 	AddressResolver AddressResolver `yson:"address_resolver"`
+	Stockpile       *Stockpile      `yson:"stockpile,omitempty"`
 	SolomonExporter SolomonExporter `yson:"solomon_exporter"`
 	Logging         Logging         `yson:"logging"`
 	MonitoringPort  int32           `yson:"monitoring_port"`

@@ -479,7 +479,7 @@ func (g *NodeGenerator) fillCommonService(
 	s *ytv1.InstanceSpec,
 	component consts.ComponentType,
 ) {
-	// ToDo(psushin): enable porto resource tracker?
+	c.Stockpile = &Stockpile{ThreadCount: ptr.To(0)} // This is default since 25.3
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillSolomonExporter(&c.SolomonExporter, s.MetricExporter)
 	keyring := getMountKeyring(g.commonSpec, s.NativeTransport)
