@@ -100,6 +100,8 @@ spec:
             cpu: "0"
             memory: "0"
         volumeMounts:
+        - mountPath: /yt/http-proxy-logs
+          name: http-proxy-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -132,7 +134,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; '
+        - 'echo ''Init locations''; mkdir -p /yt/http-proxy-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -162,6 +164,8 @@ spec:
             cpu: "0"
             memory: "0"
         volumeMounts:
+        - mountPath: /yt/http-proxy-logs
+          name: http-proxy-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -211,6 +215,8 @@ spec:
             cpu: "0"
             memory: "0"
         volumeMounts:
+        - mountPath: /yt/http-proxy-logs
+          name: http-proxy-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -252,6 +258,16 @@ spec:
         secret:
           secretName: https-server-cert
   updateStrategy: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: http-proxy-logs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+    status: {}
 status:
   availableReplicas: 0
   replicas: 0

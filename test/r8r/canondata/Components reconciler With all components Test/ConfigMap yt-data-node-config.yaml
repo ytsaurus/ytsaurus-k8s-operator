@@ -14,6 +14,18 @@ data:
         };
         logging={
             writers={
+                debug={
+                    type=file;
+                    "file_name"="/yt/data-node-logs/data-node.debug.log.zstd";
+                    format="plain_text";
+                    "compression_method"=zstd;
+                    "enable_compression"=%true;
+                    "enable_system_messages"=%true;
+                    "rotation_policy"={
+                        "max_segment_size"=104857600;
+                        "max_total_size_to_keep"=1073741824;
+                    };
+                };
                 "info-stderr"={
                     type=stderr;
                     "file_name"="..";
@@ -26,6 +38,17 @@ data:
                     "min_level"=info;
                     writers=[
                         "info-stderr";
+                    ];
+                    family="plain_text";
+                };
+                {
+                    "exclude_categories"=[
+                        Bus;
+                        Concurrency;
+                    ];
+                    "min_level"=debug;
+                    writers=[
+                        debug;
                     ];
                     family="plain_text";
                 };

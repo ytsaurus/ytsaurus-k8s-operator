@@ -98,6 +98,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/node-data
           name: node-data
+        - mountPath: /yt/exec-node-logs
+          name: exec-node-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -165,6 +167,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/node-data
           name: node-data
+        - mountPath: /yt/exec-node-logs
+          name: exec-node-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -192,7 +196,7 @@ spec:
         - bash
         - -xc
         - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-cache; mkdir -p /yt/node-data/slots;
-          mkdir -p /yt/node-data/image-cache; '
+          mkdir -p /yt/exec-node-logs; mkdir -p /yt/node-data/image-cache; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -226,6 +230,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/node-data
           name: node-data
+        - mountPath: /yt/exec-node-logs
+          name: exec-node-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -279,6 +285,8 @@ spec:
         volumeMounts:
         - mountPath: /yt/node-data
           name: node-data
+        - mountPath: /yt/exec-node-logs
+          name: exec-node-logs
         - mountPath: /config_template
           name: config-template
           readOnly: true
@@ -336,6 +344,15 @@ spec:
       resources:
         requests:
           storage: 5Gi
+    status: {}
+  - metadata:
+      name: exec-node-logs
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
     status: {}
 status:
   availableReplicas: 0

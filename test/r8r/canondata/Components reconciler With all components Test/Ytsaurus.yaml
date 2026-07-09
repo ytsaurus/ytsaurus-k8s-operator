@@ -25,11 +25,28 @@ spec:
     name: test-overrides
   controllerAgents:
     instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/controller-agent-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -38,17 +55,45 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: controller-agent-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/controller-agent-logs
+      name: controller-agent-logs
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
   dataNodes:
   - instanceCount: 3
     locations:
     - locationType: ChunkStore
       path: /yt/node-data/chunk-store
+    - locationType: Logs
+      path: /yt/data-node-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -66,16 +111,43 @@ spec:
         resources:
           requests:
             storage: 10Gi
+    - metadata:
+        name: data-node-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data
+    - mountPath: /yt/data-node-logs
+      name: data-node-logs
   discovery:
     instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/discovery-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -84,6 +156,18 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: discovery-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/discovery-logs
+      name: discovery-logs
   dnsConfig:
     options:
     - name: global-dns-option
@@ -108,6 +192,8 @@ spec:
       path: /yt/node-data/chunk-cache
     - locationType: Slots
       path: /yt/node-data/slots
+    - locationType: Logs
+      path: /yt/exec-node-logs
     - locationType: ImageCache
       path: /yt/node-data/image-cache
     loggers:
@@ -115,6 +201,20 @@ spec:
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     privileged: false
     resources:
@@ -133,19 +233,46 @@ spec:
         resources:
           requests:
             storage: 5Gi
+    - metadata:
+        name: exec-node-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
     volumeMounts:
     - mountPath: /yt/node-data
       name: node-data
+    - mountPath: /yt/exec-node-logs
+      name: exec-node-logs
   extraPodAnnotations:
     extra-pod-annotation: "true"
   hostNetwork: true
   httpProxies:
   - instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/http-proxy-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -158,16 +285,45 @@ spec:
     transport:
       httpsSecret:
         name: https-server-cert
+    volumeClaimTemplates:
+    - metadata:
+        name: http-proxy-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/http-proxy-logs
+      name: http-proxy-logs
   imagePullSecrets:
   - name: global-image-pull-secrets
   jobImage: mirror.gcr.io/library/python:3.12-slim
   masterCaches:
     instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/master-cache-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -176,6 +332,18 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: master-cache-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/master-cache-logs
+      name: master-cache-logs
   nativeTransport:
     tlsClientSecret:
       name: native-client-cert
@@ -211,11 +379,27 @@ spec:
       path: /yt/master-data/master-changelogs
     - locationType: MasterSnapshots
       path: /yt/master-data/master-snapshots
+    - locationType: Logs
+      path: /yt/master-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     nodeSelector:
       instance-node-selector: "true"
@@ -245,17 +429,44 @@ spec:
         resources:
           requests:
             storage: 5Gi
+    - metadata:
+        name: master-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
+    - mountPath: /yt/master-logs
+      name: master-logs
   queryTrackers:
     image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
     instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/query-tracker-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -264,13 +475,42 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: query-tracker-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/query-tracker-logs
+      name: query-tracker-logs
   queueAgents:
     instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/queue-agent-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -279,13 +519,42 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: queue-agent-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/queue-agent-logs
+      name: queue-agent-logs
   rpcProxies:
   - instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/rpc-proxy-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -296,14 +565,43 @@ spec:
         memory: "0"
     serviceType: NodePort
     transport: {}
+    volumeClaimTemplates:
+    - metadata:
+        name: rpc-proxy-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/rpc-proxy-logs
+      name: rpc-proxy-logs
   runtimeClassName: global-runtime-class
   schedulers:
     instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/scheduler-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -312,6 +610,18 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: scheduler-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/scheduler-logs
+      name: scheduler-logs
   secondaryMasters:
   - cellTag: 2
     instanceCount: 1
@@ -320,11 +630,27 @@ spec:
       path: /yt/master-data/master-changelogs
     - locationType: MasterSnapshots
       path: /yt/master-data/master-snapshots
+    - locationType: Logs
+      path: /yt/master-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -342,9 +668,19 @@ spec:
         resources:
           requests:
             storage: 5Gi
+    - metadata:
+        name: master-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
     volumeMounts:
     - mountPath: /yt/master-data
       name: master-data
+    - mountPath: /yt/master-logs
+      name: master-logs
   setHostnameAsFqdn: false
   strawberry:
     image: ghcr.io/ytsaurus/strawberry:0.0.17
@@ -377,11 +713,28 @@ spec:
       workerCapacity: 128
     image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
     instanceCount: 1
+    locations:
+    - locationType: Logs
+      path: /yt/yql-agent-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
       useTimestampSuffix: false
       writerType: stderr
+    - categoriesFilter:
+        type: exclude
+        values:
+        - Bus
+        - Concurrency
+      compression: zstd
+      format: plain_text
+      minLogLevel: debug
+      name: debug
+      rotationPolicy:
+        maxSegmentSize: 100Mi
+        maxTotalSizeToKeep: 1Gi
+      useTimestampSuffix: false
+      writerType: file
     minReadyInstanceCount: 0
     resources:
       limits:
@@ -390,6 +743,18 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: yql-agent-logs
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    volumeMounts:
+    - mountPath: /yt/yql-agent-logs
+      name: yql-agent-logs
 status:
   conditions:
   - lastTransitionTime: null

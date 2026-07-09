@@ -105,6 +105,9 @@ include ${TEST_ENV}
 ## Debug options: 1|asan|msan|race, disable test parallelism, fail fast, keep artifacts.
 DEBUG ?=
 
+## Enable YTserver debug logs in e2e tests.
+E2E_DEBUG_LOGS ?= 0
+
 ## Dry run tests.
 DRYRUN ?=
 
