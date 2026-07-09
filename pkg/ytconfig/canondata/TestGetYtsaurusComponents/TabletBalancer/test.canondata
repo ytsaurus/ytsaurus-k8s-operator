@@ -4,6 +4,9 @@
         "enable_ipv6"=%false;
         retries=1000;
     };
+    stockpile={
+        "thread_count"=0;
+    };
     "solomon_exporter"={
         host="{POD_SHORT_HOSTNAME}";
         "instance_tags"={
