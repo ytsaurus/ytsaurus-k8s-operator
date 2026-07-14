@@ -34,7 +34,7 @@ type server interface {
 	podsManager
 
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32)
-	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool)
+	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, error)
 
 	needUpdate() ComponentStatus
 	needSync(updating bool) bool
@@ -484,8 +484,8 @@ func evaluateOnDeleteCompletion(pods []corev1.Pod, updateRevision string, replic
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
 
-	sts, ok := s.fetchAndValidateStatefulSet(ctx)
-	if !ok {
+	sts, err := s.fetchAndValidateStatefulSet(ctx)
+	if err != nil || sts == nil {
 		return false
 	}
 
@@ -762,7 +762,7 @@ func (s *serverImpl) setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategy
 }
 
 type stsRollingStatus struct {
-	partition         *int32
+	partition         int32
 	availableReplicas int32
 	updatedReplicas   int32
 	totalCount        int32
@@ -770,50 +770,64 @@ type stsRollingStatus struct {
 	currentRevision   string
 }
 
-func (s *serverImpl) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool) {
-	sts, ok := s.fetchAndValidateStatefulSet(ctx)
-	if !ok {
-		return nil, false
-	}
+// IsFinished is true when all pods are exposed and on the new revision.
+func (s stsRollingStatus) IsFinished() bool {
+	return s.partition == 0 && s.updatedReplicas == s.totalCount
+}
 
-	var partition *int32
+func (s stsRollingStatus) UnavailableReplicas() int32 {
+	return max(int32(0), s.totalCount-s.availableReplicas)
+}
+
+// InProgressReplicas counts pods committed to update (above partition) but not yet on the new revision.
+// This covers the timing window where partition was lowered but pods haven't restarted yet.
+func (s stsRollingStatus) InProgressReplicas() int32 {
+	return max(int32(0), s.totalCount-s.partition-s.updatedReplicas)
+}
+
+func (s stsRollingStatus) UnavailableOrInProgressReplicas() int32 {
+	// Take the larger of actual unavailability and in-progress count to avoid
+	// double-counting pods that are both in-progress and already unavailable.
+	return max(s.UnavailableReplicas(), s.InProgressReplicas())
+}
+
+func (s *serverImpl) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, error) {
+	sts, err := s.fetchAndValidateStatefulSet(ctx)
+	if err != nil || sts == nil {
+		return nil, err
+	}
+	var partition int32
 	if sts.Spec.UpdateStrategy.RollingUpdate != nil {
-		partition = sts.Spec.UpdateStrategy.RollingUpdate.Partition
+		partition = ptr.Deref(sts.Spec.UpdateStrategy.RollingUpdate.Partition, 0)
 	}
-
-	totalCount := int32(0)
-	if sts.Spec.Replicas != nil {
-		totalCount = *sts.Spec.Replicas
-	}
-
 	return &stsRollingStatus{
+		totalCount:        ptr.Deref(sts.Spec.Replicas, 1),
 		partition:         partition,
 		availableReplicas: sts.Status.AvailableReplicas,
 		updatedReplicas:   sts.Status.UpdatedReplicas,
-		totalCount:        totalCount,
 		updateRevision:    sts.Status.UpdateRevision,
 		currentRevision:   sts.Status.CurrentRevision,
-	}, true
+	}, nil
 }
 
 func (s *serverImpl) addMonitoringPort(port corev1.ServicePort) {
 	s.monitoringService.AddPort(port)
 }
 
-func (s *serverImpl) fetchAndValidateStatefulSet(ctx context.Context) (*appsv1.StatefulSet, bool) {
+func (s *serverImpl) fetchAndValidateStatefulSet(ctx context.Context) (*appsv1.StatefulSet, error) {
 	logger := log.FromContext(ctx)
 	if !resources.Exists(s.statefulSet) {
-		return nil, false
+		return nil, nil
 	}
 
 	if err := s.statefulSet.Fetch(ctx); err != nil {
 		logger.Error(err, "Failed to fetch StatefulSet status", "component", s.labeller.GetFullComponentName())
-		return nil, false
+		return nil, err
 	}
 
 	sts := s.statefulSet.OldObject()
 	if sts.Status.UpdateRevision == "" {
-		return nil, false
+		return nil, nil
 	}
 
 	// for race condition case when new revision is created but status not updated yet
@@ -822,7 +836,8 @@ func (s *serverImpl) fetchAndValidateStatefulSet(ctx context.Context) (*appsv1.S
 			"component", s.labeller.GetFullComponentName(),
 			"generation", sts.Generation,
 			"observedGeneration", sts.Status.ObservedGeneration)
-		return nil, false
+		return nil, nil
 	}
-	return sts, true
+
+	return sts, nil
 }
