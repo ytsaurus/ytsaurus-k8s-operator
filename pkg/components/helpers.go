@@ -429,61 +429,43 @@ func handleRollingUpdatingClusterState(
 		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
 	}
 
-	sts, ok := server.getRollingUpdateStatus(ctx)
-	if !ok {
-		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	roll, err := server.getRollingUpdateStatus(ctx)
+	if err != nil || roll == nil {
+		return ptr.To(ComponentStatusUpdateStep("rolling update is not ready")), err
 	}
-
-	totalCount := sts.totalCount
 
 	// Init guard: the StatefulSet still differs from desired spec (needUpdate=true),
 	// so this is the start of a new rolling cycle and we must initialize
 	// RollingUpdate strategy with a fresh partition/maxUnavailable.
 	if status := server.needUpdate(); status.IsNeedUpdate() {
-		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, totalCount-1, maxUnavailable)
+		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, roll.totalCount, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
 			return ptr.To(ComponentStatusBlocked("failed to initialize rolling update for %s", cmp.GetFullName())), err
 		}
-		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+		return ptr.To(ComponentStatusUpdateStep("rolling started")), nil
 	}
 
-	partition := *sts.partition
-
-	// Completion: all pods are exposed and on the new revision.
-	if partition == 0 && sts.updatedReplicas == totalCount {
+	if roll.IsFinished() {
 		setPodsUpdatedCondition(ctx, ytsaurus, cmp)
 		return nil, nil
 	}
 
-	// Budget calculation.
-	// inProgress: pods committed to update (below partition) but not yet on the new revision.
-	// This covers the timing window where partition was lowered but pods haven't restarted yet.
-	inProgress := max(int32(0), (totalCount-partition)-sts.updatedReplicas)
-	// effective: take the larger of actual unavailability and in-progress count to avoid
-	// double-counting pods that are both in-progress and already unavailable.
-	effective := max(totalCount-sts.availableReplicas, inProgress)
-	budget := maxUnavailable - effective
-
-	if partition == 0 {
-		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
-	}
-
-	if budget <= 0 {
-		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, effective, partition)
-		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
-	}
-
-	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
-		if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
-			return status, err
+	if wasted := roll.UnavailableOrInProgressReplicas(); wasted >= maxUnavailable {
+		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, wasted, roll.partition)
+	} else if roll.partition != 0 {
+		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
+				return status, err
+			}
+		}
+		// Advance rolling process one by one. Slow and steady.
+		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, roll.partition-1, maxUnavailable)
+		if err := server.Sync(ctx); err != nil {
+			return ptr.To(ComponentStatusBlocked("failed to advance rolling update partition for %s", cmp.GetFullName())), err
 		}
 	}
 
-	server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, partition-1, maxUnavailable)
-	if err := server.Sync(ctx); err != nil {
-		return ptr.To(ComponentStatusBlocked("failed to advance rolling update partition for %s", cmp.GetFullName())), err
-	}
-	return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
+	return ptr.To(ComponentStatusUpdating("Rolling update: %v of %v pods", roll.updatedReplicas, roll.totalCount)), nil
 }
 
 func setRollingBudgetExhaustedCondition(

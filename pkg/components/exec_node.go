@@ -133,13 +133,16 @@ func (n *ExecNode) drainExecNodeForRollingUpdate(ctx context.Context) ComponentS
 		return ComponentStatusBlocked("YT client is not available")
 	}
 
-	sts, ok := n.server.getRollingUpdateStatus(ctx)
-	if !ok || sts.partition == nil || *sts.partition == 0 {
+	roll, err := n.server.getRollingUpdateStatus(ctx)
+	if err != nil {
+		return ComponentStatusBlocked("Error: %v", err)
+	}
+	if roll == nil || roll.partition == 0 {
 		return ComponentStatusReady()
 	}
 
-	partition := int(*sts.partition)
-	totalCount := int(sts.totalCount)
+	partition := int(roll.partition)
+	totalCount := int(roll.totalCount)
 
 	// Drain the pod about to be updated (at partition-1).
 	if s := n.drainExecNode(ctx, ytClient, partition-1); s.SyncStatus != SyncStatusReady {

@@ -182,8 +182,8 @@ func (fs *FakeServer) listPods(ctx context.Context) ([]corev1.Pod, error) {
 	return nil, nil
 }
 
-func (fs *FakeServer) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, bool) {
-	return nil, false
+func (fs *FakeServer) getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, error) {
+	return nil, nil
 }
 
 func (fs *FakeServer) Sync(ctx context.Context) error {
