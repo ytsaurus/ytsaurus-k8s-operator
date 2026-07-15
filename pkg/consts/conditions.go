@@ -19,8 +19,11 @@ const (
 
 // Both status and update conditions
 const (
-	ConditionTimbertruckPrepared = "TimbertruckPrepared"
-	ConditionCypressPatchApplied = "CypressPatchApplied"
+	ConditionTimbertruckPrepared     = "TimbertruckPrepared"
+	ConditionCypressPatchApplied     = "CypressPatchApplied"
+	ConditionMasterCellsPreparation  = "MasterCellsPreparation"
+	ConditionMasterCellsRegistration = "MasterCellsRegistration"
+	ConditionMasterCellsCompletion   = "MasterCellsCompletion"
 )
 
 // Component status conditions suffixes
@@ -60,6 +63,13 @@ const (
 	ConditionQAStateUpdated                  = "QAStateUpdated"
 	ConditionQAStatePreparedForUpdating      = "QAStatePreparedForUpdating"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
+)
+
+// Instance initialization phases and init-job reasons.
+const (
+	PhaseClusterInitialization  = "ClusterInitialization"
+	PhaseClusterReconfiguration = "ClusterReconfiguration"
+	PhaseCellRegistration       = "CellRegistration"
 )
 
 // Conditions below are for migration from imaginary chunks to real chunks for 24.2
