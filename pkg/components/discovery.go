@@ -19,9 +19,16 @@ type Discovery struct {
 
 	cfgen          *ytconfig.Generator
 	ytsaurusClient internalYtsaurusClient
+
+	master Component
 }
 
-func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc internalYtsaurusClient) *Discovery {
+func NewDiscovery(
+	cfgen *ytconfig.Generator,
+	ytsaurus *apiproxy.Ytsaurus,
+	yc internalYtsaurusClient,
+	master Component,
+) *Discovery {
 	l := cfgen.GetComponentLabeller(consts.DiscoveryType, "")
 	resource := ytsaurus.GetResource()
 
@@ -47,6 +54,7 @@ func NewDiscovery(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc int
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		ytsaurusClient:  yc,
+		master:          master,
 	}
 }
 
@@ -64,6 +72,11 @@ func (d *Discovery) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		if d.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			return ComponentStatusReady(), nil
 		}
+	}
+
+	// Do not start until masters are running, otherwise may cache incomplete ClusterMeta.
+	if masterStatus := d.master.GetStatus(); !masterStatus.IsRunning() {
+		return masterStatus.Blocker(), nil
 	}
 
 	if d.NeedSync() {
