@@ -7,6 +7,7 @@ const (
 	ConditionReadyToWork                = "ReadyToWork"
 	ConditionImageHeaterReady           = "ImageHeaterReady"
 	ConditionImageHeaterComplete        = "ImageHeaterComplete"
+	ConditionMasterCellRolesInitialized = "MasterCellRolesInitialized"
 	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
 
 	// Cluster health checks
@@ -60,6 +61,12 @@ const (
 	ConditionQAStateUpdated                  = "QAStateUpdated"
 	ConditionQAStatePreparedForUpdating      = "QAStatePreparedForUpdating"
 	ConditionSafeModeDisabled                = "SafeModeDisabled"
+)
+
+// Instance initialization phases and init-job reasons.
+const (
+	PhaseCellRolesInitialization = "CellRolesInitialization"
+	PhaseClusterInitialization   = "ClusterInitialization"
 )
 
 // Conditions below are for migration from imaginary chunks to real chunks for 24.2

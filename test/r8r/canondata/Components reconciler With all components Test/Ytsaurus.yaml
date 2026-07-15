@@ -4,7 +4,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "21"
+  resourceVersion: "26"
 spec:
   adminCredentials:
     name: test-ytsaurus-admin
@@ -785,6 +785,12 @@ status:
     reason: Ready
     status: "True"
     type: Master-2Ready
+  - lastTransitionTime: null
+    message: Master cell roles initialized
+    observedGeneration: 1
+    reason: CellRolesInitialization
+    status: "True"
+    type: MasterCellRolesInitialized
   - lastTransitionTime: null
     message: Job yt-master-init-job-default completed in -1ns
     observedGeneration: 1

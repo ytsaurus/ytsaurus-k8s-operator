@@ -279,6 +279,10 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	)
 }
 
+func (s *serverImpl) getPodAnnotation(name string) string {
+	return s.statefulSet.OldObject().Spec.Template.Annotations[name]
+}
+
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 	found := 0
 	for _, container := range s.statefulSet.OldObject().Spec.Template.Spec.Containers {

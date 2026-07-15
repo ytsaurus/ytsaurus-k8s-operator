@@ -19,7 +19,7 @@ metadata:
     kind: Ytsaurus
     name: test-ytsaurus
     uid: ""
-  resourceVersion: "1"
+  resourceVersion: "2"
 spec:
   ports:
   - name: ytsaurus-metrics

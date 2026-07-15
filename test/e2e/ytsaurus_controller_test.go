@@ -834,6 +834,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					completedJobs := namespaceWatcher.GetCompletedInitJobs()
 					// NOTE: One init job could be created several times until it appear in object cache.
 					Expect(completedJobs).Should(HaveEach(BeElementOf([]InitJob{
+						{"yt-master-init-job-default", "CellRolesInitialization"},
 						{"yt-master-init-job-default", "ClusterInitialization"},
 						{"yt-client-init-job-user", "InitJob"},
 						{"yt-scheduler-init-job-user", "InitJob"},

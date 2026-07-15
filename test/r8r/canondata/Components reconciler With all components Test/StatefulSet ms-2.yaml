@@ -20,7 +20,7 @@ metadata:
     kind: Ytsaurus
     name: test-ytsaurus
     uid: ""
-  resourceVersion: "1"
+  resourceVersion: "2"
 spec:
   podManagementPolicy: Parallel
   replicas: 1
