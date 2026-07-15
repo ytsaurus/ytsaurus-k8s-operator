@@ -146,7 +146,7 @@ func NewComponentManager(
 	var tnds []components.Component
 	if len(resource.Spec.TabletNodes) > 0 {
 		for idx, tndSpec := range resource.Spec.TabletNodes {
-			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, tndSpec, idx == 0))
+			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, m, tndSpec, idx == 0))
 		}
 	}
 	allComponents = append(allComponents, tnds...)
