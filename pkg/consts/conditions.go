@@ -7,6 +7,7 @@ const (
 	ConditionReadyToWork                = "ReadyToWork"
 	ConditionImageHeaterReady           = "ImageHeaterReady"
 	ConditionImageHeaterComplete        = "ImageHeaterComplete"
+	ConditionMasterCellsInitialized     = "MasterCellsInitialized"
 	ConditionTimbertruckUserInitialized = "TimbertruckUserInitialized"
 
 	// Cluster health checks
@@ -67,6 +68,7 @@ const (
 
 // Instance initialization phases and init-job reasons.
 const (
+	PhaseCellsInitialization    = "CellsInitialization"
 	PhaseClusterInitialization  = "ClusterInitialization"
 	PhaseClusterReconfiguration = "ClusterReconfiguration"
 	PhaseCellRegistration       = "CellRegistration"

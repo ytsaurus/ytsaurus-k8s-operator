@@ -119,7 +119,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     uid: ""
-  resourceVersion: "1"
+  resourceVersion: "2"
 - annotations:
     ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "1"
@@ -140,7 +140,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     uid: ""
-  resourceVersion: "1"
+  resourceVersion: "2"
 - annotations:
     ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
@@ -372,7 +372,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     uid: ""
-  resourceVersion: "1"
+  resourceVersion: "2"
 - annotations:
     ytsaurus.tech/observed-generation: "1"
   generation: 1
@@ -393,4 +393,4 @@
     kind: Ytsaurus
     name: test-ytsaurus
     uid: ""
-  resourceVersion: "1"
+  resourceVersion: "2"
