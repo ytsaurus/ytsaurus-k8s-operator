@@ -9,6 +9,8 @@ const (
 	YTCellTagLabelName = "ytsaurus.tech/cell-tag"
 	YTCellIDLabelName  = "ytsaurus.tech/cell-id"
 
+	YTCellRoleLabelPrefix = "cell-role.ytsaurus.tech/"
+
 	YTComponentLabelName = "yt_component"
 	YTMetricsLabelName   = "yt_metrics"
 
