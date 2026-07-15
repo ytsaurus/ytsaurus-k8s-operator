@@ -545,12 +545,8 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusWaitingFor(m.uploaderSecret.Name()), err
 	}
 
-	needSync := m.NeedSync()
-	if needSync {
-		if !dry {
-			err = m.doServerSync(ctx)
-		}
-		return ComponentStatusWaitingFor("components"), err
+	if status, err := m.ServerSync(ctx, dry); !status.IsReady() || err != nil {
+		return status, err
 	}
 
 	if status, err := m.ArePodsReady(ctx); !status.IsReady() || err != nil {
@@ -565,6 +561,19 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	if m.ytsaurus.IsInitializing() && m.IsPrimary() {
 		return m.runInitPhaseJobs(ctx, dry)
+	}
+
+	return ComponentStatusReady(), nil
+}
+
+func (m *Master) ServerSync(ctx context.Context, dry bool) (ComponentStatus, error) {
+	needSync := m.NeedSync()
+	if needSync {
+		var err error
+		if !dry {
+			err = m.doServerSync(ctx)
+		}
+		return ComponentStatusWaitingFor("components"), err
 	}
 
 	return ComponentStatusReady(), nil
