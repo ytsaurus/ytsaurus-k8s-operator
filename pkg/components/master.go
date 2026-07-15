@@ -120,6 +120,10 @@ func NewMaster(
 			TextConfigGenerator(consts.ClusterInitializationScriptName, master.scriptInitialization),
 			TextConfigGenerator(consts.MasterEnterReadOnlyScriptName, master.scriptEnterReadOnly),
 			TextConfigGenerator(consts.MasterExitReadOnlyScriptName, master.scriptExitReadOnly),
+			TextConfigGenerator(consts.MasterCellsPreparationScriptName, master.scriptMasterCellsPreparation),
+			TextConfigGenerator(consts.MasterCellsWaitRegistrationScriptName, master.scriptWaitingMasterCellsRegistation),
+			TextConfigGenerator(consts.MasterCellsSettlementScriptName, master.scriptMasterCellsSettlement),
+			TextConfigGenerator(consts.MasterCellsCompletionScriptName, master.scriptMasterCellsCompletion),
 		)
 	}
 
@@ -483,6 +487,79 @@ func (m *Master) scriptExitReadOnly() ([]string, error) {
 	)()
 }
 
+func (m *Master) scriptMasterCellsPreparation() ([]string, error) {
+	return []string{
+		initJobWithNativeDriverPrologue(),
+		`/usr/bin/yt set //sys/@provision_lock %true`,
+		`/usr/bin/yt set //sys/@config/chunk_manager/enable_chunk_refresh %false`,
+		`/usr/bin/yt set //sys/@config/chunk_manager/enable_chunk_requisition_update %false`,
+		`/usr/bin/yt set //sys/@config/multicell_manager/testing/allow_master_cell_with_empty_role %true`,
+		`/usr/bin/yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true`,
+	}, nil
+}
+
+func (m *Master) scriptMasterCellsCompletion() ([]string, error) {
+	return []string{
+		initJobWithNativeDriverPrologue(),
+		`/usr/bin/yt set //sys/@config/chunk_manager/enable_chunk_refresh %true`,
+		`/usr/bin/yt set //sys/@config/chunk_manager/enable_chunk_requisition_update %true`,
+		"/usr/bin/yt remove //sys/@provision_lock -f",
+	}, nil
+}
+
+func (m *Master) scriptWaitingMasterCellsRegistation() ([]string, error) {
+	commands := []string{
+		initJobWithNativeDriverPrologue(),
+		fmt.Sprintf(
+			`while test "$(/usr/bin/yt get --format json //sys/@registered_master_cell_tags | jq -c sort)" != '%s'; do sleep 1; done`,
+			m.cfgen.GetMasterCellTagsAsSortedJSON(true),
+		),
+	}
+	if false {
+		// //sys/secondary_masters is filled by world initialization which happens every 5 minutes.
+		testCell := func(spec *ytv1.MastersSpec, path, tag string) {
+			for _, address := range m.cfgen.GetMasterCellAddresses(spec) {
+				commands = append(commands, fmt.Sprintf(`test "$(yt get %s%s/%s/%s/active)" = %%true`, path, tag, address, consts.MasterHydraPath))
+			}
+		}
+		testCell(m.mastersSpec, "//sys/primary_masters", "")
+		for _, secondary := range m.secondaryMasters {
+			testCell(secondary.mastersSpec, "//sys/secondary_masters/", secondary.labeller.InstanceGroup)
+		}
+	}
+	return commands, nil
+}
+
+func (m *Master) scriptMasterCellsSettlement() ([]string, error) {
+	commands, err := m.scriptMasterCellDescriptors()
+	if err != nil {
+		return nil, err
+	}
+	return append([]string{
+		initJobWithNativeDriverPrologue(),
+		`test "$(/usr/bin/yt get //sys/@dynamically_propagated_masters_cell_tags)" = '[]'`,
+	}, commands...), nil
+}
+
+func (m *Master) NeedUpdate() ComponentStatus {
+	// NOTE: See master maintenance update flow.
+	if m.ytsaurus.GetClusterMaintenance().Shutdown == ytv1.ClusterShutdownExceptMasters {
+		switch {
+		case m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsPreparation):
+			return ComponentStatusNeedUpdate("Master cells preparation")
+		case m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsRegistration):
+			return ComponentStatusNeedUpdate("Master cells registration")
+		case m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsCompletion):
+			return ComponentStatusNeedUpdate("Master cells completion")
+		}
+	}
+	if !m.IsPrimary() && m.IsUnregistered() && !m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsRegistration) {
+		return ComponentStatusBlocked("Secondary master cell %v cannot register yet", m.labeller.InstanceGroup)
+	}
+	return m.server.needUpdate()
+}
+
+//nolint:cyclop //this is complex function
 func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
@@ -504,11 +581,59 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 						Message: "Master read-only snapshots were built",
 					})
 				})
-			case ytv1.UpdateStateWaitingForMasterExitReadOnly:
+			case ytv1.UpdateStateWaitingForMasterEnterReadOnly, ytv1.UpdateStateWaitingForMasterCellsEnterReadOnly:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterEnterReadOnlyScriptName, nil)
+			case ytv1.UpdateStateWaitingForMasterExitReadOnly, ytv1.UpdateStateWaitingForMasterCellsExitReadOnly:
 				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterExitReadOnlyScriptName, nil)
 			case ytv1.UpdateStateWaitingForSidecarsInitialize:
 				// TODO: Split into separate script.
 				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.ClusterInitializationScriptName, nil)
+			case ytv1.UpdateStateWaitingForMasterCellsPreparation:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterCellsPreparationScriptName, nil)
+			case ytv1.UpdateStateWaitingForMasterCellsAcception:
+				if !dry {
+					// Finish master cells preparation.
+					m.owner.RemoveStatusCondition(consts.ConditionMasterCellsPreparation)
+					// Open master cells registration.
+					m.owner.SetStatusCondition(metav1.Condition{
+						Type:    consts.ConditionMasterCellsRegistration,
+						Status:  metav1.ConditionTrue,
+						Reason:  consts.PhaseCellRegistration,
+						Message: "Master cells registration is open",
+					})
+					m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+						Type:    m.ytsaurus.GetUpdateStateCompleteCondition(updateState),
+						Status:  metav1.ConditionTrue,
+						Reason:  "Complete",
+						Message: "Done",
+					})
+				}
+				return ComponentStatusWaitingFor("opening master cell registration"), nil
+			case ytv1.UpdateStateWaitingForMasterCellsRegistration:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterCellsWaitRegistrationScriptName, func() {
+					for _, secondary := range m.secondaryMasters {
+						if secondary.mastersSpec.InstanceCount > 0 && secondary.IsUnregistered() {
+							secondary.SetUnregistered(false)
+						}
+					}
+					// Close master cells registration.
+					m.owner.RemoveStatusCondition(consts.ConditionMasterCellsRegistration)
+				})
+			case ytv1.UpdateStateWaitingForMasterCellsSettlement:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterCellsSettlementScriptName, func() {
+					// Trigger master cells completion pass.
+					m.owner.SetStatusCondition(metav1.Condition{
+						Type:    consts.ConditionMasterCellsCompletion,
+						Status:  metav1.ConditionTrue,
+						Reason:  consts.PhaseCellRegistration,
+						Message: "Master cells completion is pending",
+					})
+				})
+			case ytv1.UpdateStateWaitingForMasterCellsCompletion:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterCellsCompletionScriptName, func() {
+					// Finish master cells completion pass.
+					m.owner.RemoveStatusCondition(consts.ConditionMasterCellsCompletion)
+				})
 			}
 		}
 
@@ -528,6 +653,8 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		case ytv1.UpdateStateWaitingForMasterReady:
 			// Masters are upgraded first at separate update state.
 			// Sync server and create pods below.
+		case ytv1.UpdateStateWaitingForMasterCellsRegistration:
+			// Sync secondary cells masters when to register them.
 		default:
 			return ComponentStatusReadyAfter("No actions required for this update state"), nil
 		}
@@ -545,6 +672,36 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusWaitingFor(m.uploaderSecret.Name()), err
 	}
 
+	if !m.ytsaurus.IsInitializing() {
+		initiated := m.mastersSpec.InstanceCount > 0
+		unregistered := m.IsUnregistered()
+		if !m.IsPrimary() && !initiated && !unregistered {
+			if !dry {
+				m.SetUnregistered(true)
+			}
+			return ComponentStatusWaitingFor("marking secondary master cell unregistered"), nil
+		}
+		if !m.IsPrimary() && initiated && unregistered {
+			preparation := m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsPreparation)
+			regisration := m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsRegistration)
+			if !regisration && !preparation {
+				if !dry {
+					m.owner.SetStatusCondition(metav1.Condition{
+						Type:    consts.ConditionMasterCellsPreparation,
+						Status:  metav1.ConditionTrue,
+						Reason:  consts.PhaseClusterReconfiguration,
+						Message: "Secondary master cells registration is pending",
+					})
+				}
+				return ComponentStatusWaitingFor("starting secondary master cell registration"), nil
+			}
+			// Delay instantiation of unregistered secondary masters until primary master opens registration.
+			if !regisration {
+				m.server.setInstanceCount(0)
+			}
+		}
+	}
+
 	if status, err := m.ServerSync(ctx, dry); !status.IsReady() || err != nil {
 		return status, err
 	}
@@ -559,8 +716,10 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		}
 	}
 
-	if m.ytsaurus.IsInitializing() && m.IsPrimary() {
-		return m.runInitPhaseJobs(ctx, dry)
+	if m.IsPrimary() && m.ytsaurus.IsInitializing() {
+		if status, err := m.runInitPhaseJobs(ctx, dry); !status.IsReady() || err != nil {
+			return status, err
+		}
 	}
 
 	return ComponentStatusReady(), nil

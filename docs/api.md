@@ -3148,7 +3148,15 @@ _Appears in:_
 | `WaitingForPodsRemoval` |  |
 | `WaitingForPodsCreation` |  |
 | `WaitingForMasterReady` |  |
+| `WaitingForMasterEnterReadOnly` |  |
 | `WaitingForMasterExitReadOnly` |  |
+| `WaitingForMasterCellsEnterReadOnly` |  |
+| `WaitingForMasterCellsExitReadOnly` |  |
+| `WaitingForMasterCellsPreparation` |  |
+| `WaitingForMasterCellsAcception` |  |
+| `WaitingForMasterCellsRegistration` |  |
+| `WaitingForMasterCellsSettlement` |  |
+| `WaitingForMasterCellsCompletion` |  |
 | `WaitingForCypressPatch` |  |
 | `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdate` |  |

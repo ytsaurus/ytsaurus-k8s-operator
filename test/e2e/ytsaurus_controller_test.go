@@ -52,7 +52,7 @@ import (
 const (
 	pollInterval     = time.Millisecond * 250
 	reactionTimeout  = time.Second * 150
-	bootstrapTimeout = time.Minute * 10
+	bootstrapTimeout = time.Minute * 20
 	upgradeTimeout   = time.Minute * 20
 
 	consistencyTimeout = time.Second * 10
@@ -2352,6 +2352,97 @@ exec "$@"`
 				})
 
 			}) // integration multicell initialization
+
+			Context("Extending cluster with secondary master", Label("maintenance"), func() {
+				BeforeEach(func(ctx context.Context) {
+					By("Setting 3 replicas for each master cell")
+					ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
+				})
+
+				It("Verifies master cells", Label(epoch), Label(images.YtsaurusVersion.String()), func(ctx context.Context) {
+					podsBeforeMaintenance := getComponentPods(ctx, namespace)
+
+					By("Starting cluster maintenance")
+					ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
+						Shutdown: ytv1.ClusterShutdownExceptMasters,
+					}
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state maintenance")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterState(ytv1.ClusterStateMaintenance))
+					Expect(getComponentPods(ctx, namespace)).To(HaveEach(HaveField("Labels", Or(
+						HaveKeyWithValue("app.kubernetes.io/name", "yt-image-heater"),
+						HaveKeyWithValue("app.kubernetes.io/component", "yt-master"),
+					))))
+
+					By("Allowing update everything")
+					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+					By("Keeping primary master default roles")
+					ytsaurus.Spec.PrimaryMasters.Roles = ptr.To(ytv1.GetMasterCellRoles(nil, true, false))
+					By("Adding secondary master cell with default roles")
+					cell := ytBuilder.WithSecondaryMaster()
+					cell.InstanceCount = 0
+					By("Adding secondary master cell with empty roles")
+					cell = ytBuilder.WithSecondaryMaster()
+					cell.InstanceCount = 0
+					cell.Roles = ptr.To([]ytv1.MasterCellRole{})
+
+					By("Initiating update")
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state maintenance")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(And(
+						HaveObservedGeneration(),
+						HaveClusterState(ytv1.ClusterStateMaintenance),
+					))
+					Expect(ytsaurus.Status.UpdateStatus.MasterCellsMaintenance).To(ConsistOf([]ytv1.MasterCellMaintenanceInfo{
+						{CellTag: 2, Unregistered: true},
+						{CellTag: 3, Unregistered: true},
+					}))
+
+					By("Adding secondary cell instances")
+					ytsaurus.Spec.SecondaryMasters[0].InstanceCount = 3
+					ytsaurus.Spec.SecondaryMasters[1].InstanceCount = 3
+
+					By("Initiating update")
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state maintenance")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(And(
+						HaveObservedGeneration(),
+						HaveClusterState(ytv1.ClusterStateMaintenance),
+					))
+					Expect(ytsaurus.Status.UpdateStatus.MasterCellsMaintenance).To(BeEmpty())
+
+					Expect(getComponentPods(ctx, namespace)).To(HaveEach(HaveField("Labels", Or(
+						HaveKeyWithValue("app.kubernetes.io/name", "yt-image-heater"),
+						HaveKeyWithValue("app.kubernetes.io/component", "yt-master"),
+						HaveKeyWithValue("app.kubernetes.io/component", "yt-master-2"),
+						HaveKeyWithValue("app.kubernetes.io/component", "yt-master-3"),
+					))))
+
+					By("Ending cluster maintenance")
+					ytsaurus.Spec.ClusterMaintenance = nil
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state running")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+					podsAfterMantenance := getComponentPods(ctx, namespace)
+
+					pods := getChangedPods(podsBeforeMaintenance, podsAfterMantenance)
+					Expect(pods.Heated).To(BeEmpty(), "heated")
+					Expect(pods.Created).To(ConsistOf("ms-2-0", "ms-2-1", "ms-2-2", "ms-3-0", "ms-3-1", "ms-3-2"), "created")
+					Expect(pods.Deleted).To(BeEmpty(), "deleted")
+					Expect(pods.Updated).To(ConsistOf("ms-0", "ms-1", "ms-2", "hp-0", "dnd-0", "dnd-1", "dnd-2", "ds-0"), "updated")
+
+					By("Checking primary cell")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.PrimaryMasters.CellTag)
+					By("Checking secondary cell")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
+				})
+
+			}) // integration multicell maintenance
 
 		}) // integration multicell
 
