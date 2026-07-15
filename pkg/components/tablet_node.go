@@ -32,12 +32,15 @@ type TabletNode struct {
 	initBundlesCondition string
 	spec                 ytv1.TabletNodesSpec
 	doInitialization     bool
+
+	master Component
 }
 
 func NewTabletNode(
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	ytsaurusClient internalYtsaurusClient,
+	master Component,
 	spec ytv1.TabletNodesSpec,
 	doInitiailization bool,
 ) *TabletNode {
@@ -68,6 +71,7 @@ func NewTabletNode(
 		ytsaurusClient:       ytsaurusClient,
 		spec:                 spec,
 		doInitialization:     doInitiailization,
+		master:               master,
 	}
 }
 
@@ -88,6 +92,13 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 			}
 		} else {
 			return ComponentStatusReadyAfter("Not updating component"), nil
+		}
+	}
+
+	if tn.master != nil {
+		// Do not start until masters are running, otherwise may cache incomplete ClusterMeta.
+		if masterStatus := tn.master.GetStatus(); !masterStatus.IsRunning() {
+			return masterStatus.Blocker(), nil
 		}
 	}
 
