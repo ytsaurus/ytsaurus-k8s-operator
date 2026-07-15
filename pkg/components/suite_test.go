@@ -138,6 +138,10 @@ func (fs *FakeServer) needUpdate() ComponentStatus {
 	return ComponentStatusReady()
 }
 
+func (fs *FakeServer) getPodAnnotation(name string) string {
+	return ""
+}
+
 func (fs *FakeServer) podsImageCorrespondsToSpec() bool {
 	return true
 }

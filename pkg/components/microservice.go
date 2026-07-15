@@ -218,6 +218,10 @@ func (m *microserviceImpl) needUpdate() ComponentStatus {
 	return ComponentStatusReady()
 }
 
+func (m *microserviceImpl) getPodAnnotation(name string) string {
+	return m.deployment.OldObject().Spec.Template.Annotations[name]
+}
+
 func (m *microserviceImpl) podsImageCorrespondsToSpec() bool {
 	return m.deployment.OldObject().Spec.Template.Spec.Containers[0].Image == m.image
 }

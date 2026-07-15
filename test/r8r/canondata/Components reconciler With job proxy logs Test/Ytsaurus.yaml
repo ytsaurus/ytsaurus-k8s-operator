@@ -2,7 +2,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "17"
+  resourceVersion: "22"
 spec:
   clusterFeatures: {}
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
@@ -129,6 +129,12 @@ status:
     reason: Observed
     status: "True"
     type: OperatorVersion
+  - lastTransitionTime: null
+    message: Master cell roles initialized
+    observedGeneration: 1
+    reason: CellsInitialization
+    status: "True"
+    type: MasterCellsInitialized
   - lastTransitionTime: null
     message: Job yt-master-init-job-default completed in -1ns
     observedGeneration: 1

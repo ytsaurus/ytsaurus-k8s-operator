@@ -43,6 +43,7 @@ const (
 	InitJobScriptName    = "init-job-script.sh"
 
 	PostprocessConfigScriptName               = "postprocess-config.sh"
+	MasterCellsInitializationScriptName       = "master-cells-initialization.sh"
 	ClusterInitializationScriptName           = "cluster-initialization.sh"
 	MasterEnterReadOnlyScriptName             = "master-enter-read-only.sh"
 	MasterExitReadOnlyScriptName              = "master-exit-read-only.sh"

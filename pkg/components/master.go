@@ -117,6 +117,7 @@ func NewMaster(
 			"default",
 			&mastersSpec.InstanceSpec,
 			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
+			TextConfigGenerator(consts.MasterCellsInitializationScriptName, master.scriptMasterCellsInitialization),
 			TextConfigGenerator(consts.ClusterInitializationScriptName, master.scriptInitialization),
 			TextConfigGenerator(consts.MasterEnterReadOnlyScriptName, master.scriptEnterReadOnly),
 			TextConfigGenerator(consts.MasterExitReadOnlyScriptName, master.scriptExitReadOnly),
@@ -389,19 +390,25 @@ func (m *Master) scriptMasterCellDescriptors() ([]string, error) {
 		return nil, err
 	}
 	return []string{
-		fmt.Sprintf("yt set %s '%s'", consts.MasterCellDescriptorsPath, string(config)),
-		`yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true`, // NOTE: This is default since 25.3
+		RunIfNonexistent("//sys/@provision_lock", `exit 1`),
+		`test "$(/usr/bin/yt get //sys/@dynamically_propagated_masters_cell_tags)" = '[]'`,
+		fmt.Sprintf("/usr/bin/yt set %s '%s'", consts.MasterCellDescriptorsPath, string(config)),
+		`/usr/bin/yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true`, // NOTE: This is default since 25.3
 	}, nil
+}
+
+func (m *Master) scriptMasterCellsInitialization() ([]string, error) {
+	return JoinTextGenerators(
+		PlainTextGenerator(initJobWithNativeDriverPrologue()),
+		m.scriptWaitingMasterCellsRegistation,
+		m.scriptMasterCellDescriptors,
+		PlainTextGenerator(masterEnterReadOnly),
+	)()
 }
 
 func (m *Master) scriptInitialization() ([]string, error) {
 	clusterConn := m.cfgen.GetClusterConnection()
 	connConfig, err := yson.MarshalFormat(clusterConn, yson.FormatPretty)
-	if err != nil {
-		return nil, err
-	}
-
-	initMasterCells, err := m.scriptMasterCellDescriptors()
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +424,7 @@ func (m *Master) scriptInitialization() ([]string, error) {
 	}
 
 	initCommands := []string{
-		RunIfExists("//sys/@provision_lock", initMasterCells...),
+		masterExitReadOnly,
 		m.initGroups(),
 		RunIfExists("//sys/@provision_lock", initSchemaACLsCommands),
 		"/usr/bin/yt create scheduler_pool_tree --attributes '{name=default; config={nodes_filter=\"\"}}' --ignore-existing",
@@ -531,14 +538,10 @@ func (m *Master) scriptWaitingMasterCellsRegistation() ([]string, error) {
 }
 
 func (m *Master) scriptMasterCellsSettlement() ([]string, error) {
-	commands, err := m.scriptMasterCellDescriptors()
-	if err != nil {
-		return nil, err
-	}
-	return append([]string{
-		initJobWithNativeDriverPrologue(),
-		`test "$(/usr/bin/yt get //sys/@dynamically_propagated_masters_cell_tags)" = '[]'`,
-	}, commands...), nil
+	return JoinTextGenerators(
+		PlainTextGenerator(initJobWithNativeDriverPrologue()),
+		m.scriptMasterCellDescriptors,
+	)()
 }
 
 func (m *Master) NeedUpdate() ComponentStatus {
@@ -727,6 +730,12 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 func (m *Master) ServerSync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	needSync := m.NeedSync()
+
+	if m.ytsaurus.IsInitializing() && m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsInitialized) &&
+		m.server.getPodAnnotation(consts.InstancePhaseAnnotationName) == consts.PhaseCellsInitialization {
+		needSync = true
+	}
+
 	if needSync {
 		var err error
 		if !dry {
@@ -744,6 +753,11 @@ func (m *Master) doServerSync(ctx context.Context) error {
 	podMeta := &statefulSet.Spec.Template.ObjectMeta
 	metav1.SetMetaDataLabel(podMeta, consts.YTCellTagLabelName, m.labeller.GetCellName(m.mastersSpec.CellTag))
 	metav1.SetMetaDataLabel(podMeta, consts.YTCellIDLabelName, m.cfgen.GetCellID(m.mastersSpec.CellTag))
+
+	// Arm restart of masters after cell roles initialization to refresh cached cluster metadata.
+	if m.ytsaurus.IsInitializing() && !m.owner.IsStatusConditionTrue(consts.ConditionMasterCellsInitialized) {
+		metav1.SetMetaDataAnnotation(podMeta, consts.InstancePhaseAnnotationName, consts.PhaseCellsInitialization)
+	}
 
 	podSpec := &statefulSet.Spec.Template.Spec
 	podSpec.Containers[0].Env = append(podSpec.Containers[0].Env, getNativeClientConfigEnv()...)
@@ -803,7 +817,18 @@ func (m *Master) getHostAddressLabel() string {
 }
 
 func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatus, error) {
-	return m.initJob.RunScript(ctx, dry, "ClusterInitialization", consts.ClusterInitializationScriptName, nil)
+	if !m.ytsaurus.IsStatusConditionTrue(consts.ConditionMasterCellsInitialized) {
+		return m.initJob.RunScript(ctx, dry, consts.PhaseCellsInitialization, consts.MasterCellsInitializationScriptName, func(status *ComponentStatus) {
+			m.owner.SetStatusCondition(metav1.Condition{
+				Type:    consts.ConditionMasterCellsInitialized,
+				Status:  metav1.ConditionTrue,
+				Reason:  consts.PhaseCellsInitialization,
+				Message: "Master cell roles initialized",
+			})
+			*status = ComponentStatusWaitingFor("cluster initialization")
+		})
+	}
+	return m.initJob.RunScript(ctx, dry, consts.PhaseClusterInitialization, consts.ClusterInitializationScriptName, nil)
 }
 
 func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string, masterInstanceSpec *ytv1.InstanceSpec) error {

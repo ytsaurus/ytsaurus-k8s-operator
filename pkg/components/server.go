@@ -317,6 +317,10 @@ func (s *serverImpl) Exists() bool {
 	return resources.Exists(s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService)
 }
 
+func (s *serverImpl) getPodAnnotation(name string) string {
+	return s.statefulSet.OldObject().Spec.Template.Annotations[name]
+}
+
 // timbertruckConfigNeedsReload reports whether the timbertruck sidecar configmap is missing or
 // its content has drifted from what the operator would generate.
 func (s *serverImpl) timbertruckConfigNeedsReload() bool {
