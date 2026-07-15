@@ -99,7 +99,7 @@ func NewComponentManager(
 	yc := components.NewYtsaurusClient(cfgen, ytsaurus, m, hps[0], getAllComponents)
 	allComponents = append(allComponents, yc)
 
-	d := components.NewDiscovery(cfgen, ytsaurus, yc)
+	d := components.NewDiscovery(cfgen, ytsaurus, yc, m)
 	allComponents = append(allComponents, d)
 
 	var dnds []components.Component

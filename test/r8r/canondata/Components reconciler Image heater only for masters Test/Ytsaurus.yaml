@@ -103,12 +103,6 @@ status:
     status: "True"
     type: ImageHeaterReady
   - lastTransitionTime: null
-    message: 'Pods are ready: 0 of 1, running 0, need 0'
-    observedGeneration: 1
-    reason: Ready
-    status: "True"
-    type: DiscoveryReady
-  - lastTransitionTime: null
     message: Job yt-master-init-job-default completed in -1ns
     observedGeneration: 1
     reason: ClusterInitialization
@@ -120,6 +114,12 @@ status:
     reason: Ready
     status: "True"
     type: MasterReady
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: DiscoveryReady
   - lastTransitionTime: null
     message: 'Pods are ready: 0 of 1, running 0, need 0'
     observedGeneration: 1
