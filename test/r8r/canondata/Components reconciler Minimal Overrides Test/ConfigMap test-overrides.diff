@@ -1,0 +1,12 @@
+--- base/ConfigMap test-overrides.yson
++++ test/ConfigMap test-overrides.yson
+@@ -1 +1,9 @@
++data:
++  place-holder: ""
++  ytserver-discovery.yson: '{ hello = yt }'
++metadata:
++  generation: 1
++  name: test-overrides
++  namespace: ytsaurus-components
++  resourceVersion: "1"
+ 

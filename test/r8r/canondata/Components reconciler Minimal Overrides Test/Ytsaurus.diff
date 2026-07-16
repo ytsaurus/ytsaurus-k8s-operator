@@ -1,0 +1,88 @@
+--- base/Ytsaurus.yson
++++ test/Ytsaurus.yson
+@@ -1,12 +1,14 @@
+ apiVersion: cluster.ytsaurus.tech/v1
+ kind: Ytsaurus
+ metadata:
+-  generation: 1
++  generation: 4
+   name: test-ytsaurus
+   namespace: ytsaurus-components
+-  resourceVersion: "22"
++  resourceVersion: "40"
+ spec:
+   clusterFeatures: {}
++  configOverrides:
++    name: test-overrides
+   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+   discovery:
+     instanceCount: 1
+@@ -76,6 +78,9 @@
+     - mountPath: /yt/master-data
+       name: master-data
+   terminationGracePeriodSeconds: 5
++  updatePlan:
++  - class: Everything
++    component: {}
+   useIpv4: false
+   useIpv6: false
+   usePorto: false
+@@ -84,7 +89,7 @@
+   conditions:
+   - lastTransitionTime: null
+     message: 0.0.0-devel
+-    observedGeneration: 1
++    observedGeneration: 4
+     reason: Observed
+     status: "True"
+     type: OperatorVersion
+@@ -102,19 +107,13 @@
+     type: defaultMasterInitJobCompleted
+   - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 1
++    observedGeneration: 4
+     reason: Ready
+     status: "True"
+     type: MasterReady
+   - lastTransitionTime: null
+     message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 1
+-    reason: Ready
+-    status: "True"
+-    type: DiscoveryReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 1
++    observedGeneration: 4
+     reason: Ready
+     status: "True"
+     type: HttpProxyReady
+@@ -131,18 +130,24 @@
+     status: "True"
+     type: UpdateIsPossible
+   - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 4
++    reason: Ready
++    status: "True"
++    type: DiscoveryReady
++  - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 1
++    observedGeneration: 4
+     reason: Ready
+     status: "True"
+     type: YtsaurusClientReady
+   - lastTransitionTime: null
+     message: Cluster state is Running
+-    observedGeneration: 1
++    observedGeneration: 4
+     reason: Running
+     status: "True"
+     type: ReadyToWork
+-  observedGeneration: 1
++  observedGeneration: 4
+   state: Running
+   updateStatus: {}
+ 
