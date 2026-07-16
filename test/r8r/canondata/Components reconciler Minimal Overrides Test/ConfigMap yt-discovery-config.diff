@@ -1,0 +1,134 @@
+--- base/ConfigMap yt-discovery-config.yson
++++ test/ConfigMap yt-discovery-config.yson
+@@ -6,56 +6,8 @@
+             "enable_ipv6"=%false;
+             retries=1000;
+         };
+-        stockpile={
+-            "thread_count"=0;
+-        };
+-        "solomon_exporter"={
+-            host="{POD_SHORT_HOSTNAME}";
+-            "instance_tags"={
+-                pod="{K8S_POD_NAME}";
+-            };
+-        };
+-        logging={
+-            writers={
+-                "info-stderr"={
+-                    type=stderr;
+-                    "file_name"="..";
+-                    "enable_compression"=%true;
+-                    "enable_system_messages"=%true;
+-                };
+-            };
+-            rules=[
+-                {
+-                    "min_level"=info;
+-                    writers=[
+-                        "info-stderr";
+-                    ];
+-                    family="plain_text";
+-                };
+-            ];
+-            "flush_period"=3000;
+-        };
+-        "monitoring_port"=10020;
+-        "rpc_port"=9020;
+-        "timestamp_provider"={
+-            addresses=[
+-                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+-            ];
+-        };
+         "cluster_connection"={
+             "cluster_name"="test-ytsaurus";
+-            "primary_master"={
+-                addresses=[
+-                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+-                ];
+-                peers=[
+-                    {
+-                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
+-                        voting=%true;
+-                    };
+-                ];
+-                "cell_id"="65726e65-ad6b7562-10259-79747361";
+-            };
+             "discovery_connection"={
+                 addresses=[
+                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
+@@ -67,6 +19,18 @@
+                 ];
+                 "cell_id"="65726e65-ad6b7562-10259-79747361";
+                 "enable_master_cache_discovery"=%false;
++            };
++            "primary_master"={
++                addresses=[
++                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
++                ];
++                "cell_id"="65726e65-ad6b7562-10259-79747361";
++                peers=[
++                    {
++                        address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
++                        voting=%true;
++                    };
++                ];
+             };
+         };
+         "cypress_annotations"={
+@@ -80,10 +44,48 @@
+                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
+             ];
+         };
++        hello=yt;
++        logging={
++            "flush_period"=3000;
++            rules=[
++                {
++                    family="plain_text";
++                    "min_level"=info;
++                    writers=[
++                        "info-stderr";
++                    ];
++                };
++            ];
++            writers={
++                "info-stderr"={
++                    "enable_compression"=%true;
++                    "enable_system_messages"=%true;
++                    "file_name"="..";
++                    type=stderr;
++                };
++            };
++        };
++        "monitoring_port"=10020;
++        "rpc_port"=9020;
++        "solomon_exporter"={
++            host="{POD_SHORT_HOSTNAME}";
++            "instance_tags"={
++                pod="{K8S_POD_NAME}";
++            };
++        };
++        stockpile={
++            "thread_count"=0;
++        };
++        "timestamp_provider"={
++            addresses=[
++                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
++            ];
++        };
+     }
+ metadata:
+   annotations:
+     ytsaurus.tech/config-hash: <censored>
++    ytsaurus.tech/config-overrides-version: "1"
+     ytsaurus.tech/observed-generation: "1"
+   generation: 1
+   labels:
+@@ -102,5 +104,5 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ 
