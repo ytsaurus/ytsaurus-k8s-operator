@@ -661,6 +661,16 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		Context("Zero-diff", func() {
 			It("Test", func(ctx context.Context) {})
 		})
+		Context("Overrides", func() {
+			BeforeEach(func(ctx context.Context) {
+				ytBuilder.WithOverrides()
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+				ytBuilder.Overrides.Data["ytserver-discovery.yson"] = `{ hello = yt }`
+				Expect(k8sClient.Create(ctx, ytBuilder.Overrides)).To(Succeed())
+				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
+			})
+			It("Test", func(ctx context.Context) {})
+		})
 	})
 
 	Context("Image heater only for masters", func() {
