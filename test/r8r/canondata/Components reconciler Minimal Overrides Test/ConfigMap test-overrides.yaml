@@ -1,0 +1,8 @@
+data:
+  place-holder: ""
+  ytserver-discovery.yson: '{ hello = yt }'
+metadata:
+  generation: 1
+  name: test-overrides
+  namespace: ytsaurus-components
+  resourceVersion: "1"
