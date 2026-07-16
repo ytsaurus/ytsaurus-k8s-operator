@@ -1,0 +1,91 @@
+--- base/Object List.yson
++++ test/Object List.yson
+@@ -1,5 +1,5 @@
+ - annotations:
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "4"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-discovery
+@@ -17,10 +17,10 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "3"
+ - annotations:
+     ytsaurus.tech/instance-hash: <censored>
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "4"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-discovery
+@@ -38,7 +38,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "3"
+ - annotations:
+     ytsaurus.tech/instance-hash: <censored>
+     ytsaurus.tech/observed-generation: "1"
+@@ -141,6 +141,10 @@
+     name: test-ytsaurus
+     uid: ""
+   resourceVersion: "2"
++- generation: 1
++  name: test-overrides
++  namespace: ytsaurus-components
++  resourceVersion: "1"
+ - annotations:
+     ytsaurus.tech/init-job-reason: InitJob
+     ytsaurus.tech/observed-generation: "1"
+@@ -205,8 +209,10 @@
+     uid: ""
+   resourceVersion: "1"
+ - annotations:
+-    kubernetes.io/description: ""
+-    ytsaurus.tech/observed-generation: "1"
++    kubernetes.io/description: |
++      overrides-version: 1
++    ytsaurus.tech/config-overrides-version: "1"
++    ytsaurus.tech/observed-generation: "4"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-client
+@@ -224,10 +230,11 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ - annotations:
+     ytsaurus.tech/config-hash: <censored>
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/config-overrides-version: "1"
++    ytsaurus.tech/observed-generation: "4"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-discovery
+@@ -245,9 +252,9 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
+-- annotations:
+-    ytsaurus.tech/observed-generation: "1"
++  resourceVersion: "2"
++- annotations:
++    ytsaurus.tech/observed-generation: "4"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-discovery
+@@ -266,7 +273,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "3"
+ - annotations:
+     ytsaurus.tech/config-hash: <censored>
+     ytsaurus.tech/observed-generation: "1"
