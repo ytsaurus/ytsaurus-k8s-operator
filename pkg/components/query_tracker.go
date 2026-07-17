@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -60,7 +59,7 @@ func NewQueryTracker(
 		}),
 	)
 
-	return &QueryTracker{
+	queryTracker := &QueryTracker{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		tabletNodes:     tabletNodes,
@@ -70,15 +69,16 @@ func NewQueryTracker(
 			l,
 			ytsaurus,
 			"qt-state",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&resource.Spec.QueryTrackers.InstanceSpec,
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
 			ytsaurus),
 	}
+	queryTracker.initQTState.AddScript(consts.InitJobScriptName, queryTracker.createInitQueryTrackerStateScript)
+	return queryTracker
 }
 
 func (qt *QueryTracker) Fetch(ctx context.Context) error {
@@ -398,7 +398,7 @@ func (qt *QueryTracker) init(ctx context.Context, ytClient yt.Client) (err error
 	return nil
 }
 
-func (qt *QueryTracker) prepareInitQueryTrackerState() {
+func (qt *QueryTracker) createInitQueryTrackerStateScript() ([]string, error) {
 	path := "/usr/bin/init_query_tracker_state"
 
 	script := []string{
@@ -407,7 +407,10 @@ func (qt *QueryTracker) prepareInitQueryTrackerState() {
 			path, path, qt.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)),
 	}
 
-	qt.initQTState.SetInitScript(strings.Join(script, "\n"))
+	return script, nil
+}
+
+func (qt *QueryTracker) prepareInitQueryTrackerState() {
 	job := qt.initQTState.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{qt.secret.GetEnvSource()}

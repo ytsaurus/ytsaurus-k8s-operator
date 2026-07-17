@@ -1,5 +1,6 @@
 metadata:
   annotations:
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
@@ -24,6 +25,8 @@ spec:
   backoffLimit: 3
   template:
     metadata:
+      annotations:
+        ytsaurus.tech/init-job-reason: InitJob
       labels:
         app.kubernetes.io/component: yt-spyt-test-ytsaurus
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator

@@ -69,7 +69,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 
 	microservice.getHttpService().SetHttpNodePort(resource.Spec.UI.HttpNodePort)
 
-	return &UI{
+	ui := &UI{
 		microserviceComponent: microserviceComponent{
 			component:    newComponent(l, ytsaurus),
 			microservice: microservice,
@@ -80,11 +80,10 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			l,
 			ytsaurus,
 			"default",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&ytv1.InstanceSpec{
 				PodSpec: resource.Spec.UI.PodSpec,
 			},
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
@@ -94,6 +93,8 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		caBundle:     resources.NewCABundle(resource.Spec.CABundle),
 		master:       master,
 	}
+	ui.initJob.AddInitJobScript(ui.createInitScript)
+	return ui
 }
 
 func (u *UI) Fetch(ctx context.Context) error {
@@ -312,9 +313,6 @@ func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusWaitingFor(u.secret.Name()), err
 	}
 
-	if !dry {
-		u.initJob.SetInitScript(u.createInitScript())
-	}
 	status, err := u.initJob.Sync(ctx, dry)
 	if err != nil || status.SyncStatus != SyncStatusReady {
 		return status, err

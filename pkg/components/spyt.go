@@ -32,7 +32,7 @@ type Spyt struct {
 
 func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.Ytsaurus) *Spyt {
 	l := cfgen.GetComponentLabeller(consts.SpytType, spyt.GetResource().Name)
-	return &Spyt{
+	s := &Spyt{
 		labeller: l,
 		spyt:     spyt,
 		cfgen:    cfgen,
@@ -41,29 +41,30 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 			l,
 			spyt,
 			"user",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{},
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		initEnvironment: NewInitJob(
 			l,
 			spyt,
 			"spyt-environment",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
 				Image: &spyt.GetResource().Spec.Image,
 			},
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
 			spyt),
 	}
+	s.initUser.AddInitJobScript(s.createInitUserScript)
+	s.initEnvironment.AddInitJobScript(s.createInitScript)
+	return s
 }
 
 func (s *Spyt) createInitUserScript() string {
@@ -142,9 +143,6 @@ func (s *Spyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusWaitingFor(s.secret.Name()), err
 	}
 
-	if !dry {
-		s.initUser.SetInitScript(s.createInitUserScript())
-	}
 	status, err := s.initUser.Sync(ctx, dry)
 	if status.SyncStatus != SyncStatusReady {
 		s.spyt.GetResource().Status.ReleaseStatus = ytv1.SpytReleaseStatusCreatingUser
@@ -152,7 +150,6 @@ func (s *Spyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !dry {
-		s.initEnvironment.SetInitScript(s.createInitScript())
 		job := s.initEnvironment.Build()
 		container := &job.Spec.Template.Spec.Containers[0]
 		env := []corev1.EnvVar{

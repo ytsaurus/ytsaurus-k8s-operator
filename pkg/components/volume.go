@@ -177,7 +177,7 @@ func getConfigPostprocessingCommand(configFileName string) string {
 
 	configTemplatePath := path.Join(consts.ConfigTemplateMountPoint, configFileName)
 	configPath := path.Join(consts.ConfigMountPoint, configFileName)
-	postprocessScriptPath := path.Join(consts.ConfigMountPoint, consts.PostprocessConfigScriptFileName)
+	postprocessScriptPath := path.Join(consts.ConfigMountPoint, consts.PostprocessConfigScriptName)
 
 	var postprocessScript strings.Builder
 

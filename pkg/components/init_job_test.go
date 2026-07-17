@@ -54,7 +54,7 @@ func syncJobUntilReady(job *InitJob) {
 	}, waitTimeout, waitTick).Should(Equal(SyncStatusReady))
 }
 
-func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
+func newTestJob(ytsaurus *apiproxy.Ytsaurus, script string, generators ...ConfigGenerator) *InitJob {
 	resource := ytsaurus.GetResource()
 	return NewInitJob(
 		&labeller.Labeller{
@@ -65,13 +65,15 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus) *InitJob {
 		},
 		ytsaurus,
 		"dummy",
-		consts.ClientConfigFileName,
-		func() ([]byte, error) { return []byte("dummy-cfg"), nil },
 		&resource.Spec.CommonSpec,
 		&resource.Spec.PodSpec,
 		&ytv1.InstanceSpec{
 			Image: ptr.To("dummy-image"),
 		},
+		append(generators,
+			YsonConfigGenerator(consts.ClientConfigFileName, func() ([]byte, error) { return []byte("dummy-cfg"), nil }),
+			TextConfigGenerator(consts.InitJobScriptName, func() ([]string, error) { return []string{script}, nil }),
+		)...,
 	)
 }
 
@@ -105,8 +107,7 @@ var _ = Describe("InitJob", func() {
 		})
 
 		It("should delete job and prepare restart", func(ctx context.Context) {
-			job := newTestJob(ytsaurus)
-			job.SetInitScript(scriptBefore)
+			job := newTestJob(ytsaurus, scriptBefore)
 			syncJobUntilReady(job)
 
 			job.Restart()
@@ -129,20 +130,18 @@ var _ = Describe("InitJob", func() {
 		})
 
 		It("should update script on job restart", func(ctx context.Context) {
-			job := newTestJob(ytsaurus)
-			job.SetInitScript(scriptBefore)
+			job := newTestJob(ytsaurus, scriptBefore)
 			syncJobUntilReady(job)
 
 			// Imagine that new version of operator wants to set new init script for job.
-			job = newTestJob(ytsaurus)
-			job.SetInitScript(scriptAfter)
+			job = newTestJob(ytsaurus, scriptAfter)
 			job.Restart()
 			syncJobUntilReady(job)
 
 			cmData := testutil.FetchConfigMapData(
 				h,
 				"yt-master-init-job-dummy-config",
-				consts.InitJobScriptFileName,
+				consts.InitJobScriptName,
 			)
 			Expect(cmData).To(Equal(scriptAfter))
 		})
