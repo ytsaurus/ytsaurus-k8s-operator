@@ -75,17 +75,15 @@ func NewScheduler(
 			l,
 			ytsaurus,
 			"user",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&resource.Spec.Schedulers.InstanceSpec,
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		initOpArchiveJob: NewInitJobForYtsaurus(
 			l,
 			ytsaurus,
 			"op-archive",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&resource.Spec.Schedulers.InstanceSpec,
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
@@ -93,6 +91,10 @@ func NewScheduler(
 			ytsaurus),
 	}
 
+	scheduler.initUserJob.AddInitJobScript(scheduler.createInitUserScript)
+
+	scheduler.initOpArchiveJob.AddScript(consts.OperationsArchiveInitializationScriptName, scheduler.scriptInitOperationsArchive)
+	scheduler.initOpArchiveJob.AddScript(consts.OperationsArchiveUpdateScriptName, scheduler.scriptInitOperationsArchive)
 	scheduler.initOpArchiveJob.envFrom = []corev1.EnvFromSource{scheduler.secret.GetEnvSource()}
 
 	return &scheduler
@@ -120,7 +122,7 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 				return *status, err
 			}
 		case ytv1.UpdateStateWaitingForOpArchiveUpdate:
-			return s.initOpArchiveJob.RunUpdateScript(ctx, dry, s.ytsaurus, updateState, s.scriptInitOperationsArchive, nil)
+			return s.initOpArchiveJob.RunUpdateScript(ctx, dry, s.ytsaurus, updateState, consts.OperationsArchiveUpdateScriptName, nil)
 		default:
 			return ComponentStatusReady(), nil
 		}
@@ -166,10 +168,6 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 		return ComponentStatusReady(), nil
 	}
 
-	if !dry {
-		s.initUserJob.SetInitScript(s.createInitUserScript())
-	}
-
 	status, err := s.initUserJob.Sync(ctx, dry)
 	if status.SyncStatus != SyncStatusReady {
 		return status, err
@@ -182,7 +180,7 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 		}
 	}
 
-	return s.initOpArchiveJob.RunScript(ctx, dry, "InitOperationsArchive", s.scriptInitOperationsArchive, nil)
+	return s.initOpArchiveJob.RunScript(ctx, dry, "InitOperationsArchive", consts.OperationsArchiveInitializationScriptName, nil)
 }
 
 func (s *Scheduler) createInitUserScript() string {

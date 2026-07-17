@@ -831,13 +831,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 				It("Triggers cluster update", Label(newVersion), func(ctx context.Context) {
 					By("Checking jobs")
-					completedJobs := namespaceWatcher.GetCompletedJobNames()
-					Expect(completedJobs).Should(ConsistOf(
-						"yt-master-init-job-default",
-						"yt-client-init-job-user",
-						"yt-scheduler-init-job-user",
-						"yt-scheduler-init-job-op-archive",
-					))
+					completedJobs := namespaceWatcher.GetCompletedInitJobs()
+					// NOTE: One init job could be created several times until it appear in object cache.
+					Expect(completedJobs).Should(HaveEach(BeElementOf([]InitJob{
+						{"yt-master-init-job-default", "ClusterInitialization"},
+						{"yt-client-init-job-user", "InitJob"},
+						{"yt-scheduler-init-job-user", "InitJob"},
+						{"yt-scheduler-init-job-op-archive", "InitOperationsArchive"},
+					})))
 
 					checkPodLabels(ctx, namespace)
 

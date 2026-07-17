@@ -142,6 +142,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
@@ -330,6 +331,7 @@
     uid: ""
   resourceVersion: "1"
 - annotations:
+    ytsaurus.tech/init-job-reason: ClusterInitialization
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:

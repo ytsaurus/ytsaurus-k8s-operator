@@ -1,6 +1,7 @@
 metadata:
   annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/init-job-reason: YQLAgentInit
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
@@ -27,6 +28,7 @@ spec:
     metadata:
       annotations:
         extra-pod-annotation: "true"
+        ytsaurus.tech/init-job-reason: YQLAgentInit
       labels:
         app.kubernetes.io/component: yt-yql-agent
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
@@ -41,7 +43,7 @@ spec:
       - command:
         - /bin/bash
         - -eux
-        - /config/init-job-script.sh
+        - /config/yql-agent-initialization.sh
         env:
         - name: K8S_POD_NAME
           valueFrom:
