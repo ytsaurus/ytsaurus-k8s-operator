@@ -77,7 +77,6 @@ data:
     set -eux -o pipefail
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
-    export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     /usr/bin/yt create user --attributes '{name="robot-strawberry-controller"}' --ignore-existing
     /usr/bin/yt create map_node '//sys/cypress_tokens/107e090b330009cc4addb719867539736819cb584778a754b9c60fd2883a99fd' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/107e090b330009cc4addb719867539736819cb584778a754b9c60fd2883a99fd/@user' 'robot-strawberry-controller'

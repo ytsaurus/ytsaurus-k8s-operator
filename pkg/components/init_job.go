@@ -30,7 +30,6 @@ func initJobWithNativeDriverPrologue() string {
 	commands := []string{
 		initJobPrologue,
 		fmt.Sprintf("export YT_DRIVER_CONFIG_PATH=%s", path.Join(consts.ConfigMountPoint, consts.ClientConfigFileName)),
-		`export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"`,
 	}
 	return strings.Join(commands, "\n")
 }

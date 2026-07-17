@@ -77,7 +77,6 @@ data:
     set -eux -o pipefail
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
-    export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     /usr/bin/yt create user --attributes '{name="robot-ytsaurus-k8s-operator"}' --ignore-existing
     /usr/bin/yt create map_node '//sys/cypress_tokens/0d0ddc7507a05e55c85c286718179e2a6c09fdc143f2989f12db0bab466f67cb' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/0d0ddc7507a05e55c85c286718179e2a6c09fdc143f2989f12db0bab466f67cb/@user' 'robot-ytsaurus-k8s-operator'

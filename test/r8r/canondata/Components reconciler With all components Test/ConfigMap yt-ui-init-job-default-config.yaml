@@ -77,7 +77,6 @@ data:
     set -eux -o pipefail
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
-    export YTSAURUS_VERSION="$(/usr/bin/ytserver-all --version | head -c4)"
     /usr/bin/yt create user --attributes '{name="robot-ui"}' --ignore-existing
     /usr/bin/yt create map_node '//sys/cypress_tokens/d00189dc217c558cd0536e8a14e7632b9293dc2d795148ce052d14c4e0e0079c' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/d00189dc217c558cd0536e8a14e7632b9293dc2d795148ce052d14c4e0e0079c/@user' 'robot-ui'
