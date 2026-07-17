@@ -39,8 +39,16 @@ const (
 	PendingCypressPatchFileName  = "pending-cypress-patch.yson"
 	PreviousCypressPatchFileName = "previous-cypress-patch.yson"
 
-	InitJobScriptFileName           = "init-job-script.sh"
-	PostprocessConfigScriptFileName = "postprocess-config.sh"
+	InitJobDefaultReason = "InitJob"
+	InitJobScriptName    = "init-job-script.sh"
+
+	PostprocessConfigScriptName               = "postprocess-config.sh"
+	ClusterInitializationScriptName           = "cluster-initialization.sh"
+	MasterExitReadOnlyScriptName              = "master-exit-read-only.sh"
+	OperationsArchiveInitializationScriptName = "operations-archive-initialization.sh"
+	OperationsArchiveUpdateScriptName         = "operations-archive-update.sh"
+	YQLAgentInitializationScriptName          = "yql-agent-initialization.sh"
+	YQLAgentUpdateScriptName                  = "yql-agent-update.sh"
 
 	UIClusterConfigFileName = "clusters-config.json"
 	UISecretFileName        = "yt-interface-secret.json"

@@ -33,7 +33,7 @@ type Chyt struct {
 
 func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.Ytsaurus) *Chyt {
 	l := cfgen.GetComponentLabeller(consts.ChytType, chyt.GetResource().Name)
-	return &Chyt{
+	c := &Chyt{
 		labeller: l,
 		chyt:     chyt,
 		cfgen:    cfgen,
@@ -42,41 +42,42 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			l,
 			chyt,
 			"user",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{},
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		initEnvironment: NewInitJob(
 			l,
 			chyt,
 			"release",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
 				Image: ptr.To(chyt.GetResource().Spec.Image),
 			},
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		initChPublicJob: NewInitJob(
 			l,
 			chyt,
 			"ch-public",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
 				Image: ptr.To(chyt.GetResource().Spec.Image),
 			},
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
 			chyt),
 	}
+	c.initUser.AddInitJobScript(c.createInitUserScript)
+	c.initEnvironment.AddInitJobScript(c.createInitScript)
+	c.initChPublicJob.AddInitJobScript(c.createInitChPublicScript)
+	return c
 }
 
 func (c *Chyt) createInitUserScript() string {
@@ -121,8 +122,6 @@ func (c *Chyt) createInitChPublicScript() string {
 }
 
 func (c *Chyt) prepareChPublicJob() {
-	c.initChPublicJob.SetInitScript(c.createInitChPublicScript())
-
 	job := c.initChPublicJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{c.secret.GetEnvSource()}
@@ -148,10 +147,6 @@ func (c *Chyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		return ComponentStatusWaitingFor(c.secret.Name()), err
 	}
 
-	if !dry {
-		c.initUser.SetInitScript(c.createInitUserScript())
-	}
-
 	status, err := c.initUser.Sync(ctx, dry)
 	if status.SyncStatus != SyncStatusReady {
 		c.chyt.GetResource().Status.ReleaseStatus = ytv1.ChytReleaseStatusCreatingUser
@@ -159,7 +154,6 @@ func (c *Chyt) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	if !dry {
-		c.initEnvironment.SetInitScript(c.createInitScript())
 		job := c.initEnvironment.Build()
 		container := &job.Spec.Template.Spec.Containers[0]
 		container.Env = append(container.Env,

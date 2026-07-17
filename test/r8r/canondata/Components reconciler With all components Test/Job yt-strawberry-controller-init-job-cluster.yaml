@@ -1,6 +1,7 @@
 metadata:
   annotations:
     extra-pod-annotation: "true"
+    ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
@@ -27,6 +28,7 @@ spec:
     metadata:
       annotations:
         extra-pod-annotation: "true"
+        ytsaurus.tech/init-job-reason: InitJob
       labels:
         app.kubernetes.io/component: yt-strawberry-controller
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator

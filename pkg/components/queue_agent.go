@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -61,7 +60,7 @@ func NewQueueAgent(
 		}),
 	)
 
-	return &QueueAgent{
+	queueAgent := &QueueAgent{
 		serverComponent: newLocalServerComponent(l, ytsaurus, srv),
 		cfgen:           cfgen,
 		master:          master,
@@ -72,15 +71,16 @@ func NewQueueAgent(
 			l,
 			ytsaurus,
 			"qa-state",
-			consts.ClientConfigFileName,
-			cfgen.GetNativeClientConfig,
 			&resource.Spec.QueueAgents.InstanceSpec,
+			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
 			l,
 			ytsaurus),
 	}
+	queueAgent.initQAStateJob.AddScript(consts.InitJobScriptName, queueAgent.createInitQAStateScript)
+	return queueAgent
 }
 
 func (qa *QueueAgent) Fetch(ctx context.Context) error {
@@ -281,7 +281,7 @@ func (qa *QueueAgent) init(ctx context.Context, ytClient yt.Client) (err error) 
 	return nil
 }
 
-func (qa *QueueAgent) prepareInitQueueAgentState() {
+func (qa *QueueAgent) createInitQAStateScript() ([]string, error) {
 	path := "/usr/bin/init_queue_agent_state"
 	proxy := qa.cfgen.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)
 
@@ -316,7 +316,10 @@ func (qa *QueueAgent) prepareInitQueueAgentState() {
 		`fi`,
 	}
 
-	qa.initQAStateJob.SetInitScript(strings.Join(script, "\n"))
+	return script, nil
+}
+
+func (qa *QueueAgent) prepareInitQAState() {
 	job := qa.initQAStateJob.Build()
 	container := &job.Spec.Template.Spec.Containers[0]
 	container.EnvFrom = []corev1.EnvFromSource{qa.secret.GetEnvSource()}
@@ -353,7 +356,7 @@ func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	if !dry {
-		qa.prepareInitQueueAgentState()
+		qa.prepareInitQAState()
 	}
 	return qa.initQAStateJob.Sync(ctx, dry)
 }

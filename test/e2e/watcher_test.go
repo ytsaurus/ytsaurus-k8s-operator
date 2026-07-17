@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 )
 
@@ -42,15 +43,19 @@ func (w *NamespaceWatcher) GetRawEvents() []watch.Event {
 	return w.events
 }
 
+type InitJob struct {
+	Name   string
+	Reason string
+}
+
 // TODO: not really generic, but good enough for the start.
-func (w *NamespaceWatcher) GetCompletedJobNames() []string {
-	var result []string
+func (w *NamespaceWatcher) GetCompletedInitJobs() (result []InitJob) {
 	for _, ev := range w.events {
 		if job, ok := ev.Object.(*batchv1.Job); ok {
 			if job.Status.Succeeded == 0 {
 				continue
 			}
-			result = append(result, job.Name)
+			result = append(result, InitJob{job.Name, job.Annotations[consts.InitJobReasonAnnotationName]})
 		}
 	}
 	return result
