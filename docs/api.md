@@ -110,6 +110,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -308,6 +309,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for initialization job containers. Overrides the setting from the referenced Ytsaurus. |  |  |
 | `ytsaurus` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `image` _string_ |  |  |  |
 | `makeDefault` _boolean_ | Mark specified image as default for cliques. | false |  |
@@ -664,6 +666,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -706,6 +709,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -750,6 +754,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -812,6 +817,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -915,6 +921,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1027,6 +1034,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1175,6 +1183,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1294,6 +1303,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1522,6 +1532,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1607,6 +1618,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1799,6 +1811,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1899,6 +1912,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -1985,6 +1999,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2009,6 +2024,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2051,6 +2067,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2093,6 +2110,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2240,6 +2258,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2340,6 +2359,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2488,6 +2508,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2605,6 +2626,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2686,6 +2708,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for initialization job containers. Overrides the setting from the referenced Ytsaurus. |  |  |
 | `ytsaurus` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `image` _string_ |  |  |  |
 | `sparkVersions` _string array_ | If multiple versions are provided, only the first one is used for query tracker dynamic config. |  |  |
@@ -2722,6 +2745,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2798,6 +2822,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2844,6 +2869,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -2904,6 +2930,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -3031,6 +3058,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -3216,6 +3244,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
@@ -3339,6 +3368,7 @@ _Appears in:_
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
 | `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
+| `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources for init containers and initialization job containers.<br />Component-level settings override the global setting. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
 | `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |

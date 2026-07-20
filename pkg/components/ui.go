@@ -209,6 +209,11 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 			VolumeMounts: volumeMounts,
 		},
 	}
+	setInitContainerResources(
+		deployment.Spec.Template.Spec.InitContainers,
+		ytsaurusResource.Spec.UI.InitContainerResources,
+		ytsaurusResource.Spec.InitContainerResources,
+	)
 
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{

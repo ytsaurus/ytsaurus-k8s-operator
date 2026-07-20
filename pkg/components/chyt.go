@@ -46,7 +46,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
-			&ytv1.InstanceSpec{},
+			&ytv1.InstanceSpec{PodSpec: ytv1.PodSpec{InitContainerResources: chyt.GetResource().Spec.InitContainerResources}},
 		),
 		initEnvironment: NewInitJob(
 			l,
@@ -57,7 +57,8 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
-				Image: ptr.To(chyt.GetResource().Spec.Image),
+				Image:   ptr.To(chyt.GetResource().Spec.Image),
+				PodSpec: ytv1.PodSpec{InitContainerResources: chyt.GetResource().Spec.InitContainerResources},
 			},
 		),
 		initChPublicJob: NewInitJob(
@@ -69,7 +70,8 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
-				Image: ptr.To(chyt.GetResource().Spec.Image),
+				Image:   ptr.To(chyt.GetResource().Spec.Image),
+				PodSpec: ytv1.PodSpec{InitContainerResources: chyt.GetResource().Spec.InitContainerResources},
 			},
 		),
 		secret: resources.NewStringSecret(

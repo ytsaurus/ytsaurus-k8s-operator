@@ -34,6 +34,9 @@ const (
 // ChytSpec defines the desired state of Chyt
 type ChytSpec struct {
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
+	// Resources for initialization job containers. Overrides the setting from the referenced Ytsaurus.
+	//+optional
+	InitContainerResources *corev1.ResourceRequirements `json:"initContainerResources,omitempty"`
 
 	Ytsaurus *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
 	Image    string                       `json:"image,omitempty"`
