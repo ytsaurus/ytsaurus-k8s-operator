@@ -90,7 +90,7 @@ func NewYtsaurusClient(
 			"user",
 			consts.ClientConfigFileName,
 			cfgen.GetNativeClientConfig,
-			&ytv1.InstanceSpec{Resources: *resource.Spec.PrimaryMasters.Resources.DeepCopy()},
+			&ytv1.InstanceSpec{},
 		),
 		secret: resources.NewStringSecret(
 			l.GetSecretName(),
