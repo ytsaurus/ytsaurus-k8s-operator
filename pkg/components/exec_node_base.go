@@ -133,11 +133,6 @@ func (n *baseExecNode) doBuildBase() error {
 		}
 	}
 
-	// Exec nodes may add custom init containers or job resources after the base
-	// StatefulSet is built. Keep every init container aligned with the final
-	// resources of the main YTsaurus container.
-	setContainerResources(podSpec.InitContainers, podSpec.Containers[0].Resources)
-
 	return nil
 }
 

@@ -111,8 +111,8 @@ spec:
         name: prepare-locations
         resources:
           limits:
-            cpu: "5"
-            memory: 10Gi
+            cpu: "1"
+            memory: 2Gi
           requests:
             cpu: "0"
             memory: "0"
@@ -155,8 +155,8 @@ spec:
         name: postprocess-config
         resources:
           limits:
-            cpu: "5"
-            memory: 10Gi
+            cpu: "1"
+            memory: 2Gi
           requests:
             cpu: "0"
             memory: "0"
