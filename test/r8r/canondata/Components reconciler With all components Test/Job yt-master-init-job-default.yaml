@@ -63,7 +63,13 @@ spec:
           value: /etc/ssl/certs/ca-certificates.crt
         image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: ytsaurus-init
-        resources: {}
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /config

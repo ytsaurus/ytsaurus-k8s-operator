@@ -688,18 +688,7 @@ func ptrDefault[T any](ptr, def *T) *T {
 	return def
 }
 
-func getInitContainerResources(component, global *corev1.ResourceRequirements) *corev1.ResourceRequirements {
-	if component != nil {
-		return component
-	}
-	return global
-}
-
-func setInitContainerResources(containers []corev1.Container, component, global *corev1.ResourceRequirements) {
-	resources := getInitContainerResources(component, global)
-	if resources == nil {
-		return
-	}
+func setContainerResources(containers []corev1.Container, resources corev1.ResourceRequirements) {
 	for i := range containers {
 		containers[i].Resources = *resources.DeepCopy()
 	}

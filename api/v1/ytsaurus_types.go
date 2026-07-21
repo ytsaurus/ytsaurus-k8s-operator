@@ -410,11 +410,6 @@ type MetricExporter struct {
 }
 
 type PodSpec struct {
-	// Resources for init containers and initialization job containers.
-	// Component-level settings override the global setting.
-	//+optional
-	InitContainerResources *corev1.ResourceRequirements `json:"initContainerResources,omitempty"`
-
 	// Labels for instance pods.
 	PodLabels map[string]string `json:"podLabels,omitempty"`
 	// Annotations for instance pods.

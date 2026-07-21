@@ -104,7 +104,13 @@ spec:
               fieldPath: spec.nodeName
         image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: prepare-locations
-        resources: {}
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         volumeMounts:
         - mountPath: /config_template
           name: config-template
@@ -138,7 +144,13 @@ spec:
               fieldPath: spec.nodeName
         image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: postprocess-config
-        resources: {}
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         volumeMounts:
         - mountPath: /config_template
           name: config-template

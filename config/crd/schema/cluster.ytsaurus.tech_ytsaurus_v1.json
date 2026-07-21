@@ -897,69 +897,6 @@
               "description": "Overrides coreImage for component.",
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
@@ -3303,69 +3240,6 @@
               "description": "Overrides coreImage for component.",
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
@@ -5557,69 +5431,6 @@
               "description": "Overrides coreImage for component.",
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
@@ -7807,69 +7618,6 @@
               "image": {
                 "description": "Overrides coreImage for component.",
                 "type": "string"
-              },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
               },
               "instanceCount": {
                 "description": "Desired count of replicas. Default: 0.",
@@ -10072,69 +9820,6 @@
             "image": {
               "description": "Overrides coreImage for component.",
               "type": "string"
-            },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
             },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
@@ -12381,69 +12066,6 @@
               "image": {
                 "description": "Overrides coreImage for component.",
                 "type": "string"
-              },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
               },
               "initContainers": {
                 "description": "List of init containers as yaml of core/v1 Container.",
@@ -15043,69 +14665,6 @@
                 "description": "Overrides coreImage for component.",
                 "type": "string"
               },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
-              },
               "instanceCount": {
                 "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
@@ -16516,69 +16075,6 @@
             "x-kubernetes-map-type": "atomic"
           }
         },
-        "initContainerResources": {
-          "description": "Resources for init containers and initialization job containers.",
-          "type": "object",
-          "properties": {
-            "claims": {
-              "description": "Claims lists the names of resources, defined in spec.",
-              "type": "array",
-              "items": {
-                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                "type": "object",
-                "required": [
-                  "name"
-                ],
-                "properties": {
-                  "name": {
-                    "description": "Name must match the name of one entry in pod.spec.",
-                    "type": "string"
-                  },
-                  "request": {
-                    "description": "Request is the name chosen for a request in the referenced claim.",
-                    "type": "string"
-                  }
-                }
-              },
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
-            },
-            "limits": {
-              "description": "Limits describes the maximum amount of compute resources allowed.",
-              "type": "object",
-              "additionalProperties": {
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "x-kubernetes-int-or-string": true
-              }
-            },
-            "requests": {
-              "description": "Requests describes the minimum amount of compute resources required.",
-              "type": "object",
-              "additionalProperties": {
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "x-kubernetes-int-or-string": true
-              }
-            }
-          }
-        },
         "isManaged": {
           "description": "Setting to false disables all operator actions. Default: true.",
           "type": "boolean",
@@ -17411,69 +16907,6 @@
               "image": {
                 "description": "Overrides coreImage for component.",
                 "type": "string"
-              },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
               },
               "instanceCount": {
                 "description": "Desired count of replicas. Default: 0.",
@@ -19693,69 +19126,6 @@
             "image": {
               "description": "Overrides coreImage for component.",
               "type": "string"
-            },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
             },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
@@ -22085,69 +21455,6 @@
               "description": "Overrides coreImage for component.",
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
@@ -24367,69 +23674,6 @@
               "description": "Overrides coreImage for component.",
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
@@ -26614,69 +25858,6 @@
             "image": {
               "description": "Overrides coreImage for component.",
               "type": "string"
-            },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
             },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
@@ -28868,69 +28049,6 @@
               "image": {
                 "description": "Overrides coreImage for component.",
                 "type": "string"
-              },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
               },
               "instanceCount": {
                 "description": "Desired count of replicas. Default: 0.",
@@ -31176,69 +30294,6 @@
               "description": "Overrides coreImage for component.",
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
               "type": "integer",
@@ -33454,69 +32509,6 @@
                 "description": "Overrides coreImage for component.",
                 "type": "string"
               },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
-              },
               "instanceCount": {
                 "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
@@ -35000,69 +33992,6 @@
             "image": {
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "logToStderr": {
               "description": "Write logs to stderr.",
               "type": "boolean"
@@ -36014,69 +34943,6 @@
             "image": {
               "description": "Overrides coreImage for component.",
               "type": "string"
-            },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
             },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",
@@ -38264,69 +37130,6 @@
               "image": {
                 "description": "Overrides coreImage for component.",
                 "type": "string"
-              },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
               },
               "instanceCount": {
                 "description": "Desired count of replicas. Default: 0.",
@@ -40536,69 +39339,6 @@
                 "description": "Overrides coreImage for component.",
                 "type": "string"
               },
-              "initContainerResources": {
-                "description": "Resources for init containers and initialization job containers.",
-                "type": "object",
-                "properties": {
-                  "claims": {
-                    "description": "Claims lists the names of resources, defined in spec.",
-                    "type": "array",
-                    "items": {
-                      "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "description": "Name must match the name of one entry in pod.spec.",
-                          "type": "string"
-                        },
-                        "request": {
-                          "description": "Request is the name chosen for a request in the referenced claim.",
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "x-kubernetes-list-map-keys": [
-                      "name"
-                    ],
-                    "x-kubernetes-list-type": "map"
-                  },
-                  "limits": {
-                    "description": "Limits describes the maximum amount of compute resources allowed.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  },
-                  "requests": {
-                    "description": "Requests describes the minimum amount of compute resources required.",
-                    "type": "object",
-                    "additionalProperties": {
-                      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                      "anyOf": [
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "x-kubernetes-int-or-string": true
-                    }
-                  }
-                }
-              },
               "instanceCount": {
                 "description": "Desired count of replicas. Default: 0.",
                 "type": "integer",
@@ -42212,69 +40952,6 @@
             "image": {
               "type": "string"
             },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
-            },
             "instanceCount": {
               "type": "integer",
               "format": "int32"
@@ -43439,69 +42116,6 @@
             "image": {
               "description": "Overrides coreImage for component.",
               "type": "string"
-            },
-            "initContainerResources": {
-              "description": "Resources for init containers and initialization job containers.",
-              "type": "object",
-              "properties": {
-                "claims": {
-                  "description": "Claims lists the names of resources, defined in spec.",
-                  "type": "array",
-                  "items": {
-                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                    "type": "object",
-                    "required": [
-                      "name"
-                    ],
-                    "properties": {
-                      "name": {
-                        "description": "Name must match the name of one entry in pod.spec.",
-                        "type": "string"
-                      },
-                      "request": {
-                        "description": "Request is the name chosen for a request in the referenced claim.",
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "x-kubernetes-list-map-keys": [
-                    "name"
-                  ],
-                  "x-kubernetes-list-type": "map"
-                },
-                "limits": {
-                  "description": "Limits describes the maximum amount of compute resources allowed.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                },
-                "requests": {
-                  "description": "Requests describes the minimum amount of compute resources required.",
-                  "type": "object",
-                  "additionalProperties": {
-                    "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                    "anyOf": [
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "x-kubernetes-int-or-string": true
-                  }
-                }
-              }
             },
             "instanceCount": {
               "description": "Desired count of replicas. Default: 0.",

@@ -269,11 +269,7 @@ func (j *InitJob) Build() *batchv1.Job {
 			},
 		},
 	}
-	setInitContainerResources(
-		job.Spec.Template.Spec.Containers,
-		j.instanceSpec.InitContainerResources,
-		j.commonPodSpec.InitContainerResources,
-	)
+	setContainerResources(job.Spec.Template.Spec.Containers, j.instanceSpec.Resources)
 
 	podSpec := &job.Spec.Template.Spec
 

@@ -845,52 +845,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -2891,52 +2845,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -4813,52 +4721,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -6741,52 +6603,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     instanceCount:
                       default: 0
                       description: 'Desired count of replicas. Default: 0.'
@@ -8676,52 +8492,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -10650,52 +10420,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     initContainers:
                       description: List of init containers as yaml of core/v1 Container.
                       items:
@@ -12897,52 +12621,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     instanceCount:
                       default: 0
                       description: 'Desired count of replicas. Default: 0.'
@@ -14113,50 +13791,6 @@ spec:
                   type: object
                   x-kubernetes-map-type: atomic
                 type: array
-              initContainerResources:
-                description: Resources for init containers and initialization job
-                  containers.
-                properties:
-                  claims:
-                    description: Claims lists the names of resources, defined in spec.
-                    items:
-                      description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                      properties:
-                        name:
-                          description: Name must match the name of one entry in pod.spec.
-                          type: string
-                        request:
-                          description: Request is the name chosen for a request in
-                            the referenced claim.
-                          type: string
-                      required:
-                      - name
-                      type: object
-                    type: array
-                    x-kubernetes-list-map-keys:
-                    - name
-                    x-kubernetes-list-type: map
-                  limits:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: Limits describes the maximum amount of compute resources
-                      allowed.
-                    type: object
-                  requests:
-                    additionalProperties:
-                      anyOf:
-                      - type: integer
-                      - type: string
-                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                      x-kubernetes-int-or-string: true
-                    description: Requests describes the minimum amount of compute
-                      resources required.
-                    type: object
-                type: object
               isManaged:
                 default: true
                 description: 'Setting to false disables all operator actions. Default:
@@ -14919,52 +14553,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     instanceCount:
                       default: 0
                       description: 'Desired count of replicas. Default: 0.'
@@ -16866,52 +16454,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -18892,52 +18434,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -20837,52 +20333,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -22755,52 +22205,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -24687,52 +24091,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     instanceCount:
                       default: 0
                       description: 'Desired count of replicas. Default: 0.'
@@ -26658,52 +26016,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -28604,52 +27916,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     instanceCount:
                       default: 0
                       description: 'Desired count of replicas. Default: 0.'
@@ -29877,52 +29143,6 @@ spec:
                     type: boolean
                   image:
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   logToStderr:
                     description: Write logs to stderr.
                     type: boolean
@@ -30770,52 +29990,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'
@@ -32698,52 +31872,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     instanceCount:
                       default: 0
                       description: 'Desired count of replicas. Default: 0.'
@@ -34642,52 +33770,6 @@ spec:
                     image:
                       description: Overrides coreImage for component.
                       type: string
-                    initContainerResources:
-                      description: Resources for init containers and initialization
-                        job containers.
-                      properties:
-                        claims:
-                          description: Claims lists the names of resources, defined
-                            in spec.
-                          items:
-                            description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                            properties:
-                              name:
-                                description: Name must match the name of one entry
-                                  in pod.spec.
-                                type: string
-                              request:
-                                description: Request is the name chosen for a request
-                                  in the referenced claim.
-                                type: string
-                            required:
-                            - name
-                            type: object
-                          type: array
-                          x-kubernetes-list-map-keys:
-                          - name
-                          x-kubernetes-list-type: map
-                        limits:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Limits describes the maximum amount of compute
-                            resources allowed.
-                          type: object
-                        requests:
-                          additionalProperties:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          description: Requests describes the minimum amount of compute
-                            resources required.
-                          type: object
-                      type: object
                     instanceCount:
                       default: 0
                       description: 'Desired count of replicas. Default: 0.'
@@ -36031,52 +35113,6 @@ spec:
                     type: integer
                   image:
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     format: int32
                     type: integer
@@ -37078,52 +36114,6 @@ spec:
                   image:
                     description: Overrides coreImage for component.
                     type: string
-                  initContainerResources:
-                    description: Resources for init containers and initialization
-                      job containers.
-                    properties:
-                      claims:
-                        description: Claims lists the names of resources, defined
-                          in spec.
-                        items:
-                          description: ResourceClaim references one entry in PodSpec.ResourceClaims.
-                          properties:
-                            name:
-                              description: Name must match the name of one entry in
-                                pod.spec.
-                              type: string
-                            request:
-                              description: Request is the name chosen for a request
-                                in the referenced claim.
-                              type: string
-                          required:
-                          - name
-                          type: object
-                        type: array
-                        x-kubernetes-list-map-keys:
-                        - name
-                        x-kubernetes-list-type: map
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Limits describes the maximum amount of compute
-                          resources allowed.
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: Requests describes the minimum amount of compute
-                          resources required.
-                        type: object
-                    type: object
                   instanceCount:
                     default: 0
                     description: 'Desired count of replicas. Default: 0.'

@@ -214,7 +214,13 @@ spec:
           value: /etc/ssl/certs/ca-certificates.crt
         image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: prepare-locations
-        resources: {}
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         securityContext:
           privileged: false
         volumeMounts:
@@ -261,7 +267,13 @@ spec:
           value: /etc/ssl/certs/ca-certificates.crt
         image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: postprocess-config
-        resources: {}
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: "0"
+            memory: "0"
         securityContext:
           privileged: false
         volumeMounts:

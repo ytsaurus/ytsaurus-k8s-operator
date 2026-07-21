@@ -1040,69 +1040,6 @@
             "x-kubernetes-map-type": "atomic"
           }
         },
-        "initContainerResources": {
-          "description": "Resources for init containers and initialization job containers.",
-          "type": "object",
-          "properties": {
-            "claims": {
-              "description": "Claims lists the names of resources, defined in spec.",
-              "type": "array",
-              "items": {
-                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-                "type": "object",
-                "required": [
-                  "name"
-                ],
-                "properties": {
-                  "name": {
-                    "description": "Name must match the name of one entry in pod.spec.",
-                    "type": "string"
-                  },
-                  "request": {
-                    "description": "Request is the name chosen for a request in the referenced claim.",
-                    "type": "string"
-                  }
-                }
-              },
-              "x-kubernetes-list-map-keys": [
-                "name"
-              ],
-              "x-kubernetes-list-type": "map"
-            },
-            "limits": {
-              "description": "Limits describes the maximum amount of compute resources allowed.",
-              "type": "object",
-              "additionalProperties": {
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "x-kubernetes-int-or-string": true
-              }
-            },
-            "requests": {
-              "description": "Requests describes the minimum amount of compute resources required.",
-              "type": "object",
-              "additionalProperties": {
-                "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
-                "anyOf": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "x-kubernetes-int-or-string": true
-              }
-            }
-          }
-        },
         "initContainers": {
           "description": "List of init containers as yaml of core/v1 Container.",
           "type": "array",
