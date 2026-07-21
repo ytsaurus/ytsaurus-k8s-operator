@@ -109,8 +109,7 @@ func NewStrawberryController(
 			consts.ClientConfigFileName,
 			cfgen.GetNativeClientConfig,
 			&ytv1.InstanceSpec{
-				PodSpec:   resource.Spec.StrawberryController.PodSpec,
-				Resources: *resource.Spec.StrawberryController.Resources.DeepCopy(),
+				PodSpec: resource.Spec.StrawberryController.PodSpec,
 			},
 		),
 		initChytClusterJob: NewInitJobForYtsaurus(
@@ -120,9 +119,8 @@ func NewStrawberryController(
 			ChytInitClusterJobConfigFileName,
 			cfgen.GetStrawberryInitClusterConfig,
 			&ytv1.InstanceSpec{
-				PodSpec:   resource.Spec.StrawberryController.PodSpec,
-				Image:     ptr.To(image),
-				Resources: *resource.Spec.StrawberryController.Resources.DeepCopy(),
+				PodSpec: resource.Spec.StrawberryController.PodSpec,
+				Image:   ptr.To(image),
 			},
 		),
 		secret: resources.NewStringSecret(
@@ -243,7 +241,6 @@ func (c *StrawberryController) syncComponents(ctx context.Context) (err error) {
 				},
 			},
 			VolumeMounts: volumeMounts,
-			Resources:    *c.spec.Resources.DeepCopy(),
 		},
 	}
 

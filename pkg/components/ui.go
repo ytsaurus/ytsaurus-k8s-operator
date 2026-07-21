@@ -83,8 +83,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			consts.ClientConfigFileName,
 			cfgen.GetNativeClientConfig,
 			&ytv1.InstanceSpec{
-				PodSpec:   resource.Spec.UI.PodSpec,
-				Resources: *resource.Spec.UI.Resources.DeepCopy(),
+				PodSpec: resource.Spec.UI.PodSpec,
 			},
 		),
 		secret: resources.NewStringSecret(
@@ -210,6 +209,7 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 			VolumeMounts: volumeMounts,
 		},
 	}
+
 	deployment.Spec.Template.Spec.Containers = []corev1.Container{
 		{
 			Image:   u.microservice.getImage(),
@@ -232,13 +232,8 @@ func (u *UI) syncComponents(ctx context.Context) (err error) {
 				},
 			},
 			VolumeMounts: volumeMounts,
-			Resources:    *ytsaurusResource.Spec.UI.Resources.DeepCopy(),
 		},
 	}
-	setContainerResources(
-		deployment.Spec.Template.Spec.InitContainers,
-		deployment.Spec.Template.Spec.Containers[0].Resources,
-	)
 
 	deployment.Spec.Template.Spec.Volumes = []corev1.Volume{
 		{

@@ -59,13 +59,7 @@ spec:
             name: yt-chyt-test-ytsaurus-secret
         image: ghcr.io/ytsaurus/chyt:2.18.3
         name: ytsaurus-init
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "0"
-            memory: "0"
+        resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /config

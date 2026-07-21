@@ -45,7 +45,7 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
-			&ytv1.InstanceSpec{Resources: *ytsaurus.Spec.PrimaryMasters.Resources.DeepCopy()},
+			&ytv1.InstanceSpec{},
 		),
 		initEnvironment: NewInitJob(
 			l,
@@ -56,8 +56,7 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
-				Image:     &spyt.GetResource().Spec.Image,
-				Resources: *ytsaurus.Spec.PrimaryMasters.Resources.DeepCopy(),
+				Image: &spyt.GetResource().Spec.Image,
 			},
 		),
 		secret: resources.NewStringSecret(

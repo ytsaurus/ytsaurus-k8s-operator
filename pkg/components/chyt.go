@@ -46,7 +46,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			cfgen.GetNativeClientConfig,
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
-			&ytv1.InstanceSpec{Resources: *ytsaurus.Spec.PrimaryMasters.Resources.DeepCopy()},
+			&ytv1.InstanceSpec{},
 		),
 		initEnvironment: NewInitJob(
 			l,
@@ -57,8 +57,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
-				Image:     ptr.To(chyt.GetResource().Spec.Image),
-				Resources: *ytsaurus.Spec.PrimaryMasters.Resources.DeepCopy(),
+				Image: ptr.To(chyt.GetResource().Spec.Image),
 			},
 		),
 		initChPublicJob: NewInitJob(
@@ -70,8 +69,7 @@ func NewChyt(cfgen *ytconfig.NodeGenerator, chyt *apiproxy.Chyt, ytsaurus *ytv1.
 			&ytsaurus.Spec.CommonSpec,
 			&ytsaurus.Spec.PodSpec,
 			&ytv1.InstanceSpec{
-				Image:     ptr.To(chyt.GetResource().Spec.Image),
-				Resources: *ytsaurus.Spec.PrimaryMasters.Resources.DeepCopy(),
+				Image: ptr.To(chyt.GetResource().Spec.Image),
 			},
 		),
 		secret: resources.NewStringSecret(
