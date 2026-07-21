@@ -10,6 +10,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -295,6 +296,86 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 				},
 			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.execNodes[0].sidecars[1].name: Duplicate value: \"foo\"")))
+		})
+
+		It("Should reject non-guaranteed exec node jobs and sidecar containers when main container has Guaranteed QoS", func() {
+			ytsaurus.Spec.ExecNodes[0].Resources = corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("2"),
+					corev1.ResourceMemory: resource.MustParse("4Gi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("2"),
+					corev1.ResourceMemory: resource.MustParse("4Gi"),
+				},
+			}
+			ytsaurus.Spec.ExecNodes[0].JobResources = &corev1.ResourceRequirements{
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("1"),
+					corev1.ResourceMemory: resource.MustParse("1Gi"),
+				},
+			}
+			ytsaurus.Spec.ExecNodes[0].InitContainers = []string{`name: init
+image: busybox
+resources:
+  requests:
+    cpu: "1"
+    memory: 1Gi
+  limits:
+    cpu: "2"
+    memory: 1Gi`}
+			ytsaurus.Spec.ExecNodes[0].Sidecars = []string{`name: sidecar
+image: busybox`}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(SatisfyAll(
+				ContainSubstring("spec.execNodes[0].jobResources: Forbidden"),
+				ContainSubstring("spec.execNodes[0].initContainers[0].resources: Forbidden"),
+				ContainSubstring("spec.execNodes[0].sidecars[0].resources: Forbidden"),
+			)))
+		})
+
+		It("Should accept guaranteed exec node jobs and sidecar containers when main container has Guaranteed QoS", func() {
+			ytsaurus.Spec.ExecNodes[0].Resources = corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("2"),
+					corev1.ResourceMemory: resource.MustParse("4Gi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("2"),
+					corev1.ResourceMemory: resource.MustParse("4Gi"),
+				},
+			}
+			ytsaurus.Spec.ExecNodes[0].JobResources = &corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("1"),
+					corev1.ResourceMemory: resource.MustParse("1Gi"),
+				},
+				Limits: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("1"),
+					corev1.ResourceMemory: resource.MustParse("1Gi"),
+				},
+			}
+			ytsaurus.Spec.ExecNodes[0].InitContainers = []string{`name: init
+image: busybox
+resources:
+  requests:
+    cpu: "1"
+    memory: 1Gi
+  limits:
+    cpu: "1"
+    memory: 1Gi`}
+			ytsaurus.Spec.ExecNodes[0].Sidecars = []string{`name: sidecar
+image: busybox
+resources:
+  requests:
+    cpu: "1"
+    memory: 1Gi
+  limits:
+    cpu: "1"
+    memory: 1Gi`}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 
 		It("Check combination of schedulers, controllerAgents and execNodes", func() {
