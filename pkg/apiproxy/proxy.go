@@ -170,7 +170,7 @@ func (c *apiProxy) DeleteObject(ctx context.Context, obj client.Object, opts ...
 
 	c.RecordNormal(
 		"Reconciliation",
-		fmt.Sprintf("Deleted YT object %s", obj.GetName()))
+		fmt.Sprintf("Deleted YT object %s (%T)", obj.GetName(), obj))
 	logger.V(2).Info("deleted YT object", "object_name", obj.GetName())
 	return nil
 }
@@ -194,7 +194,7 @@ func (c *apiProxy) updateObject(ctx context.Context, obj client.Object) error {
 
 	c.RecordNormal(
 		"Reconciliation",
-		fmt.Sprintf("Updated YT object %s", obj.GetName()))
+		fmt.Sprintf("Updated YT object %s (%T)", obj.GetName(), obj))
 	logger.V(2).Info("updated existing YT object", "object_name", obj.GetName())
 	return nil
 }
