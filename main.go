@@ -46,6 +46,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -119,8 +120,19 @@ func main() {
 		"clusterDomain", clusterDomain,
 	)
 
+	broadcaster := record.NewBroadcaster(
+		record.WithCorrelatorOptions(record.CorrelatorOptions{
+			LRUCacheSize:         4096,
+			BurstSize:            100, // Token bucket per spam key.
+			QPS:                  1,   // Refill one event per second.
+			MaxEvents:            100, // Aggregate only after 100 distinct messages with the same source/object/type/reason.
+			MaxIntervalInSeconds: 600, // Aggregation cool down interval.
+		}),
+	)
+
 	managerOptions := ctrl.Options{
-		Scheme: scheme,
+		Scheme:           scheme,
+		EventBroadcaster: broadcaster,
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port: 9443,
 		}),
