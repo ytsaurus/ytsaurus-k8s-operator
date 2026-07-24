@@ -2,7 +2,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "7"
+  resourceVersion: "9"
 spec:
   createPublicClique: true
   image: ghcr.io/ytsaurus/chyt:2.18.3

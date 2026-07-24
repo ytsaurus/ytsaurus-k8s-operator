@@ -300,7 +300,7 @@ func (j *InitJob) Exists() bool {
 	return resources.Exists(j.initJob, j.configs)
 }
 
-func (j *InitJob) start(ctx context.Context, dry bool, isRestarted bool) (ComponentStatus, error) {
+func (j *InitJob) start(ctx context.Context, dry, isStarted, isRestarted bool) (ComponentStatus, error) {
 	if dry {
 		return ComponentStatusWaitingFor("job %s start", j.Name()), nil
 	}
@@ -311,12 +311,28 @@ func (j *InitJob) start(ctx context.Context, dry bool, isRestarted bool) (Compon
 		return ComponentStatusWaitingFor("job %v delete", j.Name()), err
 	}
 
+	if isRestarted && j.configs.Exists() {
+		err := j.configs.configMap.DeleteBackground(ctx)
+		return ComponentStatusWaitingFor("job %v configmap %v delete", j.Name(), j.configs.GetConfigMapName()), err
+	}
+
+	if !isStarted {
+		// NOTE: Set condition reason to checkpoint fresh (re)start.
+		j.owner.SetStatusCondition(metav1.Condition{
+			Type:    j.statusCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  j.reason,
+			Message: fmt.Sprintf("Job %s starting", j.Name()),
+		})
+		return ComponentStatusWaitingFor("job %v starting for reason %v", j.Name(), j.reason), nil
+	}
+
 	if _, err := j.configs.Build(); err != nil {
 		return ComponentStatusWaitingFor("job %v configmap %v", j.Name(), j.configs.GetConfigMapName()), err
 	}
 
 	// NOTE: Track job reason in configmap annotation but not recreate to allow manual fixes for failing job.
-	if isRestarted || !j.configs.Exists() || j.configs.getAnnotation(consts.InitJobReasonAnnotationName) != j.reason {
+	if !j.configs.Exists() || j.configs.getAnnotation(consts.InitJobReasonAnnotationName) != j.reason {
 		j.configs.setAnnotation(consts.InitJobReasonAnnotationName, j.reason)
 		if err := j.configs.Sync(ctx); err != nil {
 			return ComponentStatusWaitingFor("job %v configmap %v", j.Name(), j.configs.GetConfigMapName()), err
@@ -347,9 +363,9 @@ func (j *InitJob) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	isStarted := condition != nil && condition.Reason == j.reason
-	if !isExists || !isStarted || j.initJob.IsFailed() {
+	if !isStarted || !isExists || j.initJob.IsFailed() {
 		isRestarted := condition == nil
-		return j.start(ctx, dry, isRestarted)
+		return j.start(ctx, dry, isStarted, isRestarted)
 	}
 
 	if !j.initJob.IsComplete() {

@@ -101,7 +101,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -120,7 +120,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Created YT object yt-master-init-job-default-config (*v1.ConfigMap)
   metadata:
@@ -139,7 +139,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "3"
+    resourceVersion: "4"
   lastTimestamp: null
   message: Created YT object yt-master-init-job-default (*v1.Job)
   metadata:
@@ -158,7 +158,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object hp (*v1.StatefulSet)
   metadata:
@@ -177,7 +177,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Config ytserver-http-proxy.yson needs creation
   metadata:
@@ -196,7 +196,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object yt-http-proxy-config (*v1.ConfigMap)
   metadata:
@@ -215,7 +215,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object http-proxies (*v1.Service)
   metadata:
@@ -234,7 +234,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object yt-http-proxy-monitoring (*v1.Service)
   metadata:
@@ -253,7 +253,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object ds (*v1.StatefulSet)
   metadata:
@@ -272,7 +272,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Config ytserver-discovery.yson needs creation
   metadata:
@@ -291,7 +291,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object yt-discovery-config (*v1.ConfigMap)
   metadata:
@@ -310,7 +310,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object discovery (*v1.Service)
   metadata:
@@ -329,7 +329,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object yt-discovery-monitoring (*v1.Service)
   metadata:
@@ -348,7 +348,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object end (*v1.StatefulSet)
   metadata:
@@ -367,7 +367,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Config ytserver-exec-node.yson needs creation
   metadata:
@@ -386,7 +386,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object yt-exec-node-config (*v1.ConfigMap)
   metadata:
@@ -405,7 +405,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object exec-nodes (*v1.Service)
   metadata:
@@ -424,7 +424,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "5"
+    resourceVersion: "6"
   lastTimestamp: null
   message: Created YT object yt-exec-node-monitoring (*v1.Service)
   metadata:
@@ -443,7 +443,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "6"
+    resourceVersion: "7"
   lastTimestamp: null
   message: Created YT object http-proxies-lb (*v1.Service)
   metadata:
@@ -462,7 +462,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "9"
+    resourceVersion: "10"
   lastTimestamp: null
   message: Created YT object yt-client-secret (*v1.Secret)
   metadata:
@@ -481,7 +481,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "12"
   lastTimestamp: null
   message: Config client.yson needs creation
   metadata:
@@ -500,7 +500,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "12"
   lastTimestamp: null
   message: Created YT object yt-client-init-job-user-config (*v1.ConfigMap)
   metadata:
@@ -519,7 +519,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "10"
+    resourceVersion: "12"
   lastTimestamp: null
   message: Created YT object yt-client-init-job-user (*v1.Job)
   metadata:
@@ -538,7 +538,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "12"
+    resourceVersion: "14"
   lastTimestamp: null
   message: Created YT object yt-cypress-patch (*v1.ConfigMap)
   metadata:
@@ -557,7 +557,7 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
-    resourceVersion: "12"
+    resourceVersion: "14"
   lastTimestamp: null
   message: Skip patch apply in test
   metadata:
