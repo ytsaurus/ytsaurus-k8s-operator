@@ -212,6 +212,7 @@ func main() {
 			WatchOperatorInstance: watchOperatorInstance,
 			ClusterDomain:         clusterDomain,
 			Client:                mgr.GetClient(),
+			APIReader:             mgr.GetAPIReader(),
 			Scheme:                mgr.GetScheme(),
 			Recorder:              mgr.GetEventRecorderFor(name),
 		}

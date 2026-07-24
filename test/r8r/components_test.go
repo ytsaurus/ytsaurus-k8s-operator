@@ -225,16 +225,32 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			clientBuilder.WithInterceptorFuncs(interceptor.Funcs{
 				Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 					err := client.Get(ctx, key, obj, opts...)
-					log.Info("Get object", "key", key, "ok", err == nil, "version", obj.GetResourceVersion())
+					if obj.GetObjectKind().GroupVersionKind().Empty() {
+						gvks, _, err := k8sScheme.ObjectKinds(obj)
+						Expect(err).To(Succeed())
+						Expect(gvks).To(HaveLen(1))
+						obj.GetObjectKind().SetGroupVersionKind(gvks[0])
+					}
+					log.Info("Get object",
+						"ok", err == nil,
+						"gvk", obj.GetObjectKind().GroupVersionKind(),
+						"key", key,
+						"resourceVersion", obj.GetResourceVersion(),
+					)
 					return err
 				},
 				Create: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
 					gvks, _, err := k8sScheme.ObjectKinds(obj)
 					Expect(err).To(Succeed())
+					Expect(gvks).To(HaveLen(1))
 					obj.GetObjectKind().SetGroupVersionKind(gvks[0])
 					obj.SetGeneration(1)
 
-					log.Info("Create object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName(), "version", obj.GetResourceVersion())
+					log.Info("Create object",
+						"gvk", obj.GetObjectKind().GroupVersionKind(),
+						"name", obj.GetName(),
+						"resourceVersion", obj.GetResourceVersion(),
+					)
 					return client.Create(ctx, obj, opts...)
 				},
 				Update: func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
@@ -245,6 +261,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				},
 				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 					log.Info("Patch object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())
+					obj.SetGeneration(getGeneration(obj) + 1)
 					return client.Patch(ctx, obj, patch, opts...)
 				},
 				Delete: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.DeleteOption) error {
@@ -353,6 +370,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			baseReconciler := controllers.BaseReconciler{
 				ClusterDomain: "cluster.local",
 				Client:        k8sClient,
+				APIReader:     k8sClient,
 				Scheme:        k8sScheme,
 				Recorder:      eventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
 			}
