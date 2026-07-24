@@ -2,7 +2,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "16"
+  resourceVersion: "18"
 spec:
   clusterFeatures: {}
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2

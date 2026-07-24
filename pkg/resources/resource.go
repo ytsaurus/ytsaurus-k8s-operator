@@ -79,6 +79,10 @@ func (r *BaseManagedResource[T]) Sync(ctx context.Context) error {
 	return r.proxy.SyncObject(ctx, r.oldObject, r.newObject)
 }
 
+func (r *BaseManagedResource[T]) DeleteBackground(ctx context.Context) error {
+	return r.proxy.DeleteObject(ctx, r.oldObject, client.PropagationPolicy(metav1.DeletePropagationBackground))
+}
+
 func (r *BaseManagedResource[T]) DeleteForeground(ctx context.Context) error {
 	return r.proxy.DeleteObject(ctx, r.oldObject, client.PropagationPolicy(metav1.DeletePropagationForeground))
 }

@@ -2,7 +2,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "15"
+  resourceVersion: "17"
 spec:
   clusterFeatures: {}
   configOverrides:
