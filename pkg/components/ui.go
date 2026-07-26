@@ -58,7 +58,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 			},
 			UICustomConfigFileName: {
 				Generator: cfgen.GetUICustomConfig,
-				Format:    ConfigFormatJsonWithJsPrologue,
+				Format:    ConfigFormatJsModule,
 			},
 		},
 		"ytsaurus-ui-deployment",

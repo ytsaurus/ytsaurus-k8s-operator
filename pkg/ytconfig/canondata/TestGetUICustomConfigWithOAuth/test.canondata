@@ -1,0 +1,14 @@
+{
+    odinBaseUrl="http://odin-webservice.odin.svc.cluster.local";
+    ytOAuthSettings={
+        baseURL="https://id.example.com";
+        authPath="oauth/v2/authorize";
+        tokenPath="oauth/v2/token";
+        logoutPath="oidc/v1/end_session";
+        clientIdEnvName="OAUTH_CLIENT_ID";
+        clientSecretEnvName="OAUTH_CLIENT_SECRET";
+        scope="openid profile email";
+        buttonLabel="Login via SSO";
+        callbackBaseUrl="https://yt.example.com";
+    };
+}

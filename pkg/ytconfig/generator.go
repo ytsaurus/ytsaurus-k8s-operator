@@ -1284,6 +1284,24 @@ func (g *Generator) GetUICustomSettings() *UICustomSettings {
 	}
 }
 
+func (g *Generator) GetUIOAuthSettings() *UIOAuthSettings {
+	oauth := g.ytsaurus.Spec.UI.OAuth
+	if oauth == nil {
+		return nil
+	}
+	return &UIOAuthSettings{
+		BaseURL:             oauth.BaseURL,
+		AuthPath:            oauth.AuthPath,
+		TokenPath:           oauth.TokenPath,
+		LogoutPath:          oauth.LogoutPath,
+		ClientIDEnvName:     oauth.ClientIDEnvName,
+		ClientSecretEnvName: oauth.ClientSecretEnvName,
+		Scope:               oauth.Scope,
+		ButtonLabel:         oauth.ButtonLabel,
+		CallbackBaseURL:     oauth.CallbackBaseURL,
+	}
+}
+
 func (g *Generator) GetUICustomConfig() ([]byte, error) {
 	if g.ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
@@ -1292,6 +1310,7 @@ func (g *Generator) GetUICustomConfig() ([]byte, error) {
 	c := UICustom{
 		OdinBaseUrl: g.ytsaurus.Spec.UI.OdinBaseUrl,
 		Settings:    g.GetUICustomSettings(),
+		OAuth:       g.GetUIOAuthSettings(),
 	}
 
 	return marshallYsonConfig(c)
