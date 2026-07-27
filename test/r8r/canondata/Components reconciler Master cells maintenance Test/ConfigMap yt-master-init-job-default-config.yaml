@@ -151,7 +151,6 @@ data:
     /usr/bin/yt set //sys/@cluster_name 'test-ytsaurus'
     fi
 
-
     fi
 
     /usr/bin/yt remove //sys/@provision_lock -f
