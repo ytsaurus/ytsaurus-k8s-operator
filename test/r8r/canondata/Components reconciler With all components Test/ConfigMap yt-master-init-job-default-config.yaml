@@ -182,16 +182,14 @@ data:
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     /usr/bin/yt set //sys/@cluster_name 'test-ytsaurus'
     fi
-    if [ $(/usr/bin/yt exists //sys/users/admin) = 'false' ]; then
+    /usr/bin/yt get //sys/media//@name || /usr/bin/yt create domestic_medium --attr '{name="";}' || /usr/bin/yt create medium --attr '{name="";}'
+    /usr/bin/yt get //sys/accounts/sys/@resource_limits/disk_space_per_medium/ || /usr/bin/yt set //sys/accounts/sys/@resource_limits/disk_space_per_medium/ 1073741824
     /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
+    /usr/bin/yt add-member admin superusers || true
+    while [ "$(/usr/bin/yt check-permission --format json admin administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
     /usr/bin/yt execute set_user_password '{user=admin;new_password_sha256="8e70fdbd0400b7a21539fd15fb4ab86c129f7cbd99261dbb0d95c18df8dec177"}'
     /usr/bin/yt create map_node '//sys/cypress_tokens/10a4c7c9fc5206d6f36dc6944a81bb6f4a3cb0e25014ae3b12e6c3e52712292a' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/10a4c7c9fc5206d6f36dc6944a81bb6f4a3cb0e25014ae3b12e6c3e52712292a/@user' 'admin'
-    /usr/bin/yt add-member admin superusers || true
-    while [ "$(/usr/bin/yt check-permission --format json admin administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
-    fi
-    /usr/bin/yt get //sys/media//@name || /usr/bin/yt create domestic_medium --attr '{name="";}' || /usr/bin/yt create medium --attr '{name="";}'
-    /usr/bin/yt get //sys/accounts/sys/@resource_limits/disk_space_per_medium/ || /usr/bin/yt set //sys/accounts/sys/@resource_limits/disk_space_per_medium/ 1073741824
     fi
     if [ 'true' = 'true' ]; then
     if [ $(/usr/bin/yt exists //sys/users/robot-hydra-persistence-uploader) = 'false' ]; then
