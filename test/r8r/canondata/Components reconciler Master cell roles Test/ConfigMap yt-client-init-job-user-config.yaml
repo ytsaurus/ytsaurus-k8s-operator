@@ -87,10 +87,10 @@ data:
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     /usr/bin/yt create user --attributes '{name="robot-ytsaurus-k8s-operator"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef/@user' 'robot-ytsaurus-k8s-operator'
     /usr/bin/yt add-member robot-ytsaurus-k8s-operator superusers || true
     while [ "$(/usr/bin/yt check-permission --format json robot-ytsaurus-k8s-operator administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
+    /usr/bin/yt create map_node '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef/@user' 'robot-ytsaurus-k8s-operator'
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>

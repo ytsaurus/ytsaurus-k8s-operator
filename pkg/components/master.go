@@ -170,13 +170,12 @@ func (m *Master) getAdminCredentials() (exists bool, adminLogin string, adminPas
 	return exists, adminLogin, adminPassword, adminToken
 }
 
-func (m *Master) initAdminUser() string {
+func (m *Master) initAdminUser() []string {
 	exists, adminLogin, adminPassword, adminToken := m.getAdminCredentials()
 	if !exists {
-		return ""
+		return nil
 	}
-	commands := createUserCommand(adminLogin, adminPassword, adminToken, true)
-	return RunIfNonexistent(fmt.Sprintf("//sys/users/%s", adminLogin), commands...)
+	return createUserCommand(adminLogin, adminPassword, adminToken, true)
 }
 
 func (m *Master) initUploaderUser() (string, error) {
@@ -402,9 +401,10 @@ func (m *Master) scriptInitialization() ([]string, error) {
 		"/usr/bin/yt create map_node //home --ignore-existing",
 		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection '%s'", string(connConfig))),
 		RunIfExists("//sys/@provision_lock", fmt.Sprintf("/usr/bin/yt set //sys/@cluster_name '%s'", clusterConn.ClusterName)),
-		m.initAdminUser(),
 		m.initMedia(),
 	}
+
+	initCommands = append(initCommands, m.initAdminUser()...)
 
 	initScript := RunIfCondition(
 		fmt.Sprintf("'%v' = 'true'", ytv1.ClusterStateInitializing == m.ytsaurus.GetClusterState()),
