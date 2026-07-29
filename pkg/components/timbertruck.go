@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"fmt"
-	"path"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -492,13 +491,16 @@ func checkAndAddTimbertruckToPodSpec(ctx context.Context, proxy apiproxy.APIProx
 		return fmt.Errorf("failed to sync timbertruck configmap: %w", err)
 	}
 
-	logsLocation := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeLogs)
-	logsDirectory := logsLocation.Path
 	deliveryProxy := cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	configMapName := configBuilder.GetConfigMapName()
 
 	const configVolumeName = consts.TimbertruckContainerName + "-config"
 	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(configVolumeName, configMapName, nil))
+
+	volumeMounts, err := buildTimbertruckVolumeMounts(instanceSpec, configVolumeName)
+	if err != nil {
+		return err
+	}
 
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
 		Name:    consts.TimbertruckContainerName,
@@ -521,13 +523,27 @@ func checkAndAddTimbertruckToPodSpec(ctx context.Context, proxy apiproxy.APIProx
 				Value: deliveryProxy,
 			},
 		}, getDefaultEnv()...),
-		VolumeMounts: []corev1.VolumeMount{
-			{Name: path.Base(logsDirectory), MountPath: logsDirectory, ReadOnly: false},
-			{Name: configVolumeName, MountPath: "/etc/timbertruck", ReadOnly: true},
-		},
+		VolumeMounts:    volumeMounts,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	})
 	return nil
+}
+
+// buildTimbertruckVolumeMounts resolves the spec-derived log volume mount for
+// the timbertruck sidecar and appends the read-only mount for its config.
+func buildTimbertruckVolumeMounts(instanceSpec *ytv1.InstanceSpec, configVolumeName string) ([]corev1.VolumeMount, error) {
+	logMounts, err := resolveLocationMounts(
+		instanceSpec,
+		[]ytv1.LocationType{ytv1.LocationTypeLogs},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve mounts for timbertruck: %w", err)
+	}
+	return append(logMounts, corev1.VolumeMount{
+		Name:      configVolumeName,
+		MountPath: "/etc/timbertruck",
+		ReadOnly:  true,
+	}), nil
 }
 
 func checkAndAddTimbertruckToServerOptions(options *[]Option, timbertruck *ytv1.TimbertruckSpec, structuredLoggers []ytv1.StructuredLoggerSpec) {

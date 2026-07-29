@@ -533,12 +533,15 @@ func (m *Master) doServerSync(ctx context.Context) error {
 	podSpec.Containers[0].Env = append(podSpec.Containers[0].Env, getNativeClientConfigEnv()...)
 
 	if m.mastersSpec.HydraPersistenceUploader != nil && m.mastersSpec.HydraPersistenceUploader.Image != nil {
-		addHydraPersistenceUploaderToPodSpec(
+		if err := addHydraPersistenceUploaderToPodSpec(
 			*m.mastersSpec.HydraPersistenceUploader.Image,
 			podSpec,
 			m.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 			m.uploaderSecret.Name(),
-		)
+			&m.mastersSpec.InstanceSpec,
+		); err != nil {
+			return err
+		}
 	}
 	if err := checkAndAddTimbertruckToPodSpec(ctx, m.ytsaurus, m.ytsaurus.GetCommonSpec().ConfigOverrides, m.mastersSpec.Timbertruck, podSpec, &m.mastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
 		return err
@@ -590,7 +593,26 @@ func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatu
 	return m.initJob.RunScript(ctx, dry, "ClusterInitialization", m.scriptInitialization, nil)
 }
 
-func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string) {
+func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string, masterInstanceSpec *ytv1.InstanceSpec) error {
+	masterDataMounts, err := resolveLocationMounts(
+		masterInstanceSpec,
+		[]ytv1.LocationType{ytv1.LocationTypeMasterSnapshots, ytv1.LocationTypeMasterChangelogs},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to resolve mounts for hydra persistence uploader: %w", err)
+	}
+	for i := range masterDataMounts {
+		masterDataMounts[i].ReadOnly = true
+	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{Name: consts.ConfigTemplateVolumeName, MountPath: consts.ConfigMountPoint, ReadOnly: true},
+	}
+	volumeMounts = append(volumeMounts, masterDataMounts...)
+	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+		Name: "shared-binaries", MountPath: "/shared-binaries", ReadOnly: false,
+	})
+
 	podSpec.Containers = append(podSpec.Containers,
 		corev1.Container{
 			Name:    consts.HydraPersistenceUploaderContainerName,
@@ -610,12 +632,7 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 				},
 				{Name: "YT_PROXY", Value: proxy},
 			}, getDefaultEnv()...),
-			VolumeMounts: []corev1.VolumeMount{
-				{Name: consts.ConfigTemplateVolumeName, MountPath: consts.ConfigMountPoint, ReadOnly: true},
-				{Name: "master-data", MountPath: "/yt/master-data", ReadOnly: true},
-				{Name: "master-logs", MountPath: "/yt/master-logs", ReadOnly: true},
-				{Name: "shared-binaries", MountPath: "/shared-binaries", ReadOnly: false},
-			},
+			VolumeMounts:    volumeMounts,
 			ImagePullPolicy: corev1.PullIfNotPresent,
 		},
 	)
@@ -653,4 +670,5 @@ func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.Pod
 			},
 		},
 	)
+	return nil
 }

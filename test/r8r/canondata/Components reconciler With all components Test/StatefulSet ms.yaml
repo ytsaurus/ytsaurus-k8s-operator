@@ -161,12 +161,14 @@ spec:
         - mountPath: /config
           name: config-template
           readOnly: true
-        - mountPath: /yt/master-data
+        - mountPath: /yt/master-data/master-snapshots
           name: master-data
           readOnly: true
-        - mountPath: /yt/master-logs
-          name: master-logs
+          subPath: master-snapshots
+        - mountPath: /yt/master-data/master-changelogs
+          name: master-data
           readOnly: true
+          subPath: master-changelogs
         - mountPath: /shared-binaries
           name: shared-binaries
       dnsConfig:

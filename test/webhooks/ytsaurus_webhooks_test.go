@@ -337,6 +337,52 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("location path is not in any volume mount")))
 		})
 
+		It("Should not accept a volume mount that duplicates a previous mount path", func() {
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts,
+				corev1.VolumeMount{Name: "duplicate", MountPath: ytsaurus.Spec.PrimaryMasters.VolumeMounts[0].MountPath},
+			)
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("volume mount completely covers previous volume mount"),
+			))
+		})
+
+		It("Should not accept a volume mount that covers a previous nested mount", func() {
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts,
+				corev1.VolumeMount{Name: "cover", MountPath: "/yt"},
+			)
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("volume mount completely covers previous volume mount"),
+			))
+		})
+
+		It("Should not accept a volume mount path with a trailing slash", func() {
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts[0].MountPath += "/"
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("mount path must not end with '/'"),
+			))
+		})
+
+		It("Should not accept a location path with a trailing slash", func() {
+			ytsaurus.Spec.PrimaryMasters.Locations[0].Path += "/"
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("location path must not end with '/'"),
+			))
+		})
+
+		It("Should accept a nested volume mount that comes after its parent", func() {
+			parentPath := ytsaurus.Spec.PrimaryMasters.VolumeMounts[0].MountPath
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts,
+				corev1.VolumeMount{Name: "nested", MountPath: parentPath + "/nested"},
+			)
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
 		It("Should not accept non-empty primaryMaster/hostAddresses with HostNetwork=false", func() {
 			ytsaurus.Spec.HostNetwork = ptr.To(false)
 			ytsaurus.Spec.PrimaryMasters.HostAddresses = []string{"test.yt.address"}
@@ -367,16 +413,67 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(SatisfyAll(
 				ContainSubstring("spec.primaryMasters.timbertruck.image: Required value: timbertruck image is required"),
 				ContainSubstring("spec.primaryMasters.structuredLoggers: Required value: structuredLoggers must be configured when timbertruck is enabled"),
-				ContainSubstring("spec.primaryMasters.locations: Required value: logs location must be configured when timbertruck is enabled"),
+				ContainSubstring("spec.primaryMasters.locations: Required value: Logs location must be configured for timbertruck"),
 			)))
 		})
 
 		It("Should accept Timbertruck with structured loggers, logs location and Image", func() {
-			image := "ghcr.io/ytsaurus/sidecars:0.0.0"
-			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{Image: &image}
+			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
 			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"}}
 			ytsaurus.Spec.PrimaryMasters.Locations = append(ytsaurus.Spec.PrimaryMasters.Locations, ytv1.LocationSpec{LocationType: ytv1.LocationTypeLogs, Path: "/yt/master-logs"})
 			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts, corev1.VolumeMount{Name: "master-logs", MountPath: "/yt/master-logs"})
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		It("Should not accept Timbertruck with uncovered log location", func() {
+			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"}}
+
+			ytsaurus.Spec.PrimaryMasters.Locations = []ytv1.LocationSpec{
+				{LocationType: ytv1.LocationTypeLogs, Path: "/yt/uncovered-logs"},
+			}
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = []corev1.VolumeMount{}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("location path is not in any volume mount"),
+			))
+		})
+
+		It("Should not accept HydraPersistenceUploader without image and locations", func() {
+			ytsaurus.Spec.PrimaryMasters.HydraPersistenceUploader = &ytv1.HydraPersistenceUploaderSpec{}
+
+			ytsaurus.Spec.PrimaryMasters.Locations = []ytv1.LocationSpec{}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(SatisfyAll(
+				ContainSubstring("spec.primaryMasters.hydraPersistenceUploader.image: Required value: hydraPersistenceUploader image is required"),
+				ContainSubstring("spec.primaryMasters.locations: Required value: MasterSnapshots location must be configured for hydraPersistenceUploader"),
+				ContainSubstring("spec.primaryMasters.locations: Required value: MasterChangelogs location must be configured for hydraPersistenceUploader"),
+			)))
+		})
+
+		It("Should not accept HydraPersistenceUploader with uncovered locations", func() {
+			ytsaurus.Spec.PrimaryMasters.HydraPersistenceUploader = &ytv1.HydraPersistenceUploaderSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
+
+			ytsaurus.Spec.PrimaryMasters.Locations = []ytv1.LocationSpec{
+				{LocationType: ytv1.LocationTypeMasterSnapshots, Path: "/yt/uncovered-snapshots"},
+				{LocationType: ytv1.LocationTypeMasterChangelogs, Path: "/yt/uncovered-changelogs"},
+			}
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts = []corev1.VolumeMount{}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(SatisfyAll(
+				ContainSubstring("location path is not in any volume mount"),
+			)))
+		})
+
+		It("Should accept HydraPersistenceUploader with proper locations and mounts", func() {
+			ytsaurus.Spec.PrimaryMasters.HydraPersistenceUploader = &ytv1.HydraPersistenceUploaderSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
+
+			ytsaurus.Spec.PrimaryMasters.Locations = append(ytsaurus.Spec.PrimaryMasters.Locations,
+				ytv1.LocationSpec{LocationType: ytv1.LocationTypeMasterSnapshots, Path: "/yt/master-data/snapshots"},
+				ytv1.LocationSpec{LocationType: ytv1.LocationTypeMasterChangelogs, Path: "/yt/master-data/changelogs"},
+			)
 
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())

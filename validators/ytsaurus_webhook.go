@@ -34,6 +34,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -151,7 +152,7 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 		}
 	}
 
-	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, path.Child("hydraPersistenceUploader"))...)
+	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, mastersSpec.Locations, path)...)
 
 	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, mastersSpec.StructuredLoggers, mastersSpec.Locations, path)...)
 
@@ -346,12 +347,24 @@ func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *ytv1.Ytsaurus) field.
 }
 
 func (r *baseValidator) validateHydraPersistenceUploaderSpec(
-	hydraPersistenceUploader *ytv1.HydraPersistenceUploaderSpec, path *field.Path) field.ErrorList {
+	hydraPersistenceUploader *ytv1.HydraPersistenceUploaderSpec, locations []ytv1.LocationSpec, parentPath *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	if hydraPersistenceUploader != nil && hydraPersistenceUploader.Image == nil {
-		allErrors = append(allErrors, field.Required(path.Child("image"), "hydraPersistenceUploader image is required"))
+	if hydraPersistenceUploader == nil {
+		return allErrors
 	}
+
+	if hydraPersistenceUploader.Image == nil {
+		allErrors = append(allErrors, field.Required(parentPath.Child("hydraPersistenceUploader", "image"), "hydraPersistenceUploader image is required"))
+	}
+
+	allErrors = append(allErrors, requireLocations(
+		parentPath.Child("locations"),
+		locations,
+		"hydraPersistenceUploader",
+		ytv1.LocationTypeMasterSnapshots,
+		ytv1.LocationTypeMasterChangelogs,
+	)...)
 
 	return allErrors
 }
@@ -371,8 +384,29 @@ func (r *baseValidator) validateTimbertruckSpec(
 		if len(structuredLoggers) == 0 {
 			allErrors = append(allErrors, field.Required(parentPath.Child("structuredLoggers"), "structuredLoggers must be configured when timbertruck is enabled"))
 		}
-		if logLocation := ytv1.FindFirstLocation(locations, ytv1.LocationTypeLogs); logLocation == nil {
-			allErrors = append(allErrors, field.Required(parentPath.Child("locations"), "logs location must be configured when timbertruck is enabled"))
+		allErrors = append(allErrors, requireLocations(
+			parentPath.Child("locations"),
+			locations,
+			"timbertruck",
+			ytv1.LocationTypeLogs,
+		)...)
+	}
+	return allErrors
+}
+
+func requireLocations(
+	locationsPath *field.Path,
+	locations []ytv1.LocationSpec,
+	reason string,
+	locationTypes ...ytv1.LocationType,
+) field.ErrorList {
+	var allErrors field.ErrorList
+	for _, locationType := range locationTypes {
+		if ytv1.FindFirstLocation(locations, locationType) == nil {
+			allErrors = append(allErrors, field.Required(
+				locationsPath,
+				fmt.Sprintf("%s location must be configured for %s", locationType, reason),
+			))
 		}
 	}
 	return allErrors
@@ -611,17 +645,27 @@ func (r *baseValidator) validateInstanceSpec(instanceSpec ytv1.InstanceSpec, com
 
 	allErrors = append(allErrors, r.validateTransportSecurity(instanceSpec.NativeTransport, commonSpec, path.Child("nativeTransport"))...)
 
+	for mountIdx, volumeMount := range instanceSpec.VolumeMounts {
+		if strings.HasSuffix(volumeMount.MountPath, "/") {
+			allErrors = append(allErrors, field.Invalid(path.Child("volumeMounts").Index(mountIdx), volumeMount.MountPath,
+				"mount path must not end with '/'"))
+		}
+		for _, previousMount := range instanceSpec.VolumeMounts[:mountIdx] {
+			if previousMount.MountPath == volumeMount.MountPath ||
+				strings.HasPrefix(previousMount.MountPath, volumeMount.MountPath+"/") {
+				allErrors = append(allErrors, field.Invalid(path.Child("volumeMounts").Index(mountIdx), volumeMount.MountPath,
+					fmt.Sprintf("volume mount completely covers previous volume mount %q", previousMount.MountPath)))
+			}
+		}
+	}
+
 	if instanceSpec.Locations != nil {
 		for locationIdx, location := range instanceSpec.Locations {
-			inVolumeMount := false
-			for _, volumeMount := range instanceSpec.VolumeMounts {
-				if strings.HasPrefix(location.Path, volumeMount.MountPath) {
-					inVolumeMount = true
-					break
-				}
+			if strings.HasSuffix(location.Path, "/") {
+				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location,
+					"location path must not end with '/'"))
 			}
-
-			if !inVolumeMount {
+			if components.FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path) == nil {
 				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location,
 					"location path is not in any volume mount"))
 			}

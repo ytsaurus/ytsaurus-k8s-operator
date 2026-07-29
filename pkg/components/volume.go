@@ -1,8 +1,10 @@
 package components
 
 import (
+	"cmp"
 	"fmt"
 	"path"
+	"slices"
 	"strings"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -72,6 +74,53 @@ func createVolumeMounts(specVolumeMounts []corev1.VolumeMount) []corev1.VolumeMo
 	volumeMounts = append(volumeMounts, createConfigTemplateVolumeMount())
 	volumeMounts = append(volumeMounts, createConfigVolumeMount())
 	return volumeMounts
+}
+
+// FindVolumeMountForPath returns the volume mount that path resides in.
+// Mounts are scanned backward: the kubelet applies mounts in order, so the
+// last mount covering a path is the one visible in the container.
+func FindVolumeMountForPath(volumeMounts []corev1.VolumeMount, path string) *corev1.VolumeMount {
+	for i, mount := range slices.Backward(volumeMounts) {
+		if path == mount.MountPath || strings.HasPrefix(path, mount.MountPath+"/") {
+			return &volumeMounts[i]
+		}
+	}
+	return nil
+}
+
+func resolveLocationMounts(instanceSpec *ytv1.InstanceSpec, requiredLocations []ytv1.LocationType) ([]corev1.VolumeMount, error) {
+	mounts := make([]corev1.VolumeMount, 0, len(requiredLocations))
+	for _, requiredLocation := range requiredLocations {
+		location := ytv1.FindFirstLocation(instanceSpec.Locations, requiredLocation)
+		if location == nil {
+			return nil, fmt.Errorf("no location of type %q found", requiredLocation)
+		}
+		volumeMount := FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path)
+		if volumeMount == nil {
+			return nil, fmt.Errorf("no volume mount covers location %q (path %q)", requiredLocation, location.Path)
+		}
+		if slices.ContainsFunc(mounts, func(mount corev1.VolumeMount) bool {
+			return mount.MountPath == location.Path
+		}) {
+			continue
+		}
+		relPath := strings.TrimPrefix(strings.TrimPrefix(location.Path, volumeMount.MountPath), "/")
+		mount := corev1.VolumeMount{
+			Name:      volumeMount.Name,
+			MountPath: location.Path,
+		}
+		// SubPath and SubPathExpr are mutually exclusive.
+		if volumeMount.SubPathExpr != "" {
+			mount.SubPathExpr = path.Join(volumeMount.SubPathExpr, relPath)
+		} else {
+			mount.SubPath = path.Join(volumeMount.SubPath, relPath)
+		}
+		mounts = append(mounts, mount)
+	}
+	slices.SortStableFunc(mounts, func(a, b corev1.VolumeMount) int {
+		return cmp.Compare(len(a.MountPath), len(b.MountPath))
+	})
+	return mounts, nil
 }
 
 func createConfigVolume(volumeName string, configMapName string, mode *int32) corev1.Volume {
