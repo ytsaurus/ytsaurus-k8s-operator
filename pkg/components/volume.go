@@ -1,6 +1,7 @@
 package components
 
 import (
+	"cmp"
 	"fmt"
 	"path"
 	"slices"
@@ -98,13 +99,27 @@ func resolveLocationMounts(instanceSpec *ytv1.InstanceSpec, requiredLocations []
 		if volumeMount == nil {
 			return nil, fmt.Errorf("no volume mount covers location %q (path %q)", requiredLocation, location.Path)
 		}
+		if slices.ContainsFunc(mounts, func(mount corev1.VolumeMount) bool {
+			return mount.MountPath == location.Path
+		}) {
+			continue
+		}
 		relPath := strings.TrimPrefix(strings.TrimPrefix(location.Path, volumeMount.MountPath), "/")
-		mounts = append(mounts, corev1.VolumeMount{
+		mount := corev1.VolumeMount{
 			Name:      volumeMount.Name,
 			MountPath: location.Path,
-			SubPath:   path.Join(volumeMount.SubPath, relPath),
-		})
+		}
+		// SubPath and SubPathExpr are mutually exclusive.
+		if volumeMount.SubPathExpr != "" {
+			mount.SubPathExpr = path.Join(volumeMount.SubPathExpr, relPath)
+		} else {
+			mount.SubPath = path.Join(volumeMount.SubPath, relPath)
+		}
+		mounts = append(mounts, mount)
 	}
+	slices.SortStableFunc(mounts, func(a, b corev1.VolumeMount) int {
+		return cmp.Compare(len(a.MountPath), len(b.MountPath))
+	})
 	return mounts, nil
 }
 

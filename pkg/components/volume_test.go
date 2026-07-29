@@ -66,9 +66,10 @@ var _ = Describe("FindVolumeMountForPath", func() {
 
 var _ = Describe("resolveLocationMounts", func() {
 	type wantMount struct {
-		Name      string
-		MountPath string
-		SubPath   string
+		Name        string
+		MountPath   string
+		SubPath     string
+		SubPathExpr string
 	}
 
 	DescribeTable("resolves locations to granular sub-path mounts",
@@ -91,6 +92,7 @@ var _ = Describe("resolveLocationMounts", func() {
 				Expect(got[i].Name).To(Equal(w.Name), "mount[%d].Name", i)
 				Expect(got[i].MountPath).To(Equal(w.MountPath), "mount[%d].MountPath", i)
 				Expect(got[i].SubPath).To(Equal(w.SubPath), "mount[%d].SubPath", i)
+				Expect(got[i].SubPathExpr).To(Equal(w.SubPathExpr), "mount[%d].SubPathExpr", i)
 				Expect(got[i].ReadOnly).To(BeFalseBecause("mount[%d] must not set ReadOnly", i))
 			}
 		},
@@ -161,6 +163,46 @@ var _ = Describe("resolveLocationMounts", func() {
 			[]wantMount{
 				{Name: "snapshots-vol", MountPath: "/yt/snapshots/data", SubPath: "data"},
 				{Name: "changelogs-vol", MountPath: "/yt/changelogs/data", SubPath: "data"},
+			},
+		),
+		Entry("volume mount with subPathExpr keeps the expression",
+			[]corev1.VolumeMount{
+				{Name: "storage", MountPath: "/yt/master-data", SubPathExpr: "$(K8S_POD_NAME)"},
+			},
+			[]ytv1.LocationSpec{
+				{LocationType: ytv1.LocationTypeMasterSnapshots, Path: "/yt/master-data/snapshots"},
+			},
+			[]ytv1.LocationType{ytv1.LocationTypeMasterSnapshots},
+			[]wantMount{
+				{Name: "storage", MountPath: "/yt/master-data/snapshots", SubPathExpr: "$(K8S_POD_NAME)/snapshots"},
+			},
+		),
+		Entry("parent location is mounted before a nested one",
+			[]corev1.VolumeMount{
+				{Name: "vol-a", MountPath: "/yt/data"},
+				{Name: "vol-b", MountPath: "/yt/data/snapshots"},
+			},
+			[]ytv1.LocationSpec{
+				{LocationType: ytv1.LocationTypeMasterSnapshots, Path: "/yt/data/snapshots"},
+				{LocationType: ytv1.LocationTypeMasterChangelogs, Path: "/yt/data"},
+			},
+			[]ytv1.LocationType{ytv1.LocationTypeMasterSnapshots, ytv1.LocationTypeMasterChangelogs},
+			[]wantMount{
+				{Name: "vol-a", MountPath: "/yt/data", SubPath: ""},
+				{Name: "vol-b", MountPath: "/yt/data/snapshots", SubPath: ""},
+			},
+		),
+		Entry("locations sharing one path produce a single mount",
+			[]corev1.VolumeMount{
+				{Name: "master-data", MountPath: "/yt/master-data"},
+			},
+			[]ytv1.LocationSpec{
+				{LocationType: ytv1.LocationTypeMasterSnapshots, Path: "/yt/master-data/store"},
+				{LocationType: ytv1.LocationTypeMasterChangelogs, Path: "/yt/master-data/store"},
+			},
+			[]ytv1.LocationType{ytv1.LocationTypeMasterSnapshots, ytv1.LocationTypeMasterChangelogs},
+			[]wantMount{
+				{Name: "master-data", MountPath: "/yt/master-data/store", SubPath: "store"},
 			},
 		),
 		Entry("two locations on the same volume are mounted separately (no de-dup)",

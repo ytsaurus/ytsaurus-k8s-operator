@@ -646,6 +646,10 @@ func (r *baseValidator) validateInstanceSpec(instanceSpec ytv1.InstanceSpec, com
 	allErrors = append(allErrors, r.validateTransportSecurity(instanceSpec.NativeTransport, commonSpec, path.Child("nativeTransport"))...)
 
 	for mountIdx, volumeMount := range instanceSpec.VolumeMounts {
+		if strings.HasSuffix(volumeMount.MountPath, "/") {
+			allErrors = append(allErrors, field.Invalid(path.Child("volumeMounts").Index(mountIdx), volumeMount.MountPath,
+				"mount path must not end with '/'"))
+		}
 		for _, previousMount := range instanceSpec.VolumeMounts[:mountIdx] {
 			if previousMount.MountPath == volumeMount.MountPath ||
 				strings.HasPrefix(previousMount.MountPath, volumeMount.MountPath+"/") {
@@ -657,6 +661,10 @@ func (r *baseValidator) validateInstanceSpec(instanceSpec ytv1.InstanceSpec, com
 
 	if instanceSpec.Locations != nil {
 		for locationIdx, location := range instanceSpec.Locations {
+			if strings.HasSuffix(location.Path, "/") {
+				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location,
+					"location path must not end with '/'"))
+			}
 			if components.FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path) == nil {
 				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location,
 					"location path is not in any volume mount"))

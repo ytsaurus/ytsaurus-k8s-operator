@@ -357,6 +357,22 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			))
 		})
 
+		It("Should not accept a volume mount path with a trailing slash", func() {
+			ytsaurus.Spec.PrimaryMasters.VolumeMounts[0].MountPath += "/"
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("mount path must not end with '/'"),
+			))
+		})
+
+		It("Should not accept a location path with a trailing slash", func() {
+			ytsaurus.Spec.PrimaryMasters.Locations[0].Path += "/"
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("location path must not end with '/'"),
+			))
+		})
+
 		It("Should accept a nested volume mount that comes after its parent", func() {
 			parentPath := ytsaurus.Spec.PrimaryMasters.VolumeMounts[0].MountPath
 			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts,
