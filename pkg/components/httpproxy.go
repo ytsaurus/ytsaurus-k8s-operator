@@ -73,11 +73,11 @@ func NewHTTPProxy(
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-http-proxy",
-		[]ConfigGenerator{{
-			"ytserver-http-proxy.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetHTTPProxyConfig(spec) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetHTTPProxyConfig(spec)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.HTTPProxyMonitoringPort,
 		WithContainerPorts(containerPorts...),

@@ -720,7 +720,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			BeforeAll(func(ctx context.Context) {
 				ytBuilder.WithOverrides()
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
-				ytBuilder.Overrides.Data["ytserver-discovery.yson"] = `{ hello = yt }`
+				ytBuilder.Overrides.Data["ytserver-discovery.yaml"] = `override_yaml: {bool: true, number: 1, float: 0.5, string: str}`
+				ytBuilder.Overrides.Data["ytserver-discovery.yson"] = `{ override_yson = {bool=%true; number=1; float=0.5; string=str} }`
 				Expect(k8sClient.Create(ctx, ytBuilder.Overrides)).To(Succeed())
 				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
 			})
@@ -764,6 +765,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 			ytBuilder.WithAdminUser()
 			ytBuilder.WithOverrides()
+			ytBuilder.Overrides.Data["ytserver-all.yaml"] = `overrides_all_yaml: true`
+			ytBuilder.Overrides.Data["ytserver-all.yson"] = `{overrides_all_yson=%true}`
 			ytBuilder.WithSecondaryMaster()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()

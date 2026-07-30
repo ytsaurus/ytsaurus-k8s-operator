@@ -1,10 +1,21 @@
 --- base/ConfigMap yt-discovery-config.yson
 +++ test/ConfigMap yt-discovery-config.yson
-@@ -80,11 +80,13 @@
+@@ -80,11 +80,24 @@
                  "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
              ];
          };
-+        hello=yt;
++        "override_yaml"={
++            bool=%true;
++            float=0.500000;
++            number=1;
++            string=str;
++        };
++        "override_yson"={
++            bool=%true;
++            number=1;
++            float=0.500000;
++            string=str;
++        };
      }
  metadata:
    annotations:
@@ -15,7 +26,7 @@
    generation: 1
    labels:
      app.kubernetes.io/component: yt-discovery
-@@ -102,5 +104,5 @@
+@@ -102,5 +115,5 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""

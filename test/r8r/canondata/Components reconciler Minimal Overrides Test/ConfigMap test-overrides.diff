@@ -1,9 +1,12 @@
 --- base/ConfigMap test-overrides.yson
 +++ test/ConfigMap test-overrides.yson
-@@ -1 +1,9 @@
+@@ -1 +1,12 @@
 +data:
 +  place-holder: ""
-+  ytserver-discovery.yson: '{ hello = yt }'
++  ytserver-discovery.yaml: 'override_yaml: {bool: true, number: 1, float: 0.5, string:
++    str}'
++  ytserver-discovery.yson: '{ override_yson = {bool=%true; number=1; float=0.5; string=str}
++    }'
 +metadata:
 +  generation: 1
 +  name: test-overrides

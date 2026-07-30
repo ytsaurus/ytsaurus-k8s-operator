@@ -1,0 +1,6 @@
+{
+    bool=%true;
+    float=0.500000;
+    number=1;
+    string=str;
+}

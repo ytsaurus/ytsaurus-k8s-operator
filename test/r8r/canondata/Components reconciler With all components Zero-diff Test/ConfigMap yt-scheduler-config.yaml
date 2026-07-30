@@ -146,6 +146,8 @@ data:
                 "enable_operation_archivation"=%false;
             };
         };
+        "overrides_all_yaml"=%true;
+        "overrides_all_yson"=%true;
     }
 metadata:
   annotations:
