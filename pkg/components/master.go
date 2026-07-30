@@ -80,15 +80,13 @@ func NewMaster(
 		&mastersSpec.InstanceSpec,
 		"/usr/bin/ytserver-master",
 		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetMasterConfig(mastersSpec)
+			}),
 			{
-				"ytserver-master.yson",
-				ConfigFormatYson,
-				func() ([]byte, error) { return cfgen.GetMasterConfig(mastersSpec) },
-			},
-			{
-				consts.ClientConfigFileName,
-				ConfigFormatYson,
-				cfgen.GetNativeClientConfig,
+				FileName:  consts.ClientConfigFileName,
+				Format:    ConfigFormatYson,
+				Generator: cfgen.GetNativeClientConfig,
 			},
 		},
 		cfgen.GetTimbertruckConfig,

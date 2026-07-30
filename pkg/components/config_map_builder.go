@@ -43,7 +43,8 @@ type TextGeneratorFunc func() ([]string, error)
 type ConfigGeneratorFunc func() ([]byte, error)
 
 type ConfigGenerator struct {
-	FileName string
+	FileName            string
+	GlobalOverridesName string
 	// Format is the desired serialization format for config map.
 	// Note that conversion from YSON to Format (if needed) is performed as a very last
 	// step of config generation pipeline.
@@ -71,6 +72,15 @@ func TextConfigGenerator(fileName string, generator TextGeneratorFunc) ConfigGen
 			}
 			return []byte(strings.Join(text, "\n")), nil
 		},
+	}
+}
+
+func ServerConfigGenerator(l *labeller.Labeller, generator ConfigGeneratorFunc) ConfigGenerator {
+	return ConfigGenerator{
+		FileName:            l.GetServerConfigFileName(),
+		GlobalOverridesName: consts.YtserverAllConfigFileName,
+		Format:              ConfigFormatYson,
+		Generator:           generator,
 	}
 }
 
@@ -138,6 +148,7 @@ func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error)
 
 	if h.overridesMap.GetResourceVersion() != "" {
 		overrideNames := []string{
+			descriptor.GlobalOverridesName,
 			descriptor.FileName,
 			fmt.Sprintf("%s--%s", name, descriptor.FileName),
 		}

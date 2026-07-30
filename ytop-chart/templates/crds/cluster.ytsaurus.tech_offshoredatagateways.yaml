@@ -854,8 +854,8 @@ spec:
                 - shutdown
                 type: object
               configOverrides:
-                description: LocalObjectReference contains enough information to let
-                  you locate the...
+                description: Configmap with patches for overriding options in generated
+                  configs.
                 properties:
                   name:
                     default: ""

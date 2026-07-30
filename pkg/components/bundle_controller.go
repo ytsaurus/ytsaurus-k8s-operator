@@ -29,11 +29,11 @@ func NewBundleController(
 		ytsaurus,
 		&resource.Spec.BundleController.InstanceSpec,
 		"/usr/bin/ytserver-bundle-controller",
-		[]ConfigGenerator{{
-			"ytserver-bundle-controller.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetBundleControllerConfig(resource.Spec.BundleController) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetBundleControllerConfig(resource.Spec.BundleController)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.BundleControllerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
