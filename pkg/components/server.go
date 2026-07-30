@@ -77,6 +77,8 @@ type serverImpl struct {
 	// timbertruckDelivery / timbertruckConfigs are non-nil only when this component delivers logs.
 	timbertruckDelivery *timbertruckDelivery
 	timbertruckConfigs  *ConfigMapBuilder
+	// timbertruckVolumeMounts are resolved together with the delivery settings above.
+	timbertruckVolumeMounts []corev1.VolumeMount
 
 	builtStatefulSet *appsv1.StatefulSet
 
@@ -212,11 +214,20 @@ func newServerConfigured(
 	// delivery proxy address; without it (e.g. remote nodes) delivery stays disabled.
 	var timbertruckDelivery *timbertruckDelivery
 	var timbertruckConfigs *ConfigMapBuilder
+	var timbertruckVolumeMounts []corev1.VolumeMount
 	if cfgen != nil {
 		if delivery := resolveTimbertruckDelivery(opts.timbertruck, commonSpec.Timbertruck, instanceSpec); delivery != nil {
-			if configs := buildTimbertruckConfigMap(proxy, commonSpec.ConfigOverrides, delivery, l, cfgen); configs != nil {
+			// Resolve the sidecar mounts up front: a logs location not covered by any volume mount
+			// is rejected by the webhook, so failing here means delivery cannot work at all and the
+			// sidecar is not added. Doing it here keeps pod spec building infallible.
+			volumeMounts, err := buildTimbertruckVolumeMounts(instanceSpec, timbertruckConfigVolumeName)
+			if err != nil {
+				log.Log.Error(err, "Timbertruck log delivery is disabled for component",
+					"component", l.GetFullComponentName())
+			} else if configs := buildTimbertruckConfigMap(proxy, commonSpec.ConfigOverrides, delivery, l, cfgen); configs != nil {
 				timbertruckDelivery = delivery
 				timbertruckConfigs = configs
+				timbertruckVolumeMounts = volumeMounts
 				if opts.sidecarImages == nil {
 					opts.sidecarImages = make(map[string]string)
 				}
@@ -226,19 +237,20 @@ func newServerConfigured(
 	}
 
 	return &serverImpl{
-		labeller:            l,
-		image:               image,
-		configs:             configs,
-		cfgen:               cfgen,
-		timbertruckDelivery: timbertruckDelivery,
-		timbertruckConfigs:  timbertruckConfigs,
-		sidecarImages:       opts.sidecarImages,
-		proxy:               proxy,
-		commonSpec:          commonSpec,
-		commonPodSpec:       commonPodSpec,
-		instanceSpec:        instanceSpec,
-		instanceCount:       instanceCount,
-		binaryPath:          binaryPath,
+		labeller:                l,
+		image:                   image,
+		configs:                 configs,
+		cfgen:                   cfgen,
+		timbertruckDelivery:     timbertruckDelivery,
+		timbertruckConfigs:      timbertruckConfigs,
+		timbertruckVolumeMounts: timbertruckVolumeMounts,
+		sidecarImages:           opts.sidecarImages,
+		proxy:                   proxy,
+		commonSpec:              commonSpec,
+		commonPodSpec:           commonPodSpec,
+		instanceSpec:            instanceSpec,
+		instanceCount:           instanceCount,
+		binaryPath:              binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			l.GetServerStatefulSetName(),
 			l,
@@ -637,10 +649,10 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	// covered by any volume mount is rejected by the webhook, so here we just skip the sidecar
 	// instead of failing the whole pod spec.
 	if s.timbertruckDelivery != nil {
-		_ = addTimbertruckSidecar(
+		addTimbertruckSidecar(
 			podSpec,
 			s.timbertruckDelivery.Image,
-			s.instanceSpec,
+			s.timbertruckVolumeMounts,
 			s.timbertruckConfigs.GetConfigMapName(),
 			timbertruckConfigFileName(s.labeller),
 			s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),

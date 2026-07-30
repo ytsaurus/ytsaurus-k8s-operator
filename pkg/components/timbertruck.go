@@ -635,18 +635,14 @@ func buildTimbertruckConfigMap(
 	)
 }
 
+// timbertruckConfigVolumeName is the pod volume holding the sidecar's config.
+const timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
+
 // addTimbertruckSidecar appends the timbertruck sidecar container and its config volume to podSpec.
-// The logs location mount is resolved from instanceSpec, so the sidecar sees the very same volume
-// (and subPath) as the server container.
-func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, instanceSpec *ytv1.InstanceSpec, configMapName, configFileName, deliveryProxy string) error {
-	const configVolumeName = consts.TimbertruckContainerName + "-config"
-
-	volumeMounts, err := buildTimbertruckVolumeMounts(instanceSpec, configVolumeName)
-	if err != nil {
-		return err
-	}
-
-	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(configVolumeName, configMapName, nil))
+// volumeMounts are resolved beforehand by buildTimbertruckVolumeMounts, so the sidecar sees the very
+// same volume (and subPath) as the server container.
+func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts []corev1.VolumeMount, configMapName, configFileName, deliveryProxy string) {
+	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(timbertruckConfigVolumeName, configMapName, nil))
 
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
 		Name:    consts.TimbertruckContainerName,
@@ -672,7 +668,6 @@ func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, instanceSpec *
 		VolumeMounts:    volumeMounts,
 		ImagePullPolicy: corev1.PullIfNotPresent,
 	})
-	return nil
 }
 
 // buildTimbertruckVolumeMounts resolves the spec-derived log volume mount for
