@@ -217,6 +217,7 @@ data:
             };
             "default_cluster"="test-ytsaurus";
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:

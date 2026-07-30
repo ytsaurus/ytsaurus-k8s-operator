@@ -161,6 +161,7 @@ data:
         "caching_object_service"={
             capacity=0;
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:

@@ -67,7 +67,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+        image: ghcr.io/ytsaurus/query-tracker:0.1.2
         name: ytserver
         ports:
         - containerPort: 10028
@@ -139,7 +139,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+        image: ghcr.io/ytsaurus/query-tracker:0.1.2
         name: prepare-locations
         resources:
           limits:
@@ -190,7 +190,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+        image: ghcr.io/ytsaurus/query-tracker:0.1.2
         name: postprocess-config
         resources:
           limits:

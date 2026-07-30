@@ -34,11 +34,11 @@ func NewOffshoreDataGateways(
 		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-offshore-data-gateway",
-		[]ConfigGenerator{{
-			"ytserver-offshore-data-gateway.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetOffshoreDataGatewaysConfig(spec) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetOffshoreDataGatewaysConfig(spec)
+			}),
+		},
 		nil, // no timbertruck delivery for remote nodes
 		nil,
 		nil,

@@ -9,7 +9,7 @@
    name: test-ytsaurus
    namespace: ytsaurus-components
 -  resourceVersion: "22"
-+  resourceVersion: "24"
++  resourceVersion: "26"
  spec:
    clusterFeatures: {}
    coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
@@ -45,7 +45,14 @@
      reason: Ready
      status: "True"
      type: HttpProxyReady
-@@ -132,7 +132,7 @@
+@@ -126,23 +126,23 @@
+     type: userYtsaurusClientInitJobCompleted
+   - lastTransitionTime: null
+     message: Cypress operations skipped
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: HealthChecks
+     status: "True"
      type: UpdateIsPossible
    - lastTransitionTime: null
      message: Ready
@@ -54,7 +61,10 @@
      reason: Ready
      status: "True"
      type: YtsaurusClientReady
-@@ -142,7 +142,7 @@
+   - lastTransitionTime: null
+     message: Cluster state is Running
+-    observedGeneration: 1
++    observedGeneration: 2
      reason: Running
      status: "True"
      type: ReadyToWork

@@ -2437,7 +2437,7 @@
           }
         },
         "configOverrides": {
-          "description": "LocalObjectReference contains enough information to let you locate the...",
+          "description": "Configmap with patches for overriding options in generated configs.",
           "type": "object",
           "properties": {
             "name": {

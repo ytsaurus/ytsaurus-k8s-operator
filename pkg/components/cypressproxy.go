@@ -27,11 +27,11 @@ func NewCypressProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Cy
 		ytsaurus,
 		&resource.Spec.CypressProxies.InstanceSpec,
 		"/usr/bin/ytserver-cypress-proxy",
-		[]ConfigGenerator{{
-			"ytserver-cypress-proxy.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetCypressProxiesConfig(resource.Spec.CypressProxies) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetCypressProxiesConfig(resource.Spec.CypressProxies)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.CypressProxyMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{

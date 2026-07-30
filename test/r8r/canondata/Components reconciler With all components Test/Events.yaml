@@ -248,10 +248,48 @@
     namespace: ytsaurus-components
     resourceVersion: "3"
   lastTimestamp: null
+  message: Applied configmap/yt-master-2-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "3"
+  lastTimestamp: null
   message: Created YT object ms-2 (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "3"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-2-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -400,10 +438,48 @@
     namespace: ytsaurus-components
     resourceVersion: "4"
   lastTimestamp: null
+  message: Applied configmap/yt-master-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "4"
+  lastTimestamp: null
   message: Created YT object ms (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "4"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -628,10 +704,48 @@
     namespace: ytsaurus-components
     resourceVersion: "8"
   lastTimestamp: null
+  message: Applied configmap/yt-master-2-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "8"
+  lastTimestamp: null
   message: Updated YT object ms-2 (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "8"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-2-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -685,10 +799,48 @@
     namespace: ytsaurus-components
     resourceVersion: "8"
   lastTimestamp: null
+  message: Applied configmap/yt-master-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "8"
+  lastTimestamp: null
   message: Updated YT object ms (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "8"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -837,10 +989,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-http-proxy-config "ytserver-http-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object hp (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-http-proxy-config "ytserver-http-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -932,10 +1124,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object ds (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1027,10 +1259,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-data-node-config "ytserver-data-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object dnd (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-data-node-config "ytserver-data-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1141,10 +1413,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-rpc-proxy-config "ytserver-rpc-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object rp (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-rpc-proxy-config "ytserver-rpc-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1236,10 +1548,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-exec-node-config "ytserver-exec-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object end (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-exec-node-config "ytserver-exec-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1369,10 +1721,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-tablet-node-config "ytserver-tablet-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object tnd (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-tablet-node-config "ytserver-tablet-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1483,10 +1875,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-controller-agent-config "ytserver-controller-agent.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object ca (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-controller-agent-config "ytserver-controller-agent.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1597,10 +2029,50 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
+  message: Applied configmap/yt-master-cache-config "ytserver-master-cache.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
   message: Created YT object msc (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "13"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-cache-config "ytserver-master-cache.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1730,10 +2202,50 @@
     namespace: ytsaurus-components
     resourceVersion: "14"
   lastTimestamp: null
+  message: Applied configmap/yt-scheduler-config "ytserver-scheduler.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "14"
+  lastTimestamp: null
   message: Created YT object sch (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "14"
+  lastTimestamp: null
+  message: Applied configmap/yt-scheduler-config "ytserver-scheduler.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -1825,10 +2337,50 @@
     namespace: ytsaurus-components
     resourceVersion: "14"
   lastTimestamp: null
+  message: Applied configmap/yt-query-tracker-config "ytserver-query-tracker.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "14"
+  lastTimestamp: null
   message: Created YT object qt (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "14"
+  lastTimestamp: null
+  message: Applied configmap/yt-query-tracker-config "ytserver-query-tracker.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -2053,10 +2605,50 @@
     namespace: ytsaurus-components
     resourceVersion: "15"
   lastTimestamp: null
+  message: Applied configmap/yt-queue-agent-config "ytserver-queue-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "15"
+  lastTimestamp: null
   message: Created YT object qa (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "15"
+  lastTimestamp: null
+  message: Applied configmap/yt-queue-agent-config "ytserver-queue-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -2718,10 +3310,50 @@
     namespace: ytsaurus-components
     resourceVersion: "20"
   lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "20"
+  lastTimestamp: null
   message: Created YT object yqla (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "20"
+  lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -3174,10 +3806,566 @@
     namespace: ytsaurus-components
     resourceVersion: "30"
   lastTimestamp: null
+  message: Applied configmap/yt-master-2-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-http-proxy-config "ytserver-http-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-data-node-config "ytserver-data-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-rpc-proxy-config "ytserver-rpc-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-exec-node-config "ytserver-exec-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-tablet-node-config "ytserver-tablet-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-scheduler-config "ytserver-scheduler.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-controller-agent-config "ytserver-controller-agent.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-query-tracker-config "ytserver-query-tracker.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-queue-agent-config "ytserver-queue-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-cache-config "ytserver-master-cache.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
   message: Cluster state is Running
   metadata:
     namespace: ytsaurus-components
   reason: ClusterState
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-2-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-config "ytserver-master.yson" override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-http-proxy-config "ytserver-http-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-data-node-config "ytserver-data-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-rpc-proxy-config "ytserver-rpc-proxy.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-exec-node-config "ytserver-exec-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-tablet-node-config "ytserver-tablet-node.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-scheduler-config "ytserver-scheduler.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-controller-agent-config "ytserver-controller-agent.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-query-tracker-config "ytserver-query-tracker.yson"
+    override "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-queue-agent-config "ytserver-queue-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-master-cache-config "ytserver-master-cache.yson" override
+    "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:

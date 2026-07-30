@@ -159,6 +159,7 @@ data:
         "queue_agent"={
             stage=production;
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:

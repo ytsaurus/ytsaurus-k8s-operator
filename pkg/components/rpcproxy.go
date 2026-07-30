@@ -64,11 +64,11 @@ func NewRPCProxy(
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-proxy",
-		[]ConfigGenerator{{
-			"ytserver-rpc-proxy.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetRPCProxyConfig(spec) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetRPCProxyConfig(spec)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.RPCProxyMonitoringPort,
 		WithContainerPorts(ports...),

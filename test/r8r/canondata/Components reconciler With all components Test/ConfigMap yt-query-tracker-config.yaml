@@ -143,6 +143,7 @@ data:
         };
         user="query_tracker";
         "create_state_tables_on_startup"=%true;
+        "overrides_all"=#;
     }
 metadata:
   annotations:

@@ -190,6 +190,7 @@ data:
                 "update_period"=60000;
             };
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:
