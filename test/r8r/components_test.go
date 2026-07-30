@@ -163,6 +163,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var configMaps map[string]*corev1.ConfigMap
 	var secrets map[string]*corev1.Secret
 	var jobs map[string]*batchv1.Job
+	var diffSince string
 
 	objectKind := func(obj client.Object) string {
 		gvks, _, err := k8sScheme.ObjectKinds(obj)
@@ -171,20 +172,39 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		return gvks[0].Kind
 	}
 
+	assertStruct := func(name string, s any) {
+		if diffSince == "" {
+			By(fmt.Sprintf("Assert %s", name), func() {
+				canonize.AssertStruct(GinkgoT(), name, s)
+			})
+		} else {
+			By(fmt.Sprintf("Assert diff %s since %q", name, diffSince), func() {
+				canonize.AssertStructDiff(GinkgoT(), diffSince, name, s)
+			})
+		}
+	}
+
 	// NOTE: execution order for each test spec:
-	// - BeforeEach               (configuration)
-	// - JustBeforeEach           (creation, validation)
-	// - It                       (test itself)
-	// - JustAfterEach            (diagnosis, validation)
-	// - AfterEach, DeferCleanup  (cleanup)
+	// - BeforeEach OncePerOrdered      (init, configuration)
+	// - JustBeforeEach OncePerOrdered  (creation)
+	// - JustBeforeEach                 (validation)
+	// - It                             (test itself)
+	// - JustAfterEach                  (diagnosis, validation)
+	// - DeferCleanup                   (cleanup)
+	// - AfterEach OncePerOrdered       (destruction)
+	//
+	// Ordered group of test-cases share one cluster.
 	//
 	// See:
 	// https://onsi.github.io/ginkgo/#separating-creation-and-configuration-justbeforeeach
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
+	// https://onsi.github.io/ginkgo/#ordered-containers
 	// NOTE: cross-node operations must use specCtx, in-node operations should use node ctx.
 
-	BeforeEach(func(ctx context.Context) {
+	BeforeEach(OncePerOrdered, func(ctx context.Context) {
+		diffSince = ""
+
 		By("Creating spec context", func() {
 			var cancel context.CancelFunc
 			Expect(specCtx).To(BeNil())
@@ -278,7 +298,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		// generator = ytconfig.NewGenerator(ytsaurus, "cluster.local")
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustBeforeEach(OncePerOrdered, func(ctx context.Context) {
 
 		By("Creating namespace", func() {
 			namespaceObject := corev1.Namespace{
@@ -290,7 +310,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustBeforeEach(OncePerOrdered, func(ctx context.Context) {
 		if ytsaurus == nil {
 			return
 		}
@@ -458,7 +478,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			obj.SetStatusConditions(conditions)
 
-			canonize.AssertStruct(GinkgoT(), kind, obj)
+			assertStruct(kind, obj)
 		}
 	})
 
@@ -466,7 +486,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		var objectList []metav1.ObjectMeta
 
 		By("Checking Events", func() {
-			canonize.AssertStruct(GinkgoT(), "Events", k8sEvents)
+			assertStruct("Events", k8sEvents)
 		})
 
 		By("Checking Services", func() {
@@ -477,7 +497,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				log.Info("Found Service", "name", obj.Name)
 				objectList = append(objectList, obj.ObjectMeta)
 
-				canonize.AssertStruct(GinkgoT(), "Service "+obj.Name, obj)
+				assertStruct("Service "+obj.Name, obj)
 
 				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
@@ -501,7 +521,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
 				censoredObj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, censoredObj)
+				assertStruct("StatefulSet "+obj.Name, censoredObj)
 			}
 		})
 
@@ -521,7 +541,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj := obj.DeepCopy()
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "DaemonSets "+obj.Name, censoredObj)
+				assertStruct("DaemonSets "+obj.Name, censoredObj)
 			}
 		})
 
@@ -544,7 +564,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
 				censoredObj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "Deployment "+obj.Name, censoredObj)
+				assertStruct("Deployment "+obj.Name, censoredObj)
 			}
 		})
 
@@ -566,7 +586,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj := obj.DeepCopy()
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, censoredObj)
+				assertStruct("ConfigMap "+obj.Name, censoredObj)
 			}
 		})
 
@@ -580,7 +600,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 				secrets[obj.Name] = obj
 				censoredObj := obj.DeepCopy()
-				canonize.AssertStruct(GinkgoT(), "Secret "+obj.Name, censoredObj)
+				assertStruct("Secret "+obj.Name, censoredObj)
 			}
 		})
 
@@ -594,7 +614,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 				jobs[obj.Name] = obj
 
-				canonize.AssertStruct(GinkgoT(), "Job "+obj.Name, obj)
+				assertStruct("Job "+obj.Name, obj)
 
 				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
@@ -608,7 +628,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				log.Info("Found RemoteYtsaurus", "name", obj.Name)
 				objectList = append(objectList, obj.ObjectMeta)
 
-				canonize.AssertStruct(GinkgoT(), "RemoteYtsaurus "+obj.Name, obj)
+				assertStruct("RemoteYtsaurus "+obj.Name, obj)
 			}
 		})
 
@@ -622,12 +642,18 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				obj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName, consts.InstanceHashAnnotationName)
 			}
 
-			canonize.AssertStruct(GinkgoT(), "Object List", objectList)
+			assertStruct("Object List", objectList)
 		})
 	})
 
-	Context("Minimal", func() {
-		It("Test", func(ctx context.Context) {})
+	Context("Minimal", Ordered, func() {
+		It("Test", func(ctx context.Context) {
+			By("Setting diff since " + GinkgoT().Name())
+			diffSince = GinkgoT().Name()
+		})
+		Context("Zero-diff", func() {
+			It("Test", func(ctx context.Context) {})
+		})
 	})
 
 	Context("Image heater only for masters", func() {
@@ -652,7 +678,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 	})
 
-	Context("With all components", func() {
+	Context("With all components", Ordered, func() {
 		BeforeEach(func() {
 			ytBuilder.DebugLogs = true
 			ytBuilder.CreateMinimal()
@@ -767,6 +793,10 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Expect(&podSpec.DNSPolicy).To(BeEquivalentTo(options.DNSPolicy))
 				Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
 			}
+			diffSince = GinkgoT().Name()
+		})
+		Context("Zero-diff", func() {
+			It("Test", func(ctx context.Context) {})
 		})
 	})
 
