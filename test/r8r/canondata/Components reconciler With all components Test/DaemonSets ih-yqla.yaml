@@ -46,7 +46,7 @@ spec:
       - command:
         - sleep
         - inf
-        image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+        image: ghcr.io/ytsaurus/query-tracker:0.1.2
         imagePullPolicy: Always
         name: image
         resources:

@@ -64,7 +64,7 @@ spec:
         envFrom:
         - secretRef:
             name: yt-strawberry-controller-secret
-        image: ghcr.io/ytsaurus/strawberry:0.0.17
+        image: ghcr.io/ytsaurus/strawberry:0.0.16
         name: ytsaurus-init
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError
