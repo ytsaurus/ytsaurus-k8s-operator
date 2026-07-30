@@ -163,6 +163,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var configMaps map[string]*corev1.ConfigMap
 	var secrets map[string]*corev1.Secret
 	var jobs map[string]*batchv1.Job
+	var diffBase string
 
 	objectKind := func(obj client.Object) string {
 		gvks, _, err := k8sScheme.ObjectKinds(obj)
@@ -171,20 +172,47 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		return gvks[0].Kind
 	}
 
+	assertStruct := func(name string, s any) {
+		if diffBase == "" {
+			By(fmt.Sprintf("Assert %s", name), func() {
+				canonize.AssertStruct(GinkgoT(), name, s)
+			})
+		} else {
+			By(fmt.Sprintf("Assert diff %s since %q", name, diffBase), func() {
+				canonize.AssertStructDiff(GinkgoT(), diffBase, name, s)
+			})
+		}
+	}
+
 	// NOTE: execution order for each test spec:
-	// - BeforeEach               (configuration)
-	// - JustBeforeEach           (creation, validation)
-	// - It                       (test itself)
-	// - JustAfterEach            (diagnosis, validation)
-	// - AfterEach, DeferCleanup  (cleanup)
+	// - BeforeEach OncePerOrdered      (reset diff base)
+	// - BeforeEach OncePerOrdered      (init, configuration)
+	// - BeforeAll  [Ordered]           (modification)
+	// - BeforeEach                     (modification)
+	// - JustBeforeEach OncePerOrdered  (creation)
+	// - It                             (modification)
+	// - JustAfterEach                  (reconciler)
+	// - JustAfterEach                  (diagnosis, validation)
+	// - JustAfterEach                  (assert, canonize)
+	// - AfterEach                      (extra validation)
+	// - AfterEach                      (set diff base)
+	// - DeferCleanup                   (cleanup)
+	// - AfterEach OncePerOrdered       (destruction)
+	//
+	// Ordered group of test-cases share one cluster,
+	// First test-case in ordered group defines diff base for followers.
 	//
 	// See:
 	// https://onsi.github.io/ginkgo/#separating-creation-and-configuration-justbeforeeach
 	// https://onsi.github.io/ginkgo/#spec-cleanup-aftereach-and-defercleanup
 	// https://onsi.github.io/ginkgo/#separating-diagnostics-collection-and-teardown-justaftereach
+	// https://onsi.github.io/ginkgo/#ordered-containers
 	// NOTE: cross-node operations must use specCtx, in-node operations should use node ctx.
 
-	BeforeEach(func(ctx context.Context) {
+	BeforeEach(OncePerOrdered, func(ctx context.Context) {
+		By("Resetting diff base")
+		diffBase = ""
+
 		By("Creating spec context", func() {
 			var cancel context.CancelFunc
 			Expect(specCtx).To(BeNil())
@@ -213,7 +241,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Expect(err).To(Succeed())
 				accessor, err := meta.Accessor(currentObj)
 				Expect(err).To(Succeed())
-				return accessor.GetGeneration()
+				generation := accessor.GetGeneration()
+				Expect(generation).ToNot(Equal(int64(0)))
+				return generation
 			}
 
 			clientBuilder := fake.NewClientBuilder()
@@ -225,30 +255,62 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			clientBuilder.WithInterceptorFuncs(interceptor.Funcs{
 				Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 					err := client.Get(ctx, key, obj, opts...)
-					log.Info("Get object", "key", key, "ok", err == nil, "version", obj.GetResourceVersion())
+					if obj.GetObjectKind().GroupVersionKind().Empty() {
+						gvks, _, err := k8sScheme.ObjectKinds(obj)
+						Expect(err).To(Succeed())
+						Expect(gvks).To(HaveLen(1))
+						obj.GetObjectKind().SetGroupVersionKind(gvks[0])
+					}
+					log.Info("Get object",
+						"ok", err == nil,
+						"gvk", obj.GetObjectKind().GroupVersionKind(),
+						"key", key,
+						"resourceVersion", obj.GetResourceVersion(),
+						"generation", obj.GetGeneration(),
+					)
 					return err
 				},
 				Create: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.CreateOption) error {
 					gvks, _, err := k8sScheme.ObjectKinds(obj)
 					Expect(err).To(Succeed())
+					Expect(gvks).To(HaveLen(1))
 					obj.GetObjectKind().SetGroupVersionKind(gvks[0])
 					obj.SetGeneration(1)
 
-					log.Info("Create object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName(), "version", obj.GetResourceVersion())
+					log.Info("Create object",
+						"gvk", obj.GetObjectKind().GroupVersionKind(),
+						"name", obj.GetName(),
+						"resourceVersion", obj.GetResourceVersion(),
+						"generation", obj.GetGeneration(),
+					)
 					return client.Create(ctx, obj, opts...)
 				},
 				Update: func(ctx context.Context, c client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
 					obj.SetGeneration(getGeneration(obj) + 1)
-
-					log.Info("Update object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())
+					log.Info("Update object",
+						"gvk", obj.GetObjectKind().GroupVersionKind(),
+						"name", obj.GetName(),
+						"resourceVersion", obj.GetResourceVersion(),
+						"generation", obj.GetGeneration(),
+					)
 					return c.Update(ctx, obj, opts...)
 				},
 				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
-					log.Info("Patch object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())
+					obj.SetGeneration(getGeneration(obj) + 1)
+					log.Info("Patch object",
+						"gvk", obj.GetObjectKind().GroupVersionKind(),
+						"name", obj.GetName(),
+						"generation", obj.GetGeneration(),
+					)
 					return client.Patch(ctx, obj, patch, opts...)
 				},
 				Delete: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.DeleteOption) error {
-					log.Info("Delete object", "gvk", obj.GetObjectKind().GroupVersionKind(), "name", obj.GetName())
+					obj.SetGeneration(getGeneration(obj))
+					log.Info("Delete object",
+						"gvk", obj.GetObjectKind().GroupVersionKind(),
+						"name", obj.GetName(),
+						"generation", obj.GetGeneration(),
+					)
 					return client.Delete(ctx, obj, opts...)
 				},
 				SubResourceUpdate: func(ctx context.Context, client client.Client, subResourceName string, obj client.Object, opts ...client.SubResourceUpdateOption) error {
@@ -278,7 +340,14 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		// generator = ytconfig.NewGenerator(ytsaurus, "cluster.local")
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	AfterEach(func() {
+		if diffBase == "" {
+			By("Setting diff base to " + GinkgoT().Name())
+			diffBase = GinkgoT().Name()
+		}
+	})
+
+	JustBeforeEach(OncePerOrdered, func(ctx context.Context) {
 
 		By("Creating namespace", func() {
 			namespaceObject := corev1.Namespace{
@@ -290,7 +359,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustBeforeEach(OncePerOrdered, func(ctx context.Context) {
 		if ytsaurus == nil {
 			return
 		}
@@ -307,7 +376,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustAfterEach(func(ctx context.Context) {
 		var eventBroadcaster record.EventBroadcaster
 		var fetchEvents func() []*corev1.Event
 
@@ -431,7 +500,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustAfterEach(func(ctx context.Context) {
 		for _, obj := range controllerObjects {
 			kind := objectKind(obj)
 			By(fmt.Sprintf("Checking %s %s", kind, obj.GetName()))
@@ -458,11 +527,11 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			obj.SetStatusConditions(conditions)
 
-			canonize.AssertStruct(GinkgoT(), kind, obj)
+			assertStruct(kind, obj)
 		}
 	})
 
-	JustBeforeEach(func(ctx context.Context) {
+	JustAfterEach(func(ctx context.Context) {
 		var objectList []metav1.ObjectMeta
 
 		By("Checking Events", func() {
@@ -477,7 +546,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				log.Info("Found Service", "name", obj.Name)
 				objectList = append(objectList, obj.ObjectMeta)
 
-				canonize.AssertStruct(GinkgoT(), "Service "+obj.Name, obj)
+				assertStruct("Service "+obj.Name, obj)
 
 				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
@@ -501,7 +570,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
 				censoredObj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "StatefulSet "+obj.Name, censoredObj)
+				assertStruct("StatefulSet "+obj.Name, censoredObj)
 			}
 		})
 
@@ -521,7 +590,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj := obj.DeepCopy()
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "DaemonSets "+obj.Name, censoredObj)
+				assertStruct("DaemonSets "+obj.Name, censoredObj)
 			}
 		})
 
@@ -544,7 +613,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.InstanceHashAnnotationName)
 				censoredObj.Spec.Template.Annotations = CensorMapValues(obj.Spec.Template.Annotations, consts.ConfigHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "Deployment "+obj.Name, censoredObj)
+				assertStruct("Deployment "+obj.Name, censoredObj)
 			}
 		})
 
@@ -566,7 +635,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				censoredObj := obj.DeepCopy()
 				censoredObj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName)
 
-				canonize.AssertStruct(GinkgoT(), "ConfigMap "+obj.Name, censoredObj)
+				assertStruct("ConfigMap "+obj.Name, censoredObj)
 			}
 		})
 
@@ -580,7 +649,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 				secrets[obj.Name] = obj
 				censoredObj := obj.DeepCopy()
-				canonize.AssertStruct(GinkgoT(), "Secret "+obj.Name, censoredObj)
+				assertStruct("Secret "+obj.Name, censoredObj)
 			}
 		})
 
@@ -594,7 +663,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				objectList = append(objectList, obj.ObjectMeta)
 				jobs[obj.Name] = obj
 
-				canonize.AssertStruct(GinkgoT(), "Job "+obj.Name, obj)
+				assertStruct("Job "+obj.Name, obj)
 
 				Expect(obj.Annotations).To(HaveKey(consts.ObservedGenerationAnnotationName))
 			}
@@ -608,7 +677,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				log.Info("Found RemoteYtsaurus", "name", obj.Name)
 				objectList = append(objectList, obj.ObjectMeta)
 
-				canonize.AssertStruct(GinkgoT(), "RemoteYtsaurus "+obj.Name, obj)
+				assertStruct("RemoteYtsaurus "+obj.Name, obj)
 			}
 		})
 
@@ -622,12 +691,28 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				obj.Annotations = CensorMapValues(obj.Annotations, consts.ConfigHashAnnotationName, consts.InstanceHashAnnotationName)
 			}
 
-			canonize.AssertStruct(GinkgoT(), "Object List", objectList)
+			assertStruct("Object List", objectList)
 		})
 	})
 
-	Context("Minimal", func() {
+	Context("Minimal", Ordered, func() {
 		It("Test", func(ctx context.Context) {})
+		Context("Zero-diff", func() {
+			BeforeAll(func(ctx context.Context) {
+				Expect(diffBase).ToNot(BeEmpty())
+				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
+				Expect(ytsaurus.Generation).To(Equal(int64(2)))
+			})
+			It("Test", func(ctx context.Context) {})
+		})
+		Context("Zero-diff 2", func() {
+			BeforeAll(func(ctx context.Context) {
+				Expect(diffBase).ToNot(BeEmpty())
+				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
+				Expect(ytsaurus.Generation).To(Equal(int64(3)))
+			})
+			It("Test", func(ctx context.Context) {})
+		})
 	})
 
 	Context("Image heater only for masters", func() {
@@ -642,7 +727,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				},
 			}
 		})
-		It("Test", func(ctx context.Context) {
+		It("Test", func(ctx context.Context) {})
+		AfterEach(func() {
 			Expect(daemonSets).To(ConsistOf(
 				HaveField("ObjectMeta.Annotations", HaveKeyWithValue(
 					consts.ImageHeaterTargetsAnnotationName,
@@ -652,8 +738,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 	})
 
-	Context("With all components", func() {
-		BeforeEach(func() {
+	Context("With all components", Ordered, func() {
+		BeforeAll(func() {
 			ytBuilder.DebugLogs = true
 			ytBuilder.CreateMinimal()
 			ytsaurus = ytBuilder.Ytsaurus
@@ -720,7 +806,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithNativeTransportTLS("native-server-cert", "native-client-cert")
 			ytBuilder.WithHTTPSProxies("https-server-cert", false)
 		})
-		It("Test", func(ctx context.Context) {
+		It("Test", func(ctx context.Context) {})
+		AfterEach(func() {
 			for _, sts := range statefulSets {
 				log.Info("sts", "name", sts.Name)
 				podSpec := &sts.Spec.Template.Spec
@@ -768,6 +855,13 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Expect(podSpec.DNSConfig).To(BeEquivalentTo(options.DNSConfig))
 			}
 		})
+		Context("Zero-diff", func() {
+			BeforeAll(func(ctx context.Context) {
+				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
+				Expect(ytsaurus.Generation).To(Equal(int64(2)))
+			})
+			It("Test", func(ctx context.Context) {})
+		})
 	})
 
 	Context("Master cells maintenance", func() {
@@ -777,7 +871,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			ytBuilder.WithSecondaryMaster()
 		})
-		It("Test", func(ctx context.Context) {
+		It("Test", func(ctx context.Context) {})
+		AfterEach(func() {
 			Expect(ytsaurus).To(HaveField("Status.State", Equal(ytv1.ClusterStateMaintenance)))
 			for _, sts := range statefulSets {
 				replicas := int32(0)
@@ -801,8 +896,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithSecondaryMaster().Roles = ptr.To(ytv1.GetMasterCellRoles(nil, false, true))
 			ytBuilder.WithSecondaryMaster().Roles = ptr.To([]ytv1.MasterCellRole{})
 		})
-		It("Test", func(ctx context.Context) {
-		})
+		It("Test", func(ctx context.Context) {})
 	})
 
 	Context("With job proxy logs", func() {
