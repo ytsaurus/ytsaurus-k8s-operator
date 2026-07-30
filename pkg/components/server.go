@@ -280,7 +280,15 @@ func newServerConfigured(
 }
 
 func (s *serverImpl) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService)
+	if err := resources.Fetch(ctx, s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService); err != nil {
+		return err
+	}
+	if s.timbertruckConfigs != nil && s.timbertruckConfigs.Exists() {
+		if _, err := s.timbertruckConfigs.needReload(); err != nil {
+			return fmt.Errorf("failed to check timbertruck configuration: %w", err)
+		}
+	}
+	return nil
 }
 
 func (s *serverImpl) Exists() bool {
@@ -657,6 +665,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 			timbertruckConfigFileName(s.labeller),
 			s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 		)
+		s.addCARootBundle(&podSpec.Containers[len(podSpec.Containers)-1])
 	}
 
 	s.builtStatefulSet = statefulSet

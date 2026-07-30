@@ -221,7 +221,7 @@ generate: ## Generate everything.
 .PHONY: manifests
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	rm -f config/crd/bases/*.yaml
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd:maxDescLen=80 webhook paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\"}" output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd:maxDescLen=80 webhook paths="{\"./api/...\" , \"./controllers/...\", \"./pkg/...\", \"./validators/...\"}" output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate-code
 generate-code: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.

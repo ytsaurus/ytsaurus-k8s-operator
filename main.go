@@ -263,12 +263,24 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteExecNodes")
 		os.Exit(1)
 	}
+	if enableWebhooks {
+		if err = validators.NewRemoteExecNodesValidator().SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "RemoteExecNodes")
+			os.Exit(1)
+		}
+	}
 
 	if err = (&controllers.RemoteDataNodesReconciler{
 		BaseReconciler: baseReconciler("remotedatanodes-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteDataNodes")
 		os.Exit(1)
+	}
+	if enableWebhooks {
+		if err = validators.NewRemoteDataNodesValidator().SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "RemoteDataNodes")
+			os.Exit(1)
+		}
 	}
 
 	if err = (&controllers.RemoteTabletNodesReconciler{
@@ -277,12 +289,24 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "RemoteTabletNodes")
 		os.Exit(1)
 	}
+	if enableWebhooks {
+		if err = validators.NewRemoteTabletNodesValidator().SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "RemoteTabletNodes")
+			os.Exit(1)
+		}
+	}
 
 	if err = (&controllers.OffshoreDataGatewaysReconciler{
 		BaseReconciler: baseReconciler("offshoredatagateways-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OffshoreDataGateways")
 		os.Exit(1)
+	}
+	if enableWebhooks {
+		if err = validators.NewOffshoreDataGatewaysValidator().SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "OffshoreDataGateways")
+			os.Exit(1)
+		}
 	}
 	//+kubebuilder:scaffold:builder
 

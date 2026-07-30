@@ -195,7 +195,7 @@ func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (Compone
 		return ComponentStatusWaitingFor("waiting for timbertruck user initialization"), nil
 	}
 
-	if !tt.ytsaurus.IsStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
+	if !tt.ytsaurus.IsStatusConditionTrueAndObservedGeneration(consts.ConditionTimbertruckPrepared) {
 		if !dry {
 			if err := tt.prepareTimbertruckTables(ctx); err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
@@ -319,17 +319,11 @@ func resolveTimbertruckDelivery(componentTT, commonTT *ytv1.TimbertruckSpec, ins
 	}
 }
 
-// timbertruckComponentName is the per-component name used to build delivery names and the
-// corresponding YT queue paths. It must be identical between the sidecar config (built in
-// serverImpl) and the YT-side table preparation (GetDeliveryLoggers), so it is derived solely
-// from the labeller. For single-group components (e.g. primary master) it equals the service
-// kebab-case name, preserving the original master paths.
+// timbertruckComponentName is shared by the local log filename and the delivery identity.
+// Instance groups intentionally use the same delivery queues so logs from all roles/groups of a
+// component type are aggregated.
 func timbertruckComponentName(l *labeller.Labeller) string {
-	name := consts.GetServiceKebabCase(l.ComponentType)
-	if l.InstanceGroup != "" && l.InstanceGroup != consts.DefaultName {
-		name += "-" + l.InstanceGroup
-	}
-	return name
+	return consts.GetServiceKebabCase(l.ComponentType)
 }
 
 // timbertruckConfigFileName is the per-component file name of the timbertruck sidecar config.
@@ -454,8 +448,9 @@ func (tt *Timbertruck) GetDeliveryLoggers() []ComponentLoggers {
 		if delivery == nil {
 			continue
 		}
+		labeler := source.buildLabeller(tt.cfgen)
 		result = append(result, ComponentLoggers{
-			ComponentName:     timbertruckComponentName(source.buildLabeller(tt.cfgen)),
+			ComponentName:     timbertruckComponentName(labeler),
 			StructuredLoggers: delivery.Loggers,
 			LogsDeliveryPath:  delivery.LogsDeliveryPath,
 		})

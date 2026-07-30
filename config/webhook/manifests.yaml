@@ -30,6 +30,86 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-cluster-ytsaurus-tech-v1-offshoredatagateways
+  failurePolicy: Fail
+  name: voffshoredatagateways.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - offshoredatagateways
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-cluster-ytsaurus-tech-v1-remotedatanodes
+  failurePolicy: Fail
+  name: vremotedatanodes.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - remotedatanodes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-cluster-ytsaurus-tech-v1-remoteexecnodes
+  failurePolicy: Fail
+  name: vremoteexecnodes.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - remoteexecnodes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-cluster-ytsaurus-tech-v1-remotetabletnodes
+  failurePolicy: Fail
+  name: vremotetabletnodes.kb.io
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - remotetabletnodes
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-cluster-ytsaurus-tech-v1-spyt
   failurePolicy: Fail
   name: vspyt.kb.io

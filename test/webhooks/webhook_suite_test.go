@@ -134,6 +134,18 @@ var _ = BeforeSuite(func() {
 	err = validators.NewChytValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = validators.NewRemoteDataNodesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewRemoteExecNodesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewRemoteTabletNodesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewOffshoreDataGatewaysValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
 	//+kubebuilder:scaffold:webhook
 
 	go func() {

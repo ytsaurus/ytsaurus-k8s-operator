@@ -29,7 +29,14 @@ type TimbertruckYTQueueConfig struct {
 	ProducerPath string `json:"producer_path" yson:"producer_path"`
 }
 
-func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir, componentName, logsDirectory, deliveryProxy, logsDeliveryPath string) *TimbertruckConfig {
+func NewTimbertruckConfig(
+	structuredLoggers []ytv1.StructuredLoggerSpec,
+	workDir,
+	componentName,
+	logsDirectory,
+	deliveryProxy,
+	logsDeliveryPath string,
+) *TimbertruckConfig {
 	timbertruckConfig := &TimbertruckConfig{
 		WorkDir:  workDir,
 		JsonLogs: []TimbertruckJsonLogConfig{},

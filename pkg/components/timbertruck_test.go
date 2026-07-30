@@ -65,6 +65,28 @@ func TestGetTimbertruckConfig(t *testing.T) {
 	canonize.Assert(t, []byte(strings.TrimSpace(string(yamlData))))
 }
 
+func TestTimbertruckInstanceGroupsShareDeliveryQueue(t *testing.T) {
+	config := ytconfig.NewTimbertruckConfig(
+		[]v1.StructuredLoggerSpec{{
+			BaseLoggerSpec: v1.BaseLoggerSpec{
+				Name:        "access",
+				Format:      v1.LogFormatJson,
+				Compression: v1.LogCompressionNone,
+			},
+		}},
+		"/work",
+		"data-node",
+		"/logs",
+		"proxy",
+		"//logs",
+	)
+
+	require.Len(t, config.JsonLogs, 1)
+	require.Equal(t, "/logs/data-node.access.log.json", config.JsonLogs[0].LogFile)
+	require.Equal(t, "data-node-access", config.JsonLogs[0].Name)
+	require.Equal(t, "//logs/data-node-access/queue", config.JsonLogs[0].YTQueue[0].QueuePath)
+}
+
 var _ = Describe("buildTimbertruckVolumeMounts", func() {
 	const configVolumeName = consts.TimbertruckContainerName + "-config"
 
