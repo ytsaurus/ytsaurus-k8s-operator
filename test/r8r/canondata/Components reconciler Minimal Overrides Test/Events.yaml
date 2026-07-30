@@ -9,6 +9,26 @@
     resourceVersion: "31"
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
     "ytserver-discovery.yson"
   metadata:
     namespace: ytsaurus-components
@@ -32,11 +52,22 @@
     Config ytserver-discovery.yson needs reload. Diff:
     --- old/ytserver-discovery.yson
     +++ new/ytserver-discovery.yson
-    @@ -78,4 +78,5 @@
+    @@ -78,4 +78,16 @@
                  "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
              ];
          };
-    +    hello=yt;
+    +    "override_yaml"={
+    +        bool=%true;
+    +        float=0.500000;
+    +        number=1;
+    +        string=str;
+    +    };
+    +    "override_yson"={
+    +        bool=%true;
+    +        number=1;
+    +        float=0.500000;
+    +        string=str;
+    +    };
      }
   metadata:
     namespace: ytsaurus-components
@@ -154,6 +185,26 @@
     resourceVersion: "33"
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "33"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
     "ytserver-discovery.yson"
   metadata:
     namespace: ytsaurus-components
@@ -193,6 +244,26 @@
     resourceVersion: "33"
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "33"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
     "ytserver-discovery.yson"
   metadata:
     namespace: ytsaurus-components
@@ -216,11 +287,22 @@
     Config ytserver-discovery.yson needs reload. Diff:
     --- old/ytserver-discovery.yson
     +++ new/ytserver-discovery.yson
-    @@ -78,4 +78,5 @@
+    @@ -78,4 +78,16 @@
                  "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
              ];
          };
-    +    hello=yt;
+    +    "override_yaml"={
+    +        bool=%true;
+    +        float=0.500000;
+    +        number=1;
+    +        string=str;
+    +    };
+    +    "override_yson"={
+    +        bool=%true;
+    +        number=1;
+    +        float=0.500000;
+    +        string=str;
+    +    };
      }
   metadata:
     namespace: ytsaurus-components
@@ -376,6 +458,26 @@
     resourceVersion: "36"
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "36"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
     "ytserver-discovery.yson"
   metadata:
     namespace: ytsaurus-components
@@ -435,7 +537,7 @@
     resourceVersion: "36"
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-    "ytserver-discovery.yson"
+    "ytserver-discovery.yaml"
   metadata:
     namespace: ytsaurus-components
   reason: Override
@@ -456,6 +558,66 @@
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
     "ytserver-discovery.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "36"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "36"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "36"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
   metadata:
     namespace: ytsaurus-components
   reason: Override
@@ -514,6 +676,26 @@
     resourceVersion: "36"
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "36"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
     "ytserver-discovery.yson"
   metadata:
     namespace: ytsaurus-components
@@ -556,6 +738,26 @@
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "37"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
@@ -824,7 +1026,47 @@
     resourceVersion: "42"
   lastTimestamp: null
   message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "42"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
     "ytserver-discovery.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "43"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
   metadata:
     namespace: ytsaurus-components
   reason: Override
@@ -867,6 +1109,26 @@
   metadata:
     namespace: ytsaurus-components
   reason: ClusterState
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "44"
+  lastTimestamp: null
+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
+    "ytserver-discovery.yaml"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:

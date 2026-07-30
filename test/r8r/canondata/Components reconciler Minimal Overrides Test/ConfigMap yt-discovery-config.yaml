@@ -80,7 +80,18 @@ data:
                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
             ];
         };
-        hello=yt;
+        "override_yaml"={
+            bool=%true;
+            float=0.500000;
+            number=1;
+            string=str;
+        };
+        "override_yson"={
+            bool=%true;
+            number=1;
+            float=0.500000;
+            string=str;
+        };
     }
 metadata:
   annotations:

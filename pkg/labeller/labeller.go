@@ -170,6 +170,11 @@ func (l *Labeller) GetFullComponentLabel() string {
 	return l.getGroupName(l.GetComponentLabel())
 }
 
+// GetServerConfigName returns config file name without format extension.
+func (l *Labeller) GetServerConfigName() string {
+	return fmt.Sprintf("ytserver-%s", consts.GetServiceKebabCase(l.ComponentType))
+}
+
 func (l *Labeller) GetCypressPatchConfigMapName() string {
 	return l.getName("yt-cypress-patch", "")
 }

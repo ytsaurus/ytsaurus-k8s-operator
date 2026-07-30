@@ -1,5 +1,7 @@
 data:
   place-holder: ""
+  ytserver-all.yaml: 'overrides_all_yaml: true'
+  ytserver-all.yson: '{overrides_all_yson=%true}'
 metadata:
   generation: 1
   name: test-overrides

@@ -11,6 +11,8 @@ import (
 	"go.ytsaurus.tech/yt/go/yson"
 	"sigs.k8s.io/yaml"
 
+	yeml "k8s.io/apimachinery/pkg/util/yaml"
+
 	"github.com/pmezard/go-difflib/difflib"
 
 	corev1 "k8s.io/api/core/v1"
@@ -43,7 +45,9 @@ type TextGeneratorFunc func() ([]string, error)
 type ConfigGeneratorFunc func() ([]byte, error)
 
 type ConfigGenerator struct {
-	FileName string
+	FileName            string
+	ConfigOverridesName string
+	GlobalOverridesName string
 	// Format is the desired serialization format for config map.
 	// Note that conversion from YSON to Format (if needed) is performed as a very last
 	// step of config generation pipeline.
@@ -71,6 +75,17 @@ func TextConfigGenerator(fileName string, generator TextGeneratorFunc) ConfigGen
 			}
 			return []byte(strings.Join(text, "\n")), nil
 		},
+	}
+}
+
+func ServerConfigGenerator(l *labeller.Labeller, generator ConfigGeneratorFunc) ConfigGenerator {
+	configName := l.GetServerConfigName()
+	return ConfigGenerator{
+		FileName:            configName + ".yson",
+		ConfigOverridesName: configName,
+		GlobalOverridesName: consts.YtserverAllConfigOverrideName,
+		Format:              ConfigFormatYson,
+		Generator:           generator,
 	}
 }
 
@@ -110,11 +125,20 @@ func (h *ConfigMapBuilder) AddGenerator(fileName string, format ConfigFormat, ge
 	})
 }
 
-func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
+func overrideYsonConfigs(base []byte, overrides []byte, format ConfigFormat) ([]byte, error) {
 	config := ypatch.OrderedValue{}
 	err := yson.Unmarshal(base, &config)
 	if err != nil {
 		return nil, err
+	}
+	if format == ConfigFormatYaml {
+		var config any
+		if err = yeml.UnmarshalStrict(overrides, &config); err == nil {
+			overrides, err = yson.Marshal(config)
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 	err = yson.Unmarshal(overrides, &config)
 	if err != nil {
@@ -137,21 +161,28 @@ func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error)
 	}
 
 	if h.overridesMap.GetResourceVersion() != "" {
-		overrideNames := []string{
-			descriptor.FileName,
-			fmt.Sprintf("%s--%s", name, descriptor.FileName),
+		overrides := []struct {
+			Name   string
+			Format ConfigFormat
+		}{
+			{fmt.Sprintf("%s.yaml", descriptor.GlobalOverridesName), ConfigFormatYaml},
+			{fmt.Sprintf("%s.yson", descriptor.GlobalOverridesName), ConfigFormatYson},
+			{fmt.Sprintf("%s.yaml", descriptor.ConfigOverridesName), ConfigFormatYaml},
+			{descriptor.FileName, ConfigFormatYson}, // NOTE: Compat, we had yson overrides for toml.
+			{fmt.Sprintf("%s--%s.yaml", name, descriptor.ConfigOverridesName), ConfigFormatYaml},
+			{fmt.Sprintf("%s--%s", name, descriptor.FileName), ConfigFormatYson},
 		}
-		for _, overrideName := range overrideNames {
-			if value, ok := h.overridesMap.Data[overrideName]; ok {
-				configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value))
+		for _, override := range overrides {
+			if value, ok := h.overridesMap.Data[override.Name]; ok {
+				configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value), override.Format)
 				if err != nil {
 					h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot apply configmap/%s %q override %q: %s",
-						name, descriptor.FileName, overrideName, err))
+						name, descriptor.FileName, override.Name, err))
 					return nil, fmt.Errorf("failed to apply configmap/%s %q override %q: %w",
-						name, descriptor.FileName, overrideName, err)
+						name, descriptor.FileName, override.Name, err)
 				}
 				h.apiProxy.RecordNormal("Override", fmt.Sprintf("Applied configmap/%s %q override %q",
-					name, descriptor.FileName, overrideName))
+					name, descriptor.FileName, override.Name))
 				serializedConfig = configWithOverrides
 			}
 		}

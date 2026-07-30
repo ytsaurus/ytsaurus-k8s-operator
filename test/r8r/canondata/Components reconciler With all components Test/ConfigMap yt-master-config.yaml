@@ -295,6 +295,8 @@ data:
                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
             ];
         };
+        "overrides_all_yaml"=%true;
+        "overrides_all_yson"=%true;
     }
 metadata:
   annotations:

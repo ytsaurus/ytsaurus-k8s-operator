@@ -1021,6 +1021,10 @@ type CommonSpec struct {
 	// Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead.
 	ExtraPodAnnotations map[string]string `json:"extraPodAnnotations,omitempty"`
 
+	// Configmap with patches for overriding options in generated configs.
+	// See https://ytsaurus.tech/docs/en/admin-guide/config-overrides
+	// Config overrides: "ytserver-all.{yaml,yson}", "{name}.{yaml,yson}", "{configmap}--{name}.{yaml,yson}".
+	// Cypress patches: "cypress-patch.yson", "yt-{component}-cypress-patch.yson".
 	ConfigOverrides *corev1.LocalObjectReference `json:"configOverrides,omitempty"`
 
 	// Credentials for pulling "coreImage" and "image" set for components.

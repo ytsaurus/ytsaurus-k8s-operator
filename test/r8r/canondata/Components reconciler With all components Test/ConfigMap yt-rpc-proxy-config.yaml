@@ -153,6 +153,8 @@ data:
         "public_rpc_port"=9013;
         "public_bus_server"={
         };
+        "overrides_all_yaml"=%true;
+        "overrides_all_yson"=%true;
     }
 metadata:
   annotations:

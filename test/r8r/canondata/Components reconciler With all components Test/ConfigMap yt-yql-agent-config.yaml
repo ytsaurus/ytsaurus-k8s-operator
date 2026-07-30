@@ -217,6 +217,8 @@ data:
             };
             "default_cluster"="test-ytsaurus";
         };
+        "overrides_all_yaml"=%true;
+        "overrides_all_yson"=%true;
     }
 metadata:
   annotations:

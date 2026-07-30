@@ -20,6 +20,7 @@ func TestConfigMerge(t *testing.T) {
 	merged, err := overrideYsonConfigs(
 		[]byte(hpConfigWithoutOverride),
 		[]byte(hpConfigOverride),
+		ConfigFormatYson,
 	)
 	require.NoError(t, err)
 	canonize.Assert(t, merged)
@@ -37,6 +38,7 @@ func TestConfigMergePreservesFieldOrder(t *testing.T) {
 			nested = { nested_first = 3; nested_new = 4; };
 			root_new = 3;
 		}`),
+		ConfigFormatYson,
 	)
 	require.NoError(t, err)
 
@@ -49,4 +51,14 @@ func TestConfigMergePreservesFieldOrder(t *testing.T) {
 	require.Less(t, strings.Index(result, "nested_last"), strings.Index(result, "nested_new"))
 	require.Less(t, strings.Index(result, "list_first"), strings.Index(result, "list_last"))
 	require.Contains(t, result, `"nested_first"=3`)
+}
+
+func TestConfigYAMLTypes(t *testing.T) {
+	merged, err := overrideYsonConfigs(
+		[]byte(`{}`),
+		[]byte(`{bool: true, number: 1, float: 0.5, string: str}`),
+		ConfigFormatYaml,
+	)
+	require.NoError(t, err)
+	canonize.Assert(t, merged)
 }
