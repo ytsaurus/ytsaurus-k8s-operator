@@ -1,0 +1,65 @@
+--- base/Ytsaurus.yson
++++ test/Ytsaurus.yson
+@@ -1,10 +1,10 @@
+ apiVersion: cluster.ytsaurus.tech/v1
+ kind: Ytsaurus
+ metadata:
+-  generation: 1
++  generation: 2
+   name: test-ytsaurus
+   namespace: ytsaurus-components
+-  resourceVersion: "22"
++  resourceVersion: "24"
+ spec:
+   clusterFeatures: {}
+   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+@@ -84,7 +84,7 @@
+   conditions:
+   - lastTransitionTime: null
+     message: 0.0.0-devel
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Observed
+     status: "True"
+     type: OperatorVersion
+@@ -102,19 +102,19 @@
+     type: defaultMasterInitJobCompleted
+   - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Ready
+     status: "True"
+     type: MasterReady
+   - lastTransitionTime: null
+     message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Ready
+     status: "True"
+     type: DiscoveryReady
+   - lastTransitionTime: null
+     message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Ready
+     status: "True"
+     type: HttpProxyReady
+@@ -132,7 +132,7 @@
+     type: UpdateIsPossible
+   - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Ready
+     status: "True"
+     type: YtsaurusClientReady
+@@ -142,7 +142,7 @@
+     reason: Running
+     status: "True"
+     type: ReadyToWork
+-  observedGeneration: 1
++  observedGeneration: 2
+   state: Running
+   updateStatus: {}
+ 
