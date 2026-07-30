@@ -37,11 +37,11 @@ func NewExecNode(
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		[]ConfigGenerator{{
-			"ytserver-exec-node.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetExecNodeConfig(spec) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetExecNodeConfig(spec)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{

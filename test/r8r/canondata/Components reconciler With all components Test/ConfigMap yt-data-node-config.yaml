@@ -184,6 +184,7 @@ data:
                 capacity=0;
             };
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:

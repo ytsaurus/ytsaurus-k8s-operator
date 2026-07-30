@@ -146,6 +146,7 @@ data:
                 "enable_operation_archivation"=%false;
             };
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:

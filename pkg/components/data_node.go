@@ -42,11 +42,11 @@ func NewDataNode(
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		[]ConfigGenerator{{
-			"ytserver-data-node.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetDataNodeConfig(spec) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetDataNodeConfig(spec)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
