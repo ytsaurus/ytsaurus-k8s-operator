@@ -35,11 +35,11 @@ func NewRemoteTabletNodes(
 		&ytv1.PodSpec{},
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		[]ConfigGenerator{{
-			"ytserver-tablet-node.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetTabletNodeConfig(spec)
+			}),
+		},
 		nil, // no timbertruck delivery for remote nodes
 		nil,
 		nil,

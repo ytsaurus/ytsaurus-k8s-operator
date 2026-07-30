@@ -30,11 +30,11 @@ func NewTabletBalancer(
 		ytsaurus,
 		&resource.Spec.TabletBalancer.InstanceSpec,
 		"/usr/bin/ytserver-tablet-balancer",
-		[]ConfigGenerator{{
-			"ytserver-tablet-balancer.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetTabletBalancerConfig(resource.Spec.TabletBalancer) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetTabletBalancerConfig(resource.Spec.TabletBalancer)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.TabletBalancerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{

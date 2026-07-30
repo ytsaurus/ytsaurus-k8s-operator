@@ -39,11 +39,11 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,
 		"/usr/bin/ytserver-yql-agent",
-		[]ConfigGenerator{{
-			"ytserver-yql-agent.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.YQLAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{

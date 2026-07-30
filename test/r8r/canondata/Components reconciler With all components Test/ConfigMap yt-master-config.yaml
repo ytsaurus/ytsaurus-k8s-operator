@@ -293,6 +293,7 @@ data:
                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
             ];
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:
