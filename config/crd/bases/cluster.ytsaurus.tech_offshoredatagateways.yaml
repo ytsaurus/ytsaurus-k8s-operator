@@ -1318,6 +1318,29 @@ spec:
                       type: string
                   type: object
                 type: array
+              tracing:
+                description: Common tracing configuration for all YTsaurus server
+                  components.
+                properties:
+                  collectorAddress:
+                    description: Address of the tracing collector gRPC endpoint.
+                    minLength: 1
+                    type: string
+                  maxMemory:
+                    anyOf:
+                    - type: integer
+                    - type: string
+                    description: Maximum memory occupied by queued spans.
+                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                    x-kubernetes-int-or-string: true
+                  processTags:
+                    additionalProperties:
+                      type: string
+                    description: Tags attached to the tracing process descriptor.
+                    type: object
+                required:
+                - collectorAddress
+                type: object
               useIpv4:
                 default: false
                 type: boolean

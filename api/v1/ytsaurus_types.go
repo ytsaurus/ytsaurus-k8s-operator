@@ -409,6 +409,22 @@ type MetricExporter struct {
 	GridStep     int32                  `json:"gridStep,omitempty"`
 }
 
+// TracingSpec configures distributed tracing for all YTsaurus server components.
+// Component-specific settings can be applied through configOverrides.
+type TracingSpec struct {
+	// Address of the tracing collector gRPC endpoint.
+	//+kubebuilder:validation:MinLength:=1
+	CollectorAddress string `json:"collectorAddress"`
+
+	// Maximum memory occupied by queued spans.
+	//+optional
+	MaxMemory *resource.Quantity `json:"maxMemory,omitempty"`
+
+	// Tags attached to the tracing process descriptor.
+	//+optional
+	ProcessTags map[string]string `json:"processTags,omitempty"`
+}
+
 type PodSpec struct {
 	// Labels for instance pods.
 	PodLabels map[string]string `json:"podLabels,omitempty"`
@@ -945,6 +961,10 @@ type CommonSpec struct {
 	// Common config for native RPC bus transport.
 	//+optional
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
+
+	// Common tracing configuration for all YTsaurus server components.
+	//+optional
+	Tracing *TracingSpec `json:"tracing,omitempty"`
 
 	// Allow prioritizing performance over data safety. Useful for tests and experiments.
 	//+kubebuilder:default:=false

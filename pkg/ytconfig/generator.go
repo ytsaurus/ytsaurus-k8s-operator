@@ -456,7 +456,11 @@ func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 	}
 }
 
-func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec) {
+func (g *NodeGenerator) fillCommonService(
+	c *CommonServer,
+	s *ytv1.InstanceSpec,
+	component consts.ComponentType,
+) {
 	// ToDo(psushin): enable porto resource tracker?
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillSolomonExporter(&c.SolomonExporter, s.MetricExporter)
@@ -464,6 +468,19 @@ func (g *NodeGenerator) fillCommonService(c *CommonServer, s *ytv1.InstanceSpec)
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)
 	c.TimestampProviders.Addresses = g.getMasterAddresses(&g.primaryMaster)
+
+	if spec := g.commonSpec.Tracing; spec != nil {
+		c.Jaeger = &Jaeger{
+			CollectorChannelConfig: JaegerCollectorChannelConfig{
+				Address: spec.CollectorAddress,
+			},
+			ServiceName: "yt-" + consts.GetServiceKebabCase(component),
+			ProcessTags: maps.Clone(spec.ProcessTags),
+		}
+		if spec.MaxMemory != nil {
+			c.Jaeger.MaxMemory = ptr.To(spec.MaxMemory.Value())
+		}
+	}
 }
 
 func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
@@ -633,7 +650,7 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 		return MasterServer{}, err
 	}
 	g.fillIOEngine(&c.Changelogs.IOEngine)
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.MasterType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillMasterCell(&c.PrimaryMaster, &g.primaryMaster)
 	c.SecondaryMasters = make([]MasterCell, len(g.secondaryMasters))
@@ -713,7 +730,7 @@ func (g *Generator) getSchedulerConfigImpl(spec *ytv1.SchedulersSpec) (Scheduler
 	if len(g.ytsaurus.Spec.TabletNodes) == 0 {
 		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.To(false)
 	}
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.SchedulerType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
 }
@@ -737,7 +754,7 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 		return RPCProxyServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.RpcProxyType)
 
 	var publicBusServer *BusServer
 
@@ -826,7 +843,7 @@ func (g *Generator) getTCPProxyConfigImpl(spec *ytv1.TCPProxiesSpec) (TCPProxySe
 		return TCPProxyServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.TcpProxyType)
 
 	return c, nil
 }
@@ -850,7 +867,7 @@ func (g *Generator) getKafkaProxyConfigImpl(spec *ytv1.KafkaProxiesSpec) (KafkaP
 		return KafkaProxyServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.KafkaProxyType)
 
 	return c, nil
 }
@@ -882,7 +899,7 @@ func (g *Generator) getControllerAgentConfigImpl(spec *ytv1.ControllerAgentsSpec
 		"/job/cpu/user",
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.ControllerAgentType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
@@ -911,7 +928,7 @@ func (g *NodeGenerator) getDataNodeConfigImpl(spec *ytv1.DataNodesSpec) (DataNod
 		g.fillIOEngine(&c.DataNode.StoreLocations[i].IOEngine)
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.DataNodeType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
 }
@@ -932,7 +949,7 @@ func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNod
 	for i := range c.DataNode.CacheLocations {
 		g.fillIOEngine(&c.DataNode.CacheLocations[i].IOEngine)
 	}
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.ExecNodeType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
@@ -1023,7 +1040,7 @@ func (g *NodeGenerator) getTabletNodeConfigImpl(spec *ytv1.TabletNodesSpec) (Tab
 			DeduceProfilingTagFromBundleName: ptr.To(false),
 		}
 	}
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.TabletNodeType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	return c, nil
 }
@@ -1042,7 +1059,7 @@ func (g *NodeGenerator) getOffshoreDataGatewaysConfigImpl(spec *ytv1.OffshoreDat
 		return OffshoreDataGatewayServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.OffshoreDataGatewayType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.BusClient = c.ClusterConnection.BusClient
 	return c, nil
@@ -1062,7 +1079,7 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 		return c, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.HttpProxyType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	g.fillDriverConfig(&c.Driver)
@@ -1107,7 +1124,7 @@ func (g *Generator) getQueryTrackerConfigImpl(spec *ytv1.QueryTrackerSpec) (Quer
 	if err != nil {
 		return c, err
 	}
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.QueryTrackerType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
@@ -1132,7 +1149,7 @@ func (g *Generator) getQueueAgentConfigImpl(spec *ytv1.QueueAgentSpec) (QueueAge
 		return c, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.QueueAgentType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	c.BusClient = c.ClusterConnection.BusClient
@@ -1158,7 +1175,7 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServ
 	if err != nil {
 		return c, err
 	}
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.YqlAgentType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	clusterName := g.ytsaurus.Name
@@ -1205,7 +1222,7 @@ func (g *Generator) getBundleControllerConfigImpl(spec *ytv1.BundleControllerSpe
 		return BundleControllerServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.BundleControllerType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.BundleController.Cluster = g.ytsaurus.Name
 
@@ -1226,7 +1243,7 @@ func (g *Generator) getTabletBalancerConfigImpl(spec *ytv1.TabletBalancerSpec) (
 		return TabletBalancerServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.TabletBalancerType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
 	return c, nil
@@ -1303,7 +1320,7 @@ func (g *Generator) getDiscoveryConfigImpl(spec *ytv1.DiscoverySpec) (DiscoveryS
 		return c, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.DiscoveryType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.DiscoveryServer.Addresses = g.getDiscoveryAddresses()
 	c.BusClient = c.ClusterConnection.BusClient
@@ -1324,7 +1341,7 @@ func (g *Generator) getMasterCachesConfigImpl(spec *ytv1.MasterCachesSpec) (Mast
 		return MasterCacheServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.MasterCacheType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.BusClient = c.ClusterConnection.BusClient
 	return c, nil
@@ -1347,7 +1364,7 @@ func (g *Generator) getCypressProxiesConfigImpl(spec *ytv1.CypressProxiesSpec) (
 		return CypressProxyServer{}, err
 	}
 
-	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.CypressProxyType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	c.BusClient = c.ClusterConnection.BusClient
 	return c, nil
