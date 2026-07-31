@@ -456,6 +456,24 @@ func (g *NodeGenerator) fillCypressAnnotations(c *CommonServer) {
 	}
 }
 
+func (g *NodeGenerator) fillTracing(c *CommonServer, component consts.ComponentType) {
+	spec := g.commonSpec.Tracing
+	if spec == nil {
+		return
+	}
+
+	c.Jaeger = &Jaeger{
+		CollectorChannelConfig: JaegerCollectorChannelConfig{
+			Address: spec.CollectorAddress,
+		},
+		ServiceName: "yt-" + consts.GetServiceKebabCase(component),
+		ProcessTags: maps.Clone(spec.ProcessTags),
+	}
+	if spec.MaxMemory != nil {
+		c.Jaeger.MaxMemory = ptr.To(spec.MaxMemory.Value())
+	}
+}
+
 func (g *NodeGenerator) fillCommonService(
 	c *CommonServer,
 	s *ytv1.InstanceSpec,
@@ -468,19 +486,7 @@ func (g *NodeGenerator) fillCommonService(
 	g.fillClusterConnection(&c.ClusterConnection, s.NativeTransport, keyring)
 	g.fillCypressAnnotations(c)
 	c.TimestampProviders.Addresses = g.getMasterAddresses(&g.primaryMaster)
-
-	if spec := g.commonSpec.Tracing; spec != nil {
-		c.Jaeger = &Jaeger{
-			CollectorChannelConfig: JaegerCollectorChannelConfig{
-				Address: spec.CollectorAddress,
-			},
-			ServiceName: "yt-" + consts.GetServiceKebabCase(component),
-			ProcessTags: maps.Clone(spec.ProcessTags),
-		}
-		if spec.MaxMemory != nil {
-			c.Jaeger.MaxMemory = ptr.To(spec.MaxMemory.Value())
-		}
-	}
+	g.fillTracing(c, component)
 }
 
 func (g *NodeGenerator) fillBusServer(c *CommonServer, s *ytv1.RPCTransportSpec) {
