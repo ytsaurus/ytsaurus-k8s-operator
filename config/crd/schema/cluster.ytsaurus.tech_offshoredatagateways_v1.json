@@ -1554,6 +1554,40 @@
             }
           }
         },
+        "tracing": {
+          "description": "Common tracing configuration for all YTsaurus server components.",
+          "type": "object",
+          "required": [
+            "collectorAddress"
+          ],
+          "properties": {
+            "collectorAddress": {
+              "description": "Address of the tracing collector gRPC endpoint.",
+              "type": "string",
+              "minLength": 1
+            },
+            "maxMemory": {
+              "description": "Maximum memory occupied by queued spans.",
+              "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "x-kubernetes-int-or-string": true
+            },
+            "processTags": {
+              "description": "Tags attached to the tracing process descriptor.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "useIpv4": {
           "type": "boolean",
           "default": false

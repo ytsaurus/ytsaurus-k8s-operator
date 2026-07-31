@@ -61,6 +61,8 @@ func GetServiceKebabCase(component ComponentType) string {
 		return "tablet-balancer"
 	case ControllerAgentType:
 		return "controller-agent"
+	case CypressProxyType:
+		return "cypress-proxy"
 	case DataNodeType:
 		return "data-node"
 	case DiscoveryType:

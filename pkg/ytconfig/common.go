@@ -174,11 +174,23 @@ type BasicServer struct {
 	BusServer       *BusServer      `yson:"bus_server,omitempty"`
 }
 
+type JaegerCollectorChannelConfig struct {
+	Address string `yson:"address"`
+}
+
+type Jaeger struct {
+	CollectorChannelConfig JaegerCollectorChannelConfig `yson:"collector_channel_config"`
+	ServiceName            string                       `yson:"service_name"`
+	MaxMemory              *int64                       `yson:"max_memory,omitempty"`
+	ProcessTags            map[string]string            `yson:"process_tags,omitempty"`
+}
+
 type CommonServer struct {
 	BasicServer
 	TimestampProviders TimestampProviders `yson:"timestamp_provider"`
 	ClusterConnection  ClusterConnection  `yson:"cluster_connection"`
 	CypressAnnotations map[string]any     `yson:"cypress_annotations,omitempty"`
+	Jaeger             *Jaeger            `yson:"jaeger,omitempty"`
 }
 
 type BindMount struct {

@@ -136,6 +136,46 @@ func TestGetControllerAgentsConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestCommonTracingConfig(t *testing.T) {
+	maxMemory := resource.MustParse("100Mi")
+	ytsaurus := getYtsaurusWithoutNodes()
+	ytsaurus.Spec.Tracing = &ytv1.TracingSpec{
+		CollectorAddress: "collector:14250",
+		MaxMemory:        &maxMemory,
+		ProcessTags: map[string]string{
+			"environment": "test",
+		},
+	}
+	g := NewGenerator(ytsaurus, testClusterDomain)
+
+	masterConfig, err := g.getMasterConfigImpl(&ytsaurus.Spec.PrimaryMasters)
+	require.NoError(t, err)
+	require.Equal(t, &Jaeger{
+		CollectorChannelConfig: JaegerCollectorChannelConfig{
+			Address: "collector:14250",
+		},
+		ServiceName: "yt-master",
+		MaxMemory:   ptr.To(int64(100 * 1024 * 1024)),
+		ProcessTags: map[string]string{
+			"environment": "test",
+		},
+	}, masterConfig.Jaeger)
+
+	dataNodeConfig, err := g.getDataNodeConfigImpl(
+		ptr.To(getDataNodeSpec(testLocationChunkStore)),
+	)
+	require.NoError(t, err)
+	require.Equal(t, "yt-data-node", dataNodeConfig.Jaeger.ServiceName)
+	require.Equal(t, "collector:14250",
+		dataNodeConfig.Jaeger.CollectorChannelConfig.Address)
+
+	cypressProxyConfig, err := g.getCypressProxiesConfigImpl(
+		ytsaurus.Spec.CypressProxies,
+	)
+	require.NoError(t, err)
+	require.Equal(t, "yt-cypress-proxy", cypressProxyConfig.Jaeger.ServiceName)
+}
+
 func TestGetDataNodeConfig(t *testing.T) {
 	cases := map[string]struct {
 		Location ytv1.LocationSpec
