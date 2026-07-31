@@ -80,7 +80,7 @@ spec:
           value: /etc/ssl/certs/ca-certificates.crt
         - name: YT_DRIVER_CONFIG_PATH
           value: /config_template/client.yson
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         lifecycle:
           postStart:
             exec:
@@ -251,7 +251,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: prepare-locations
         resources:
           limits:
@@ -306,7 +306,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
         name: postprocess-config
         resources:
           limits:

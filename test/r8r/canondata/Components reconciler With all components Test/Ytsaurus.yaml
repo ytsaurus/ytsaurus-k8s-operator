@@ -67,7 +67,7 @@ spec:
     volumeMounts:
     - mountPath: /yt/controller-agent-logs
       name: controller-agent-logs
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
   dataNodes:
   - instanceCount: 3
     locations:
@@ -455,7 +455,7 @@ spec:
     - emptyDir: {}
       name: logs
   queryTrackers:
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2
+    image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
     instanceCount: 1
     locations:
     - locationType: Logs
@@ -695,7 +695,7 @@ spec:
       name: master-logs
   setHostnameAsFqdn: false
   strawberry:
-    image: ghcr.io/ytsaurus/strawberry:0.0.16
+    image: ghcr.io/ytsaurus/strawberry:0.0.17
     resources: {}
   tolerations:
   - key: global-toleration
@@ -723,7 +723,7 @@ spec:
       uploadReplicationFactor: 1
       useTmpfs: false
       workerCapacity: 128
-    image: ghcr.io/ytsaurus/query-tracker:0.1.2
+    image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
     instanceCount: 1
     locations:
     - locationType: Logs
