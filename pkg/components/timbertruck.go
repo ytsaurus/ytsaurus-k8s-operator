@@ -648,10 +648,7 @@ func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts [
 // buildTimbertruckVolumeMounts resolves the spec-derived log volume mount for
 // the timbertruck sidecar and appends the read-only mount for its config.
 func buildTimbertruckVolumeMounts(instanceSpec *ytv1.InstanceSpec, configVolumeName string) ([]corev1.VolumeMount, error) {
-	logMounts, err := resolveLocationMounts(
-		instanceSpec,
-		[]ytv1.LocationType{ytv1.LocationTypeLogs},
-	)
+	logMounts, err := resolveLocationMounts(instanceSpec, ytv1.LocationTypeLogs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve mounts for timbertruck: %w", err)
 	}

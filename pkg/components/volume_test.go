@@ -84,7 +84,7 @@ var _ = Describe("resolveLocationMounts", func() {
 				Locations:    locations,
 			}
 
-			got, err := resolveLocationMounts(instanceSpec, requiredLocations)
+			got, err := resolveLocationMounts(instanceSpec, requiredLocations...)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(got).To(HaveLen(len(want)))
 
@@ -226,7 +226,7 @@ var _ = Describe("resolveLocationMounts", func() {
 			VolumeMounts: []corev1.VolumeMount{{Name: "master-data", MountPath: "/yt/master-data"}},
 			Locations:    []ytv1.LocationSpec{},
 		}
-		_, err := resolveLocationMounts(instanceSpec, []ytv1.LocationType{ytv1.LocationTypeMasterSnapshots})
+		_, err := resolveLocationMounts(instanceSpec, ytv1.LocationTypeMasterSnapshots)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("MasterSnapshots"))
 	})
@@ -238,7 +238,7 @@ var _ = Describe("resolveLocationMounts", func() {
 				{LocationType: ytv1.LocationTypeLogs, Path: "/yt/logs/data"},
 			},
 		}
-		_, err := resolveLocationMounts(instanceSpec, []ytv1.LocationType{ytv1.LocationTypeLogs})
+		_, err := resolveLocationMounts(instanceSpec, ytv1.LocationTypeLogs)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("no volume mount covers"))
 	})

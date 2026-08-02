@@ -574,10 +574,7 @@ func (m *Master) runInitPhaseJobs(ctx context.Context, dry bool) (ComponentStatu
 }
 
 func addHydraPersistenceUploaderToPodSpec(hydraImage string, podSpec *corev1.PodSpec, proxy string, secretKey string, masterInstanceSpec *ytv1.InstanceSpec) error {
-	masterDataMounts, err := resolveLocationMounts(
-		masterInstanceSpec,
-		[]ytv1.LocationType{ytv1.LocationTypeMasterSnapshots, ytv1.LocationTypeMasterChangelogs},
-	)
+	masterDataMounts, err := resolveLocationMounts(masterInstanceSpec, ytv1.LocationTypeMasterSnapshots, ytv1.LocationTypeMasterChangelogs)
 	if err != nil {
 		return fmt.Errorf("failed to resolve mounts for hydra persistence uploader: %w", err)
 	}
