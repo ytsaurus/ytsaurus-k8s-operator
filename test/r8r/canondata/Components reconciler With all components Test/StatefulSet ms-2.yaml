@@ -126,7 +126,8 @@ spec:
         - bash
         - -xc
         - 'echo ''Init locations''; mkdir -p /yt/master-data/master-changelogs; mkdir
-          -p /yt/master-data/master-snapshots; mkdir -p /yt/master-logs; '
+          -p /yt/master-data/master-snapshots; mkdir -p /yt/master-logs; mkdir -p
+          /yt/master-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

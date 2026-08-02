@@ -53,6 +53,7 @@ type InitJob struct {
 	statusCondition string // Condition for tracking job state.
 	reason          string // Changing reason triggers fresh start.
 	scriptFileName  string // Name of the script to execute.
+	logFilePath     string
 
 	builtJob *batchv1.Job
 }
@@ -103,6 +104,10 @@ func NewInitJob(
 			generators...,
 		),
 		scriptFileName: consts.InitJobScriptName,
+	}
+
+	if location := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeInitJobLogs); location != nil {
+		initJob.logFilePath = path.Join(location.Path, initJob.Name()+".log")
 	}
 
 	return initJob
@@ -227,6 +232,7 @@ func (j *InitJob) Build() *batchv1.Job {
 	if j.builtJob != nil {
 		return j.builtJob
 	}
+	scriptFilePath := path.Join(consts.ConfigMountPoint, j.scriptFileName)
 	job := j.initJob.Build()
 	job.Spec = batchv1.JobSpec{
 		// NOTE: Jobs are not deleted automatically. Delete triggers job restart.
@@ -244,7 +250,7 @@ func (j *InitJob) Build() *batchv1.Job {
 						Command: []string{
 							"/bin/bash",
 							"-eux",
-							path.Join(consts.ConfigMountPoint, j.scriptFileName),
+							scriptFilePath,
 						},
 						Env:     getDefaultEnv(),
 						EnvFrom: j.envFrom,
@@ -297,6 +303,20 @@ func (j *InitJob) Build() *batchv1.Job {
 
 	j.busClientSecret.AddVolume(&job.Spec.Template.Spec)
 	j.busClientSecret.AddVolumeMount(&job.Spec.Template.Spec.Containers[0])
+
+	if j.logFilePath != "" {
+		job.Spec.Template.Spec.Containers[0].Command = []string{
+			"/bin/bash",
+			"-euxc",
+			"exec &> >(tee -a " + j.logFilePath + "); . " + scriptFilePath,
+		}
+		logMounts, err := resolveLocationMounts(j.instanceSpec, ytv1.LocationTypeInitJobLogs)
+		if err == nil && len(logMounts) != 0 {
+			job.Spec.Template.Spec.Containers[0].VolumeMounts = append(job.Spec.Template.Spec.Containers[0].VolumeMounts, logMounts...)
+			pvcSuffix := fmt.Sprintf("-%s-0", j.labeller.GetComponentShortName())
+			job.Spec.Template.Spec.Volumes = append(job.Spec.Template.Spec.Volumes, resolveVolumeMounts(j.instanceSpec, logMounts, pvcSuffix)...)
+		}
+	}
 
 	j.builtJob = job
 	return job

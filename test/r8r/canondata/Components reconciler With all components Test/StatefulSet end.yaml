@@ -196,7 +196,7 @@ spec:
         - bash
         - -xc
         - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-cache; mkdir -p /yt/node-data/slots;
-          mkdir -p /yt/exec-node-logs; mkdir -p /yt/node-data/image-cache; '
+          mkdir -p /yt/exec-node-logs; mkdir -p /yt/exec-node-logs; mkdir -p /yt/node-data/image-cache; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

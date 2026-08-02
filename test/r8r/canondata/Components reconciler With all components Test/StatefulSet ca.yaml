@@ -119,7 +119,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/controller-agent-logs; '
+        - 'echo ''Init locations''; mkdir -p /yt/controller-agent-logs; mkdir -p /yt/controller-agent-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

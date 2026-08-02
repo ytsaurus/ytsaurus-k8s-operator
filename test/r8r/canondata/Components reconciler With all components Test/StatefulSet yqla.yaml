@@ -129,7 +129,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/yql-agent-logs; '
+        - 'echo ''Init locations''; mkdir -p /yt/yql-agent-logs; mkdir -p /yt/yql-agent-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

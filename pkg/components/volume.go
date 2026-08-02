@@ -128,6 +128,34 @@ func resolveLocationMounts(
 	return mounts, nil
 }
 
+func resolveVolumeMounts(
+	instanceSpec *ytv1.InstanceSpec,
+	volumeMounts []corev1.VolumeMount,
+	pvcSuffix string,
+) []corev1.Volume {
+	volumes := make([]corev1.Volume, 0, len(volumeMounts))
+	for _, mnt := range volumeMounts {
+		for _, vol := range instanceSpec.Volumes {
+			if vol.Name == mnt.Name {
+				volumes = append(volumes, createVolumes([]ytv1.Volume{vol})...)
+			}
+		}
+		for _, vol := range instanceSpec.VolumeClaimTemplates {
+			if vol.Name == mnt.Name {
+				volumes = append(volumes, corev1.Volume{
+					Name: vol.Name,
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: vol.Name + pvcSuffix,
+						},
+					},
+				})
+			}
+		}
+	}
+	return volumes
+}
+
 func createConfigVolume(volumeName string, configMapName string, mode *int32) corev1.Volume {
 	return corev1.Volume{
 		Name: volumeName,

@@ -168,6 +168,8 @@ spec:
         name: timbertruck
         resources: {}
         volumeMounts:
+        - mountPath: /yt/logs
+          name: logs
         - mountPath: /yt/master-logs
           name: master-logs
         - mountPath: /etc/timbertruck
@@ -229,7 +231,7 @@ spec:
         - -xc
         - 'echo ''Init locations''; mkdir -p /yt/master-data/master-changelogs; mkdir
           -p /yt/master-data/master-snapshots; mkdir -p /yt/master-logs; mkdir -p
-          /yt/logs; '
+          /yt/master-logs; mkdir -p /yt/logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

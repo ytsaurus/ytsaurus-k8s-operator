@@ -195,6 +195,7 @@ const (
 	LocationTypeMasterSnapshots  LocationType = "MasterSnapshots"
 	LocationTypeImageCache       LocationType = "ImageCache"
 	LocationTypeJobProxyLogs     LocationType = "JobProxyLogs"
+	LocationTypeInitJobLogs      LocationType = "InitJobLogs"
 )
 
 type LocationSpec struct {

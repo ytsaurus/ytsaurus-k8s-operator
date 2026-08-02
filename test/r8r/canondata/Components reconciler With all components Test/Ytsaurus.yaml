@@ -28,6 +28,8 @@ spec:
     locations:
     - locationType: Logs
       path: /yt/controller-agent-logs
+    - locationType: InitJobLogs
+      path: /yt/controller-agent-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
@@ -74,6 +76,8 @@ spec:
     - locationType: ChunkStore
       path: /yt/node-data/chunk-store
     - locationType: Logs
+      path: /yt/data-node-logs
+    - locationType: InitJobLogs
       path: /yt/data-node-logs
     loggers:
     - minLogLevel: info
@@ -128,6 +132,8 @@ spec:
     instanceCount: 1
     locations:
     - locationType: Logs
+      path: /yt/discovery-logs
+    - locationType: InitJobLogs
       path: /yt/discovery-logs
     loggers:
     - minLogLevel: info
@@ -194,6 +200,8 @@ spec:
       path: /yt/node-data/slots
     - locationType: Logs
       path: /yt/exec-node-logs
+    - locationType: InitJobLogs
+      path: /yt/exec-node-logs
     - locationType: ImageCache
       path: /yt/node-data/image-cache
     loggers:
@@ -254,6 +262,8 @@ spec:
     locations:
     - locationType: Logs
       path: /yt/http-proxy-logs
+    - locationType: InitJobLogs
+      path: /yt/http-proxy-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
@@ -304,6 +314,8 @@ spec:
     instanceCount: 1
     locations:
     - locationType: Logs
+      path: /yt/master-cache-logs
+    - locationType: InitJobLogs
       path: /yt/master-cache-logs
     loggers:
     - minLogLevel: info
@@ -380,6 +392,8 @@ spec:
     - locationType: MasterSnapshots
       path: /yt/master-data/master-snapshots
     - locationType: Logs
+      path: /yt/master-logs
+    - locationType: InitJobLogs
       path: /yt/master-logs
     - locationType: Logs
       path: /yt/logs
@@ -460,6 +474,8 @@ spec:
     locations:
     - locationType: Logs
       path: /yt/query-tracker-logs
+    - locationType: InitJobLogs
+      path: /yt/query-tracker-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
@@ -504,6 +520,8 @@ spec:
     locations:
     - locationType: Logs
       path: /yt/queue-agent-logs
+    - locationType: InitJobLogs
+      path: /yt/queue-agent-logs
     loggers:
     - minLogLevel: info
       name: info-stderr
@@ -547,6 +565,8 @@ spec:
   - instanceCount: 1
     locations:
     - locationType: Logs
+      path: /yt/rpc-proxy-logs
+    - locationType: InitJobLogs
       path: /yt/rpc-proxy-logs
     loggers:
     - minLogLevel: info
@@ -594,6 +614,8 @@ spec:
     instanceCount: 1
     locations:
     - locationType: Logs
+      path: /yt/scheduler-logs
+    - locationType: InitJobLogs
       path: /yt/scheduler-logs
     loggers:
     - minLogLevel: info
@@ -643,6 +665,8 @@ spec:
     - locationType: MasterSnapshots
       path: /yt/master-data/master-snapshots
     - locationType: Logs
+      path: /yt/master-logs
+    - locationType: InitJobLogs
       path: /yt/master-logs
     loggers:
     - minLogLevel: info
@@ -727,6 +751,8 @@ spec:
     instanceCount: 1
     locations:
     - locationType: Logs
+      path: /yt/yql-agent-logs
+    - locationType: InitJobLogs
       path: /yt/yql-agent-logs
     loggers:
     - minLogLevel: info

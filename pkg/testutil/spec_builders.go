@@ -259,6 +259,7 @@ func (b *YtsaurusBuilder) addLogsVolume(spec *ytv1.InstanceSpec, name string) {
 	spec.VolumeClaimTemplates = append(spec.VolumeClaimTemplates, b.CreateVolumeClaim(name, logsVolumeSize))
 	spec.VolumeMounts = append(spec.VolumeMounts, corev1.VolumeMount{Name: name, MountPath: path})
 	spec.Locations = append(spec.Locations, ytv1.LocationSpec{LocationType: ytv1.LocationTypeLogs, Path: path})
+	spec.Locations = append(spec.Locations, ytv1.LocationSpec{LocationType: ytv1.LocationTypeInitJobLogs, Path: path})
 }
 
 func (b *YtsaurusBuilder) CreateLoggersSpec() []ytv1.TextLoggerSpec {
