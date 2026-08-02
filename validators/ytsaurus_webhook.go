@@ -156,7 +156,8 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 
 	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, mastersSpec.StructuredLoggers, mastersSpec.Locations, path)...)
 
-	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
+	wantGuaranteedQoS := isGuaranteedQoS(mastersSpec.Resources)
+	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"), wantGuaranteedQoS)...)
 
 	return allErrors
 }
@@ -412,7 +413,21 @@ func requireLocations(
 	return allErrors
 }
 
-func (r *baseValidator) validateSidecars(sidecars []string, path *field.Path) field.ErrorList {
+func isGuaranteedQoS(resources corev1.ResourceRequirements) bool {
+	cpuRequest, hasCPURequest := resources.Requests[corev1.ResourceCPU]
+	memoryRequest, hasMemoryRequest := resources.Requests[corev1.ResourceMemory]
+	cpuLimit, hasCPULimit := resources.Limits[corev1.ResourceCPU]
+	memoryLimit, hasMemoryLimit := resources.Limits[corev1.ResourceMemory]
+
+	return hasCPULimit && !cpuLimit.IsZero() && (!hasCPURequest || cpuRequest.Equal(cpuLimit)) &&
+		hasMemoryLimit && !memoryLimit.IsZero() && (!hasMemoryRequest || memoryRequest.Equal(memoryLimit))
+}
+
+func (r *baseValidator) validateSidecars(
+	sidecars []string,
+	path *field.Path,
+	wantGuaranteedQoS bool,
+) field.ErrorList {
 	var allErrors field.ErrorList
 
 	names := make(map[string]bool)
@@ -425,6 +440,10 @@ func (r *baseValidator) validateSidecars(sidecars []string, path *field.Path) fi
 			allErrors = append(allErrors, field.Duplicate(path.Index(i).Child("name"), sidecar.Name))
 		}
 		names[sidecar.Name] = true
+		if wantGuaranteedQoS && !isGuaranteedQoS(sidecar.Resources) {
+			allErrors = append(allErrors, field.Forbidden(path.Index(i).Child("resources"),
+				"container must have Guaranteed QoS when main container has Guaranteed QoS"))
+		}
 	}
 
 	return allErrors
@@ -452,11 +471,17 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) field.
 			allErrors = append(allErrors, field.NotFound(path.Child("locations"), ytv1.LocationTypeSlots))
 		}
 
+		wantGuaranteedQoS := isGuaranteedQoS(en.Resources)
+		if wantGuaranteedQoS && (en.JobResources == nil || !isGuaranteedQoS(*en.JobResources)) {
+			allErrors = append(allErrors, field.Forbidden(path.Child("jobResources"),
+				"job container must have Guaranteed QoS when main container has Guaranteed QoS"))
+		}
+
 		if en.InitContainers != nil {
-			allErrors = append(allErrors, r.validateSidecars(en.InitContainers, path.Child("initContainers"))...)
+			allErrors = append(allErrors, r.validateSidecars(en.InitContainers, path.Child("initContainers"), wantGuaranteedQoS)...)
 		}
 		if en.Sidecars != nil {
-			allErrors = append(allErrors, r.validateSidecars(en.Sidecars, path.Child("sidecars"))...)
+			allErrors = append(allErrors, r.validateSidecars(en.Sidecars, path.Child("sidecars"), wantGuaranteedQoS)...)
 		}
 	}
 
