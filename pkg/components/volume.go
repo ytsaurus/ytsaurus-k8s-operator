@@ -88,20 +88,25 @@ func FindVolumeMountForPath(volumeMounts []corev1.VolumeMount, path string) *cor
 	return nil
 }
 
-func resolveLocationMounts(instanceSpec *ytv1.InstanceSpec, requiredLocations []ytv1.LocationType) ([]corev1.VolumeMount, error) {
-	mounts := make([]corev1.VolumeMount, 0, len(requiredLocations))
+func resolveLocationMounts(
+	instanceSpec *ytv1.InstanceSpec,
+	requiredLocations ...ytv1.LocationType,
+) ([]corev1.VolumeMount, error) {
 	for _, requiredLocation := range requiredLocations {
-		location := ytv1.FindFirstLocation(instanceSpec.Locations, requiredLocation)
-		if location == nil {
+		if ytv1.FindFirstLocation(instanceSpec.Locations, requiredLocation) == nil {
 			return nil, fmt.Errorf("no location of type %q found", requiredLocation)
+		}
+	}
+	mounts := []corev1.VolumeMount{}
+	for _, location := range instanceSpec.Locations {
+		if !slices.Contains(requiredLocations, location.LocationType) {
+			continue
 		}
 		volumeMount := FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path)
 		if volumeMount == nil {
-			return nil, fmt.Errorf("no volume mount covers location %q (path %q)", requiredLocation, location.Path)
+			return nil, fmt.Errorf("no volume mount covers location %q (path %q)", location.LocationType, location.Path)
 		}
-		if slices.ContainsFunc(mounts, func(mount corev1.VolumeMount) bool {
-			return mount.MountPath == location.Path
-		}) {
+		if slices.ContainsFunc(mounts, func(mount corev1.VolumeMount) bool { return mount.MountPath == location.Path }) {
 			continue
 		}
 		relPath := strings.TrimPrefix(strings.TrimPrefix(location.Path, volumeMount.MountPath), "/")
