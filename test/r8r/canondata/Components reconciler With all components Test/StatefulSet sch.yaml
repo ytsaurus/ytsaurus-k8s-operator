@@ -119,7 +119,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/scheduler-logs; '
+        - 'echo ''Init locations''; mkdir -p /yt/scheduler-logs; mkdir -p /yt/scheduler-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

@@ -121,7 +121,8 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-store; mkdir -p /yt/data-node-logs; '
+        - 'echo ''Init locations''; mkdir -p /yt/node-data/chunk-store; mkdir -p /yt/data-node-logs;
+          mkdir -p /yt/data-node-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

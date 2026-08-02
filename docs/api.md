@@ -1392,6 +1392,7 @@ _Appears in:_
 | `MasterSnapshots` |  |
 | `ImageCache` |  |
 | `JobProxyLogs` |  |
+| `InitJobLogs` |  |
 
 
 #### LogCompression

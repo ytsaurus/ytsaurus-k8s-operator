@@ -119,7 +119,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/master-cache-logs; '
+        - 'echo ''Init locations''; mkdir -p /yt/master-cache-logs; mkdir -p /yt/master-cache-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:

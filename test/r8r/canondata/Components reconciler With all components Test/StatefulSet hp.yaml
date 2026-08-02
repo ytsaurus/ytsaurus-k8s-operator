@@ -134,7 +134,7 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Init locations''; mkdir -p /yt/http-proxy-logs; '
+        - 'echo ''Init locations''; mkdir -p /yt/http-proxy-logs; mkdir -p /yt/http-proxy-logs; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
