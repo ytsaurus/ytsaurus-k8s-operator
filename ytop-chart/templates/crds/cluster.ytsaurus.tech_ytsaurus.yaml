@@ -37834,6 +37834,19 @@ spec:
                       - type
                       type: object
                     type: array
+                  masterCellsMaintenance:
+                    description: State of master cells maintenance.
+                    items:
+                      properties:
+                        cellTag:
+                          type: integer
+                        unregistered:
+                          type: boolean
+                      required:
+                      - cellTag
+                      - unregistered
+                      type: object
+                    type: array
                   state:
                     type: string
                   tabletCellBundles:

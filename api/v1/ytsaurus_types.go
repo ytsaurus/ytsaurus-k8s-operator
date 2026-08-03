@@ -1242,6 +1242,8 @@ type UpdateStatus struct {
 	BlockedComponentsSummary string `json:"blockedComponentsSummary,omitempty"`
 	// Update progress.
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// State of master cells maintenance.
+	MasterCellsMaintenance []MasterCellMaintenanceInfo `json:"masterCellsMaintenance,omitempty"`
 	// Snapshot of tablet cell bundles.
 	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 	// Snapshot of bundle controller.

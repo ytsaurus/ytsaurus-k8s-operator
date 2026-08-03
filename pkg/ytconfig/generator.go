@@ -1,10 +1,12 @@
 package ytconfig
 
 import (
+	"encoding/json"
 	"fmt"
 	"maps"
 	"net"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -35,12 +37,13 @@ type NodeGenerator struct {
 	baseLabeller             *labeller.Labeller
 	timbertruckDeliveryProxy string
 
-	commonSpec         *ytv1.CommonSpec
-	clusterFeatures    ytv1.ClusterFeatures
-	primaryMaster      masterCellInfo
-	secondaryMasters   []masterCellInfo
-	masterCache        *masterCacheInfo
-	cypressProxiesSpec *ytv1.CypressProxiesSpec
+	commonSpec          *ytv1.CommonSpec
+	clusterFeatures     ytv1.ClusterFeatures
+	primaryMaster       masterCellInfo
+	secondaryMasters    []masterCellInfo
+	unregisteredMasters []masterCellInfo
+	masterCache         *masterCacheInfo
+	cypressProxiesSpec  *ytv1.CypressProxiesSpec
 
 	discoveryInstanceCount int32
 	dataNodesInstanceCount int32
@@ -83,11 +86,24 @@ func NewLocalNodeGenerator(
 		InstanceCount:        ytsaurus.Spec.PrimaryMasters.InstanceCount,
 	}
 
-	secondaryMasters := make([]masterCellInfo, len(ytsaurus.Spec.SecondaryMasters))
-	for i, spec := range ytsaurus.Spec.SecondaryMasters {
-		secondaryMasters[i] = masterCellInfo{
+	secondaryMasters := make([]masterCellInfo, 0, len(ytsaurus.Spec.SecondaryMasters))
+	unregisteredMasters := []masterCellInfo{}
+
+	for _, spec := range ytsaurus.Spec.SecondaryMasters {
+		if spec.InstanceCount == 0 {
+			continue
+		}
+		info := masterCellInfo{
 			MasterConnectionSpec: spec.MasterConnectionSpec,
 			InstanceCount:        spec.InstanceCount,
+		}
+		registered := !slices.ContainsFunc(ytsaurus.Status.UpdateStatus.MasterCellsMaintenance, func(info ytv1.MasterCellMaintenanceInfo) bool {
+			return info.CellTag == spec.CellTag && info.Unregistered
+		})
+		if registered {
+			secondaryMasters = append(secondaryMasters, info)
+		} else {
+			unregisteredMasters = append(unregisteredMasters, info)
 		}
 	}
 
@@ -116,6 +132,7 @@ func NewLocalNodeGenerator(
 		clusterFeatures:               ptr.Deref(ytsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{}),
 		primaryMaster:                 primaryMaster,
 		secondaryMasters:              secondaryMasters,
+		unregisteredMasters:           unregisteredMasters,
 		masterCache:                   masterCache,
 		discoveryInstanceCount:        ytsaurus.Spec.Discovery.InstanceCount,
 		cypressProxiesSpec:            ytsaurus.Spec.CypressProxies,
@@ -221,6 +238,24 @@ func (g *NodeGenerator) GetMasterCellAddresses(spec *ytv1.MastersSpec) []string 
 		MasterConnectionSpec: spec.MasterConnectionSpec,
 		InstanceCount:        spec.InstanceCount,
 	})
+}
+
+func (g *NodeGenerator) GetMasterCellTagsAsSortedJSON(unregistered bool) string {
+	cellTags := make([]uint16, 0, len(g.secondaryMasters)+len(g.unregisteredMasters))
+	for _, secondary := range g.secondaryMasters {
+		cellTags = append(cellTags, secondary.CellTag)
+	}
+	if unregistered {
+		for _, secondary := range g.unregisteredMasters {
+			cellTags = append(cellTags, secondary.CellTag)
+		}
+	}
+	slices.Sort(cellTags)
+	tags, err := json.Marshal(cellTags)
+	if err != nil {
+		panic(err)
+	}
+	return string(tags)
 }
 
 func (g *NodeGenerator) getMasterCachesAddresses() []string {
@@ -670,12 +705,17 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	}
 	g.fillIOEngine(&c.Changelogs.IOEngine)
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.MasterType)
+
+	// Masters need to know unregistered master cells, otherwise they cannot register.
+	unregisteredMasters := make([]MasterCell, len(g.unregisteredMasters))
+	for i := range g.unregisteredMasters {
+		g.fillMasterCell(&unregisteredMasters[i], &g.unregisteredMasters[i])
+	}
+	c.ClusterConnection.SecondaryMasters = append(c.ClusterConnection.SecondaryMasters, unregisteredMasters...)
+
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 	g.fillMasterCell(&c.PrimaryMaster, &g.primaryMaster)
-	c.SecondaryMasters = make([]MasterCell, len(g.secondaryMasters))
-	for i := range g.secondaryMasters {
-		g.fillMasterCell(&c.SecondaryMasters[i], &g.secondaryMasters[i])
-	}
+	c.SecondaryMasters = slices.Clone(c.ClusterConnection.SecondaryMasters)
 	configureMasterServerCypressManager(g.GetMaxReplicationFactor(), &c.CypressManager)
 
 	c.BusClient = c.ClusterConnection.BusClient

@@ -11,6 +11,11 @@ type MasterConnectionSpec struct {
 	HostAddresses []string `json:"hostAddresses,omitempty"`
 }
 
+type MasterCellMaintenanceInfo struct {
+	CellTag      uint16 `json:"cellTag"`
+	Unregistered bool   `json:"unregistered"`
+}
+
 type MasterCachesConnectionSpec struct {
 	//+listType=set
 	HostAddresses []string `json:"hostAddresses,omitempty"`
