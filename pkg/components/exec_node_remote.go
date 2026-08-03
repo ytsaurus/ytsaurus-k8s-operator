@@ -26,9 +26,6 @@ func NewRemoteExecNodes(
 	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
 
 	srv := newServerConfigured(
-		nil, // no timbertruck delivery for remote nodes
-		nil,
-		nil,
 		l,
 		proxy,
 		&commonSpec,
@@ -40,6 +37,9 @@ func NewRemoteExecNodes(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetExecNodeConfig(spec) },
 		}},
+		nil, // no timbertruck delivery for remote nodes
+		nil,
+		nil,
 		newServerOptions(&spec.InstanceSpec, consts.ExecNodeMonitoringPort, WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.ExecNodeRPCPort,

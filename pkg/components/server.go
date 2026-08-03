@@ -100,7 +100,7 @@ func newServer(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath string,
 	generators []ConfigGenerator,
-	generateTimbertruckConfig timbertruckConfigGenerator,
+	timbertruckGenerator timbertruckConfigGenerator,
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
@@ -109,7 +109,7 @@ func newServer(
 	var delivery *timbertruckDelivery
 	var configGenerator ConfigGeneratorFunc
 	var volumeMounts []corev1.VolumeMount
-	if generateTimbertruckConfig != nil {
+	if timbertruckGenerator != nil {
 		delivery = resolveTimbertruckDelivery(opts.timbertruck, ytsaurus.GetCommonSpec().Timbertruck, instanceSpec)
 		if delivery != nil {
 			var err error
@@ -121,7 +121,7 @@ func newServer(
 			} else {
 				configGenerator = func() ([]byte, error) {
 					workDir := fmt.Sprintf("%s/%s", delivery.LogsDirectory, consts.TimbertruckWorkDirName)
-					return generateTimbertruckConfig(
+					return timbertruckGenerator(
 						delivery.Loggers,
 						workDir,
 						timbertruckComponentName(l),
@@ -134,9 +134,6 @@ func newServer(
 		}
 	}
 	return newServerConfigured(
-		delivery,
-		configGenerator,
-		volumeMounts,
 		l,
 		ytsaurus,
 		ytsaurus.GetCommonSpec(),
@@ -144,14 +141,14 @@ func newServer(
 		instanceSpec,
 		binaryPath,
 		generators,
+		delivery,
+		configGenerator,
+		volumeMounts,
 		opts,
 	)
 }
 
 func newServerConfigured(
-	timbertruckDelivery *timbertruckDelivery,
-	timbertruckConfigGenerator ConfigGeneratorFunc,
-	timbertruckVolumeMounts []corev1.VolumeMount,
 	l *labeller.Labeller,
 	proxy apiproxy.APIProxy,
 	commonSpec *ytv1.CommonSpec,
@@ -159,6 +156,9 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath string,
 	generators []ConfigGenerator,
+	timbertruckDelivery *timbertruckDelivery,
+	timbertruckConfigGenerator ConfigGeneratorFunc,
+	timbertruckVolumeMounts []corev1.VolumeMount,
 	opts *options,
 ) server {
 	image := commonSpec.CoreImage

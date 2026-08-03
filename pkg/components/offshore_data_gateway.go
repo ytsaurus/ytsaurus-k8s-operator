@@ -28,9 +28,6 @@ func NewOffshoreDataGateways(
 	l := cfgen.GetComponentLabeller(consts.OffshoreDataGatewayType, "")
 
 	srv := newServerConfigured(
-		nil, // no timbertruck delivery for remote nodes
-		nil,
-		nil,
 		l,
 		proxy,
 		&commonSpec,
@@ -42,6 +39,9 @@ func NewOffshoreDataGateways(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetOffshoreDataGatewaysConfig(spec) },
 		}},
+		nil, // no timbertruck delivery for remote nodes
+		nil,
+		nil,
 		newServerOptions(&spec.InstanceSpec, consts.OffshoreDataGatewayMonitoringPort, WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.OffshoreDataGatewayRPCPort,
