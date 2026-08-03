@@ -25,7 +25,7 @@ func NewBundleController(
 
 	resource := ytsaurus.GetResource()
 	srv := newServer(
-		cfgen,
+		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.BundleController.InstanceSpec,

@@ -35,7 +35,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
-		cfgen,
+		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.YQLAgents.InstanceSpec,

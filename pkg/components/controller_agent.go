@@ -28,7 +28,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
-		cfgen,
+		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,

@@ -75,7 +75,7 @@ func NewMaster(
 	l := cfgen.GetMasterLabeller(mastersSpec.CellTag)
 
 	srv := newServer(
-		cfgen,
+		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&mastersSpec.InstanceSpec,

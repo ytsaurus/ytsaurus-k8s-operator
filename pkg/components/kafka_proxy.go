@@ -29,7 +29,7 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 	l := cfgen.GetComponentLabeller(consts.KafkaProxyType, spec.Role)
 
 	srv := newServer(
-		cfgen,
+		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,

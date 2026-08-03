@@ -39,7 +39,7 @@ func NewDataNode(
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
 	srv := newServer(
-		clusterCfgen,
+		clusterCfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,

@@ -26,7 +26,7 @@ func NewTabletBalancer(
 
 	resource := ytsaurus.GetResource()
 	srv := newServer(
-		cfgen,
+		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.TabletBalancer.InstanceSpec,

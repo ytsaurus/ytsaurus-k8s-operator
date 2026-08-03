@@ -20,7 +20,6 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 const (
@@ -87,8 +86,16 @@ type serverImpl struct {
 	readinessProbeHTTPPath string
 }
 
+type timbertruckConfigGenerator func(
+	loggers []ytv1.StructuredLoggerSpec,
+	workDir string,
+	componentName string,
+	logsDirectory string,
+	logsDeliveryPath string,
+) ([]byte, error)
+
 func newServer(
-	cfgen *ytconfig.Generator,
+	generateTimbertruckConfig timbertruckConfigGenerator,
 	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
@@ -102,7 +109,7 @@ func newServer(
 	var delivery *timbertruckDelivery
 	var configGenerator ConfigGeneratorFunc
 	var volumeMounts []corev1.VolumeMount
-	if cfgen != nil {
+	if generateTimbertruckConfig != nil {
 		delivery = resolveTimbertruckDelivery(opts.timbertruck, ytsaurus.GetCommonSpec().Timbertruck, instanceSpec)
 		if delivery != nil {
 			var err error
@@ -114,7 +121,7 @@ func newServer(
 			} else {
 				configGenerator = func() ([]byte, error) {
 					workDir := fmt.Sprintf("%s/%s", delivery.LogsDirectory, consts.TimbertruckWorkDirName)
-					return cfgen.GetTimbertruckConfig(
+					return generateTimbertruckConfig(
 						delivery.Loggers,
 						workDir,
 						timbertruckComponentName(l),

@@ -47,7 +47,7 @@ func NewScheduler(
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
-		cfgen,
+		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
