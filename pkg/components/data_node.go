@@ -29,7 +29,6 @@ type dataNodeCounterCheck struct {
 }
 
 func NewDataNode(
-	clusterCfgen *ytconfig.Generator,
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
@@ -48,7 +47,7 @@ func NewDataNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetDataNodeConfig(spec) },
 		}},
-		clusterCfgen.GetTimbertruckConfig,
+		cfgen.GetTimbertruckConfig,
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

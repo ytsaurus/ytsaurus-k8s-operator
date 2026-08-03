@@ -37,7 +37,6 @@ type TabletNode struct {
 }
 
 func NewTabletNode(
-	clusterCfgen *ytconfig.Generator,
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	ytsaurusClient internalYtsaurusClient,
@@ -57,7 +56,7 @@ func NewTabletNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
 		}},
-		clusterCfgen.GetTimbertruckConfig,
+		cfgen.GetTimbertruckConfig,
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

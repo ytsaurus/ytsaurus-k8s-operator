@@ -24,7 +24,6 @@ type ExecNode struct {
 }
 
 func NewExecNode(
-	clusterCfgen *ytconfig.Generator,
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
@@ -43,7 +42,7 @@ func NewExecNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetExecNodeConfig(spec) },
 		}},
-		clusterCfgen.GetTimbertruckConfig,
+		cfgen.GetTimbertruckConfig,
 		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
