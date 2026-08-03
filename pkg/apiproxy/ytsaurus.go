@@ -207,6 +207,7 @@ func (c *Ytsaurus) ClearUpdateStatus() {
 	c.ytsaurus.Status.UpdateStatus = ytv1.UpdateStatus{
 		State:                    ytv1.UpdateStateUndefined,
 		BlockedComponentsSummary: c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary,
+		MasterCellsMaintenance:   c.ytsaurus.Status.UpdateStatus.MasterCellsMaintenance,
 	}
 }
 

@@ -130,6 +130,28 @@ func (m *Master) IsPrimary() bool {
 	return m.labeller.InstanceGroup == ""
 }
 
+func (m *Master) IsUnregistered() bool {
+	maintenance := m.ytsaurus.GetResource().Status.UpdateStatus.MasterCellsMaintenance
+	return slices.ContainsFunc(maintenance, func(info ytv1.MasterCellMaintenanceInfo) bool {
+		return info.CellTag == m.mastersSpec.CellTag && info.Unregistered
+	})
+}
+
+func (m *Master) SetUnregistered(unregistered bool) {
+	maintenance := m.ytsaurus.GetResource().Status.UpdateStatus.MasterCellsMaintenance
+	maintenance = slices.DeleteFunc(maintenance, func(info ytv1.MasterCellMaintenanceInfo) bool {
+		return info.CellTag == m.mastersSpec.CellTag
+	})
+	if unregistered {
+		maintenance = append(maintenance, ytv1.MasterCellMaintenanceInfo{
+			CellTag:      m.mastersSpec.CellTag,
+			Unregistered: true,
+		})
+	}
+	m.ytsaurus.GetResource().Status.UpdateStatus.MasterCellsMaintenance = maintenance
+	m.owner.RecordNormal("MasterCell", fmt.Sprintf("Maintenance %+v", maintenance))
+}
+
 func (m *Master) GetCypressPath() ypath.Path {
 	if m.IsPrimary() {
 		return consts.PrimaryMastersPath

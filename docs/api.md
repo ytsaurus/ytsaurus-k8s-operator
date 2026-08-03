@@ -1559,6 +1559,23 @@ _Appears in:_
 | `hostAddressesMasterCaches` _string array_ | Deprecated: use hostAddresses instead. |  |  |
 
 
+#### MasterCellMaintenanceInfo
+
+
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `cellTag` _integer_ |  |  |  |
+| `unregistered` _boolean_ |  |  |  |
+
+
 #### MasterCellRole
 
 _Underlying type:_ _string_
@@ -3164,6 +3181,7 @@ _Appears in:_
 | `updatingComponentsSummary` _string_ | Summary for kubectl column. |  |  |
 | `blockedComponentsSummary` _string_ | Summary for kubectl column. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ | Update progress. |  |  |
+| `masterCellsMaintenance` _[MasterCellMaintenanceInfo](#mastercellmaintenanceinfo) array_ | State of master cells maintenance. |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ | Snapshot of tablet cell bundles. |  |  |
 | `bundleController` _[BundleControllerInfo](#bundlecontrollerinfo)_ | Snapshot of bundle controller. |  |  |
 

@@ -44162,6 +44162,25 @@
                 }
               }
             },
+            "masterCellsMaintenance": {
+              "description": "State of master cells maintenance.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "cellTag",
+                  "unregistered"
+                ],
+                "properties": {
+                  "cellTag": {
+                    "type": "integer"
+                  },
+                  "unregistered": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
             "state": {
               "type": "string"
             },

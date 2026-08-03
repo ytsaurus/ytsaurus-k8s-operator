@@ -335,6 +335,11 @@ func NewYtsaurusStatusTracker() func(*ytv1.Ytsaurus) bool {
 			changed = true
 		}
 
+		if len(prevStatus.UpdateStatus.MasterCellsMaintenance) != len(newStatus.UpdateStatus.MasterCellsMaintenance) {
+			log.Info("UpdateStatus", "masterCellsMaintenance", newStatus.UpdateStatus.MasterCellsMaintenance)
+			changed = true
+		}
+
 		newConditions = map[string]metav1.Condition{}
 		for _, cond := range newStatus.UpdateStatus.Conditions {
 			if prevCond, found := updateConditions[cond.Type]; !found || !reflect.DeepEqual(cond, prevCond) {
