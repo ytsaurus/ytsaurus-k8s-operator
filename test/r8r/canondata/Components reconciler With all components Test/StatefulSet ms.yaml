@@ -145,8 +145,6 @@ spec:
             secretKeyRef:
               key: YT_TOKEN
               name: robot-timbertruck-secret
-        - name: YT_PROXY
-          value: https://http-proxies-lb.ytsaurus-components.svc.cluster.local
         - name: K8S_POD_NAME
           valueFrom:
             fieldRef:

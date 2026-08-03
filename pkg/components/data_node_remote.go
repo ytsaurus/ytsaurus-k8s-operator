@@ -30,6 +30,8 @@ func NewRemoteDataNodes(
 
 	srv := newServerConfigured(
 		nil, // no timbertruck delivery for remote nodes
+		nil,
+		nil,
 		l,
 		proxy,
 		&commonSpec,
@@ -41,12 +43,11 @@ func NewRemoteDataNodes(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetDataNodeConfig(spec) },
 		}},
-		consts.DataNodeMonitoringPort,
-		WithContainerPorts(corev1.ContainerPort{
+		newServerOptions(&spec.InstanceSpec, consts.DataNodeMonitoringPort, WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.DataNodeRPCPort,
 			Protocol:      corev1.ProtocolTCP,
-		}),
+		})),
 	)
 	return &RemoteDataNode{
 		serverComponent: newServerComponent(l, proxy, srv),

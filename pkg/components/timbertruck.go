@@ -598,25 +598,9 @@ func prepareExportDestination(ctx context.Context, ytClient yt.Client, queuePath
 func buildTimbertruckConfigMap(
 	proxy apiproxy.APIProxy,
 	configOverrides *corev1.LocalObjectReference,
-	delivery *timbertruckDelivery,
 	labeler *labeller.Labeller,
-	cfgen *ytconfig.Generator,
+	generate ConfigGeneratorFunc,
 ) *ConfigMapBuilder {
-	workDir := fmt.Sprintf("%s/%s", delivery.LogsDirectory, consts.TimbertruckWorkDirName)
-	deliveryProxy := cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
-
-	timbertruckConfig := ytconfig.NewTimbertruckConfig(
-		delivery.Loggers,
-		workDir,
-		timbertruckComponentName(labeler),
-		delivery.LogsDirectory,
-		deliveryProxy,
-		delivery.LogsDeliveryPath,
-	)
-	if timbertruckConfig == nil {
-		return nil
-	}
-
 	return NewConfigMapBuilder(
 		labeler,
 		proxy,
@@ -625,7 +609,7 @@ func buildTimbertruckConfigMap(
 		ConfigGenerator{
 			FileName:  timbertruckConfigFileName(labeler),
 			Format:    ConfigFormatYaml,
-			Generator: timbertruckConfig.ToYSON,
+			Generator: generate,
 		},
 	)
 }
@@ -636,7 +620,7 @@ const timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
 // addTimbertruckSidecar appends the timbertruck sidecar container and its config volume to podSpec.
 // volumeMounts are resolved beforehand by buildTimbertruckVolumeMounts, so the sidecar sees the very
 // same volume (and subPath) as the server container.
-func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts []corev1.VolumeMount, configMapName, configFileName, deliveryProxy string) {
+func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts []corev1.VolumeMount, configMapName, configFileName string) {
 	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(timbertruckConfigVolumeName, configMapName, nil))
 
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
@@ -654,10 +638,6 @@ func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts [
 						Key: consts.TokenSecretKey,
 					},
 				},
-			},
-			{
-				Name:  "YT_PROXY",
-				Value: deliveryProxy,
 			},
 		}, getDefaultEnv()...),
 		VolumeMounts:    volumeMounts,

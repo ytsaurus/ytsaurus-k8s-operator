@@ -71,9 +71,6 @@ type serverImpl struct {
 	busClientSecret   *resources.TLSSecret
 	configs           *ConfigMapBuilder
 
-	// cfgen is used to resolve the HTTP proxy address for the timbertruck sidecar. It may be nil
-	// for components that never deliver logs (e.g. remote nodes), in which case delivery is off.
-	cfgen *ytconfig.Generator
 	// timbertruckDelivery / timbertruckConfigs are non-nil only when this component delivers logs.
 	timbertruckDelivery *timbertruckDelivery
 	timbertruckConfigs  *ConfigMapBuilder
@@ -100,8 +97,39 @@ func newServer(
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
+	opts := newServerOptions(instanceSpec, defaultMonitoringPort, options...)
+
+	var delivery *timbertruckDelivery
+	var configGenerator ConfigGeneratorFunc
+	var volumeMounts []corev1.VolumeMount
+	if cfgen != nil {
+		delivery = resolveTimbertruckDelivery(opts.timbertruck, ytsaurus.GetCommonSpec().Timbertruck, instanceSpec)
+		if delivery != nil {
+			var err error
+			volumeMounts, err = buildTimbertruckVolumeMounts(instanceSpec, timbertruckConfigVolumeName)
+			if err != nil {
+				log.Log.Error(err, "Timbertruck log delivery is disabled for component",
+					"component", l.GetFullComponentName())
+				delivery = nil
+			} else {
+				configGenerator = func() ([]byte, error) {
+					workDir := fmt.Sprintf("%s/%s", delivery.LogsDirectory, consts.TimbertruckWorkDirName)
+					return cfgen.GetTimbertruckConfig(
+						delivery.Loggers,
+						workDir,
+						timbertruckComponentName(l),
+						delivery.LogsDirectory,
+						delivery.LogsDeliveryPath,
+					)
+				}
+				opts.sidecarImages[consts.TimbertruckContainerName] = delivery.Image
+			}
+		}
+	}
 	return newServerConfigured(
-		cfgen,
+		delivery,
+		configGenerator,
+		volumeMounts,
 		l,
 		ytsaurus,
 		ytsaurus.GetCommonSpec(),
@@ -109,13 +137,14 @@ func newServer(
 		instanceSpec,
 		binaryPath,
 		generators,
-		defaultMonitoringPort,
-		options...,
+		opts,
 	)
 }
 
 func newServerConfigured(
-	cfgen *ytconfig.Generator,
+	timbertruckDelivery *timbertruckDelivery,
+	timbertruckConfigGenerator ConfigGeneratorFunc,
+	timbertruckVolumeMounts []corev1.VolumeMount,
 	l *labeller.Labeller,
 	proxy apiproxy.APIProxy,
 	commonSpec *ytv1.CommonSpec,
@@ -123,8 +152,7 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath string,
 	generators []ConfigGenerator,
-	defaultMonitoringPort int32,
-	optFuncs ...Option,
+	opts *options,
 ) server {
 	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
@@ -184,24 +212,6 @@ func newServerConfigured(
 		}
 	}
 
-	monitoringPort := ptr.Deref(instanceSpec.MonitoringPort, defaultMonitoringPort)
-	opts := &options{
-		containerPorts: []corev1.ContainerPort{
-			{
-				Name:          consts.YTMonitoringContainerPortName,
-				ContainerPort: monitoringPort,
-				Protocol:      corev1.ProtocolTCP,
-			},
-		},
-		readinessProbeEndpointPort: intstr.FromString(consts.YTMonitoringContainerPortName),
-		readinessProbeEndpointPath: readinessProbeHTTPPath,
-		sidecarImages:              map[string]string{},
-	}
-
-	for _, fn := range optFuncs {
-		fn(opts)
-	}
-
 	configs := NewConfigMapBuilder(
 		l,
 		proxy,
@@ -210,37 +220,20 @@ func newServerConfigured(
 		generators...,
 	)
 
-	// Resolve timbertruck log delivery for this component. cfgen is required to compute the
-	// delivery proxy address; without it (e.g. remote nodes) delivery stays disabled.
-	var timbertruckDelivery *timbertruckDelivery
 	var timbertruckConfigs *ConfigMapBuilder
-	var timbertruckVolumeMounts []corev1.VolumeMount
-	if cfgen != nil {
-		if delivery := resolveTimbertruckDelivery(opts.timbertruck, commonSpec.Timbertruck, instanceSpec); delivery != nil {
-			// Resolve the sidecar mounts up front: a logs location not covered by any volume mount
-			// is rejected by the webhook, so failing here means delivery cannot work at all and the
-			// sidecar is not added. Doing it here keeps pod spec building infallible.
-			volumeMounts, err := buildTimbertruckVolumeMounts(instanceSpec, timbertruckConfigVolumeName)
-			if err != nil {
-				log.Log.Error(err, "Timbertruck log delivery is disabled for component",
-					"component", l.GetFullComponentName())
-			} else if configs := buildTimbertruckConfigMap(proxy, commonSpec.ConfigOverrides, delivery, l, cfgen); configs != nil {
-				timbertruckDelivery = delivery
-				timbertruckConfigs = configs
-				timbertruckVolumeMounts = volumeMounts
-				if opts.sidecarImages == nil {
-					opts.sidecarImages = make(map[string]string)
-				}
-				opts.sidecarImages[consts.TimbertruckContainerName] = delivery.Image
-			}
-		}
+	if timbertruckConfigGenerator != nil {
+		timbertruckConfigs = buildTimbertruckConfigMap(
+			proxy,
+			commonSpec.ConfigOverrides,
+			l,
+			timbertruckConfigGenerator,
+		)
 	}
 
 	return &serverImpl{
 		labeller:                l,
 		image:                   image,
 		configs:                 configs,
-		cfgen:                   cfgen,
 		timbertruckDelivery:     timbertruckDelivery,
 		timbertruckConfigs:      timbertruckConfigs,
 		timbertruckVolumeMounts: timbertruckVolumeMounts,
@@ -263,7 +256,7 @@ func newServerConfigured(
 			proxy,
 		),
 		monitoringService: resources.NewMonitoringService(
-			monitoringPort,
+			opts.monitoringPort,
 			l,
 			proxy,
 		),
@@ -277,6 +270,28 @@ func newServerConfigured(
 		readinessProbePort:     opts.readinessProbeEndpointPort,
 		readinessProbeHTTPPath: opts.readinessProbeEndpointPath,
 	}
+}
+
+func newServerOptions(instanceSpec *ytv1.InstanceSpec, defaultMonitoringPort int32, optFuncs ...Option) *options {
+	monitoringPort := ptr.Deref(instanceSpec.MonitoringPort, defaultMonitoringPort)
+	opts := &options{
+		monitoringPort: monitoringPort,
+		containerPorts: []corev1.ContainerPort{
+			{
+				Name:          consts.YTMonitoringContainerPortName,
+				ContainerPort: monitoringPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		readinessProbeEndpointPort: intstr.FromString(consts.YTMonitoringContainerPortName),
+		readinessProbeEndpointPath: readinessProbeHTTPPath,
+		sidecarImages:              map[string]string{},
+	}
+
+	for _, fn := range optFuncs {
+		fn(opts)
+	}
+	return opts
 }
 
 func (s *serverImpl) Fetch(ctx context.Context) error {
@@ -663,7 +678,6 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 			s.timbertruckVolumeMounts,
 			s.timbertruckConfigs.GetConfigMapName(),
 			timbertruckConfigFileName(s.labeller),
-			s.cfgen.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
 		)
 		s.addCARootBundle(&podSpec.Containers[len(podSpec.Containers)-1])
 	}

@@ -7,6 +7,7 @@ import (
 	"go.ytsaurus.tech/yt/go/yson"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 type TimbertruckConfig struct {
@@ -76,6 +77,27 @@ func NewTimbertruckConfig(
 	}
 
 	return timbertruckConfig
+}
+
+func (g *Generator) GetTimbertruckConfig(
+	structuredLoggers []ytv1.StructuredLoggerSpec,
+	workDir,
+	componentName,
+	logsDirectory,
+	logsDeliveryPath string,
+) ([]byte, error) {
+	config := NewTimbertruckConfig(
+		structuredLoggers,
+		workDir,
+		componentName,
+		logsDirectory,
+		g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole),
+		logsDeliveryPath,
+	)
+	if config == nil {
+		return nil, nil
+	}
+	return config.ToYSON()
 }
 
 func (c *TimbertruckConfig) ToYSON() ([]byte, error) {

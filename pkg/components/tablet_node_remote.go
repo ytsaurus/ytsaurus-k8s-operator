@@ -30,6 +30,8 @@ func NewRemoteTabletNodes(
 
 	srv := newServerConfigured(
 		nil, // no timbertruck delivery for remote nodes
+		nil,
+		nil,
 		l,
 		proxy,
 		&commonSpec,
@@ -41,12 +43,11 @@ func NewRemoteTabletNodes(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
 		}},
-		consts.TabletNodeMonitoringPort,
-		WithContainerPorts(corev1.ContainerPort{
+		newServerOptions(&spec.InstanceSpec, consts.TabletNodeMonitoringPort, WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.TabletNodeRPCPort,
 			Protocol:      corev1.ProtocolTCP,
-		}),
+		})),
 	)
 	return &RemoteTabletNode{
 		serverComponent: newServerComponent(l, proxy, srv),

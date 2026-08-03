@@ -9,6 +9,7 @@ import (
 
 type options struct {
 	containerPorts []corev1.ContainerPort
+	monitoringPort int32
 
 	readinessProbeEndpointPort intstr.IntOrString
 	readinessProbeEndpointPath string

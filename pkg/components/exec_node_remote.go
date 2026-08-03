@@ -27,6 +27,8 @@ func NewRemoteExecNodes(
 
 	srv := newServerConfigured(
 		nil, // no timbertruck delivery for remote nodes
+		nil,
+		nil,
 		l,
 		proxy,
 		&commonSpec,
@@ -38,12 +40,11 @@ func NewRemoteExecNodes(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetExecNodeConfig(spec) },
 		}},
-		consts.ExecNodeMonitoringPort,
-		WithContainerPorts(corev1.ContainerPort{
+		newServerOptions(&spec.InstanceSpec, consts.ExecNodeMonitoringPort, WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.ExecNodeRPCPort,
 			Protocol:      corev1.ProtocolTCP,
-		}),
+		})),
 	)
 
 	criConfig := ytconfig.NewCRIConfigGenerator(&spec)
