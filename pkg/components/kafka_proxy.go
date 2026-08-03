@@ -29,7 +29,6 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 	l := cfgen.GetComponentLabeller(consts.KafkaProxyType, spec.Role)
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -39,6 +38,7 @@ func NewKafkaProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, maste
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetKafkaProxyConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.KafkaProxyMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

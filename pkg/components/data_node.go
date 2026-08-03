@@ -39,7 +39,6 @@ func NewDataNode(
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 
 	srv := newServer(
-		clusterCfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -49,6 +48,7 @@ func NewDataNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetDataNodeConfig(spec) },
 		}},
+		clusterCfgen.GetTimbertruckConfig,
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

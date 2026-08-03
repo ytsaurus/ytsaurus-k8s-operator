@@ -60,7 +60,6 @@ func NewRPCProxy(
 	}
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -70,6 +69,7 @@ func NewRPCProxy(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetRPCProxyConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.RPCProxyMonitoringPort,
 		WithContainerPorts(ports...),
 	)

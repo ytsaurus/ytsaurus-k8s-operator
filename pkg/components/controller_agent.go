@@ -28,7 +28,6 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.ControllerAgents.InstanceSpec,
@@ -38,6 +37,7 @@ func NewControllerAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, 
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetControllerAgentConfig(resource.Spec.ControllerAgents) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.ControllerAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

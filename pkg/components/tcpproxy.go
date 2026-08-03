@@ -27,7 +27,6 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 	l := cfgen.GetComponentLabeller(consts.TcpProxyType, spec.Role)
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -37,6 +36,7 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetTCPProxyConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.TCPProxyMonitoringPort,
 	)
 

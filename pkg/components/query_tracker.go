@@ -42,7 +42,6 @@ func NewQueryTracker(
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
@@ -52,6 +51,7 @@ func NewQueryTracker(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.QueryTrackerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

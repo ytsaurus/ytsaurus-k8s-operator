@@ -25,7 +25,6 @@ func NewBundleController(
 
 	resource := ytsaurus.GetResource()
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.BundleController.InstanceSpec,
@@ -35,6 +34,7 @@ func NewBundleController(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetBundleControllerConfig(resource.Spec.BundleController) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.BundleControllerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

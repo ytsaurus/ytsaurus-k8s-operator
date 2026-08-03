@@ -26,7 +26,6 @@ func NewTabletBalancer(
 
 	resource := ytsaurus.GetResource()
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.TabletBalancer.InstanceSpec,
@@ -36,6 +35,7 @@ func NewTabletBalancer(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetTabletBalancerConfig(resource.Spec.TabletBalancer) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.TabletBalancerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

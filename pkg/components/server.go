@@ -95,12 +95,12 @@ type timbertruckConfigGenerator func(
 ) ([]byte, error)
 
 func newServer(
-	generateTimbertruckConfig timbertruckConfigGenerator,
 	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath string,
 	generators []ConfigGenerator,
+	generateTimbertruckConfig timbertruckConfigGenerator,
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {

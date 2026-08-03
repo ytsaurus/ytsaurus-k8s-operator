@@ -33,7 +33,6 @@ func NewDiscovery(
 	resource := ytsaurus.GetResource()
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&resource.Spec.Discovery.InstanceSpec,
@@ -43,6 +42,7 @@ func NewDiscovery(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.DiscoveryMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

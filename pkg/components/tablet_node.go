@@ -48,7 +48,6 @@ func NewTabletNode(
 	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)
 
 	srv := newServer(
-		clusterCfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -58,6 +57,7 @@ func NewTabletNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
 		}},
+		clusterCfgen.GetTimbertruckConfig,
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

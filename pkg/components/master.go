@@ -75,7 +75,6 @@ func NewMaster(
 	l := cfgen.GetMasterLabeller(mastersSpec.CellTag)
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&mastersSpec.InstanceSpec,
@@ -92,6 +91,7 @@ func NewMaster(
 				cfgen.GetNativeClientConfig,
 			},
 		},
+		cfgen.GetTimbertruckConfig,
 		consts.MasterMonitoringPort,
 		buildMasterOptions(mastersSpec)...,
 	)

@@ -34,7 +34,6 @@ func NewExecNode(
 	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
 
 	srv := newServer(
-		clusterCfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -44,6 +43,7 @@ func NewExecNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetExecNodeConfig(spec) },
 		}},
+		clusterCfgen.GetTimbertruckConfig,
 		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

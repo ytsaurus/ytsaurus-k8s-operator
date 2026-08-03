@@ -69,7 +69,6 @@ func NewHTTPProxy(
 	}
 
 	srv := newServer(
-		cfgen.GetTimbertruckConfig,
 		l,
 		ytsaurus,
 		&spec.InstanceSpec,
@@ -79,6 +78,7 @@ func NewHTTPProxy(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetHTTPProxyConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.HTTPProxyMonitoringPort,
 		WithContainerPorts(containerPorts...),
 		WithCustomReadinessProbeEndpointPort(ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort)),
