@@ -141,7 +141,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 		case ytv1.UpdateStateWaitingForTabletCellsSaving, ytv1.UpdateStateWaitingForTabletCellsRecovery:
 		case ytv1.UpdateStateWaitingForTabletCellsRemovingStart, ytv1.UpdateStateWaitingForTabletCellsRemoved:
 		case ytv1.UpdateStateWaitingForImaginaryChunksAbsence:
-		case ytv1.UpdateStateWaitingForSnapshots:
 		case ytv1.UpdateStateWaitingForCypressPatch:
 		default:
 			return ComponentStatusReady(), nil
@@ -281,26 +280,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 			}
 			// Waiting for data nodes to remove pods and areOnlineDataNodesWithImaginaryChunksExist to return false
 			// in the next reconciliations.
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
-	case ytv1.UpdateStateWaitingForSnapshots:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSnaphotsSaved) {
-			dnds, err := yc.getDataNodesInfo(ctx)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-			log.FromContext(ctx).Info("data nodes before snapshots building", "dataNodes", dnds)
-			if err := yc.BuildMasterSnapshots(ctx); err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionSnaphotsSaved,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Master snapshots were built",
-			})
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 
@@ -882,15 +861,6 @@ func (yc *YtsaurusClient) SetBundleControllerDisabled(ctx context.Context, disab
 }
 
 // Master actions.
-
-func (yc *YtsaurusClient) BuildMasterSnapshots(ctx context.Context) error {
-	_, err := yc.ytClient.BuildMasterSnapshots(ctx, &yt.BuildMasterSnapshotsOptions{
-		WaitForSnapshotCompletion: ptr.To(true),
-		SetReadOnly:               ptr.To(true),
-	})
-
-	return err
-}
 
 func (yc *YtsaurusClient) ensureRealChunkLocationsEnabled(ctx context.Context) error {
 	logger := log.FromContext(ctx)

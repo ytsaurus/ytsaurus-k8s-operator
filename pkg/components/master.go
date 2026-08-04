@@ -118,6 +118,7 @@ func NewMaster(
 			&mastersSpec.InstanceSpec,
 			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 			TextConfigGenerator(consts.ClusterInitializationScriptName, master.scriptInitialization),
+			TextConfigGenerator(consts.MasterEnterReadOnlyScriptName, master.scriptEnterReadOnly),
 			TextConfigGenerator(consts.MasterExitReadOnlyScriptName, master.scriptExitReadOnly),
 		)
 	}
@@ -420,11 +421,44 @@ func (m *Master) scriptInitialization() ([]string, error) {
 	return script, nil
 }
 
+func (m *Master) scriptDumpCellOrchids() ([]string, error) {
+	var script []string
+	for _, addreess := range m.cfgen.GetMasterCellAddresses(m.mastersSpec) {
+		path := m.GetCypressPath().Child(addreess)
+		script = append(script,
+			fmt.Sprintf(`/usr/bin/yt get '%s' || :`, path.Child(consts.MasterElectionPath)),
+			fmt.Sprintf(`/usr/bin/yt get '%s' || :`, path.Child(consts.MasterHydraPath)))
+	}
+	return script, nil
+}
+
+func (m *Master) scriptDumpAllOrchids() []TextGeneratorFunc {
+	orchids := []TextGeneratorFunc{m.scriptDumpCellOrchids}
+	for _, secondary := range m.secondaryMasters {
+		orchids = append(orchids, secondary.scriptDumpCellOrchids)
+	}
+	return orchids
+}
+
+const (
+	masterEnterReadOnly = `YT_LOG_LEVEL=Debug /usr/bin/yt execute build_master_snapshots '{ set_read_only=%true; wait_for_snapshot_completion=%true; retry=%true; }'`
+	masterExitReadOnly  = `YT_LOG_LEVEL=Debug /usr/bin/yt execute master_exit_read_only '{}'`
+)
+
+func (m *Master) scriptEnterReadOnly() ([]string, error) {
+	return JoinTextGenerators(
+		PlainTextGenerator(initJobWithNativeDriverPrologue()),
+		JoinTextGenerators(m.scriptDumpAllOrchids()...),
+		PlainTextGenerator(masterEnterReadOnly),
+	)()
+}
+
 func (m *Master) scriptExitReadOnly() ([]string, error) {
-	return []string{
-		initJobWithNativeDriverPrologue(),
-		"YT_LOG_LEVEL=DEBUG /usr/bin/yt execute master_exit_read_only '{}'",
-	}, nil
+	return JoinTextGenerators(
+		PlainTextGenerator(initJobWithNativeDriverPrologue()),
+		JoinTextGenerators(m.scriptDumpAllOrchids()...),
+		PlainTextGenerator(masterExitReadOnly),
+	)()
 }
 
 func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -439,6 +473,15 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 		if m.IsPrimary() {
 			switch updateState {
+			case ytv1.UpdateStateWaitingForSnapshots:
+				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterEnterReadOnlyScriptName, func() {
+					m.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+						Type:    consts.ConditionSnaphotsSaved,
+						Status:  metav1.ConditionTrue,
+						Reason:  "Update",
+						Message: "Master read-only snapshots were built",
+					})
+				})
 			case ytv1.UpdateStateWaitingForMasterExitReadOnly:
 				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterExitReadOnlyScriptName, nil)
 			case ytv1.UpdateStateWaitingForSidecarsInitialize:

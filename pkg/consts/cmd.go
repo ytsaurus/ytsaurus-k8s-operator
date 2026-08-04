@@ -44,6 +44,7 @@ const (
 
 	PostprocessConfigScriptName               = "postprocess-config.sh"
 	ClusterInitializationScriptName           = "cluster-initialization.sh"
+	MasterEnterReadOnlyScriptName             = "master-enter-read-only.sh"
 	MasterExitReadOnlyScriptName              = "master-exit-read-only.sh"
 	OperationsArchiveInitializationScriptName = "operations-archive-initialization.sh"
 	OperationsArchiveUpdateScriptName         = "operations-archive-update.sh"

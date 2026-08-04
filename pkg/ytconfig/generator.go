@@ -216,6 +216,13 @@ func (g *NodeGenerator) getMasterAddresses(masterCell *masterCellInfo) []string 
 	return masterLabeller.GetInstanceAddresses(masterCell.InstanceCount, consts.MasterRPCPort)
 }
 
+func (g *NodeGenerator) GetMasterCellAddresses(spec *ytv1.MastersSpec) []string {
+	return g.getMasterAddresses(&masterCellInfo{
+		MasterConnectionSpec: spec.MasterConnectionSpec,
+		InstanceCount:        spec.InstanceCount,
+	})
+}
+
 func (g *NodeGenerator) getMasterCachesAddresses() []string {
 	if g.masterCache == nil {
 		return nil

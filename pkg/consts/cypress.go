@@ -15,7 +15,8 @@ const (
 	// This is directory with symlinks to all masters.
 	ClusterMastersPath = "//sys/cluster_masters"
 
-	MasterHydraPath = "orchid/monitoring/hydra"
+	MasterElectionPath = "orchid/monitoring/election"
+	MasterHydraPath    = "orchid/monitoring/hydra"
 
 	MasterCellDescriptorsPath = "//sys/@config/multicell_manager/cell_descriptors"
 )
