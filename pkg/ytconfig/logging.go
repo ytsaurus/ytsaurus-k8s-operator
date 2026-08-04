@@ -240,8 +240,7 @@ func createBaseLoggingRule(spec ytv1.BaseLoggerSpec) LoggingRule {
 	}
 }
 
-// applyCategoriesFilter merges a categories filter into a logging rule. Include values are
-// appended to the categories already selected by the rule, skipping duplicates.
+// applyCategoriesFilter merges a filter into a rule, skipping already included categories.
 func applyCategoriesFilter(loggingRule *LoggingRule, filter *ytv1.CategoriesFilter) {
 	if filter == nil {
 		return
@@ -269,9 +268,6 @@ func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
 	return loggingRule
 }
 
-// createStructuredLoggingRule selects the categories of a structured logger. Some structured logs
-// span several categories (e.g. the scheduler event log is written under both SchedulerStructuredLog
-// and SchedulerEventLog), so categoriesFilter may add categories to the single category field.
 func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 	loggingRule.Family = ptr.To(LogFamilyStructured)
@@ -281,9 +277,7 @@ func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 
 	applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
 
-	// An absent include list makes the rule match every category, so a structured rule always keeps
-	// one: without it a logger with neither category nor include filter would silently widen from
-	// matching nothing to matching everything.
+	// An absent include list would make the rule match every category.
 	if loggingRule.IncludeCategories == nil {
 		loggingRule.IncludeCategories = []string{spec.Category}
 	}

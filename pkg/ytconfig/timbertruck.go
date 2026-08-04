@@ -11,9 +11,7 @@ import (
 
 type TimbertruckConfig struct {
 	WorkDir string `json:"work_dir" yson:"work_dir"`
-	// JsonLogs and YsonLogs are tracked by separate timbertruck pipelines: each one validates every
-	// line in its own format and drops the lines it cannot parse, so a logger must be listed under
-	// the section matching its format.
+	// Timbertruck validates each section in its own format and drops unparsable lines.
 	JsonLogs []TimbertruckJsonLogConfig `json:"json_logs,omitempty" yson:"json_logs,omitempty"`
 	YsonLogs []TimbertruckJsonLogConfig `json:"yson_logs,omitempty" yson:"yson_logs,omitempty"`
 }
