@@ -77,6 +77,7 @@ func (c *Ytsaurus) SetClusterState(clusterState ytv1.ClusterState) bool {
 		Reason:  string(clusterState),
 		Message: fmt.Sprintf("Cluster state is %v", clusterState),
 	})
+	c.RecordNormal("ClusterState", fmt.Sprintf("Cluster state is %v", clusterState))
 	return true
 }
 

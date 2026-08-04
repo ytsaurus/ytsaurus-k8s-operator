@@ -27,6 +27,25 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Cluster state is Initializing
+  metadata:
+    namespace: ytsaurus-components
+  reason: ClusterState
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
   message: Ready 0 of 5; daemon set ih-ca need sync; daemon set ih-ms need sync; daemon
@@ -2399,6 +2418,44 @@
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "19"
+  lastTimestamp: null
+  message: Cluster state is Preparing
+  metadata:
+    namespace: ytsaurus-components
+  reason: ClusterState
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "20"
+  lastTimestamp: null
+  message: Cluster state is Running
+  metadata:
+    namespace: ytsaurus-components
+  reason: ClusterState
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
