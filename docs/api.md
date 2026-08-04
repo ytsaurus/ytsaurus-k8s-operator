@@ -489,6 +489,7 @@ _Appears in:_
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ | Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by any component<br />that enables log delivery via a structured logger's enableDelivery flag.<br />Per-component overrides (e.g. primaryMasters.timbertruck) take precedence field-by-field. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -1887,6 +1888,7 @@ _Appears in:_
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ | Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by any component<br />that enables log delivery via a structured logger's enableDelivery flag.<br />Per-component overrides (e.g. primaryMasters.timbertruck) take precedence field-by-field. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -2229,6 +2231,7 @@ _Appears in:_
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ | Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by any component<br />that enables log delivery via a structured logger's enableDelivery flag.<br />Per-component overrides (e.g. primaryMasters.timbertruck) take precedence field-by-field. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -2330,6 +2333,7 @@ _Appears in:_
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ | Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by any component<br />that enables log delivery via a structured logger's enableDelivery flag.<br />Per-component overrides (e.g. primaryMasters.timbertruck) take precedence field-by-field. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -2479,6 +2483,7 @@ _Appears in:_
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ | Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by any component<br />that enables log delivery via a structured logger's enableDelivery flag.<br />Per-component overrides (e.g. primaryMasters.timbertruck) take precedence field-by-field. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |
@@ -2788,6 +2793,7 @@ _Appears in:_
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `category` _string_ |  |  |  |
+| `enableDelivery` _boolean_ | EnableDelivery turns on timbertruck delivery of this structured log to the cluster log storage.<br />Requires a timbertruck image to be configured (spec.timbertruck.image or, for masters, primaryMasters.timbertruck.image). |  |  |
 
 
 #### TCPProxiesSpec
@@ -2992,12 +2998,20 @@ _Appears in:_
 
 
 
-
+TimbertruckSpec configures the timbertruck sidecar that delivers structured logs to the
+cluster log storage. It is used both cluster-wide (spec.timbertruck) and as a per-component
+override (e.g. primaryMasters.timbertruck).
 
 
 
 _Appears in:_
+- [CommonSpec](#commonspec)
 - [MastersSpec](#mastersspec)
+- [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [RemoteDataNodesSpec](#remotedatanodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -3355,6 +3369,7 @@ _Appears in:_
 | `clusterFeatures` _[ClusterFeatures](#clusterfeatures)_ |  |  |  |
 | `clusterMaintenance` _[ClusterMaintenance](#clustermaintenance)_ | Controls cluster maintenance. |  |  |
 | `jobImage` _string_ | Default docker image for user jobs. |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ | Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by any component<br />that enables log delivery via a structured logger's enableDelivery flag.<br />Per-component overrides (e.g. primaryMasters.timbertruck) take precedence field-by-field. |  |  |
 | `caRootBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".<br />Will replace system CA root bundle for all server and job containers. |  |  |
 | `caBundle` _[FileObjectReference](#fileobjectreference)_ | Reference to trusted native transport certificates. Default kind="ConfigMap", key="ca.crt".<br />By default will use system CA bundle, which could be set by caRootBundle. |  |  |
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Common config for native RPC bus transport. |  |  |

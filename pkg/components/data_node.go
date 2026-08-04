@@ -47,6 +47,7 @@ func NewDataNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetDataNodeConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.DataNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

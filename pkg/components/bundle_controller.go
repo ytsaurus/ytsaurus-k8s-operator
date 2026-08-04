@@ -34,6 +34,7 @@ func NewBundleController(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetBundleControllerConfig(resource.Spec.BundleController) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.BundleControllerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

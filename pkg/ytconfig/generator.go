@@ -32,7 +32,8 @@ type masterCacheInfo struct {
 }
 
 type NodeGenerator struct {
-	baseLabeller *labeller.Labeller
+	baseLabeller             *labeller.Labeller
+	timbertruckDeliveryProxy string
 
 	commonSpec         *ytv1.CommonSpec
 	clusterFeatures    ytv1.ClusterFeatures
@@ -102,7 +103,7 @@ func NewLocalNodeGenerator(
 		}
 	}
 
-	return &NodeGenerator{
+	generator := &NodeGenerator{
 		baseLabeller: &labeller.Labeller{
 			Namespace:     ytsaurus.GetNamespace(),
 			ClusterName:   ytsaurus.GetName(),
@@ -121,6 +122,11 @@ func NewLocalNodeGenerator(
 		dataNodesInstanceCount:        dataNodesInstanceCount,
 		bundleControllerInstanceCount: ptr.To(bundleControllerInstanceCount),
 	}
+	generator.timbertruckDeliveryProxy = generator.GetHTTPProxiesAddress(
+		&ytsaurus.Spec,
+		consts.DefaultHTTPProxyRole,
+	)
+	return generator
 }
 
 func NewRemoteNodeGenerator(

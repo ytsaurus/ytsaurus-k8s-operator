@@ -70,6 +70,12 @@ type serverImpl struct {
 	busClientSecret   *resources.TLSSecret
 	configs           *ConfigMapBuilder
 
+	// timbertruckDelivery / timbertruckConfigs are non-nil only when this component delivers logs.
+	timbertruckDelivery *timbertruckDelivery
+	timbertruckConfigs  *ConfigMapBuilder
+	// timbertruckVolumeMounts are resolved together with the delivery settings above.
+	timbertruckVolumeMounts []corev1.VolumeMount
+
 	builtStatefulSet *appsv1.StatefulSet
 
 	updateStrategy *appsv1.StatefulSetUpdateStrategy
@@ -80,15 +86,53 @@ type serverImpl struct {
 	readinessProbeHTTPPath string
 }
 
+type timbertruckConfigGenerator func(
+	loggers []ytv1.StructuredLoggerSpec,
+	workDir string,
+	componentName string,
+	logsDirectory string,
+	logsDeliveryPath string,
+) ([]byte, error)
+
 func newServer(
 	l *labeller.Labeller,
 	ytsaurus *apiproxy.Ytsaurus,
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath string,
 	generators []ConfigGenerator,
+	timbertruckGenerator timbertruckConfigGenerator,
 	defaultMonitoringPort int32,
 	options ...Option,
 ) server {
+	opts := newServerOptions(instanceSpec, defaultMonitoringPort, options...)
+
+	var delivery *timbertruckDelivery
+	var configGenerator ConfigGeneratorFunc
+	var volumeMounts []corev1.VolumeMount
+	if timbertruckGenerator != nil {
+		delivery = resolveTimbertruckDelivery(opts.timbertruck, ytsaurus.GetCommonSpec().Timbertruck, instanceSpec)
+		if delivery != nil {
+			var err error
+			volumeMounts, err = buildTimbertruckVolumeMounts(instanceSpec, timbertruckConfigVolumeName)
+			if err != nil {
+				log.Log.Error(err, "Timbertruck log delivery is disabled for component",
+					"component", l.GetFullComponentName())
+				delivery = nil
+			} else {
+				configGenerator = func() ([]byte, error) {
+					workDir := fmt.Sprintf("%s/%s", delivery.LogsDirectory, consts.TimbertruckWorkDirName)
+					return timbertruckGenerator(
+						delivery.Loggers,
+						workDir,
+						timbertruckComponentName(l),
+						delivery.LogsDirectory,
+						delivery.LogsDeliveryPath,
+					)
+				}
+				opts.sidecarImages[consts.TimbertruckContainerName] = delivery.Image
+			}
+		}
+	}
 	return newServerConfigured(
 		l,
 		ytsaurus,
@@ -97,8 +141,10 @@ func newServer(
 		instanceSpec,
 		binaryPath,
 		generators,
-		defaultMonitoringPort,
-		options...,
+		delivery,
+		configGenerator,
+		volumeMounts,
+		opts,
 	)
 }
 
@@ -110,8 +156,10 @@ func newServerConfigured(
 	instanceSpec *ytv1.InstanceSpec,
 	binaryPath string,
 	generators []ConfigGenerator,
-	defaultMonitoringPort int32,
-	optFuncs ...Option,
+	timbertruckDelivery *timbertruckDelivery,
+	timbertruckConfigGenerator ConfigGeneratorFunc,
+	timbertruckVolumeMounts []corev1.VolumeMount,
+	opts *options,
 ) server {
 	image := commonSpec.CoreImage
 	if instanceSpec.Image != nil {
@@ -171,24 +219,6 @@ func newServerConfigured(
 		}
 	}
 
-	monitoringPort := ptr.Deref(instanceSpec.MonitoringPort, defaultMonitoringPort)
-	opts := &options{
-		containerPorts: []corev1.ContainerPort{
-			{
-				Name:          consts.YTMonitoringContainerPortName,
-				ContainerPort: monitoringPort,
-				Protocol:      corev1.ProtocolTCP,
-			},
-		},
-		readinessProbeEndpointPort: intstr.FromString(consts.YTMonitoringContainerPortName),
-		readinessProbeEndpointPath: readinessProbeHTTPPath,
-		sidecarImages:              map[string]string{},
-	}
-
-	for _, fn := range optFuncs {
-		fn(opts)
-	}
-
 	configs := NewConfigMapBuilder(
 		l,
 		proxy,
@@ -197,17 +227,30 @@ func newServerConfigured(
 		generators...,
 	)
 
+	var timbertruckConfigs *ConfigMapBuilder
+	if timbertruckConfigGenerator != nil {
+		timbertruckConfigs = buildTimbertruckConfigMap(
+			proxy,
+			commonSpec.ConfigOverrides,
+			l,
+			timbertruckConfigGenerator,
+		)
+	}
+
 	return &serverImpl{
-		labeller:      l,
-		image:         image,
-		configs:       configs,
-		sidecarImages: opts.sidecarImages,
-		proxy:         proxy,
-		commonSpec:    commonSpec,
-		commonPodSpec: commonPodSpec,
-		instanceSpec:  instanceSpec,
-		instanceCount: instanceCount,
-		binaryPath:    binaryPath,
+		labeller:                l,
+		image:                   image,
+		configs:                 configs,
+		timbertruckDelivery:     timbertruckDelivery,
+		timbertruckConfigs:      timbertruckConfigs,
+		timbertruckVolumeMounts: timbertruckVolumeMounts,
+		sidecarImages:           opts.sidecarImages,
+		proxy:                   proxy,
+		commonSpec:              commonSpec,
+		commonPodSpec:           commonPodSpec,
+		instanceSpec:            instanceSpec,
+		instanceCount:           instanceCount,
+		binaryPath:              binaryPath,
 		statefulSet: resources.NewStatefulSet(
 			l.GetServerStatefulSetName(),
 			l,
@@ -220,7 +263,7 @@ func newServerConfigured(
 			proxy,
 		),
 		monitoringService: resources.NewMonitoringService(
-			monitoringPort,
+			opts.monitoringPort,
 			l,
 			proxy,
 		),
@@ -236,12 +279,55 @@ func newServerConfigured(
 	}
 }
 
+func newServerOptions(instanceSpec *ytv1.InstanceSpec, defaultMonitoringPort int32, optFuncs ...Option) *options {
+	monitoringPort := ptr.Deref(instanceSpec.MonitoringPort, defaultMonitoringPort)
+	opts := &options{
+		monitoringPort: monitoringPort,
+		containerPorts: []corev1.ContainerPort{
+			{
+				Name:          consts.YTMonitoringContainerPortName,
+				ContainerPort: monitoringPort,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		readinessProbeEndpointPort: intstr.FromString(consts.YTMonitoringContainerPortName),
+		readinessProbeEndpointPath: readinessProbeHTTPPath,
+		sidecarImages:              map[string]string{},
+	}
+
+	for _, fn := range optFuncs {
+		fn(opts)
+	}
+	return opts
+}
+
 func (s *serverImpl) Fetch(ctx context.Context) error {
-	return resources.Fetch(ctx, s.statefulSet, s.configs, s.headlessService, s.monitoringService)
+	if err := resources.Fetch(ctx, s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService); err != nil {
+		return err
+	}
+	if s.timbertruckConfigs != nil && s.timbertruckConfigs.Exists() {
+		if _, err := s.timbertruckConfigs.needReload(); err != nil {
+			return fmt.Errorf("failed to check timbertruck configuration: %w", err)
+		}
+	}
+	return nil
 }
 
 func (s *serverImpl) Exists() bool {
-	return resources.Exists(s.statefulSet, s.configs, s.headlessService, s.monitoringService)
+	return resources.Exists(s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService)
+}
+
+// timbertruckConfigNeedsReload reports whether the timbertruck sidecar configmap is missing or
+// its content has drifted from what the operator would generate.
+func (s *serverImpl) timbertruckConfigNeedsReload() bool {
+	if s.timbertruckConfigs == nil {
+		return false
+	}
+	if !s.timbertruckConfigs.Exists() {
+		return true
+	}
+	status, err := s.timbertruckConfigs.needReload()
+	return err == nil && status.IsNeedUpdate()
 }
 
 func (s *serverImpl) needSync(updating bool) bool {
@@ -251,6 +337,7 @@ func (s *serverImpl) needSync(updating bool) bool {
 		}
 	}
 	return !s.Exists() ||
+		s.timbertruckConfigNeedsReload() ||
 		s.statefulSet.GetReplicas() != s.getInstanceCount()
 }
 
@@ -258,6 +345,11 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	cm, err := s.configs.Build()
 	if err != nil {
 		return err
+	}
+	if s.timbertruckConfigs != nil {
+		if _, err := s.timbertruckConfigs.Build(); err != nil {
+			return err
+		}
 	}
 	_ = s.headlessService.Build()
 	_ = s.monitoringService.Build()
@@ -274,11 +366,16 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	return resources.Sync(ctx,
 		s.statefulSet,
 		s.configs,
+		s.timbertruckConfigs,
 		s.headlessService,
 		s.monitoringService,
 	)
 }
 
+// podsImageCorrespondsToSpec reports whether the running pods' container images match the spec.
+// Invariant: every key in s.sidecarImages must have a matching case in the switch below; otherwise
+// `found` can never reach len(s.sidecarImages) and the component would be stuck reporting a needed
+// image update forever. Add a case here when introducing a new tracked sidecar image.
 func (s *serverImpl) podsImageCorrespondsToSpec() bool {
 	found := 0
 	for _, container := range s.statefulSet.OldObject().Spec.Template.Spec.Containers {
@@ -314,6 +411,10 @@ func (s *serverImpl) needUpdate() ComponentStatus {
 	if status, err := s.configs.needReload(); err == nil && status.IsNeedUpdate() {
 		return status
 	}
+	// Note: timbertruck config-content drift is intentionally NOT reported here. Like the master's
+	// original behavior, it is handled by needSync as a local configmap re-sync (a "bypass"), so a
+	// timbertruck config change does not drag the component through the full update flow. The
+	// timbertruck sidecar image change IS caught above via podsImageCorrespondsToSpec (sidecarImages).
 	return ComponentStatusReady()
 }
 
@@ -570,6 +671,23 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 
 	// Native transport certificates are required only in server container.
 	s.addTlsSecretMount(serverContainer)
+
+	// Append the timbertruck log-delivery sidecar when enabled for this component. Both
+	// timbertruckConfigs and timbertruckDelivery are set together (resolveTimbertruckDelivery
+	// already required a logs location). The log mount itself is resolved from instanceSpec, so
+	// the sidecar sees the same volume and subPath as the server container; a logs location not
+	// covered by any volume mount is rejected by the webhook, so here we just skip the sidecar
+	// instead of failing the whole pod spec.
+	if s.timbertruckDelivery != nil {
+		addTimbertruckSidecar(
+			podSpec,
+			s.timbertruckDelivery.Image,
+			s.timbertruckVolumeMounts,
+			s.timbertruckConfigs.GetConfigMapName(),
+			timbertruckConfigFileName(s.labeller),
+		)
+		s.addCARootBundle(&podSpec.Containers[len(podSpec.Containers)-1])
+	}
 
 	s.builtStatefulSet = statefulSet
 	return statefulSet

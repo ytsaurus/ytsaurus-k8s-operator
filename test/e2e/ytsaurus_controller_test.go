@@ -1546,12 +1546,14 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			It("Should mount timbertruck configmap on master pods", func(ctx context.Context) {
 				masterLabeller := generator.GetComponentLabeller(consts.MasterType, "")
 				configMapName := masterLabeller.GetSidecarConfigMapName(consts.TimbertruckContainerName)
+				// Per-component file name so config overrides can target this component (see timbertruckConfigFileName).
+				configFileName := masterLabeller.GetFullComponentLabel() + "-timbertruck.yaml"
 
 				By("Checking timbertruck configmap exists with snake_case keys")
 				var configMap corev1.ConfigMap
 				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, &configMap)).Should(Succeed())
-				Expect(configMap.Data).To(HaveKey("config.yaml"))
-				configYaml := configMap.Data["config.yaml"]
+				Expect(configMap.Data).To(HaveKey(configFileName))
+				configYaml := configMap.Data[configFileName]
 				Expect(configYaml).To(ContainSubstring("work_dir:"))
 				Expect(configYaml).To(ContainSubstring("json_logs:"))
 				Expect(configYaml).To(ContainSubstring("queue_batch_size:"))
@@ -1575,20 +1577,143 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				}
 				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
 				Expect(ttContainer.Command).To(Equal([]string{
-					"/usr/bin/timbertruck_os", "-config", "/etc/timbertruck/config.yaml",
+					"/usr/bin/timbertruck_os", "-config", consts.TimbertruckConfigMountPoint + "/" + configFileName,
 				}))
 
 				configMounted := false
 				for _, m := range ttContainer.VolumeMounts {
-					if m.MountPath == "/etc/timbertruck" {
+					if m.MountPath == consts.TimbertruckConfigMountPoint {
 						configMounted = true
 						break
 					}
 				}
-				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount /etc/timbertruck"))
+				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.TimbertruckConfigMountPoint))
 			})
 
 		}) // update timbertruck
+
+		Context("With timbertruck on http-proxy", Label("timbertruck"), func() {
+			BeforeEach(func() {
+				// The sidecar image is defined cluster-wide; individual loggers opt in via enableDelivery.
+				ytBuilder.WithTimbertruckImage()
+				ytsaurus.Spec.HTTPProxies[0].InstanceSpec.Locations = append(
+					ytsaurus.Spec.HTTPProxies[0].InstanceSpec.Locations,
+					ytv1.LocationSpec{
+						LocationType: ytv1.LocationTypeLogs,
+						Path:         "/yt/logs",
+					},
+				)
+				ytsaurus.Spec.HTTPProxies[0].InstanceSpec.Volumes = append(
+					ytsaurus.Spec.HTTPProxies[0].InstanceSpec.Volumes,
+					ytv1.Volume{
+						Name: "logs",
+						VolumeSource: ytv1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{},
+						},
+					},
+				)
+				ytsaurus.Spec.HTTPProxies[0].InstanceSpec.VolumeMounts = append(
+					ytsaurus.Spec.HTTPProxies[0].InstanceSpec.VolumeMounts,
+					corev1.VolumeMount{
+						Name:      "logs",
+						MountPath: "/yt/logs",
+					},
+				)
+				ytsaurus.Spec.HTTPProxies[0].InstanceSpec.StructuredLoggers = append(
+					ytsaurus.Spec.HTTPProxies[0].InstanceSpec.StructuredLoggers,
+					ytv1.StructuredLoggerSpec{
+						Category: "Access",
+						BaseLoggerSpec: ytv1.BaseLoggerSpec{
+							Name:   "access",
+							Format: ytv1.LogFormatJson,
+						},
+						EnableDelivery: ptr.To(true),
+					},
+				)
+			})
+
+			It("Should mount timbertruck configmap on http-proxy pods", func(ctx context.Context) {
+				hpLabeller := generator.GetComponentLabeller(consts.HttpProxyType, ytsaurus.Spec.HTTPProxies[0].Role)
+				configMapName := hpLabeller.GetSidecarConfigMapName(consts.TimbertruckContainerName)
+				// Per-component file name so config overrides can target this component (see timbertruckConfigFileName).
+				configFileName := hpLabeller.GetFullComponentLabel() + "-timbertruck.yaml"
+
+				By("Checking timbertruck configmap exists with snake_case keys")
+				var configMap corev1.ConfigMap
+				Expect(k8sClient.Get(ctx, client.ObjectKey{Name: configMapName, Namespace: namespace}, &configMap)).Should(Succeed())
+				Expect(configMap.Data).To(HaveKey(configFileName))
+				configYaml := configMap.Data[configFileName]
+				Expect(configYaml).To(ContainSubstring("work_dir:"))
+				Expect(configYaml).To(ContainSubstring("json_logs:"))
+				Expect(configYaml).To(ContainSubstring("queue_batch_size:"))
+
+				By("Checking http-proxy statefulset has timbertruck container with configmap mounted")
+				var sts appsv1.StatefulSet
+				Expect(k8sClient.Get(ctx, client.ObjectKey{
+					Name:      hpLabeller.GetServerStatefulSetName(),
+					Namespace: namespace,
+				}, &sts)).Should(Succeed())
+
+				var ttContainer *corev1.Container
+				for i := range sts.Spec.Template.Spec.Containers {
+					c := &sts.Spec.Template.Spec.Containers[i]
+					if c.Name == consts.TimbertruckContainerName {
+						ttContainer = c
+						break
+					}
+				}
+				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
+				Expect(ttContainer.Command).To(Equal([]string{
+					"/usr/bin/timbertruck_os", "-config", consts.TimbertruckConfigMountPoint + "/" + configFileName,
+				}))
+
+				configMounted := false
+				for _, m := range ttContainer.VolumeMounts {
+					if m.MountPath == consts.TimbertruckConfigMountPoint {
+						configMounted = true
+						break
+					}
+				}
+				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.TimbertruckConfigMountPoint))
+
+				By("Checking timbertruck was prepared")
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveStatusConditionTrue(consts.ConditionTimbertruckPrepared))
+			})
+
+			// NOTE: this exercises that http-proxy delivery survives a full cluster update; it does not
+			// change the timbertruck image specifically (the test env has a single valid sidecar image).
+			It("Should keep timbertruck delivery after a cluster update", func(ctx context.Context) {
+				hpLabeller := generator.GetComponentLabeller(consts.HttpProxyType, ytsaurus.Spec.HTTPProxies[0].Role)
+
+				By("Triggering a cluster update")
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+				updateSpecToTriggerAllComponentUpdate(ytsaurus)
+				UpdateObject(ctx, ytsaurus)
+
+				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveClusterStateUpdating())
+
+				By("Waiting cluster update completes")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				Expect(ytsaurus).Should(HaveStatusConditionTrue(consts.ConditionTimbertruckPrepared))
+
+				By("Checking http-proxy statefulset still carries the timbertruck sidecar")
+				var sts appsv1.StatefulSet
+				Expect(k8sClient.Get(ctx, client.ObjectKey{
+					Name:      hpLabeller.GetServerStatefulSetName(),
+					Namespace: namespace,
+				}, &sts)).Should(Succeed())
+
+				hasTimbertruck := false
+				for i := range sts.Spec.Template.Spec.Containers {
+					if sts.Spec.Template.Spec.Containers[i].Name == consts.TimbertruckContainerName {
+						hasTimbertruck = true
+						break
+					}
+				}
+				Expect(hasTimbertruck).To(BeTrueBecause("timbertruck container must survive a cluster update"))
+			})
+
+		}) // update timbertruck http-proxy
 
 	}) // update
 

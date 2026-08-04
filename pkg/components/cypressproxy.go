@@ -32,6 +32,7 @@ func NewCypressProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus) *Cy
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetCypressProxiesConfig(resource.Spec.CypressProxies) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.CypressProxyMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

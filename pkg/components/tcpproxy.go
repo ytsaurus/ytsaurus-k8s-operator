@@ -36,6 +36,7 @@ func NewTCPProxy(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, masterR
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetTCPProxyConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.TCPProxyMonitoringPort,
 	)
 

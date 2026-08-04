@@ -69,6 +69,7 @@ func NewRPCProxy(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetRPCProxyConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.RPCProxyMonitoringPort,
 		WithContainerPorts(ports...),
 	)

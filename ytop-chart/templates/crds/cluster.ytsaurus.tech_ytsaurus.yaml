@@ -1137,6 +1137,10 @@ spec:
                           type: string
                         enableAnchorProfiling:
                           type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
+                          type: boolean
                         format:
                           default: plain_text
                           enum:
@@ -3137,6 +3141,10 @@ spec:
                           type: string
                         enableAnchorProfiling:
                           type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
+                          type: boolean
                         format:
                           default: plain_text
                           enum:
@@ -5012,6 +5020,10 @@ spec:
                           - zstd
                           type: string
                         enableAnchorProfiling:
+                          type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
                           type: boolean
                         format:
                           default: plain_text
@@ -6902,6 +6914,10 @@ spec:
                             type: string
                           enableAnchorProfiling:
                             type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
+                            type: boolean
                           format:
                             default: plain_text
                             enum:
@@ -8783,6 +8799,10 @@ spec:
                           - zstd
                           type: string
                         enableAnchorProfiling:
+                          type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
                           type: boolean
                         format:
                           default: plain_text
@@ -10980,6 +11000,10 @@ spec:
                             type: string
                           enableAnchorProfiling:
                             type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
+                            type: boolean
                           format:
                             default: plain_text
                             enum:
@@ -12922,6 +12946,10 @@ spec:
                             type: string
                           enableAnchorProfiling:
                             type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
+                            type: boolean
                           format:
                             default: plain_text
                             enum:
@@ -14853,6 +14881,10 @@ spec:
                             type: string
                           enableAnchorProfiling:
                             type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
+                            type: boolean
                           format:
                             default: plain_text
                             enum:
@@ -16745,6 +16777,10 @@ spec:
                           - zstd
                           type: string
                         enableAnchorProfiling:
+                          type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
                           type: boolean
                         format:
                           default: plain_text
@@ -18744,6 +18780,10 @@ spec:
                           type: string
                         enableAnchorProfiling:
                           type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
+                          type: boolean
                         format:
                           default: plain_text
                           enum:
@@ -18797,6 +18837,8 @@ spec:
                     format: int64
                     type: integer
                   timbertruck:
+                    description: TimbertruckSpec configures the timbertruck sidecar
+                      that delivers structured...
                     properties:
                       directoryPath:
                         type: string
@@ -20624,6 +20666,10 @@ spec:
                           - zstd
                           type: string
                         enableAnchorProfiling:
+                          type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
                           type: boolean
                         format:
                           default: plain_text
@@ -22496,6 +22542,10 @@ spec:
                           - zstd
                           type: string
                         enableAnchorProfiling:
+                          type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
                           type: boolean
                         format:
                           default: plain_text
@@ -24393,6 +24443,10 @@ spec:
                             - zstd
                             type: string
                           enableAnchorProfiling:
+                            type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
                             type: boolean
                           format:
                             default: plain_text
@@ -26307,6 +26361,10 @@ spec:
                           - zstd
                           type: string
                         enableAnchorProfiling:
+                          type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
                           type: boolean
                         format:
                           default: plain_text
@@ -28226,6 +28284,10 @@ spec:
                             type: string
                           enableAnchorProfiling:
                             type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
+                            type: boolean
                           format:
                             default: plain_text
                             enum:
@@ -28279,6 +28341,8 @@ spec:
                       format: int64
                       type: integer
                     timbertruck:
+                      description: TimbertruckSpec configures the timbertruck sidecar
+                        that delivers structured...
                       properties:
                         directoryPath:
                           type: string
@@ -30282,6 +30346,10 @@ spec:
                           type: string
                         enableAnchorProfiling:
                           type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
+                          type: boolean
                         format:
                           default: plain_text
                           enum:
@@ -32170,6 +32238,10 @@ spec:
                             - zstd
                             type: string
                           enableAnchorProfiling:
+                            type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
                             type: boolean
                           format:
                             default: plain_text
@@ -34079,6 +34151,10 @@ spec:
                             type: string
                           enableAnchorProfiling:
                             type: boolean
+                          enableDelivery:
+                            description: EnableDelivery turns on timbertruck delivery
+                              of this structured log to the...
+                            type: boolean
                           format:
                             default: plain_text
                             enum:
@@ -34922,6 +34998,15 @@ spec:
                   - portCount
                   type: object
                 type: array
+              timbertruck:
+                description: Cluster-wide timbertruck sidecar settings (image, logs
+                  delivery path) used by...
+                properties:
+                  directoryPath:
+                    type: string
+                  image:
+                    type: string
+                type: object
               tolerations:
                 description: Tolerations for instance and init job pods.
                 items:
@@ -36428,6 +36513,10 @@ spec:
                           - zstd
                           type: string
                         enableAnchorProfiling:
+                          type: boolean
+                        enableDelivery:
+                          description: EnableDelivery turns on timbertruck delivery
+                            of this structured log to the...
                           type: boolean
                         format:
                           default: plain_text

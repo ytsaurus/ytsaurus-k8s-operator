@@ -336,6 +336,10 @@ type TextLoggerSpec struct {
 type StructuredLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
 	Category       string `json:"category,omitempty"`
+	// EnableDelivery turns on timbertruck delivery of this structured log to the cluster log storage.
+	// Requires a timbertruck image to be configured (spec.timbertruck.image or, for masters, primaryMasters.timbertruck.image).
+	//+optional
+	EnableDelivery *bool `json:"enableDelivery,omitempty"`
 }
 
 type BundleBootstrapSpec struct {
@@ -494,6 +498,9 @@ type HydraPersistenceUploaderSpec struct {
 	Image *string `json:"image,omitempty"`
 }
 
+// TimbertruckSpec configures the timbertruck sidecar that delivers structured logs to the
+// cluster log storage. It is used both cluster-wide (spec.timbertruck) and as a per-component
+// override (e.g. primaryMasters.timbertruck).
 type TimbertruckSpec struct {
 	Image         *string `json:"image,omitempty"`
 	DirectoryPath *string `json:"directoryPath,omitempty"`
@@ -947,6 +954,12 @@ type CommonSpec struct {
 	// Default docker image for user jobs.
 	//+optional
 	JobImage *string `json:"jobImage,omitempty"`
+
+	// Cluster-wide timbertruck sidecar settings (image, logs delivery path) used by any component
+	// that enables log delivery via a structured logger's enableDelivery flag.
+	// Per-component overrides (e.g. primaryMasters.timbertruck) take precedence field-by-field.
+	//+optional
+	Timbertruck *TimbertruckSpec `json:"timbertruck,omitempty"`
 
 	// Reference to trusted root certificates. Default kind="ConfigMap", key="ca-certificates.crt".
 	// Will replace system CA root bundle for all server and job containers.

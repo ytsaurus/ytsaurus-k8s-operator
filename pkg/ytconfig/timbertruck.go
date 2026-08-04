@@ -29,7 +29,14 @@ type TimbertruckYTQueueConfig struct {
 	ProducerPath string `json:"producer_path" yson:"producer_path"`
 }
 
-func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir, componentName, logsDirectory, deliveryProxy, logsDeliveryPath string) *TimbertruckConfig {
+func NewTimbertruckConfig(
+	structuredLoggers []ytv1.StructuredLoggerSpec,
+	workDir,
+	componentName,
+	logsDirectory,
+	deliveryProxy,
+	logsDeliveryPath string,
+) *TimbertruckConfig {
 	timbertruckConfig := &TimbertruckConfig{
 		WorkDir:  workDir,
 		JsonLogs: []TimbertruckJsonLogConfig{},
@@ -69,6 +76,27 @@ func NewTimbertruckConfig(structuredLoggers []ytv1.StructuredLoggerSpec, workDir
 	}
 
 	return timbertruckConfig
+}
+
+func (g *NodeGenerator) GetTimbertruckConfig(
+	structuredLoggers []ytv1.StructuredLoggerSpec,
+	workDir,
+	componentName,
+	logsDirectory,
+	logsDeliveryPath string,
+) ([]byte, error) {
+	config := NewTimbertruckConfig(
+		structuredLoggers,
+		workDir,
+		componentName,
+		logsDirectory,
+		g.timbertruckDeliveryProxy,
+		logsDeliveryPath,
+	)
+	if config == nil {
+		return nil, nil
+	}
+	return config.ToYSON()
 }
 
 func (c *TimbertruckConfig) ToYSON() ([]byte, error) {

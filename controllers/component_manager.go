@@ -204,7 +204,7 @@ func NewComponentManager(
 		allComponents = append(allComponents, tb)
 	}
 
-	if resource.Spec.PrimaryMasters.Timbertruck != nil {
+	if components.TimbertruckDeliveryEnabled(&resource.Spec) {
 		tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
 		allComponents = append(allComponents, tt)
 	}

@@ -42,6 +42,7 @@ func NewExecNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetExecNodeConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.ExecNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

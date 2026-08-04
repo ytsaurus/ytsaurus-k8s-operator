@@ -60,11 +60,8 @@ func buildMasterOptions(mastersSpec *ytv1.MastersSpec) []Option {
 		))
 	}
 
-	checkAndAddTimbertruckToServerOptions(
-		&options,
-		mastersSpec.Timbertruck,
-		mastersSpec.InstanceSpec.StructuredLoggers,
-	)
+	// Masters keep a per-component timbertruck override; serverImpl handles the sidecar generically.
+	options = append(options, WithTimbertruck(mastersSpec.Timbertruck))
 
 	return options
 }
@@ -94,6 +91,7 @@ func NewMaster(
 				cfgen.GetNativeClientConfig,
 			},
 		},
+		cfgen.GetTimbertruckConfig,
 		consts.MasterMonitoringPort,
 		buildMasterOptions(mastersSpec)...,
 	)
@@ -482,22 +480,6 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	}
 
 	needSync := m.NeedSync()
-	if !needSync {
-		needTimbertruckSync, err := timbertruckConfigMapNeedsSync(
-			ctx,
-			m.ytsaurus,
-			m.ytsaurus.GetCommonSpec().ConfigOverrides,
-			m.mastersSpec.Timbertruck,
-			&m.mastersSpec.InstanceSpec,
-			m.labeller,
-			m.cfgen,
-		)
-		if err != nil {
-			return SimpleStatus(SyncStatusUpdating), err
-		}
-		needSync = needTimbertruckSync
-	}
-
 	if needSync {
 		if !dry {
 			err = m.doServerSync(ctx)
@@ -542,9 +524,6 @@ func (m *Master) doServerSync(ctx context.Context) error {
 		); err != nil {
 			return err
 		}
-	}
-	if err := checkAndAddTimbertruckToPodSpec(ctx, m.ytsaurus, m.ytsaurus.GetCommonSpec().ConfigOverrides, m.mastersSpec.Timbertruck, podSpec, &m.mastersSpec.InstanceSpec, m.labeller, m.cfgen); err != nil {
-		return err
 	}
 	if err := AddSidecarsToPodSpec(m.mastersSpec.Sidecars, podSpec); err != nil {
 		return err

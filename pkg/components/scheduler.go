@@ -56,6 +56,7 @@ func NewScheduler(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetSchedulerConfig(resource.Spec.Schedulers) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.SchedulerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

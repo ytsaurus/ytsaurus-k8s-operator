@@ -72,6 +72,24 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+func setupWebhooks(mgr ctrl.Manager) error {
+	setups := []func() error{
+		func() error { return validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewSpytValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewChytValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewRemoteExecNodesValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewRemoteDataNodesValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewRemoteTabletNodesValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewOffshoreDataGatewaysValidator().SetupWebhookWithManager(mgr) },
+	}
+	for _, setup := range setups {
+		if err := setup(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func main() {
 	var watchOperatorInstance string
 	var metricsAddr string
@@ -224,24 +242,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if enableWebhooks {
-		if err = validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Ytsaurus")
-			os.Exit(1)
-		}
-	}
-
 	if err = (&controllers.SpytReconciler{
 		BaseReconciler: baseReconciler("spyt-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Spyt")
 		os.Exit(1)
-	}
-	if enableWebhooks {
-		if err = validators.NewSpytValidator().SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Spyt")
-			os.Exit(1)
-		}
 	}
 
 	if err = (&controllers.ChytReconciler{
@@ -249,12 +254,6 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Chyt")
 		os.Exit(1)
-	}
-	if enableWebhooks {
-		if err = validators.NewChytValidator().SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Chyt")
-			os.Exit(1)
-		}
 	}
 
 	if err = (&controllers.RemoteExecNodesReconciler{
@@ -283,6 +282,12 @@ func main() {
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OffshoreDataGateways")
 		os.Exit(1)
+	}
+	if enableWebhooks {
+		if err = setupWebhooks(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhooks")
+			os.Exit(1)
+		}
 	}
 	//+kubebuilder:scaffold:builder
 

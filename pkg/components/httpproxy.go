@@ -78,6 +78,7 @@ func NewHTTPProxy(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetHTTPProxyConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.HTTPProxyMonitoringPort,
 		WithContainerPorts(containerPorts...),
 		WithCustomReadinessProbeEndpointPort(ptr.Deref(spec.HttpPort, consts.HTTPProxyHTTPPort)),

@@ -39,12 +39,14 @@ func NewOffshoreDataGateways(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetOffshoreDataGatewaysConfig(spec) },
 		}},
-		consts.OffshoreDataGatewayMonitoringPort,
-		WithContainerPorts(corev1.ContainerPort{
+		nil, // no timbertruck delivery for remote nodes
+		nil,
+		nil,
+		newServerOptions(&spec.InstanceSpec, consts.OffshoreDataGatewayMonitoringPort, WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
 			ContainerPort: consts.OffshoreDataGatewayRPCPort,
 			Protocol:      corev1.ProtocolTCP,
-		}),
+		})),
 	)
 	return &OffshoreDataGateway{
 		serverComponent: newServerComponent(l, proxy, srv),

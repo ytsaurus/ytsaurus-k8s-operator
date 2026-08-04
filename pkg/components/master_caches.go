@@ -40,6 +40,7 @@ func NewMasterCache(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetMasterCachesConfig(resource.Spec.MasterCaches) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.MasterCachesMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

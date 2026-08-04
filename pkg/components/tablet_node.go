@@ -56,6 +56,7 @@ func NewTabletNode(
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,

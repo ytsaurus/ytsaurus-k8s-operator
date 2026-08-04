@@ -44,6 +44,7 @@ func NewYQLAgent(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, yc inte
 			ConfigFormatYson,
 			func() ([]byte, error) { return cfgen.GetYQLAgentConfig(resource.Spec.YQLAgents) },
 		}},
+		cfgen.GetTimbertruckConfig,
 		consts.YQLAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
 			Name:          consts.YTRPCPortName,
