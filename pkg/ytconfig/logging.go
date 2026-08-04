@@ -3,6 +3,7 @@ package ytconfig
 import (
 	"fmt"
 	"path"
+	"slices"
 	"time"
 
 	"go.ytsaurus.tech/yt/go/yson"
@@ -239,27 +240,53 @@ func createBaseLoggingRule(spec ytv1.BaseLoggerSpec) LoggingRule {
 	}
 }
 
+// applyCategoriesFilter merges a categories filter into a logging rule. Include values are
+// appended to the categories already selected by the rule, skipping duplicates.
+func applyCategoriesFilter(loggingRule *LoggingRule, filter *ytv1.CategoriesFilter) {
+	if filter == nil {
+		return
+	}
+
+	switch filter.Type {
+	case ytv1.CategoriesFilterTypeExclude:
+		loggingRule.ExcludeCategories = append(loggingRule.ExcludeCategories, filter.Values...)
+
+	case ytv1.CategoriesFilterTypeInclude:
+		for _, category := range filter.Values {
+			if !slices.Contains(loggingRule.IncludeCategories, category) {
+				loggingRule.IncludeCategories = append(loggingRule.IncludeCategories, category)
+			}
+		}
+	}
+}
+
 func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 
 	loggingRule.Family = ptr.To(LogFamilyPlainText)
 
-	if spec.CategoriesFilter != nil {
-		switch spec.CategoriesFilter.Type {
-		case ytv1.CategoriesFilterTypeExclude:
-			loggingRule.ExcludeCategories = append(loggingRule.ExcludeCategories, spec.CategoriesFilter.Values...)
-
-		case ytv1.CategoriesFilterTypeInclude:
-			loggingRule.IncludeCategories = append(loggingRule.IncludeCategories, spec.CategoriesFilter.Values...)
-		}
-	}
+	applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
 	return loggingRule
 }
 
+// createStructuredLoggingRule selects the categories of a structured logger. Some structured logs
+// span several categories (e.g. the scheduler event log is written under both SchedulerStructuredLog
+// and SchedulerEventLog), so categoriesFilter may add categories to the single category field.
 func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 	loggingRule.Family = ptr.To(LogFamilyStructured)
-	loggingRule.IncludeCategories = []string{spec.Category}
+	if spec.Category != "" {
+		loggingRule.IncludeCategories = []string{spec.Category}
+	}
+
+	applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
+
+	// An absent include list makes the rule match every category, so a structured rule always keeps
+	// one: without it a logger with neither category nor include filter would silently widen from
+	// matching nothing to matching everything.
+	if loggingRule.IncludeCategories == nil {
+		loggingRule.IncludeCategories = []string{spec.Category}
+	}
 
 	return loggingRule
 }

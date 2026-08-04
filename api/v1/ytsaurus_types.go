@@ -336,6 +336,11 @@ type TextLoggerSpec struct {
 type StructuredLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
 	Category       string `json:"category,omitempty"`
+	// Additional include/exclude category filter applied on top of category.
+	// Lets one logger span several categories, e.g. the scheduler event log is written
+	// under both SchedulerStructuredLog and SchedulerEventLog. Type must be set.
+	//+optional
+	CategoriesFilter *CategoriesFilter `json:"categoriesFilter,omitempty"`
 	// EnableDelivery turns on timbertruck delivery of this structured log to the cluster log storage.
 	// Requires a timbertruck image to be configured (spec.timbertruck.image or, for masters, primaryMasters.timbertruck.image).
 	//+optional

@@ -1235,6 +1235,23 @@ spec:
               structuredLoggers:
                 items:
                   properties:
+                    categoriesFilter:
+                      description: Additional include/exclude category filter applied
+                        on top of category.
+                      properties:
+                        type:
+                          description: CategoriesFilterType string describes types
+                            of possible log CategoriesFilter.
+                          enum:
+                          - exclude
+                          - include
+                          type: string
+                        values:
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                      type: object
                     category:
                       type: string
                     compression:

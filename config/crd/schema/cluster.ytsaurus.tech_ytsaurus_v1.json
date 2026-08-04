@@ -1281,6 +1281,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -3628,6 +3649,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -5823,6 +5865,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -8024,6 +8087,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -10221,6 +10305,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -12818,6 +12923,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -15083,6 +15209,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -17329,6 +17476,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -19543,6 +19711,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -21898,6 +22087,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -24099,6 +24309,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -26288,6 +26519,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -28496,6 +28748,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -30731,6 +31004,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -32973,6 +33267,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -35390,6 +35705,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },
@@ -37590,6 +37926,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -39813,6 +40170,27 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "categoriesFilter": {
+                      "description": "Additional include/exclude category filter applied on top of category.",
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                          "type": "string",
+                          "enum": [
+                            "exclude",
+                            "include"
+                          ]
+                        },
+                        "values": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
                     "category": {
                       "type": "string"
                     },
@@ -42621,6 +42999,27 @@
               "items": {
                 "type": "object",
                 "properties": {
+                  "categoriesFilter": {
+                    "description": "Additional include/exclude category filter applied on top of category.",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                        "type": "string",
+                        "enum": [
+                          "exclude",
+                          "include"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
                   "category": {
                     "type": "string"
                   },

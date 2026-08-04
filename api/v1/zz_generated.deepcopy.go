@@ -2381,6 +2381,11 @@ func (in *StrawberryControllerSpec) DeepCopy() *StrawberryControllerSpec {
 func (in *StructuredLoggerSpec) DeepCopyInto(out *StructuredLoggerSpec) {
 	*out = *in
 	in.BaseLoggerSpec.DeepCopyInto(&out.BaseLoggerSpec)
+	if in.CategoriesFilter != nil {
+		in, out := &in.CategoriesFilter, &out.CategoriesFilter
+		*out = new(CategoriesFilter)
+		(*in).DeepCopyInto(*out)
+	}
 	if in.EnableDelivery != nil {
 		in, out := &in.EnableDelivery, &out.EnableDelivery
 		*out = new(bool)

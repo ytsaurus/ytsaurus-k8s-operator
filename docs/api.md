@@ -230,6 +230,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [StructuredLoggerSpec](#structuredloggerspec)
 - [TextLoggerSpec](#textloggerspec)
 
 | Field | Description | Default | Validation |
@@ -2793,6 +2794,7 @@ _Appears in:_
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `category` _string_ |  |  |  |
+| `categoriesFilter` _[CategoriesFilter](#categoriesfilter)_ | Additional include/exclude category filter applied on top of category.<br />Lets one logger span several categories, e.g. the scheduler event log is written<br />under both SchedulerStructuredLog and SchedulerEventLog. Type must be set. |  |  |
 | `enableDelivery` _boolean_ | EnableDelivery turns on timbertruck delivery of this structured log to the cluster log storage.<br />Requires a timbertruck image to be configured (spec.timbertruck.image or, for masters, primaryMasters.timbertruck.image). |  |  |
 
 

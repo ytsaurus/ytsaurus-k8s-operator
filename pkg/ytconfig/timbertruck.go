@@ -10,8 +10,12 @@ import (
 )
 
 type TimbertruckConfig struct {
-	WorkDir  string                     `json:"work_dir" yson:"work_dir"`
-	JsonLogs []TimbertruckJsonLogConfig `json:"json_logs" yson:"json_logs"`
+	WorkDir string `json:"work_dir" yson:"work_dir"`
+	// JsonLogs and YsonLogs are tracked by separate timbertruck pipelines: each one validates every
+	// line in its own format and drops the lines it cannot parse, so a logger must be listed under
+	// the section matching its format.
+	JsonLogs []TimbertruckJsonLogConfig `json:"json_logs,omitempty" yson:"json_logs,omitempty"`
+	YsonLogs []TimbertruckJsonLogConfig `json:"yson_logs,omitempty" yson:"yson_logs,omitempty"`
 }
 
 const timbertruckQueueBatchSize = 8 * 1024 * 1024 // 8 MiB
@@ -38,8 +42,7 @@ func NewTimbertruckConfig(
 	logsDeliveryPath string,
 ) *TimbertruckConfig {
 	timbertruckConfig := &TimbertruckConfig{
-		WorkDir:  workDir,
-		JsonLogs: []TimbertruckJsonLogConfig{},
+		WorkDir: workDir,
 	}
 
 	for _, structuredLogger := range structuredLoggers {
@@ -68,10 +71,14 @@ func NewTimbertruckConfig(
 			ProducerPath: fmt.Sprintf("%s/producer", deliveryPath),
 		})
 
-		timbertruckConfig.JsonLogs = append(timbertruckConfig.JsonLogs, timbertruckJsonLogConfig)
+		if structuredLogger.Format == ytv1.LogFormatYson {
+			timbertruckConfig.YsonLogs = append(timbertruckConfig.YsonLogs, timbertruckJsonLogConfig)
+		} else {
+			timbertruckConfig.JsonLogs = append(timbertruckConfig.JsonLogs, timbertruckJsonLogConfig)
+		}
 	}
 
-	if len(timbertruckConfig.JsonLogs) == 0 {
+	if len(timbertruckConfig.JsonLogs) == 0 && len(timbertruckConfig.YsonLogs) == 0 {
 		return nil
 	}
 
