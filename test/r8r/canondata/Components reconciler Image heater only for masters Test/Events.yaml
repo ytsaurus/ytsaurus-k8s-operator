@@ -25,6 +25,25 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
+    resourceVersion: "1"
+  lastTimestamp: null
+  message: Cluster state is Initializing
+  metadata:
+    namespace: ytsaurus-components
+  reason: ClusterState
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
     resourceVersion: "2"
   lastTimestamp: null
   message: Ready 0 of 1; daemon set ih-ms need sync
@@ -539,6 +558,25 @@
     kind: Ytsaurus
     name: test-ytsaurus
     namespace: ytsaurus-components
+    resourceVersion: "9"
+  lastTimestamp: null
+  message: Cluster state is Preparing
+  metadata:
+    namespace: ytsaurus-components
+  reason: ClusterState
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
     resourceVersion: "11"
   lastTimestamp: null
   message: Created YT object yt-client-secret (*v1.Secret)
@@ -678,6 +716,25 @@
   metadata:
     namespace: ytsaurus-components
   reason: CypressPatch
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "17"
+  lastTimestamp: null
+  message: Cluster state is Running
+  metadata:
+    namespace: ytsaurus-components
+  reason: ClusterState
   reportingComponent: ytsaurus
   reportingInstance: ""
   source:
