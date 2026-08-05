@@ -12,13 +12,13 @@ import (
 type TimbertruckConfig struct {
 	WorkDir string `json:"work_dir" yson:"work_dir"`
 	// Timbertruck validates each section in its own format and drops unparsable lines.
-	JsonLogs []TimbertruckJsonLogConfig `json:"json_logs,omitempty" yson:"json_logs,omitempty"`
-	YsonLogs []TimbertruckJsonLogConfig `json:"yson_logs,omitempty" yson:"yson_logs,omitempty"`
+	JsonLogs []TimbertruckLogConfig `json:"json_logs,omitempty" yson:"json_logs,omitempty"`
+	YsonLogs []TimbertruckLogConfig `json:"yson_logs,omitempty" yson:"yson_logs,omitempty"`
 }
 
 const timbertruckQueueBatchSize = 8 * 1024 * 1024 // 8 MiB
 
-type TimbertruckJsonLogConfig struct {
+type TimbertruckLogConfig struct {
 	Name           string                     `json:"name" yson:"name"`
 	LogFile        string                     `json:"log_file" yson:"log_file"`
 	QueueBatchSize int                        `json:"queue_batch_size" yson:"queue_batch_size"`
@@ -54,7 +54,7 @@ func NewTimbertruckConfig(
 			fileName += fmt.Sprintf(".%s", structuredLogger.Compression)
 		}
 
-		timbertruckJsonLogConfig := TimbertruckJsonLogConfig{
+		timbertruckLogConfig := TimbertruckLogConfig{
 			Name:           deliveryName,
 			LogFile:        fileName,
 			QueueBatchSize: timbertruckQueueBatchSize,
@@ -63,16 +63,16 @@ func NewTimbertruckConfig(
 
 		deliveryPath := fmt.Sprintf("%s/%s", logsDeliveryPath, deliveryName)
 
-		timbertruckJsonLogConfig.YTQueue = append(timbertruckJsonLogConfig.YTQueue, TimbertruckYTQueueConfig{
+		timbertruckLogConfig.YTQueue = append(timbertruckLogConfig.YTQueue, TimbertruckYTQueueConfig{
 			Cluster:      deliveryProxy,
 			QueuePath:    fmt.Sprintf("%s/queue", deliveryPath),
 			ProducerPath: fmt.Sprintf("%s/producer", deliveryPath),
 		})
 
 		if structuredLogger.Format == ytv1.LogFormatYson {
-			timbertruckConfig.YsonLogs = append(timbertruckConfig.YsonLogs, timbertruckJsonLogConfig)
+			timbertruckConfig.YsonLogs = append(timbertruckConfig.YsonLogs, timbertruckLogConfig)
 		} else {
-			timbertruckConfig.JsonLogs = append(timbertruckConfig.JsonLogs, timbertruckJsonLogConfig)
+			timbertruckConfig.JsonLogs = append(timbertruckConfig.JsonLogs, timbertruckLogConfig)
 		}
 	}
 
