@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"slices"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
@@ -488,7 +487,7 @@ func (tt *Timbertruck) prepareTimbertruckTables(ctx context.Context) error {
 }
 
 func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client, timbertruckConfig *ytconfig.TimbertruckConfig, logsDeliveryPath string) error {
-	for _, logConfig := range slices.Concat(timbertruckConfig.JsonLogs, timbertruckConfig.YsonLogs) {
+	for _, logConfig := range timbertruckConfig.AllLogs() {
 		for _, ytQueue := range logConfig.YTQueue {
 			queuePath := ytQueue.QueuePath
 			exportPath := fmt.Sprintf("%s/export/%s", logsDeliveryPath, logConfig.Name)
