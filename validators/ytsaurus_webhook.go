@@ -424,7 +424,6 @@ func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, pa
 			allErrors = append(allErrors, field.Invalid(loggerPath, logger.Name,
 				"exactly one of category and categoriesFilter must be set"))
 		}
-		// Otherwise the rule matches no category at all.
 		if logger.Category != nil && *logger.Category == "" {
 			allErrors = append(allErrors, field.Required(loggerPath.Child("category"),
 				"category must not be empty"))
