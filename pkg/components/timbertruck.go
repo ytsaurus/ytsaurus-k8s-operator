@@ -487,7 +487,7 @@ func (tt *Timbertruck) prepareTimbertruckTables(ctx context.Context) error {
 }
 
 func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client, timbertruckConfig *ytconfig.TimbertruckConfig, logsDeliveryPath string) error {
-	for _, logConfig := range timbertruckConfig.AllLogs() {
+	for _, logConfig := range timbertruckConfig.BaseLogConfigs() {
 		for _, ytQueue := range logConfig.YTQueue {
 			queuePath := ytQueue.QueuePath
 			exportPath := fmt.Sprintf("%s/export/%s", logsDeliveryPath, logConfig.Name)

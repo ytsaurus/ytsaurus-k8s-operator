@@ -25,8 +25,6 @@ type TimbertruckBaseLogConfig struct {
 	YTQueue        []TimbertruckYTQueueConfig `json:"yt_queue" yson:"yt_queue"`
 }
 
-// Identical to TimbertruckYsonLogConfig today, kept apart as timbertruck keeps its own
-// JSONLogConfig and YSONLogConfig, so that the sections can diverge.
 type TimbertruckJsonLogConfig struct {
 	TimbertruckBaseLogConfig
 }
@@ -35,8 +33,8 @@ type TimbertruckYsonLogConfig struct {
 	TimbertruckBaseLogConfig
 }
 
-// AllLogs returns every configured log regardless of its section.
-func (c *TimbertruckConfig) AllLogs() []TimbertruckBaseLogConfig {
+// BaseLogConfigs returns every configured log regardless of its section.
+func (c *TimbertruckConfig) BaseLogConfigs() []TimbertruckBaseLogConfig {
 	logs := make([]TimbertruckBaseLogConfig, 0, len(c.JsonLogs)+len(c.YsonLogs))
 	for _, logConfig := range c.JsonLogs {
 		logs = append(logs, logConfig.TimbertruckBaseLogConfig)
