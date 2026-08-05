@@ -1118,6 +1118,9 @@ type ClusterMaintenance struct {
 	// Component configs are not changed: cluster functions are degraded accordingly.
 	//+kubebuilder:validation:Enum={"Compute","Everything","ExceptMasters","Tablets"}
 	Shutdown ClusterShutdown `json:"shutdown"`
+	// Trigger master cells roles assignment.
+	// +optional
+	AssignMasterCellsRoles bool `json:"assignMasterCellsRoles,omitempty"`
 	// TODO: Add flags to stay in read-only, safe-mode, etc.
 }
 

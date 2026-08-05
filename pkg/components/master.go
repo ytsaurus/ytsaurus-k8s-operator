@@ -562,7 +562,7 @@ func (m *Master) NeedUpdate() ComponentStatus {
 	return m.server.needUpdate()
 }
 
-//nolint:cyclop //this is complex function
+//nolint:cyclop,nestif //this is complex function
 func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
@@ -624,6 +624,12 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 				})
 			case ytv1.UpdateStateWaitingForMasterCellsSettlement:
 				return m.initJob.RunUpdateScript(ctx, dry, m.ytsaurus, updateState, consts.MasterCellsSettlementScriptName, func() {
+					m.owner.SetStatusCondition(metav1.Condition{
+						Type:    consts.ConditionMasterCellsInitialized,
+						Status:  metav1.ConditionTrue,
+						Reason:  consts.PhaseCellsRolesAssignment,
+						Message: "Master cells roles assignment complete",
+					})
 					// Trigger master cells completion pass.
 					m.owner.SetStatusCondition(metav1.Condition{
 						Type:    consts.ConditionMasterCellsCompletion,
@@ -702,6 +708,31 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 			if !regisration {
 				m.server.setInstanceCount(0)
 			}
+		}
+		maintenance := m.ytsaurus.GetClusterMaintenance()
+		cellsInitialized := m.owner.GetStatusCondition(consts.ConditionMasterCellsInitialized)
+		if maintenance.Shutdown == ytv1.ClusterShutdownExceptMasters && maintenance.AssignMasterCellsRoles {
+			if cellsInitialized == nil || cellsInitialized.Reason != consts.PhaseCellsRolesAssignment {
+				m.owner.SetStatusCondition(metav1.Condition{
+					Type:    consts.ConditionMasterCellsInitialized,
+					Status:  metav1.ConditionFalse,
+					Reason:  consts.PhaseCellsRolesAssignment,
+					Message: "Master cells roles assignment is pending",
+				})
+				m.owner.SetStatusCondition(metav1.Condition{
+					Type:    consts.ConditionMasterCellsPreparation,
+					Status:  metav1.ConditionTrue,
+					Reason:  consts.PhaseClusterReconfiguration,
+					Message: "Master cells roles assignment is pending",
+				})
+			}
+		} else if cellsInitialized != nil && cellsInitialized.Reason == consts.PhaseCellsRolesAssignment && cellsInitialized.Status == metav1.ConditionTrue {
+			m.owner.SetStatusCondition(metav1.Condition{
+				Type:    consts.ConditionMasterCellsInitialized,
+				Status:  metav1.ConditionTrue,
+				Reason:  consts.PhaseCellsRolesAssigned,
+				Message: "Master cells roles assigned",
+			})
 		}
 	}
 

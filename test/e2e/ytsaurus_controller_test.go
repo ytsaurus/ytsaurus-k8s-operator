@@ -2441,6 +2441,37 @@ exec "$@"`
 					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.PrimaryMasters.CellTag)
 					By("Checking secondary cell")
 					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
+
+					By("Starting cluster maintenance to check master cell roles assignation")
+					ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{
+						Shutdown: ytv1.ClusterShutdownExceptMasters,
+					}
+					UpdateObject(ctx, ytsaurus)
+					By("Waiting cluster state maintenance")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(And(
+						HaveObservedGeneration(),
+						HaveClusterState(ytv1.ClusterStateMaintenance),
+					))
+
+					By("Assigning roles to third cell")
+					ytsaurus.Spec.ClusterMaintenance.AssignMasterCellsRoles = true
+					ytsaurus.Spec.SecondaryMasters[1].Roles = ytsaurus.Spec.SecondaryMasters[0].Roles
+					UpdateObject(ctx, ytsaurus)
+					By("Waiting cluster state maintenance")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(And(
+						HaveObservedGeneration(),
+						HaveClusterState(ytv1.ClusterStateMaintenance),
+					))
+
+					By("Ending cluster maintenance")
+					ytsaurus.Spec.ClusterMaintenance = nil
+					UpdateObject(ctx, ytsaurus)
+
+					By("Waiting cluster state running")
+					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+
+					By("Checking third cell")
+					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[1].CellTag)
 				})
 
 			}) // integration multicell maintenance

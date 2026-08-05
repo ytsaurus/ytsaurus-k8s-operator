@@ -195,15 +195,18 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 				fmt.Sprintf("Cannot grow bigger than previous minReadyInstanceCount*2-1 (%d) in one step", oldMinReady*2-1)))
 		}
 
-		oldMaintenance := ptr.Deref(oldYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Shutdown
-		newMaintenance := ptr.Deref(newYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Shutdown
-		if oldMaintenance != ytv1.ClusterShutdownExceptMasters || newMaintenance != ytv1.ClusterShutdownExceptMasters {
+		oldMaintenance := ptr.Deref(oldYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{})
+		newMaintenance := ptr.Deref(newYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{})
+		if oldMaintenance.Shutdown != ytv1.ClusterShutdownExceptMasters || newMaintenance.Shutdown != ytv1.ClusterShutdownExceptMasters {
 			if oldInstanceCount != newInstanceCount {
 				allErrors = append(allErrors, field.Forbidden(instanceCountPath, "Could be changed only during master cells maintenance"))
 			}
 			if cellRolesChanged {
 				allErrors = append(allErrors, field.Forbidden(rolesPath, "Could be changed only during master cells maintenance"))
 			}
+		}
+		if oldInstanceCount > 0 && cellRolesChanged && (oldMaintenance.AssignMasterCellsRoles || !newMaintenance.AssignMasterCellsRoles) {
+			allErrors = append(allErrors, field.Forbidden(rolesPath, "Could be changed only together with enabling assignMasterCellsRoles"))
 		}
 	}
 

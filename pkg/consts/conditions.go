@@ -69,6 +69,8 @@ const (
 // Instance initialization phases and init-job reasons.
 const (
 	PhaseCellsInitialization    = "CellsInitialization"
+	PhaseCellsRolesAssignment   = "CellsRolesAssignment"
+	PhaseCellsRolesAssigned     = "CellsRolesAssigned"
 	PhaseClusterInitialization  = "ClusterInitialization"
 	PhaseClusterReconfiguration = "ClusterReconfiguration"
 	PhaseCellRegistration       = "CellRegistration"
