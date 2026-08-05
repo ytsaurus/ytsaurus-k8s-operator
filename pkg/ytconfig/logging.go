@@ -3,7 +3,6 @@ package ytconfig
 import (
 	"fmt"
 	"path"
-	"slices"
 	"time"
 
 	"go.ytsaurus.tech/yt/go/yson"
@@ -240,7 +239,6 @@ func createBaseLoggingRule(spec ytv1.BaseLoggerSpec) LoggingRule {
 	}
 }
 
-// applyCategoriesFilter merges a filter into a rule, skipping already included categories.
 func applyCategoriesFilter(loggingRule *LoggingRule, filter *ytv1.CategoriesFilter) {
 	if filter == nil {
 		return
@@ -251,11 +249,7 @@ func applyCategoriesFilter(loggingRule *LoggingRule, filter *ytv1.CategoriesFilt
 		loggingRule.ExcludeCategories = append(loggingRule.ExcludeCategories, filter.Values...)
 
 	case ytv1.CategoriesFilterTypeInclude:
-		for _, category := range filter.Values {
-			if !slices.Contains(loggingRule.IncludeCategories, category) {
-				loggingRule.IncludeCategories = append(loggingRule.IncludeCategories, category)
-			}
-		}
+		loggingRule.IncludeCategories = append(loggingRule.IncludeCategories, filter.Values...)
 	}
 }
 
@@ -271,17 +265,9 @@ func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
 func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 	loggingRule.Family = ptr.To(LogFamilyStructured)
-	if spec.Category != "" {
-		loggingRule.IncludeCategories = []string{spec.Category}
-	}
+	loggingRule.IncludeCategories = []string{spec.Category}
 
 	applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
-
-	// An absent include list would make the rule match every category.
-	if loggingRule.IncludeCategories == nil {
-		loggingRule.IncludeCategories = []string{spec.Category}
-	}
-
 	return loggingRule
 }
 
