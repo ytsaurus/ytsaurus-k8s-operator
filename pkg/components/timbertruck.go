@@ -487,10 +487,10 @@ func (tt *Timbertruck) prepareTimbertruckTables(ctx context.Context) error {
 }
 
 func prepareTimbertruckTablesFromConfig(ctx context.Context, ytClient yt.Client, timbertruckConfig *ytconfig.TimbertruckConfig, logsDeliveryPath string) error {
-	for _, jsonLog := range timbertruckConfig.JsonLogs {
-		for _, ytQueue := range jsonLog.YTQueue {
+	for _, logConfig := range timbertruckConfig.BaseLogConfigs() {
+		for _, ytQueue := range logConfig.YTQueue {
 			queuePath := ytQueue.QueuePath
-			exportPath := fmt.Sprintf("%s/export/%s", logsDeliveryPath, jsonLog.Name)
+			exportPath := fmt.Sprintf("%s/export/%s", logsDeliveryPath, logConfig.Name)
 			if err := prepareQueue(ctx, ytClient, queuePath, exportPath); err != nil {
 				return fmt.Errorf("failed to prepare YT queue %s with export destination %s: %w", queuePath, exportPath, err)
 			}

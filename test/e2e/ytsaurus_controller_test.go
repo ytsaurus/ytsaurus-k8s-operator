@@ -1522,7 +1522,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers = append(
 					ytsaurus.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers,
 					ytv1.StructuredLoggerSpec{
-						Category: "Access",
+						Category: ptr.To("Access"),
 						BaseLoggerSpec: ytv1.BaseLoggerSpec{
 							Name:   "access",
 							Format: ytv1.LogFormatJson,
@@ -1623,7 +1623,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytsaurus.Spec.HTTPProxies[0].InstanceSpec.StructuredLoggers = append(
 					ytsaurus.Spec.HTTPProxies[0].InstanceSpec.StructuredLoggers,
 					ytv1.StructuredLoggerSpec{
-						Category: "Access",
+						Category: ptr.To("Access"),
 						BaseLoggerSpec: ytv1.BaseLoggerSpec{
 							Name:   "access",
 							Format: ytv1.LogFormatJson,

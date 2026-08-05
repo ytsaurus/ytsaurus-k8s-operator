@@ -10,17 +10,39 @@ import (
 )
 
 type TimbertruckConfig struct {
-	WorkDir  string                     `json:"work_dir" yson:"work_dir"`
-	JsonLogs []TimbertruckJsonLogConfig `json:"json_logs" yson:"json_logs"`
+	WorkDir string `json:"work_dir" yson:"work_dir"`
+	// Timbertruck validates each section in its own format and drops unparsable lines.
+	JsonLogs []TimbertruckJsonLogConfig `json:"json_logs,omitempty" yson:"json_logs,omitempty"`
+	YsonLogs []TimbertruckYsonLogConfig `json:"yson_logs,omitempty" yson:"yson_logs,omitempty"`
 }
 
 const timbertruckQueueBatchSize = 8 * 1024 * 1024 // 8 MiB
 
-type TimbertruckJsonLogConfig struct {
+type TimbertruckBaseLogConfig struct {
 	Name           string                     `json:"name" yson:"name"`
 	LogFile        string                     `json:"log_file" yson:"log_file"`
 	QueueBatchSize int                        `json:"queue_batch_size" yson:"queue_batch_size"`
 	YTQueue        []TimbertruckYTQueueConfig `json:"yt_queue" yson:"yt_queue"`
+}
+
+type TimbertruckJsonLogConfig struct {
+	TimbertruckBaseLogConfig
+}
+
+type TimbertruckYsonLogConfig struct {
+	TimbertruckBaseLogConfig
+}
+
+// BaseLogConfigs returns every configured log regardless of its section.
+func (c *TimbertruckConfig) BaseLogConfigs() []TimbertruckBaseLogConfig {
+	logs := make([]TimbertruckBaseLogConfig, 0, len(c.JsonLogs)+len(c.YsonLogs))
+	for _, logConfig := range c.JsonLogs {
+		logs = append(logs, logConfig.TimbertruckBaseLogConfig)
+	}
+	for _, logConfig := range c.YsonLogs {
+		logs = append(logs, logConfig.TimbertruckBaseLogConfig)
+	}
+	return logs
 }
 
 type TimbertruckYTQueueConfig struct {
@@ -38,8 +60,7 @@ func NewTimbertruckConfig(
 	logsDeliveryPath string,
 ) *TimbertruckConfig {
 	timbertruckConfig := &TimbertruckConfig{
-		WorkDir:  workDir,
-		JsonLogs: []TimbertruckJsonLogConfig{},
+		WorkDir: workDir,
 	}
 
 	for _, structuredLogger := range structuredLoggers {
@@ -53,7 +74,7 @@ func NewTimbertruckConfig(
 			fileName += fmt.Sprintf(".%s", structuredLogger.Compression)
 		}
 
-		timbertruckJsonLogConfig := TimbertruckJsonLogConfig{
+		baseLogConfig := TimbertruckBaseLogConfig{
 			Name:           deliveryName,
 			LogFile:        fileName,
 			QueueBatchSize: timbertruckQueueBatchSize,
@@ -62,16 +83,20 @@ func NewTimbertruckConfig(
 
 		deliveryPath := fmt.Sprintf("%s/%s", logsDeliveryPath, deliveryName)
 
-		timbertruckJsonLogConfig.YTQueue = append(timbertruckJsonLogConfig.YTQueue, TimbertruckYTQueueConfig{
+		baseLogConfig.YTQueue = append(baseLogConfig.YTQueue, TimbertruckYTQueueConfig{
 			Cluster:      deliveryProxy,
 			QueuePath:    fmt.Sprintf("%s/queue", deliveryPath),
 			ProducerPath: fmt.Sprintf("%s/producer", deliveryPath),
 		})
 
-		timbertruckConfig.JsonLogs = append(timbertruckConfig.JsonLogs, timbertruckJsonLogConfig)
+		if structuredLogger.Format == ytv1.LogFormatYson {
+			timbertruckConfig.YsonLogs = append(timbertruckConfig.YsonLogs, TimbertruckYsonLogConfig{baseLogConfig})
+		} else {
+			timbertruckConfig.JsonLogs = append(timbertruckConfig.JsonLogs, TimbertruckJsonLogConfig{baseLogConfig})
+		}
 	}
 
-	if len(timbertruckConfig.JsonLogs) == 0 {
+	if len(timbertruckConfig.JsonLogs) == 0 && len(timbertruckConfig.YsonLogs) == 0 {
 		return nil
 	}
 

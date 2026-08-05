@@ -6,13 +6,6 @@ json_logs:
   - cluster: http-proxies-lb.ytsaurus-dev.svc.cluster.local
     producer_path: //sys/admin/logs/master-access/producer
     queue_path: //sys/admin/logs/master-access/queue
-- log_file: /yt/master-logs/master.security.log.yson.zstd
-  name: master-security
-  queue_batch_size: 8388608
-  yt_queue:
-  - cluster: http-proxies-lb.ytsaurus-dev.svc.cluster.local
-    producer_path: //sys/admin/logs/master-security/producer
-    queue_path: //sys/admin/logs/master-security/queue
 - log_file: /yt/master-logs/master.other.log.zstd
   name: master-other
   queue_batch_size: 8388608
@@ -21,3 +14,11 @@ json_logs:
     producer_path: //sys/admin/logs/master-other/producer
     queue_path: //sys/admin/logs/master-other/queue
 work_dir: /yt/master-logs/timbertruck
+yson_logs:
+- log_file: /yt/master-logs/master.security.log.yson.zstd
+  name: master-security
+  queue_batch_size: 8388608
+  yt_queue:
+  - cluster: http-proxies-lb.ytsaurus-dev.svc.cluster.local
+    producer_path: //sys/admin/logs/master-security/producer
+    queue_path: //sys/admin/logs/master-security/queue

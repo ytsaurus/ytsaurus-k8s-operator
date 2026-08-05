@@ -1434,7 +1434,29 @@
           "items": {
             "type": "object",
             "properties": {
+              "categoriesFilter": {
+                "description": "Filter for logs spanning several categories. Type must be set.",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "description": "CategoriesFilterType string describes types of possible log CategoriesFilter.",
+                    "type": "string",
+                    "enum": [
+                      "exclude",
+                      "include"
+                    ]
+                  },
+                  "values": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
               "category": {
+                "description": "Exactly one of category and categoriesFilter must be set.",
                 "type": "string"
               },
               "compression": {

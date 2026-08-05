@@ -27,10 +27,20 @@ func TestValidateRemoteTimbertruck(t *testing.T) {
 		errors := validateRemoteTimbertruck(
 			&ytv1.CommonSpec{},
 			&ytv1.InstanceSpec{StructuredLoggers: []ytv1.StructuredLoggerSpec{{
+				Category:       ptr.To("Access"),
 				EnableDelivery: ptr.To(false),
 			}}},
 		)
 		require.Len(t, errors, 1)
 		require.Equal(t, "spec.structuredLoggers[0].enableDelivery", errors[0].Field)
+	})
+
+	t.Run("rejects structured logger without categories", func(t *testing.T) {
+		errors := validateRemoteTimbertruck(
+			&ytv1.CommonSpec{},
+			&ytv1.InstanceSpec{StructuredLoggers: []ytv1.StructuredLoggerSpec{{}}},
+		)
+		require.Len(t, errors, 1)
+		require.Equal(t, "spec.structuredLoggers[0]", errors[0].Field)
 	})
 }

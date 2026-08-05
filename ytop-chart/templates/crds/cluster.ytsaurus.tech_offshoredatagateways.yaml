@@ -1230,7 +1230,26 @@ spec:
               structuredLoggers:
                 items:
                   properties:
+                    categoriesFilter:
+                      description: Filter for logs spanning several categories. Type
+                        must be set.
+                      properties:
+                        type:
+                          description: CategoriesFilterType string describes types
+                            of possible log CategoriesFilter.
+                          enum:
+                          - exclude
+                          - include
+                          type: string
+                        values:
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                      type: object
                     category:
+                      description: Exactly one of category and categoriesFilter must
+                        be set.
                       type: string
                     compression:
                       default: none

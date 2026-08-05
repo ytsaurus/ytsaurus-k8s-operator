@@ -239,28 +239,38 @@ func createBaseLoggingRule(spec ytv1.BaseLoggerSpec) LoggingRule {
 	}
 }
 
+func applyCategoriesFilter(loggingRule *LoggingRule, filter *ytv1.CategoriesFilter) {
+	if filter == nil {
+		return
+	}
+
+	switch filter.Type {
+	case ytv1.CategoriesFilterTypeExclude:
+		loggingRule.ExcludeCategories = append(loggingRule.ExcludeCategories, filter.Values...)
+
+	case ytv1.CategoriesFilterTypeInclude:
+		loggingRule.IncludeCategories = append(loggingRule.IncludeCategories, filter.Values...)
+	}
+}
+
 func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 
 	loggingRule.Family = ptr.To(LogFamilyPlainText)
 
-	if spec.CategoriesFilter != nil {
-		switch spec.CategoriesFilter.Type {
-		case ytv1.CategoriesFilterTypeExclude:
-			loggingRule.ExcludeCategories = append(loggingRule.ExcludeCategories, spec.CategoriesFilter.Values...)
-
-		case ytv1.CategoriesFilterTypeInclude:
-			loggingRule.IncludeCategories = append(loggingRule.IncludeCategories, spec.CategoriesFilter.Values...)
-		}
-	}
+	applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
 	return loggingRule
 }
 
 func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 	loggingRule.Family = ptr.To(LogFamilyStructured)
-	loggingRule.IncludeCategories = []string{spec.Category}
 
+	if spec.CategoriesFilter != nil {
+		applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
+	} else {
+		loggingRule.IncludeCategories = []string{ptr.Deref(spec.Category, "")}
+	}
 	return loggingRule
 }
 

@@ -414,6 +414,30 @@ func (r *baseValidator) validateTimbertruckSpec(
 	return allErrors
 }
 
+func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, parentPath *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	for loggerIdx, logger := range structuredLoggers {
+		loggerPath := parentPath.Child("structuredLoggers").Index(loggerIdx)
+
+		if (logger.Category != nil) == (logger.CategoriesFilter != nil) {
+			allErrors = append(allErrors, field.Invalid(loggerPath, logger.Name,
+				"exactly one of category and categoriesFilter must be set"))
+		}
+		if logger.Category != nil && *logger.Category == "" {
+			allErrors = append(allErrors, field.Required(loggerPath.Child("category"),
+				"category must not be empty"))
+		}
+		// Without both, the rule ends up with no category restriction and matches every category.
+		if filter := logger.CategoriesFilter; filter != nil && (filter.Type == "" || len(filter.Values) == 0) {
+			allErrors = append(allErrors, field.Required(loggerPath.Child("categoriesFilter"),
+				"categoriesFilter requires type and values"))
+		}
+	}
+
+	return allErrors
+}
+
 func requireLocations(
 	locationsPath *field.Path,
 	locations []ytv1.LocationSpec,
@@ -445,6 +469,7 @@ func (r *ytsaurusValidator) validateExtraTimbertruckComponents(newYtsaurus *ytv1
 	validate := func(instanceSpec *ytv1.InstanceSpec, path *field.Path) {
 		allErrors = append(allErrors, r.validateTimbertruckSpec(nil, commonTimbertruck,
 			instanceSpec.StructuredLoggers, instanceSpec.Locations, path)...)
+		allErrors = append(allErrors, validateStructuredLoggers(instanceSpec.StructuredLoggers, path)...)
 	}
 
 	if mc := newYtsaurus.Spec.MasterCaches; mc != nil {
@@ -697,6 +722,8 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	allErrors = append(allErrors, r.validatePodSpec(&instanceSpec.PodSpec, path)...)
 
 	allErrors = append(allErrors, r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path)...)
+
+	allErrors = append(allErrors, validateStructuredLoggers(instanceSpec.StructuredLoggers, path)...)
 
 	if instanceSpec.EnableAntiAffinity != nil {
 		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,

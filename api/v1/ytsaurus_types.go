@@ -336,7 +336,13 @@ type TextLoggerSpec struct {
 
 type StructuredLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
-	Category       string `json:"category,omitempty"`
+	// Exactly one of category and categoriesFilter must be set.
+	//+optional
+	Category *string `json:"category,omitempty"`
+	// Filter for logs spanning several categories. Type must be set.
+	// Exactly one of category and categoriesFilter must be set.
+	//+optional
+	CategoriesFilter *CategoriesFilter `json:"categoriesFilter,omitempty"`
 	// EnableDelivery turns on timbertruck delivery of this structured log to the cluster log storage.
 	// Requires a timbertruck image to be configured (spec.timbertruck.image or, for masters, primaryMasters.timbertruck.image).
 	//+optional

@@ -230,6 +230,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [StructuredLoggerSpec](#structuredloggerspec)
 - [TextLoggerSpec](#textloggerspec)
 
 | Field | Description | Default | Validation |
@@ -2793,7 +2794,8 @@ _Appears in:_
 | `useTimestampSuffix` _boolean_ |  | false |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
-| `category` _string_ |  |  |  |
+| `category` _string_ | Exactly one of category and categoriesFilter must be set. |  |  |
+| `categoriesFilter` _[CategoriesFilter](#categoriesfilter)_ | Filter for logs spanning several categories. Type must be set.<br />Exactly one of category and categoriesFilter must be set. |  |  |
 | `enableDelivery` _boolean_ | EnableDelivery turns on timbertruck delivery of this structured log to the cluster log storage.<br />Requires a timbertruck image to be configured (spec.timbertruck.image or, for masters, primaryMasters.timbertruck.image). |  |  |
 
 
