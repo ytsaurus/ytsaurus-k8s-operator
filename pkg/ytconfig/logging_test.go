@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
@@ -17,7 +18,7 @@ func TestCreateStructuredLoggingRule(t *testing.T) {
 	}{
 		{
 			name:              "category",
-			spec:              ytv1.StructuredLoggerSpec{Category: "Access"},
+			spec:              ytv1.StructuredLoggerSpec{Category: ptr.To("Access")},
 			includeCategories: []string{"Access"},
 		},
 		{

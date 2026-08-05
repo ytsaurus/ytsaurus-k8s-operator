@@ -269,7 +269,7 @@ func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 	if spec.CategoriesFilter != nil {
 		applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
 	} else {
-		loggingRule.IncludeCategories = []string{spec.Category}
+		loggingRule.IncludeCategories = []string{ptr.Deref(spec.Category, "")}
 	}
 	return loggingRule
 }

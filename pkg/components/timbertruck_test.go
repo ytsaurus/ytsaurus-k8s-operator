@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 
 	v1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/canonize"
@@ -22,7 +23,7 @@ func TestGetTimbertruckConfig(t *testing.T) {
 	timbertruckConfig := ytconfig.NewTimbertruckConfig(
 		[]v1.StructuredLoggerSpec{
 			{
-				Category: "Access",
+				Category: ptr.To("Access"),
 				BaseLoggerSpec: v1.BaseLoggerSpec{
 					Name:               "access",
 					Format:             v1.LogFormatJson,
@@ -31,7 +32,7 @@ func TestGetTimbertruckConfig(t *testing.T) {
 				},
 			},
 			{
-				Category: "Security",
+				Category: ptr.To("Security"),
 				BaseLoggerSpec: v1.BaseLoggerSpec{
 					Name:        "security",
 					Format:      v1.LogFormatYson,
@@ -39,7 +40,7 @@ func TestGetTimbertruckConfig(t *testing.T) {
 				},
 			},
 			{
-				Category: "Other",
+				Category: ptr.To("Other"),
 				BaseLoggerSpec: v1.BaseLoggerSpec{
 					Name:        "other",
 					Format:      v1.LogFormatPlainText,

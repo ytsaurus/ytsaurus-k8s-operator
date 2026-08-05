@@ -420,9 +420,14 @@ func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, pa
 	for loggerIdx, logger := range structuredLoggers {
 		loggerPath := parentPath.Child("structuredLoggers").Index(loggerIdx)
 
-		if (logger.Category != "") == (logger.CategoriesFilter != nil) {
+		if (logger.Category != nil) == (logger.CategoriesFilter != nil) {
 			allErrors = append(allErrors, field.Invalid(loggerPath, logger.Name,
 				"exactly one of category and categoriesFilter must be set"))
+		}
+		// Otherwise the rule matches no category at all.
+		if logger.Category != nil && *logger.Category == "" {
+			allErrors = append(allErrors, field.Required(loggerPath.Child("category"),
+				"category must not be empty"))
 		}
 		// Without both, the rule ends up with no category restriction and matches every category.
 		if filter := logger.CategoriesFilter; filter != nil && (filter.Type == "" || len(filter.Values) == 0) {

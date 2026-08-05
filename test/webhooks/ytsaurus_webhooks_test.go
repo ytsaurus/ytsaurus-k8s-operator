@@ -419,7 +419,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 
 		It("Should accept Timbertruck with structured loggers, logs location and Image", func() {
 			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
-			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"}}
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: ptr.To("Access")}}
 			ytsaurus.Spec.PrimaryMasters.Locations = append(ytsaurus.Spec.PrimaryMasters.Locations, ytv1.LocationSpec{LocationType: ytv1.LocationTypeLogs, Path: "/yt/master-logs"})
 			ytsaurus.Spec.PrimaryMasters.VolumeMounts = append(ytsaurus.Spec.PrimaryMasters.VolumeMounts, corev1.VolumeMount{Name: "master-logs", MountPath: "/yt/master-logs"})
 
@@ -440,7 +440,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		It("Should not accept structured logger with both category and categories filter", func() {
 			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{
 				BaseLoggerSpec:   ytv1.BaseLoggerSpec{Name: "event"},
-				Category:         "Access",
+				Category:         ptr.To("Access"),
 				CategoriesFilter: &ytv1.CategoriesFilter{Type: ytv1.CategoriesFilterTypeInclude, Values: []string{"Security"}},
 			}}
 
@@ -470,9 +470,20 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			))
 		})
 
+		It("Should not accept structured logger with empty category", func() {
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{
+				BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "event"},
+				Category:       ptr.To(""),
+			}}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("category must not be empty"),
+			))
+		})
+
 		It("Should not accept Timbertruck with uncovered log location", func() {
 			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
-			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"}}
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: ptr.To("Access")}}
 
 			ytsaurus.Spec.PrimaryMasters.Locations = []ytv1.LocationSpec{
 				{LocationType: ytv1.LocationTypeLogs, Path: "/yt/uncovered-logs"},

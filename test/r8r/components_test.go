@@ -706,7 +706,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytsaurus.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers = append(
 				ytsaurus.Spec.PrimaryMasters.InstanceSpec.StructuredLoggers,
 				ytv1.StructuredLoggerSpec{
-					Category: "Access",
+					Category: ptr.To("Access"),
 					BaseLoggerSpec: ytv1.BaseLoggerSpec{
 						Name:   "access",
 						Format: ytv1.LogFormatJson,

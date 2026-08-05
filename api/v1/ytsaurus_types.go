@@ -337,7 +337,7 @@ type StructuredLoggerSpec struct {
 	BaseLoggerSpec `json:",inline"`
 	// Exactly one of category and categoriesFilter must be set.
 	//+optional
-	Category string `json:"category,omitempty"`
+	Category *string `json:"category,omitempty"`
 	// Filter for logs spanning several categories. Type must be set.
 	// Exactly one of category and categoriesFilter must be set.
 	//+optional

@@ -27,7 +27,7 @@ func TestValidateRemoteTimbertruck(t *testing.T) {
 		errors := validateRemoteTimbertruck(
 			&ytv1.CommonSpec{},
 			&ytv1.InstanceSpec{StructuredLoggers: []ytv1.StructuredLoggerSpec{{
-				Category:       "Access",
+				Category:       ptr.To("Access"),
 				EnableDelivery: ptr.To(false),
 			}}},
 		)
