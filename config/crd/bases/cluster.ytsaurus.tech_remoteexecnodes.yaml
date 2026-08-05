@@ -1495,8 +1495,8 @@ spec:
                 items:
                   properties:
                     categoriesFilter:
-                      description: Additional include/exclude category filter applied
-                        on top of category.
+                      description: Category filter for logs spanning several categories,
+                        as for text loggers.
                       properties:
                         type:
                           description: CategoriesFilterType string describes types
@@ -1512,6 +1512,7 @@ spec:
                           type: array
                       type: object
                     category:
+                      description: Single category to log.
                       type: string
                     compression:
                       default: none

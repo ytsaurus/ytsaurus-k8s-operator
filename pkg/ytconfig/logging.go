@@ -265,9 +265,12 @@ func createLoggingRule(spec ytv1.TextLoggerSpec) LoggingRule {
 func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 	loggingRule := createBaseLoggingRule(spec.BaseLoggerSpec)
 	loggingRule.Family = ptr.To(LogFamilyStructured)
-	loggingRule.IncludeCategories = []string{spec.Category}
 
-	applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
+	if spec.CategoriesFilter != nil {
+		applyCategoriesFilter(&loggingRule, spec.CategoriesFilter)
+	} else {
+		loggingRule.IncludeCategories = []string{spec.Category}
+	}
 	return loggingRule
 }
 

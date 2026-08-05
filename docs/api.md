@@ -2793,8 +2793,8 @@ _Appears in:_
 | `useTimestampSuffix` _boolean_ |  | false |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
-| `category` _string_ |  |  |  |
-| `categoriesFilter` _[CategoriesFilter](#categoriesfilter)_ | Additional include/exclude category filter applied on top of category.<br />Type must be set. |  |  |
+| `category` _string_ | Single category to log. Exactly one of category and categoriesFilter must be set. |  |  |
+| `categoriesFilter` _[CategoriesFilter](#categoriesfilter)_ | Category filter for logs spanning several categories, as for text loggers.<br />Type must be set. Exactly one of category and categoriesFilter must be set. |  |  |
 | `enableDelivery` _boolean_ | EnableDelivery turns on timbertruck delivery of this structured log to the cluster log storage.<br />Requires a timbertruck image to be configured (spec.timbertruck.image or, for masters, primaryMasters.timbertruck.image). |  |  |
 
 

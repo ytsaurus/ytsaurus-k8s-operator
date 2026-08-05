@@ -1444,7 +1444,7 @@
             "type": "object",
             "properties": {
               "categoriesFilter": {
-                "description": "Additional include/exclude category filter applied on top of category.",
+                "description": "Category filter for logs spanning several categories, as for text loggers.",
                 "type": "object",
                 "properties": {
                   "type": {
@@ -1465,6 +1465,7 @@
                 }
               },
               "category": {
+                "description": "Single category to log.",
                 "type": "string"
               },
               "compression": {

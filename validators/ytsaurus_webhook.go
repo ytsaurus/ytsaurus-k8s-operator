@@ -414,6 +414,20 @@ func (r *baseValidator) validateTimbertruckSpec(
 	return allErrors
 }
 
+func (r *baseValidator) validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, parentPath *field.Path) field.ErrorList {
+	var allErrors field.ErrorList
+
+	for loggerIdx, logger := range structuredLoggers {
+		if (logger.Category != "") == (logger.CategoriesFilter != nil) {
+			allErrors = append(allErrors, field.Invalid(
+				parentPath.Child("structuredLoggers").Index(loggerIdx), logger.Name,
+				"exactly one of category and categoriesFilter must be set"))
+		}
+	}
+
+	return allErrors
+}
+
 func requireLocations(
 	locationsPath *field.Path,
 	locations []ytv1.LocationSpec,
@@ -697,6 +711,8 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	allErrors = append(allErrors, r.validatePodSpec(&instanceSpec.PodSpec, path)...)
 
 	allErrors = append(allErrors, r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path)...)
+
+	allErrors = append(allErrors, r.validateStructuredLoggers(instanceSpec.StructuredLoggers, path)...)
 
 	if instanceSpec.EnableAntiAffinity != nil {
 		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,

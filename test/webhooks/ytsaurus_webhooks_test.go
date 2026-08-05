@@ -427,6 +427,38 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})
 
+		It("Should accept structured logger with categories filter instead of category", func() {
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{
+				BaseLoggerSpec:   ytv1.BaseLoggerSpec{Name: "event"},
+				CategoriesFilter: &ytv1.CategoriesFilter{Type: ytv1.CategoriesFilterTypeInclude, Values: []string{"Access", "Security"}},
+			}}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
+		})
+
+		It("Should not accept structured logger with both category and categories filter", func() {
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{
+				BaseLoggerSpec:   ytv1.BaseLoggerSpec{Name: "event"},
+				Category:         "Access",
+				CategoriesFilter: &ytv1.CategoriesFilter{Type: ytv1.CategoriesFilterTypeInclude, Values: []string{"Security"}},
+			}}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("exactly one of category and categoriesFilter must be set"),
+			))
+		})
+
+		It("Should not accept structured logger with neither category nor categories filter", func() {
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{
+				BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "event"},
+			}}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("exactly one of category and categoriesFilter must be set"),
+			))
+		})
+
 		It("Should not accept Timbertruck with uncovered log location", func() {
 			ytsaurus.Spec.PrimaryMasters.Timbertruck = &ytv1.TimbertruckSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
 			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "access"}, Category: "Access"}}
