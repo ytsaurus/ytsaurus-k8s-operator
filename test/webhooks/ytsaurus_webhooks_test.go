@@ -449,6 +449,17 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			))
 		})
 
+		It("Should not accept structured logger with categories filter missing type or values", func() {
+			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{
+				BaseLoggerSpec:   ytv1.BaseLoggerSpec{Name: "event"},
+				CategoriesFilter: &ytv1.CategoriesFilter{Values: []string{"Access"}},
+			}}
+
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(
+				ContainSubstring("categoriesFilter requires type and values"),
+			))
+		})
+
 		It("Should not accept structured logger with neither category nor categories filter", func() {
 			ytsaurus.Spec.PrimaryMasters.StructuredLoggers = []ytv1.StructuredLoggerSpec{{
 				BaseLoggerSpec: ytv1.BaseLoggerSpec{Name: "event"},

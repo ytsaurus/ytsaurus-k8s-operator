@@ -1231,8 +1231,8 @@ spec:
                 items:
                   properties:
                     categoriesFilter:
-                      description: Category filter for logs spanning several categories,
-                        as for text loggers.
+                      description: Filter for logs spanning several categories. Type
+                        must be set.
                       properties:
                         type:
                           description: CategoriesFilterType string describes types
@@ -1248,7 +1248,8 @@ spec:
                           type: array
                       type: object
                     category:
-                      description: Single category to log.
+                      description: Exactly one of category and categoriesFilter must
+                        be set.
                       type: string
                     compression:
                       default: none

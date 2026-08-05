@@ -40,6 +40,7 @@ func validateRemoteTimbertruck(commonSpec *ytv1.CommonSpec, instanceSpec *ytv1.I
 			))
 		}
 	}
+	allErrors = append(allErrors, validateStructuredLoggers(instanceSpec.StructuredLoggers, specPath)...)
 	return allErrors
 }
 
