@@ -8,6 +8,7 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,6 +61,11 @@ func podContainerIsReady(pod *corev1.Pod, name string) bool {
 func podContainerNames(pod *corev1.Pod, names []string) []string {
 	if len(names) == 0 {
 		for _, ct := range pod.Spec.Containers {
+			// Log delivery must not gate readiness: kubelet restarts the sidecar on its own,
+			// while a failing one would otherwise stall the whole cluster update.
+			if ct.Name == consts.TimbertruckContainerName {
+				continue
+			}
 			names = append(names, ct.Name)
 		}
 	}
