@@ -37,6 +37,8 @@ on:
 env:
   DEBUG: "${{ inputs.DEBUG }}"
   TEST_YTSAURUS_VERSION: "${{ inputs.TEST_YTSAURUS_VERSION }}"
+  GINKGO_PROCS: "2"
+  GINKGO_TIMEOUT: "2h"
 
 jobs:
   check:
@@ -45,7 +47,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 6
       matrix:
         e2e:
           - name: "update basic"
@@ -53,11 +55,13 @@ jobs:
           - name: "update plan"
             filter: "update && plan"
           - name: "update other"
-            filter: "update && !(basic || plan)"
+            filter: "update && !(basic || plan || multicell)"
           - name: "tls"
             filter: "tls"
+          - name: "multicell"
+            filter: "multicell"
           - name: "other"
-            filter: "!(update || tls)"
+            filter: "!(update || tls || multicell)"
           - name: "${{ inputs.e2e_filter }}"
             filter: "${{ inputs.e2e_filter }}"
             from_input: true

@@ -891,10 +891,6 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 						Skip("YTsaurus old/new version does not support multicell")
 					}
 
-					if os.Getenv("YTSAURUS_MULTICELL_READY") == "" {
-						Skip("Multicell cluster initialization is broken")
-					}
-
 					By("Setting 3 master replicas")
 					ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
 
@@ -2327,10 +2323,6 @@ exec "$@"`
 			Context("Create cluster with secondary master", Label("initialization"), func() {
 
 				BeforeEach(func() {
-					if os.Getenv("YTSAURUS_MULTICELL_READY") == "" {
-						Skip("Multicell cluster initialization is broken")
-					}
-
 					By("Setting 3 replicas for each master cell")
 					ytsaurus.Spec.PrimaryMasters.InstanceCount = 3
 
