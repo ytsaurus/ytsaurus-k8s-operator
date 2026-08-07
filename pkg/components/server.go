@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"path"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -583,9 +584,18 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 	filename := s.configs.generators[0].FileName
 
+	// The sidecar config goes through the same postprocessing, so that it can use the same placeholders.
+	configTemplatePaths := []string{path.Join(consts.ConfigTemplateMountPoint, filename)}
+	postprocessVolumeMounts := volumeMounts
+	if s.timbertruckDelivery != nil {
+		configTemplatePaths = append(configTemplatePaths,
+			path.Join(consts.TimbertruckConfigMountPoint, timbertruckConfigFileName(s.labeller)))
+		postprocessVolumeMounts = append(slices.Clone(volumeMounts), timbertruckConfigTemplateVolumeMount())
+	}
+
 	configPostprocessingCommand := getConfigPostprocessingCommand(
 		path.Join(consts.ConfigMountPoint, consts.PostprocessConfigScriptName),
-		path.Join(consts.ConfigTemplateMountPoint, filename))
+		configTemplatePaths...)
 
 	var readinessProbeParams ytv1.HealthcheckProbeParams
 	if s.instanceSpec.ReadinessProbeParams != nil {
@@ -642,7 +652,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Name:         consts.PostprocessConfigContainerName,
 				Command:      []string{"bash", "-xc", configPostprocessingCommand},
 				Env:          getDefaultEnv(),
-				VolumeMounts: volumeMounts,
+				VolumeMounts: postprocessVolumeMounts,
 			},
 		},
 		Volumes:      volumes,

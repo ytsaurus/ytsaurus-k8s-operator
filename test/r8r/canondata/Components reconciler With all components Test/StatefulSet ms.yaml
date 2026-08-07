@@ -136,18 +136,9 @@ spec:
         - mountPath: /shared-binaries
           name: shared-binaries
       - command:
-        - bash
-        - -xc
-        - echo 'Postprocess config yt-master-timbertruck.yaml';echo 'cp /etc/timbertruck/yt-master-timbertruck.yaml
-          /config/yt-master-timbertruck.yaml; sed -i -s "s/{K8S_POD_NAME}/${K8S_POD_NAME}/g"
-          /config/yt-master-timbertruck.yaml; sed -i -s "s/{K8S_POD_NAMESPACE}/${K8S_POD_NAMESPACE}/g"
-          /config/yt-master-timbertruck.yaml; sed -i -s "s/{K8S_NODE_NAME}/${K8S_NODE_NAME}/g"
-          /config/yt-master-timbertruck.yaml; sed -i -s "s/{POD_FQDN}/$(hostname -f)/g"
-          /config/yt-master-timbertruck.yaml; sed -i -s "s/{POD_SHORT_HOSTNAME}/$(hostname
-          -s)/g" /config/yt-master-timbertruck.yaml; ' > /config/postprocess-timbertruck-config.sh;
-          chmod +x '/config/postprocess-timbertruck-config.sh'; source /config/postprocess-timbertruck-config.sh;
-          cat /config/yt-master-timbertruck.yaml;  exec /usr/bin/timbertruck_os -config
-          /config/yt-master-timbertruck.yaml
+        - /usr/bin/timbertruck_os
+        - -config
+        - /config/yt-master-timbertruck.yaml
         env:
         - name: YT_TOKEN
           valueFrom:
@@ -181,9 +172,6 @@ spec:
           name: logs
         - mountPath: /yt/master-logs
           name: master-logs
-        - mountPath: /etc/timbertruck
-          name: timbertruck-config
-          readOnly: true
         - mountPath: /config
           name: config
         - mountPath: /etc/ssl/certs
@@ -289,15 +277,22 @@ spec:
       - command:
         - bash
         - -xc
-        - 'echo ''Postprocess config ytserver-master.yson'';echo ''cp /config_template/ytserver-master.yson
+        - 'echo ''Postprocess config ytserver-master.yson'';echo ''Postprocess config
+          yt-master-timbertruck.yaml'';echo ''cp /config_template/ytserver-master.yson
           /config/ytserver-master.yson; sed -i -s "s/{K8S_POD_NAME}/${K8S_POD_NAME}/g"
           /config/ytserver-master.yson; sed -i -s "s/{K8S_POD_NAMESPACE}/${K8S_POD_NAMESPACE}/g"
           /config/ytserver-master.yson; sed -i -s "s/{K8S_NODE_NAME}/${K8S_NODE_NAME}/g"
           /config/ytserver-master.yson; sed -i -s "s/{POD_FQDN}/$(hostname -f)/g"
           /config/ytserver-master.yson; sed -i -s "s/{POD_SHORT_HOSTNAME}/$(hostname
-          -s)/g" /config/ytserver-master.yson; '' > /config/postprocess-config.sh;
+          -s)/g" /config/ytserver-master.yson; cp /etc/timbertruck/yt-master-timbertruck.yaml
+          /config/yt-master-timbertruck.yaml; sed -i -s "s/{K8S_POD_NAME}/${K8S_POD_NAME}/g"
+          /config/yt-master-timbertruck.yaml; sed -i -s "s/{K8S_POD_NAMESPACE}/${K8S_POD_NAMESPACE}/g"
+          /config/yt-master-timbertruck.yaml; sed -i -s "s/{K8S_NODE_NAME}/${K8S_NODE_NAME}/g"
+          /config/yt-master-timbertruck.yaml; sed -i -s "s/{POD_FQDN}/$(hostname -f)/g"
+          /config/yt-master-timbertruck.yaml; sed -i -s "s/{POD_SHORT_HOSTNAME}/$(hostname
+          -s)/g" /config/yt-master-timbertruck.yaml; '' > /config/postprocess-config.sh;
           chmod +x ''/config/postprocess-config.sh''; source /config/postprocess-config.sh;
-          cat /config/ytserver-master.yson; '
+          cat /config/ytserver-master.yson; cat /config/yt-master-timbertruck.yaml; '
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -338,6 +333,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/timbertruck
+          name: timbertruck-config
+          readOnly: true
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true

@@ -1574,9 +1574,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					}
 				}
 				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
-				Expect(ttContainer.Command).To(HaveLen(3))
-				Expect(ttContainer.Command[2]).To(ContainSubstring(
-					"exec /usr/bin/timbertruck_os -config " + consts.ConfigMountPoint + "/" + configFileName))
+				Expect(ttContainer.Command).To(Equal([]string{
+					"/usr/bin/timbertruck_os", "-config", consts.ConfigMountPoint + "/" + configFileName,
+				}))
 
 				configMounted := false
 				for _, m := range ttContainer.VolumeMounts {
@@ -1661,9 +1661,9 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					}
 				}
 				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
-				Expect(ttContainer.Command).To(HaveLen(3))
-				Expect(ttContainer.Command[2]).To(ContainSubstring(
-					"exec /usr/bin/timbertruck_os -config " + consts.ConfigMountPoint + "/" + configFileName))
+				Expect(ttContainer.Command).To(Equal([]string{
+					"/usr/bin/timbertruck_os", "-config", consts.ConfigMountPoint + "/" + configFileName,
+				}))
 
 				configMounted := false
 				for _, m := range ttContainer.VolumeMounts {

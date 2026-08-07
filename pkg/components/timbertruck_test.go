@@ -102,20 +102,16 @@ var _ = Describe("buildTimbertruckVolumeMounts", func() {
 
 		mounts, err := buildTimbertruckVolumeMounts(instanceSpec)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(mounts).To(HaveLen(3))
+		Expect(mounts).To(HaveLen(2))
 
 		Expect(mounts[0].Name).To(Equal("logs-vol"))
 		Expect(mounts[0].MountPath).To(Equal("/yt/logs/master-logs/logs"))
 		Expect(mounts[0].SubPath).To(Equal("master-logs/logs"))
 		Expect(mounts[0].ReadOnly).To(BeFalseBecause("timbertruck must be able to write to logs location"))
 
-		Expect(mounts[1].Name).To(Equal(timbertruckConfigVolumeName))
-		Expect(mounts[1].MountPath).To(Equal(consts.TimbertruckConfigMountPoint))
-		Expect(mounts[1].ReadOnly).To(BeTrueBecause("the raw config is only read from"))
-
-		Expect(mounts[2].Name).To(Equal(consts.ConfigVolumeName))
-		Expect(mounts[2].MountPath).To(Equal(consts.ConfigMountPoint))
-		Expect(mounts[2].ReadOnly).To(BeFalseBecause("the postprocessed config is written into this volume"))
+		Expect(mounts[1].Name).To(Equal(consts.ConfigVolumeName))
+		Expect(mounts[1].MountPath).To(Equal(consts.ConfigMountPoint))
+		Expect(mounts[1].ReadOnly).To(BeFalseBecause("the postprocessed config is written into this volume"))
 	})
 
 	It("errors when no logs location is defined", func() {
