@@ -199,12 +199,14 @@ func getLocationInitCommand(locations []ytv1.LocationSpec) string {
 	return command.String()
 }
 
-func getConfigPostprocessingCommand(postprocessScriptPath string, configTemplatePaths ...string) string {
+func getConfigPostprocessingCommand(configTemplatePaths ...string) string {
 	var command strings.Builder
 
 	// Store postprocessing as a script on filesystem to ease up manual
 	// config re-initialization without pod recreation. This will be useful
 	// when operator starts restarting processes without container recreation.
+
+	postprocessScriptPath := path.Join(consts.ConfigMountPoint, consts.PostprocessConfigScriptName)
 
 	var postprocessScript strings.Builder
 
@@ -218,11 +220,9 @@ func getConfigPostprocessingCommand(postprocessScriptPath string, configTemplate
 		fmt.Fprintf(&postprocessScript, "sed -i -s \"s/{%v}/$(%v)/g\" %v; ", placeholder, command, configPath)
 	}
 
-	configPaths := make([]string, 0, len(configTemplatePaths))
 	for _, configTemplatePath := range configTemplatePaths {
 		configFileName := path.Base(configTemplatePath)
 		configPath := path.Join(consts.ConfigMountPoint, configFileName)
-		configPaths = append(configPaths, configPath)
 
 		fmt.Fprintf(&command, "echo 'Postprocess config %v';", configFileName)
 		fmt.Fprintf(&postprocessScript, "cp %v %v; ", configTemplatePath, configPath)
@@ -238,8 +238,8 @@ func getConfigPostprocessingCommand(postprocessScriptPath string, configTemplate
 	fmt.Fprintf(&command, "echo '%v' > %v; ", postprocessScript.String(), postprocessScriptPath)
 	fmt.Fprintf(&command, "chmod +x '%v'; ", postprocessScriptPath)
 	fmt.Fprintf(&command, "source %v; ", postprocessScriptPath)
-	for _, configPath := range configPaths {
-		fmt.Fprintf(&command, "cat %v; ", configPath)
+	for _, configTemplatePath := range configTemplatePaths {
+		fmt.Fprintf(&command, "cat %v; ", path.Join(consts.ConfigMountPoint, path.Base(configTemplatePath)))
 	}
 
 	return command.String()

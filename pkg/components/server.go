@@ -593,9 +593,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		postprocessVolumeMounts = append(slices.Clone(volumeMounts), timbertruckConfigTemplateVolumeMount())
 	}
 
-	configPostprocessingCommand := getConfigPostprocessingCommand(
-		path.Join(consts.ConfigMountPoint, consts.PostprocessConfigScriptName),
-		configTemplatePaths...)
+	configPostprocessingCommand := getConfigPostprocessingCommand(configTemplatePaths...)
 
 	var readinessProbeParams ytv1.HealthcheckProbeParams
 	if s.instanceSpec.ReadinessProbeParams != nil {
