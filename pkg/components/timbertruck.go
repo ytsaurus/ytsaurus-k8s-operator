@@ -330,8 +330,8 @@ func timbertruckComponentName(l *labeller.Labeller) string {
 // It must be unique per component (it includes the full component label, e.g.
 // "yt-master-timbertruck.yaml") so that config overrides, which are keyed by file name, can
 // target a specific component's timbertruck config instead of colliding across all of them.
-// The same name is the configmap data key and the file the sidecar reads (mounted under
-// consts.TimbertruckConfigMountPoint and passed via -config).
+// The same name is the configmap data key and the file the sidecar reads, passed via -config
+// (the postprocessed copy under consts.ConfigMountPoint).
 func timbertruckConfigFileName(l *labeller.Labeller) string {
 	return fmt.Sprintf("%s-timbertruck.yaml", l.GetFullComponentLabel())
 }
@@ -615,7 +615,12 @@ func buildTimbertruckConfigMap(
 }
 
 // timbertruckConfigVolumeName is the pod volume holding the sidecar's config.
-const timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
+const (
+	timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
+	// timbertruckPostprocessConfigScriptName is kept apart from the server's script of the same purpose,
+	// since both are written into the shared config volume.
+	timbertruckPostprocessConfigScriptName = "postprocess-timbertruck-config.sh"
+)
 
 // addTimbertruckSidecar appends the timbertruck sidecar container and its config volume to podSpec.
 // volumeMounts are resolved beforehand by buildTimbertruckVolumeMounts, so the sidecar sees the very
@@ -623,10 +628,18 @@ const timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
 func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts []corev1.VolumeMount, configMapName, configFileName string) {
 	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(timbertruckConfigVolumeName, configMapName, nil))
 
+	// The config is postprocessed on every container start rather than once by the init container,
+	// so that a configmap re-sync still reaches a running pod, as it did when the sidecar read the
+	// configmap directly.
+	configPath := path.Join(consts.ConfigMountPoint, configFileName)
+	postprocessingCommand := getConfigPostprocessingCommand(
+		path.Join(consts.ConfigMountPoint, timbertruckPostprocessConfigScriptName),
+		path.Join(consts.TimbertruckConfigMountPoint, configFileName))
+
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
 		Name:    consts.TimbertruckContainerName,
 		Image:   image,
-		Command: []string{"/usr/bin/timbertruck_os", "-config", path.Join(consts.TimbertruckConfigMountPoint, configFileName)},
+		Command: []string{"bash", "-xc", fmt.Sprintf("%v exec /usr/bin/timbertruck_os -config %v", postprocessingCommand, configPath)},
 		Env: append([]corev1.EnvVar{
 			{
 				Name: consts.TokenSecretKey,
@@ -645,16 +658,19 @@ func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts [
 	})
 }
 
-// buildTimbertruckVolumeMounts resolves the spec-derived log volume mount for
-// the timbertruck sidecar and appends the read-only mount for its config.
-func buildTimbertruckVolumeMounts(instanceSpec *ytv1.InstanceSpec, configVolumeName string) ([]corev1.VolumeMount, error) {
+// buildTimbertruckVolumeMounts resolves the spec-derived log volume mount for the timbertruck
+// sidecar, the read-only mount of its raw config and the volume its postprocessed copy is written to.
+func buildTimbertruckVolumeMounts(instanceSpec *ytv1.InstanceSpec) ([]corev1.VolumeMount, error) {
 	logMounts, err := resolveLocationMounts(instanceSpec, ytv1.LocationTypeLogs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve mounts for timbertruck: %w", err)
 	}
-	return append(logMounts, corev1.VolumeMount{
-		Name:      configVolumeName,
-		MountPath: consts.TimbertruckConfigMountPoint,
-		ReadOnly:  true,
-	}), nil
+	return append(logMounts,
+		corev1.VolumeMount{
+			Name:      timbertruckConfigVolumeName,
+			MountPath: consts.TimbertruckConfigMountPoint,
+			ReadOnly:  true,
+		},
+		createConfigVolumeMount(),
+	), nil
 }
