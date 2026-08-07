@@ -199,48 +199,43 @@ func getLocationInitCommand(locations []ytv1.LocationSpec) string {
 	return command.String()
 }
 
-func getConfigPostprocessingCommand(configTemplatePaths ...string) string {
+func getConfigPostprocessingCommand(postprocessScriptName, configTemplatePath string) string {
 	var command strings.Builder
 
 	// Store postprocessing as a script on filesystem to ease up manual
 	// config re-initialization without pod recreation. This will be useful
 	// when operator starts restarting processes without container recreation.
 
-	postprocessScriptPath := path.Join(consts.ConfigMountPoint, consts.PostprocessConfigScriptName)
+	configFileName := path.Base(configTemplatePath)
+	configPath := path.Join(consts.ConfigMountPoint, configFileName)
+	postprocessScriptPath := path.Join(consts.ConfigMountPoint, postprocessScriptName)
 
 	var postprocessScript strings.Builder
 
-	substituteEnvCommand := func(configPath, envVar string) {
+	substituteEnvCommand := func(envVar string) {
 		// Replace placeholder {envVar} with the actual value of environment variable envVar.
 		fmt.Fprintf(&postprocessScript, "sed -i -s \"s/{%v}/${%v}/g\" %v; ", envVar, envVar, configPath)
 	}
 
-	substitutePlaceholderWithCommand := func(configPath, placeholder, command string) {
+	substitutePlaceholderWithCommand := func(placeholder, command string) {
 		// Replace placeholder {placeholder} with the output of the given command.
 		fmt.Fprintf(&postprocessScript, "sed -i -s \"s/{%v}/$(%v)/g\" %v; ", placeholder, command, configPath)
 	}
 
-	for _, configTemplatePath := range configTemplatePaths {
-		configFileName := path.Base(configTemplatePath)
-		configPath := path.Join(consts.ConfigMountPoint, configFileName)
+	fmt.Fprintf(&command, "echo 'Postprocess config %v';", configFileName)
+	fmt.Fprintf(&postprocessScript, "cp %v %v; ", configTemplatePath, configPath)
 
-		fmt.Fprintf(&command, "echo 'Postprocess config %v';", configFileName)
-		fmt.Fprintf(&postprocessScript, "cp %v %v; ", configTemplatePath, configPath)
-
-		for _, envVar := range getDefaultEnv() {
-			substituteEnvCommand(configPath, envVar.Name)
-		}
-
-		substitutePlaceholderWithCommand(configPath, "POD_FQDN", "hostname -f")
-		substitutePlaceholderWithCommand(configPath, "POD_SHORT_HOSTNAME", "hostname -s")
+	for _, envVar := range getDefaultEnv() {
+		substituteEnvCommand(envVar.Name)
 	}
+
+	substitutePlaceholderWithCommand("POD_FQDN", "hostname -f")
+	substitutePlaceholderWithCommand("POD_SHORT_HOSTNAME", "hostname -s")
 
 	fmt.Fprintf(&command, "echo '%v' > %v; ", postprocessScript.String(), postprocessScriptPath)
 	fmt.Fprintf(&command, "chmod +x '%v'; ", postprocessScriptPath)
 	fmt.Fprintf(&command, "source %v; ", postprocessScriptPath)
-	for _, configTemplatePath := range configTemplatePaths {
-		fmt.Fprintf(&command, "cat %v; ", path.Join(consts.ConfigMountPoint, path.Base(configTemplatePath)))
-	}
+	fmt.Fprintf(&command, "cat %v; ", configPath)
 
 	return command.String()
 }

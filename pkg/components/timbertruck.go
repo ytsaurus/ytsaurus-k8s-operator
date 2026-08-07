@@ -614,8 +614,22 @@ func buildTimbertruckConfigMap(
 	)
 }
 
-// timbertruckConfigVolumeName is the pod volume holding the sidecar's config.
-const timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
+const (
+	// timbertruckConfigVolumeName is the pod volume holding the sidecar's config.
+	timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
+	// timbertruckPostprocessConfigScriptName is kept apart from the server's one, since both scripts
+	// are written into the shared config volume.
+	timbertruckPostprocessConfigScriptName = "postprocess-timbertruck-config.sh"
+)
+
+// timbertruckConfigPostprocessingCommand postprocesses the sidecar config the same way the server
+// config is postprocessed. The init container runs it once, and the sidecar runs it again on every
+// start, so that a configmap re-sync reaches a running pod without recreating it.
+func timbertruckConfigPostprocessingCommand(l *labeller.Labeller) string {
+	return getConfigPostprocessingCommand(
+		timbertruckPostprocessConfigScriptName,
+		path.Join(consts.TimbertruckConfigMountPoint, timbertruckConfigFileName(l)))
+}
 
 // addTimbertruckSidecar appends the timbertruck sidecar container and its config volume to podSpec.
 // volumeMounts are resolved beforehand by buildTimbertruckVolumeMounts, so the sidecar sees the very
@@ -624,9 +638,11 @@ func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts [
 	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(timbertruckConfigVolumeName, configMapName, nil))
 
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
-		Name:    consts.TimbertruckContainerName,
-		Image:   image,
-		Command: []string{"/usr/bin/timbertruck_os", "-config", path.Join(consts.ConfigMountPoint, configFileName)},
+		Name:  consts.TimbertruckContainerName,
+		Image: image,
+		Command: []string{"bash", "-c", fmt.Sprintf("source %v; exec /usr/bin/timbertruck_os -config %v",
+			path.Join(consts.ConfigMountPoint, timbertruckPostprocessConfigScriptName),
+			path.Join(consts.ConfigMountPoint, configFileName))},
 		Env: append([]corev1.EnvVar{
 			{
 				Name: consts.TokenSecretKey,
@@ -656,11 +672,11 @@ func timbertruckConfigTemplateVolumeMount() corev1.VolumeMount {
 }
 
 // buildTimbertruckVolumeMounts resolves the spec-derived log volume mount for the timbertruck
-// sidecar and appends the volume holding its postprocessed config.
+// sidecar, the configmap holding its raw config and the volume its postprocessed copy is written to.
 func buildTimbertruckVolumeMounts(instanceSpec *ytv1.InstanceSpec) ([]corev1.VolumeMount, error) {
 	logMounts, err := resolveLocationMounts(instanceSpec, ytv1.LocationTypeLogs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve mounts for timbertruck: %w", err)
 	}
-	return append(logMounts, createConfigVolumeMount()), nil
+	return append(logMounts, timbertruckConfigTemplateVolumeMount(), createConfigVolumeMount()), nil
 }
