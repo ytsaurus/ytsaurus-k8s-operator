@@ -89,7 +89,9 @@ func TestTimbertruckInstanceGroupsShareDeliveryQueue(t *testing.T) {
 }
 
 var _ = Describe("buildTimbertruckVolumeMounts", func() {
-	It("derives the log mount from the instance spec and mounts the postprocessed config volume", func() {
+	const configVolumeName = consts.TimbertruckContainerName + "-config"
+
+	It("derives the log mount from the instance spec and mounts both config volumes", func() {
 		instanceSpec := &v1.InstanceSpec{
 			VolumeMounts: []corev1.VolumeMount{
 				{Name: "data-vol", MountPath: "/yt/data"},
@@ -109,9 +111,9 @@ var _ = Describe("buildTimbertruckVolumeMounts", func() {
 		Expect(mounts[0].SubPath).To(Equal("master-logs/logs"))
 		Expect(mounts[0].ReadOnly).To(BeFalseBecause("timbertruck must be able to write to logs location"))
 
-		Expect(mounts[1].Name).To(Equal(timbertruckConfigVolumeName))
-		Expect(mounts[1].MountPath).To(Equal(consts.TimbertruckConfigMountPoint))
-		Expect(mounts[1].ReadOnly).To(BeTrueBecause("the raw config is only read from"))
+		Expect(mounts[1].Name).To(Equal(configVolumeName))
+		Expect(mounts[1].MountPath).To(Equal("/etc/timbertruck"))
+		Expect(mounts[1].ReadOnly).To(BeTrueBecause("timbertruck config must be mounted read-only"))
 
 		Expect(mounts[2].Name).To(Equal(consts.ConfigVolumeName))
 		Expect(mounts[2].MountPath).To(Equal(consts.ConfigMountPoint))

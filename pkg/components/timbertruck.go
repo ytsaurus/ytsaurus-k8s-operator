@@ -330,8 +330,8 @@ func timbertruckComponentName(l *labeller.Labeller) string {
 // It must be unique per component (it includes the full component label, e.g.
 // "yt-master-timbertruck.yaml") so that config overrides, which are keyed by file name, can
 // target a specific component's timbertruck config instead of colliding across all of them.
-// The same name is the configmap data key and the file the sidecar reads, passed via -config
-// (the postprocessed copy under consts.ConfigMountPoint).
+// The same name is the configmap data key and the file the sidecar reads (postprocessed into
+// consts.ConfigMountPoint and passed via -config).
 func timbertruckConfigFileName(l *labeller.Labeller) string {
 	return fmt.Sprintf("%s-timbertruck.yaml", l.GetFullComponentLabel())
 }
@@ -614,21 +614,18 @@ func buildTimbertruckConfigMap(
 	)
 }
 
-const (
-	// timbertruckConfigVolumeName is the pod volume holding the sidecar's config.
-	timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
-	// timbertruckPostprocessConfigScriptName is kept apart from the server's one, since both scripts
-	// are written into the shared config volume.
-	timbertruckPostprocessConfigScriptName = "postprocess-timbertruck-config.sh"
-)
+// timbertruckConfigVolumeName is the pod volume holding the sidecar's config.
+const timbertruckConfigVolumeName = consts.TimbertruckContainerName + "-config"
+
+// timbertruckPostprocessConfigScriptName is kept apart from the server's one, since both scripts
+// are written into the shared config volume.
+const timbertruckPostprocessConfigScriptName = "postprocess-timbertruck-config.sh"
 
 // timbertruckConfigPostprocessingCommand postprocesses the sidecar config the same way the server
 // config is postprocessed. The init container runs it once, and the sidecar runs it again on every
 // start, so that a configmap re-sync reaches a running pod without recreating it.
 func timbertruckConfigPostprocessingCommand(l *labeller.Labeller) string {
-	return getConfigPostprocessingCommand(
-		timbertruckPostprocessConfigScriptName,
-		path.Join(consts.TimbertruckConfigMountPoint, timbertruckConfigFileName(l)))
+	return getConfigPostprocessingCommand(timbertruckPostprocessConfigScriptName, path.Join(consts.TimbertruckConfigMountPoint, timbertruckConfigFileName(l)))
 }
 
 // addTimbertruckSidecar appends the timbertruck sidecar container and its config volume to podSpec.
@@ -637,12 +634,13 @@ func timbertruckConfigPostprocessingCommand(l *labeller.Labeller) string {
 func addTimbertruckSidecar(podSpec *corev1.PodSpec, image string, volumeMounts []corev1.VolumeMount, configMapName, configFileName string) {
 	podSpec.Volumes = append(podSpec.Volumes, createConfigVolume(timbertruckConfigVolumeName, configMapName, nil))
 
+	postprocessScriptPath := path.Join(consts.ConfigMountPoint, timbertruckPostprocessConfigScriptName)
+	configPath := path.Join(consts.ConfigMountPoint, configFileName)
+
 	podSpec.Containers = append(podSpec.Containers, corev1.Container{
-		Name:  consts.TimbertruckContainerName,
-		Image: image,
-		Command: []string{"bash", "-c", fmt.Sprintf("source %v; exec /usr/bin/timbertruck_os -config %v",
-			path.Join(consts.ConfigMountPoint, timbertruckPostprocessConfigScriptName),
-			path.Join(consts.ConfigMountPoint, configFileName))},
+		Name:    consts.TimbertruckContainerName,
+		Image:   image,
+		Command: []string{"bash", "-c", fmt.Sprintf("source %v; exec /usr/bin/timbertruck_os -config %v", postprocessScriptPath, configPath)},
 		Env: append([]corev1.EnvVar{
 			{
 				Name: consts.TokenSecretKey,

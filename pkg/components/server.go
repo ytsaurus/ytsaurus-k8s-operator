@@ -584,9 +584,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 	filename := s.configs.generators[0].FileName
 
-	configPostprocessingCommand := getConfigPostprocessingCommand(
-		consts.PostprocessConfigScriptName,
-		path.Join(consts.ConfigTemplateMountPoint, filename))
+	configPostprocessingCommand := getConfigPostprocessingCommand(consts.PostprocessConfigScriptName, path.Join(consts.ConfigTemplateMountPoint, filename))
 
 	postprocessVolumeMounts := volumeMounts
 	if s.timbertruckDelivery != nil {

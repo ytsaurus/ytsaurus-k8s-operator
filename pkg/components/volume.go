@@ -202,11 +202,13 @@ func getLocationInitCommand(locations []ytv1.LocationSpec) string {
 func getConfigPostprocessingCommand(postprocessScriptName, configTemplatePath string) string {
 	var command strings.Builder
 
+	configFileName := path.Base(configTemplatePath)
+	fmt.Fprintf(&command, "echo 'Postprocess config %v';", configFileName)
+
 	// Store postprocessing as a script on filesystem to ease up manual
 	// config re-initialization without pod recreation. This will be useful
 	// when operator starts restarting processes without container recreation.
 
-	configFileName := path.Base(configTemplatePath)
 	configPath := path.Join(consts.ConfigMountPoint, configFileName)
 	postprocessScriptPath := path.Join(consts.ConfigMountPoint, postprocessScriptName)
 
@@ -217,12 +219,11 @@ func getConfigPostprocessingCommand(postprocessScriptName, configTemplatePath st
 		fmt.Fprintf(&postprocessScript, "sed -i -s \"s/{%v}/${%v}/g\" %v; ", envVar, envVar, configPath)
 	}
 
-	substitutePlaceholderWithCommand := func(placeholder, command string) {
+	substitutePlaceholderWithCommand := func(placeholder string, command string) {
 		// Replace placeholder {placeholder} with the output of the given command.
 		fmt.Fprintf(&postprocessScript, "sed -i -s \"s/{%v}/$(%v)/g\" %v; ", placeholder, command, configPath)
 	}
 
-	fmt.Fprintf(&command, "echo 'Postprocess config %v';", configFileName)
 	fmt.Fprintf(&postprocessScript, "cp %v %v; ", configTemplatePath, configPath)
 
 	for _, envVar := range getDefaultEnv() {
