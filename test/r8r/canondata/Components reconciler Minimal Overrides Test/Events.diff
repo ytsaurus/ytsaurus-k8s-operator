@@ -1,6 +1,6 @@
 --- base/Events.yson
 +++ test/Events.yson
-@@ -6,9 +6,169 @@
+@@ -6,9 +6,57 @@
      kind: Ytsaurus
      name: test-ytsaurus
      namespace: ytsaurus-components
@@ -33,123 +33,11 @@
 +    Config ytserver-discovery.yson needs reload. Diff:
 +    --- old/ytserver-discovery.yson
 +    +++ new/ytserver-discovery.yson
-+    @@ -4,56 +4,8 @@
-+             "enable_ipv6"=%false;
-+             retries=1000;
-+         };
-+    -    stockpile={
-+    -        "thread_count"=0;
-+    -    };
-+    -    "solomon_exporter"={
-+    -        host="{POD_SHORT_HOSTNAME}";
-+    -        "instance_tags"={
-+    -            pod="{K8S_POD_NAME}";
-+    -        };
-+    -    };
-+    -    logging={
-+    -        writers={
-+    -            "info-stderr"={
-+    -                type=stderr;
-+    -                "file_name"="..";
-+    -                "enable_compression"=%true;
-+    -                "enable_system_messages"=%true;
-+    -            };
-+    -        };
-+    -        rules=[
-+    -            {
-+    -                "min_level"=info;
-+    -                writers=[
-+    -                    "info-stderr";
-+    -                ];
-+    -                family="plain_text";
-+    -            };
-+    -        ];
-+    -        "flush_period"=3000;
-+    -    };
-+    -    "monitoring_port"=10020;
-+    -    "rpc_port"=9020;
-+    -    "timestamp_provider"={
-+    -        addresses=[
-+    -            "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    -        ];
-+    -    };
-+         "cluster_connection"={
-+             "cluster_name"="test-ytsaurus";
-+    -        "primary_master"={
-+    -            addresses=[
-+    -                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    -            ];
-+    -            peers=[
-+    -                {
-+    -                    address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    -                    voting=%true;
-+    -                };
-+    -            ];
-+    -            "cell_id"="65726e65-ad6b7562-10259-79747361";
-+    -        };
-+             "discovery_connection"={
-+                 addresses=[
-+                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
-+    @@ -65,6 +17,18 @@
-+                 ];
-+                 "cell_id"="65726e65-ad6b7562-10259-79747361";
-+                 "enable_master_cache_discovery"=%false;
-+    +        };
-+    +        "primary_master"={
-+    +            addresses=[
-+    +                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    +            ];
-+    +            "cell_id"="65726e65-ad6b7562-10259-79747361";
-+    +            peers=[
-+    +                {
-+    +                    address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    +                    voting=%true;
-+    +                };
-+    +            ];
-+             };
-+         };
-+         "cypress_annotations"={
-+    @@ -78,4 +42,41 @@
++    @@ -78,4 +78,5 @@
 +                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
 +             ];
 +         };
 +    +    hello=yt;
-+    +    logging={
-+    +        "flush_period"=3000;
-+    +        rules=[
-+    +            {
-+    +                family="plain_text";
-+    +                "min_level"=info;
-+    +                writers=[
-+    +                    "info-stderr";
-+    +                ];
-+    +            };
-+    +        ];
-+    +        writers={
-+    +            "info-stderr"={
-+    +                "enable_compression"=%true;
-+    +                "enable_system_messages"=%true;
-+    +                "file_name"="..";
-+    +                type=stderr;
-+    +            };
-+    +        };
-+    +    };
-+    +    "monitoring_port"=10020;
-+    +    "rpc_port"=9020;
-+    +    "solomon_exporter"={
-+    +        host="{POD_SHORT_HOSTNAME}";
-+    +        "instance_tags"={
-+    +            pod="{K8S_POD_NAME}";
-+    +        };
-+    +    };
-+    +    stockpile={
-+    +        "thread_count"=0;
-+    +    };
-+    +    "timestamp_provider"={
-+    +        addresses=[
-+    +            "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    +        ];
-+    +    };
 +     }
 +  metadata:
 +    namespace: ytsaurus-components
@@ -173,472 +61,162 @@
    metadata:
      namespace: ytsaurus-components
    reason: ClusterState
-@@ -25,9 +185,68 @@
+@@ -25,558 +73,599 @@
      kind: Ytsaurus
      name: test-ytsaurus
      namespace: ytsaurus-components
 -    resourceVersion: "2"
 -  lastTimestamp: null
 -  message: Created YT object ms (*v1.StatefulSet)
-+    resourceVersion: "24"
-+  lastTimestamp: null
-+  message: 'Update flow starting with None, for updating components: {ds}, pending:
-+    , blocked: , started: '
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "24"
-+  lastTimestamp: null
-+  message: Update flow advance None -> WaitingForPodsRemoval
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "25"
-+  lastTimestamp: null
-+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-+    "ytserver-discovery.yson"
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Override
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "25"
-+  lastTimestamp: null
-+  message: Updated YT object ds (*v1.StatefulSet)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -44,9 +263,150 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "2"
 -  lastTimestamp: null
 -  message: Config ytserver-master.yson needs creation
-+    resourceVersion: "25"
-+  lastTimestamp: null
-+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-+    "ytserver-discovery.yson"
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Override
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "25"
-+  lastTimestamp: null
-+  message: |
-+    Config ytserver-discovery.yson needs reload. Diff:
-+    --- old/ytserver-discovery.yson
-+    +++ new/ytserver-discovery.yson
-+    @@ -4,56 +4,8 @@
-+             "enable_ipv6"=%false;
-+             retries=1000;
-+         };
-+    -    stockpile={
-+    -        "thread_count"=0;
-+    -    };
-+    -    "solomon_exporter"={
-+    -        host="{POD_SHORT_HOSTNAME}";
-+    -        "instance_tags"={
-+    -            pod="{K8S_POD_NAME}";
-+    -        };
-+    -    };
-+    -    logging={
-+    -        writers={
-+    -            "info-stderr"={
-+    -                type=stderr;
-+    -                "file_name"="..";
-+    -                "enable_compression"=%true;
-+    -                "enable_system_messages"=%true;
-+    -            };
-+    -        };
-+    -        rules=[
-+    -            {
-+    -                "min_level"=info;
-+    -                writers=[
-+    -                    "info-stderr";
-+    -                ];
-+    -                family="plain_text";
-+    -            };
-+    -        ];
-+    -        "flush_period"=3000;
-+    -    };
-+    -    "monitoring_port"=10020;
-+    -    "rpc_port"=9020;
-+    -    "timestamp_provider"={
-+    -        addresses=[
-+    -            "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    -        ];
-+    -    };
-+         "cluster_connection"={
-+             "cluster_name"="test-ytsaurus";
-+    -        "primary_master"={
-+    -            addresses=[
-+    -                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    -            ];
-+    -            peers=[
-+    -                {
-+    -                    address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    -                    voting=%true;
-+    -                };
-+    -            ];
-+    -            "cell_id"="65726e65-ad6b7562-10259-79747361";
-+    -        };
-+             "discovery_connection"={
-+                 addresses=[
-+                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
-+    @@ -65,6 +17,18 @@
-+                 ];
-+                 "cell_id"="65726e65-ad6b7562-10259-79747361";
-+                 "enable_master_cache_discovery"=%false;
-+    +        };
-+    +        "primary_master"={
-+    +            addresses=[
-+    +                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    +            ];
-+    +            "cell_id"="65726e65-ad6b7562-10259-79747361";
-+    +            peers=[
-+    +                {
-+    +                    address="ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    +                    voting=%true;
-+    +                };
-+    +            ];
-+             };
-+         };
-+         "cypress_annotations"={
-+    @@ -78,4 +42,41 @@
-+                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
-+             ];
-+         };
-+    +    hello=yt;
-+    +    logging={
-+    +        "flush_period"=3000;
-+    +        rules=[
-+    +            {
-+    +                family="plain_text";
-+    +                "min_level"=info;
-+    +                writers=[
-+    +                    "info-stderr";
-+    +                ];
-+    +            };
-+    +        ];
-+    +        writers={
-+    +            "info-stderr"={
-+    +                "enable_compression"=%true;
-+    +                "enable_system_messages"=%true;
-+    +                "file_name"="..";
-+    +                type=stderr;
-+    +            };
-+    +        };
-+    +    };
-+    +    "monitoring_port"=10020;
-+    +    "rpc_port"=9020;
-+    +    "solomon_exporter"={
-+    +        host="{POD_SHORT_HOSTNAME}";
-+    +        "instance_tags"={
-+    +            pod="{K8S_POD_NAME}";
-+    +        };
-+    +    };
-+    +    stockpile={
-+    +        "thread_count"=0;
-+    +    };
-+    +    "timestamp_provider"={
-+    +        addresses=[
-+    +            "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
-+    +        ];
-+    +    };
-+     }
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -63,9 +423,9 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "2"
 -  lastTimestamp: null
 -  message: Created YT object yt-master-config (*v1.ConfigMap)
-+    resourceVersion: "25"
-+  lastTimestamp: null
-+  message: Updated YT object yt-discovery-config (*v1.ConfigMap)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -82,9 +442,9 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "2"
 -  lastTimestamp: null
 -  message: Created YT object masters (*v1.Service)
-+    resourceVersion: "25"
-+  lastTimestamp: null
-+  message: Updated YT object discovery (*v1.Service)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -101,9 +461,9 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "2"
 -  lastTimestamp: null
 -  message: Created YT object yt-master-monitoring (*v1.Service)
-+    resourceVersion: "25"
-+  lastTimestamp: null
-+  message: Updated YT object yt-discovery-monitoring (*v1.Service)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -120,9 +480,147 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "4"
 -  lastTimestamp: null
 -  message: Config client.yson needs creation
-+    resourceVersion: "26"
-+  lastTimestamp: null
-+  message: 'Update flow starting with WaitingForPodsRemoval, for updating components:
-+    {ds}, pending: {ds}, blocked: , started: '
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "26"
-+  lastTimestamp: null
-+  message: 'Update flow: condition not met for WaitingForPodsRemoval'
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "27"
-+  lastTimestamp: null
-+  message: 'Update flow starting with WaitingForPodsRemoval, for updating components:
-+    {ds}, pending: {ds}, blocked: , started: '
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "27"
-+  lastTimestamp: null
-+  message: Update flow advance WaitingForPodsRemoval -> WaitingForPodsCreation
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "28"
-+  lastTimestamp: null
-+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-+    "ytserver-discovery.yson"
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Override
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "28"
-+  lastTimestamp: null
-+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-+    "ytserver-discovery.yson"
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Override
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "28"
-+  lastTimestamp: null
-+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-+    "ytserver-discovery.yson"
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Override
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "28"
-+  lastTimestamp: null
-+  message: Updated YT object ds (*v1.StatefulSet)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -139,9 +637,29 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "4"
 -  lastTimestamp: null
 -  message: Created YT object yt-master-init-job-default-config (*v1.ConfigMap)
-+    resourceVersion: "28"
-+  lastTimestamp: null
-+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-+    "ytserver-discovery.yson"
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Override
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "28"
-+  lastTimestamp: null
-+  message: Updated YT object discovery (*v1.Service)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -158,9 +676,9 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "4"
 -  lastTimestamp: null
 -  message: Created YT object yt-master-init-job-default (*v1.Job)
-+    resourceVersion: "28"
-+  lastTimestamp: null
-+  message: Updated YT object yt-discovery-monitoring (*v1.Service)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -177,47 +695,68 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "4"
 -  lastTimestamp: null
 -  message: Job yt-master-init-job-default started
@@ -680,75 +258,22 @@
 -    resourceVersion: "6"
 -  lastTimestamp: null
 -  message: Updated YT object ms (*v1.StatefulSet)
-+    resourceVersion: "29"
-+  lastTimestamp: null
-+  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
-+    "ytserver-discovery.yson"
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Override
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "29"
-+  lastTimestamp: null
-+  message: 'Update flow starting with WaitingForPodsCreation, for updating components:
-+    {ds}, pending: , blocked: , started: '
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "29"
-+  lastTimestamp: null
-+  message: Update flow advance WaitingForPodsCreation -> WaitingForCypressPatch
-+  metadata:
-+    namespace: ytsaurus-components
-+  reason: Update
-+  reportingComponent: ytsaurus
-+  reportingInstance: ""
-+  source:
-+    component: ytsaurus
-+  type: Normal
-+- count: 1
-+  eventTime: null
-+  firstTimestamp: null
-+  involvedObject:
-+    apiVersion: cluster.ytsaurus.tech/v1
-+    kind: Ytsaurus
-+    name: test-ytsaurus
-+    namespace: ytsaurus-components
-+    resourceVersion: "30"
-+  lastTimestamp: null
-+  message: Updated YT object yt-cypress-patch (*v1.ConfigMap)
-   metadata:
-     namespace: ytsaurus-components
-   reason: Reconciliation
-@@ -234,349 +773,123 @@
-     kind: Ytsaurus
-     name: test-ytsaurus
-     namespace: ytsaurus-components
+-  metadata:
+-    namespace: ytsaurus-components
+-  reason: Reconciliation
+-  reportingComponent: ytsaurus
+-  reportingInstance: ""
+-  source:
+-    component: ytsaurus
+-  type: Normal
+-- count: 1
+-  eventTime: null
+-  firstTimestamp: null
+-  involvedObject:
+-    apiVersion: cluster.ytsaurus.tech/v1
+-    kind: Ytsaurus
+-    name: test-ytsaurus
+-    namespace: ytsaurus-components
 -    resourceVersion: "6"
 -  lastTimestamp: null
 -  message: Updated YT object masters (*v1.Service)
@@ -1092,6 +617,482 @@
 -    name: test-ytsaurus
 -    namespace: ytsaurus-components
 -    resourceVersion: "13"
++    resourceVersion: "24"
++  lastTimestamp: null
++  message: 'Update flow starting with None, for updating components: {ds}, pending:
++    , blocked: , started: '
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "24"
++  lastTimestamp: null
++  message: Update flow advance None -> WaitingForPodsRemoval
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "25"
++  lastTimestamp: null
++  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
++    "ytserver-discovery.yson"
++  metadata:
++    namespace: ytsaurus-components
++  reason: Override
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "25"
++  lastTimestamp: null
++  message: Updated YT object ds (*v1.StatefulSet)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "25"
++  lastTimestamp: null
++  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
++    "ytserver-discovery.yson"
++  metadata:
++    namespace: ytsaurus-components
++  reason: Override
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "25"
++  lastTimestamp: null
++  message: |
++    Config ytserver-discovery.yson needs reload. Diff:
++    --- old/ytserver-discovery.yson
++    +++ new/ytserver-discovery.yson
++    @@ -78,4 +78,5 @@
++                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
++             ];
++         };
++    +    hello=yt;
++     }
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "25"
++  lastTimestamp: null
++  message: Updated YT object yt-discovery-config (*v1.ConfigMap)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "25"
++  lastTimestamp: null
++  message: Updated YT object discovery (*v1.Service)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "25"
++  lastTimestamp: null
++  message: Updated YT object yt-discovery-monitoring (*v1.Service)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "26"
++  lastTimestamp: null
++  message: 'Update flow starting with WaitingForPodsRemoval, for updating components:
++    {ds}, pending: {ds}, blocked: , started: '
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "26"
++  lastTimestamp: null
++  message: 'Update flow: condition not met for WaitingForPodsRemoval'
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "27"
++  lastTimestamp: null
++  message: 'Update flow starting with WaitingForPodsRemoval, for updating components:
++    {ds}, pending: {ds}, blocked: , started: '
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "27"
++  lastTimestamp: null
++  message: Update flow advance WaitingForPodsRemoval -> WaitingForPodsCreation
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "28"
++  lastTimestamp: null
++  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
++    "ytserver-discovery.yson"
++  metadata:
++    namespace: ytsaurus-components
++  reason: Override
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "28"
++  lastTimestamp: null
++  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
++    "ytserver-discovery.yson"
++  metadata:
++    namespace: ytsaurus-components
++  reason: Override
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "28"
++  lastTimestamp: null
++  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
++    "ytserver-discovery.yson"
++  metadata:
++    namespace: ytsaurus-components
++  reason: Override
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "28"
++  lastTimestamp: null
++  message: Updated YT object ds (*v1.StatefulSet)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "28"
++  lastTimestamp: null
++  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
++    "ytserver-discovery.yson"
++  metadata:
++    namespace: ytsaurus-components
++  reason: Override
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "28"
++  lastTimestamp: null
++  message: Updated YT object discovery (*v1.Service)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "28"
++  lastTimestamp: null
++  message: Updated YT object yt-discovery-monitoring (*v1.Service)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "29"
++  lastTimestamp: null
++  message: Applied configmap/yt-discovery-config "ytserver-discovery.yson" override
++    "ytserver-discovery.yson"
++  metadata:
++    namespace: ytsaurus-components
++  reason: Override
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "29"
++  lastTimestamp: null
++  message: 'Update flow starting with WaitingForPodsCreation, for updating components:
++    {ds}, pending: , blocked: , started: '
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "29"
++  lastTimestamp: null
++  message: Update flow advance WaitingForPodsCreation -> WaitingForCypressPatch
++  metadata:
++    namespace: ytsaurus-components
++  reason: Update
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
++    resourceVersion: "30"
++  lastTimestamp: null
++  message: Updated YT object yt-cypress-patch (*v1.ConfigMap)
++  metadata:
++    namespace: ytsaurus-components
++  reason: Reconciliation
++  reportingComponent: ytsaurus
++  reportingInstance: ""
++  source:
++    component: ytsaurus
++  type: Normal
++- count: 1
++  eventTime: null
++  firstTimestamp: null
++  involvedObject:
++    apiVersion: cluster.ytsaurus.tech/v1
++    kind: Ytsaurus
++    name: test-ytsaurus
++    namespace: ytsaurus-components
 +    resourceVersion: "30"
 +  lastTimestamp: null
 +  message: Skip patch apply in test
@@ -1212,7 +1213,7 @@
    lastTimestamp: null
    message: Cluster state is Preparing
    metadata:
-@@ -595,159 +908,27 @@
+@@ -595,159 +684,27 @@
      kind: Ytsaurus
      name: test-ytsaurus
      namespace: ytsaurus-components
@@ -1393,7 +1394,7 @@
    lastTimestamp: null
    message: Cluster state is Running
    metadata:
-@@ -758,4 +939,24 @@
+@@ -758,4 +715,24 @@
    source:
      component: ytsaurus
    type: Normal
