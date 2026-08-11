@@ -1,0 +1,26 @@
+Keys:
+- first1
+- nested2
+- list3
+- attrs4
+- last5
+Values:
+  attrs4:
+    $attributes:
+      Keys:
+      - b1
+      - a2
+      Values:
+        a2: 2
+        b1: 1
+    $value:
+      x2: 2
+      y1: 1
+  first1: 1
+  last5: 2
+  list3:
+  - i2: 2
+    j1: 1
+  nested2:
+    x2: 2
+    y1: 1

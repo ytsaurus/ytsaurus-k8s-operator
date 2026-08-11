@@ -1,0 +1,7 @@
+{
+	attrs4=<b1=3>#;
+    nested2={z3=3;y1=4};
+	append6 = <>{};
+    first1 = 4;
+    last5=<attr=%true>{};
+}

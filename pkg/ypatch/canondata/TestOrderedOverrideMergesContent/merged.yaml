@@ -1,0 +1,33 @@
+Attributes:
+  Keys: null
+  Values: null
+Value:
+  append6:
+    $attributes:
+      Keys: null
+      Values: {}
+    $value: {}
+  attrs4:
+    $attributes:
+      Keys:
+      - b1
+      - a2
+      Values:
+        a2: 2
+        b1: 3
+    $value: null
+  first1: 4
+  last5:
+    $attributes:
+      Keys:
+      - attr
+      Values:
+        attr: true
+    $value: {}
+  list3:
+  - i2: 2
+    j1: 1
+  nested2:
+    x2: 2
+    y1: 4
+    z3: 3
