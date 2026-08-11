@@ -1574,18 +1574,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					}
 				}
 				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
-				Expect(ttContainer.Command).To(Equal([]string{
-					"/usr/bin/timbertruck_os", "-config", consts.TimbertruckConfigMountPoint + "/" + configFileName,
-				}))
+				Expect(ttContainer.Command).To(ContainElement(ContainSubstring(
+					"exec /usr/bin/timbertruck_os -config " + consts.ConfigMountPoint + "/" + configFileName)))
 
 				configMounted := false
 				for _, m := range ttContainer.VolumeMounts {
-					if m.MountPath == consts.TimbertruckConfigMountPoint {
+					if m.MountPath == consts.ConfigMountPoint {
 						configMounted = true
 						break
 					}
 				}
-				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.TimbertruckConfigMountPoint))
+				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.ConfigMountPoint))
 			})
 
 		}) // update timbertruck
@@ -1661,18 +1660,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					}
 				}
 				Expect(ttContainer).NotTo(BeNil(), "timbertruck container must be present")
-				Expect(ttContainer.Command).To(Equal([]string{
-					"/usr/bin/timbertruck_os", "-config", consts.TimbertruckConfigMountPoint + "/" + configFileName,
-				}))
+				Expect(ttContainer.Command).To(ContainElement(ContainSubstring(
+					"exec /usr/bin/timbertruck_os -config " + consts.ConfigMountPoint + "/" + configFileName)))
 
 				configMounted := false
 				for _, m := range ttContainer.VolumeMounts {
-					if m.MountPath == consts.TimbertruckConfigMountPoint {
+					if m.MountPath == consts.ConfigMountPoint {
 						configMounted = true
 						break
 					}
 				}
-				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.TimbertruckConfigMountPoint))
+				Expect(configMounted).To(BeTrueBecause("timbertruck container must mount " + consts.ConfigMountPoint))
 
 				By("Checking timbertruck was prepared")
 				EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveStatusConditionTrue(consts.ConditionTimbertruckPrepared))

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"path"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -113,7 +114,7 @@ func newServer(
 		delivery = resolveTimbertruckDelivery(opts.timbertruck, ytsaurus.GetCommonSpec().Timbertruck, instanceSpec)
 		if delivery != nil {
 			var err error
-			volumeMounts, err = buildTimbertruckVolumeMounts(instanceSpec, timbertruckConfigVolumeName)
+			volumeMounts, err = buildTimbertruckVolumeMounts(instanceSpec)
 			if err != nil {
 				log.Log.Error(err, "Timbertruck log delivery is disabled for component",
 					"component", l.GetFullComponentName())
@@ -583,7 +584,13 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	}
 	filename := s.configs.generators[0].FileName
 
-	configPostprocessingCommand := getConfigPostprocessingCommand(filename)
+	configPostprocessingCommand := getConfigPostprocessingCommand(consts.PostprocessConfigScriptName, path.Join(consts.ConfigTemplateMountPoint, filename))
+
+	postprocessVolumeMounts := volumeMounts
+	if s.timbertruckDelivery != nil {
+		configPostprocessingCommand += timbertruckConfigPostprocessingCommand(s.labeller)
+		postprocessVolumeMounts = append(slices.Clone(volumeMounts), timbertruckConfigTemplateVolumeMount())
+	}
 
 	var readinessProbeParams ytv1.HealthcheckProbeParams
 	if s.instanceSpec.ReadinessProbeParams != nil {
@@ -640,7 +647,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Name:         consts.PostprocessConfigContainerName,
 				Command:      []string{"bash", "-xc", configPostprocessingCommand},
 				Env:          getDefaultEnv(),
-				VolumeMounts: volumeMounts,
+				VolumeMounts: postprocessVolumeMounts,
 			},
 		},
 		Volumes:      volumes,

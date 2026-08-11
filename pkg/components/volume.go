@@ -199,18 +199,18 @@ func getLocationInitCommand(locations []ytv1.LocationSpec) string {
 	return command.String()
 }
 
-func getConfigPostprocessingCommand(configFileName string) string {
+func getConfigPostprocessingCommand(postprocessScriptName, configTemplatePath string) string {
 	var command strings.Builder
 
+	configFileName := path.Base(configTemplatePath)
 	fmt.Fprintf(&command, "echo 'Postprocess config %v';", configFileName)
 
 	// Store postprocessing as a script on filesystem to ease up manual
 	// config re-initialization without pod recreation. This will be useful
 	// when operator starts restarting processes without container recreation.
 
-	configTemplatePath := path.Join(consts.ConfigTemplateMountPoint, configFileName)
 	configPath := path.Join(consts.ConfigMountPoint, configFileName)
-	postprocessScriptPath := path.Join(consts.ConfigMountPoint, consts.PostprocessConfigScriptName)
+	postprocessScriptPath := path.Join(consts.ConfigMountPoint, postprocessScriptName)
 
 	var postprocessScript strings.Builder
 

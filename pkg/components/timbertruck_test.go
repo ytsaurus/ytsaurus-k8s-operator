@@ -91,7 +91,7 @@ func TestTimbertruckInstanceGroupsShareDeliveryQueue(t *testing.T) {
 var _ = Describe("buildTimbertruckVolumeMounts", func() {
 	const configVolumeName = consts.TimbertruckContainerName + "-config"
 
-	It("derives the log mount from the instance spec and mounts the config read-only", func() {
+	It("derives the log mount from the instance spec and mounts both config volumes", func() {
 		instanceSpec := &v1.InstanceSpec{
 			VolumeMounts: []corev1.VolumeMount{
 				{Name: "data-vol", MountPath: "/yt/data"},
@@ -102,9 +102,9 @@ var _ = Describe("buildTimbertruckVolumeMounts", func() {
 			},
 		}
 
-		mounts, err := buildTimbertruckVolumeMounts(instanceSpec, configVolumeName)
+		mounts, err := buildTimbertruckVolumeMounts(instanceSpec)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(mounts).To(HaveLen(2))
+		Expect(mounts).To(HaveLen(3))
 
 		Expect(mounts[0].Name).To(Equal("logs-vol"))
 		Expect(mounts[0].MountPath).To(Equal("/yt/logs/master-logs/logs"))
@@ -114,6 +114,10 @@ var _ = Describe("buildTimbertruckVolumeMounts", func() {
 		Expect(mounts[1].Name).To(Equal(configVolumeName))
 		Expect(mounts[1].MountPath).To(Equal("/etc/timbertruck"))
 		Expect(mounts[1].ReadOnly).To(BeTrueBecause("timbertruck config must be mounted read-only"))
+
+		Expect(mounts[2].Name).To(Equal(consts.ConfigVolumeName))
+		Expect(mounts[2].MountPath).To(Equal(consts.ConfigMountPoint))
+		Expect(mounts[2].ReadOnly).To(BeFalseBecause("the postprocessed config is written into this volume"))
 	})
 
 	It("errors when no logs location is defined", func() {
@@ -122,7 +126,7 @@ var _ = Describe("buildTimbertruckVolumeMounts", func() {
 				{Name: "logs-vol", MountPath: "/yt/logs"},
 			},
 		}
-		_, err := buildTimbertruckVolumeMounts(instanceSpec, configVolumeName)
+		_, err := buildTimbertruckVolumeMounts(instanceSpec)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("failed to resolve mounts"))
 	})
@@ -136,7 +140,7 @@ var _ = Describe("buildTimbertruckVolumeMounts", func() {
 				{LocationType: v1.LocationTypeLogs, Path: "/yt/logs-wrong/master-logs/logs"},
 			},
 		}
-		_, err := buildTimbertruckVolumeMounts(instanceSpec, configVolumeName)
+		_, err := buildTimbertruckVolumeMounts(instanceSpec)
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring("failed to resolve mounts"))
 	})
