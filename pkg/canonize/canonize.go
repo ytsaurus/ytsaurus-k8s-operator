@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -27,7 +26,11 @@ type T interface {
 }
 
 func Assert(t T, data []byte) {
-	canonFilePath := getCanonFilePath(t, canonFileName)
+	AssertBlob(t, canonFileName, data)
+}
+
+func AssertBlob(t T, name string, data []byte) {
+	canonFilePath := getCanonFilePath(t, name)
 
 	if isCanonizeNeeded() {
 		err := writeCanonData(canonFilePath, data)
@@ -44,10 +47,9 @@ func Assert(t T, data []byte) {
 		t.FailNow()
 		return
 	}
-	canonDataTrimmed := strings.TrimSpace(string(canonData))
 
 	diff := difflib.UnifiedDiff{
-		A:        difflib.SplitLines(canonDataTrimmed),
+		A:        difflib.SplitLines(string(canonData)),
 		B:        difflib.SplitLines(string(data)),
 		FromFile: "old",
 		ToFile:   "new",

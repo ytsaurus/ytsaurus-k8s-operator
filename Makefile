@@ -241,9 +241,9 @@ generate-schema: ## Generate CRD json schema.
 
 .PHONY: generate-canondata
 generate-canondata: ## Generate canon test results.
-	$(REMOVE_CANONIZED) pkg/ytconfig/canondata pkg/components/canondata test/r8r/canondata
+	$(REMOVE_CANONIZED) pkg/ytconfig/canondata pkg/ypatch/canondata pkg/components/canondata test/r8r/canondata
 	CANONIZE=y \
-	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./pkg/components/... ./test/r8r/...
+	$(GINKGO) $(GINKGO_FLAGS) $(GO_TEST_FLAGS) ./pkg/ytconfig/... ./pkg/ypatch/... ./pkg/components/... ./test/r8r/...
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
