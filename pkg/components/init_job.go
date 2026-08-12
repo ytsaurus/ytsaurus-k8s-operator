@@ -313,7 +313,11 @@ func (j *InitJob) Build() *batchv1.Job {
 		logMounts, err := resolveLocationMounts(j.instanceSpec, ytv1.LocationTypeInitJobLogs)
 		if err == nil && len(logMounts) != 0 {
 			job.Spec.Template.Spec.Containers[0].VolumeMounts = append(job.Spec.Template.Spec.Containers[0].VolumeMounts, logMounts...)
-			pvcSuffix := fmt.Sprintf("-%s-0", j.labeller.GetComponentShortName())
+			ownerName := j.labeller.GetComponentShortName()
+			if j.labeller.ComponentType == consts.YtsaurusClientType {
+				ownerName = j.labeller.ForComponent(consts.MasterType, "").GetComponentShortName()
+			}
+			pvcSuffix := fmt.Sprintf("-%s-0", ownerName)
 			job.Spec.Template.Spec.Volumes = append(job.Spec.Template.Spec.Volumes, resolveVolumeMounts(j.instanceSpec, logMounts, pvcSuffix)...)
 		}
 	}

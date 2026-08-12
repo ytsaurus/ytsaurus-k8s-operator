@@ -88,7 +88,7 @@ func NewYtsaurusClient(
 			l,
 			ytsaurus,
 			"user",
-			&ytv1.InstanceSpec{},
+			&resource.Spec.PrimaryMasters.InstanceSpec,
 			YsonConfigGenerator(consts.ClientConfigFileName, cfgen.GetNativeClientConfig),
 		),
 		secret: resources.NewStringSecret(

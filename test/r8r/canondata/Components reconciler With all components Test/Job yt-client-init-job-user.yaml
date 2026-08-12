@@ -42,8 +42,8 @@ spec:
       containers:
       - command:
         - /bin/bash
-        - -eux
-        - /config/init-job-script.sh
+        - -euxc
+        - exec &> >(tee -a /yt/master-logs/yt-client-init-job-user.log); . /config/init-job-script.sh
         env:
         - name: K8S_POD_NAME
           valueFrom:
@@ -80,19 +80,20 @@ spec:
         - mountPath: /tls/bus_client_secret
           name: bus-client-secret
           readOnly: true
+        - mountPath: /yt/master-logs
+          name: master-logs
       dnsConfig:
         options:
-        - name: global-dns-option
-      dnsPolicy: ClusterFirst
-      hostNetwork: true
+        - name: instance-dns-option
+      dnsPolicy: None
       imagePullSecrets:
       - name: global-image-pull-secrets
       nodeSelector:
-        global-node-selector: "true"
+        instance-node-selector: "true"
       restartPolicy: OnFailure
-      setHostnameAsFQDN: false
+      setHostnameAsFQDN: true
       tolerations:
-      - key: global-toleration
+      - key: instance-toleration
       volumes:
       - configMap:
           defaultMode: 320
@@ -112,6 +113,9 @@ spec:
       - name: bus-client-secret
         secret:
           secretName: native-client-cert
+      - name: master-logs
+        persistentVolumeClaim:
+          claimName: master-logs-ms-0
 status:
   conditions:
   - lastProbeTime: null
