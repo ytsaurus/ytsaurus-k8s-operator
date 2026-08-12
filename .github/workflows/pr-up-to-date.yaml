@@ -15,7 +15,7 @@ jobs:
     steps:
       # https://github.com/actions/checkout
       - name: Checkout PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.PR_HEAD }}
           fetch-depth: 0
