@@ -754,7 +754,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				podSpec := &job.Spec.Template.Spec
 				Expect(podSpec.ImagePullSecrets).To(Equal(ytsaurus.Spec.ImagePullSecrets))
 				options := &ytsaurus.Spec.PodSpec
-				if strings.HasPrefix(job.Name, "yt-master-") {
+				if strings.HasPrefix(job.Name, "yt-master-") || strings.HasPrefix(job.Name, "yt-client-") {
 					options = &ytsaurus.Spec.PrimaryMasters.PodSpec
 				}
 				Expect(podSpec.Tolerations).To(Equal(options.Tolerations))
