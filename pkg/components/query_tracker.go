@@ -150,6 +150,10 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 func (qt *QueryTracker) setup(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
+	if qt.server.getInstanceCount() == 0 {
+		return ComponentStatusReady(), nil
+	}
+
 	// Wait for tablet nodes to proceed with query tracker state init.
 	if len(qt.tabletNodes) == 0 {
 		return ComponentStatusBlockedBy("tablet nodes"), fmt.Errorf("cannot initialize query tracker without tablet nodes")
