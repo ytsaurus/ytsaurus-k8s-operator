@@ -162,9 +162,13 @@ jobs:
         if: always()
         uses: dorny/test-reporter@v3
         with:
+          report-title: "E2E Tests"
           artifact: "/Report (.*)/"
           name: "Results $1"
           path: "report.xml"
           reporter: "java-junit"
+          list-suites: "all"
           list-tests: "failed"
-          collapsed: "never"
+          collapsed: "auto"
+          max-annotations: "20"
+          fail-on-error: "false"
