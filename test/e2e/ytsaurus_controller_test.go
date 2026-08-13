@@ -1955,8 +1955,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					installCRIOScript := `#!/bin/bash
 # Install CRI-O and CRI tools, see https://cri-o.io/
 set -eux -o pipefail
-: ${K8S_VERSION=v1.35}
-: ${CRIO_VERSION=v1.35}
+: ${K8S_VERSION=v1.36}
+: ${CRIO_VERSION=v1.36}
 mkdir -p /etc/apt/keyrings
 curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key" -o /etc/apt/keyrings/kubernetes-apt-keyring.asc
 curl -fsSL "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/${CRIO_VERSION}/deb/Release.key" -o /etc/apt/keyrings/cri-o-apt-keyring.asc

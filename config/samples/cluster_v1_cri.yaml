@@ -3,6 +3,7 @@
 # This configuration is for experiments and is not suited to production as is.
 #
 # See notes below about:
+# - ephemeralCluster
 # - Enabling TmpFS in jobs
 # - Setup for Cgroup-v2
 #
@@ -23,9 +24,13 @@ spec:
   # remove "-relwithdebinfo" for image without debug symbols
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2-relwithdebinfo
 
-  # Allow updating everything at once
   updatePlan:
-    - class: Everything
+    - class: Everything       # Allow updating everything at once
+    # - class: Nothing        # Forbid all updates - use this for important clusters
+
+  # clusterMaintenance:
+  #  shutdown: Everything     # shutdown all cluster components
+  #  shutdown: ExceptMasters  # master cells reconfiguration
 
   # Default "docker_image" for jobs
   jobImage: mirror.gcr.io/library/python:3.12-slim
@@ -40,7 +45,7 @@ spec:
   # configOverrides:
   #  name: ytsaurus-config-overrides
 
-  # Allow prioritizing performance over data safety. Useful for tests and experiments.
+  # NOTE: Allow prioritizing performance over data safety. Useful for tests and experiments.
   ephemeralCluster: true
 
   useIpv4: true
@@ -62,6 +67,13 @@ spec:
   #  tlsRequired: true|false
   #  tlsInsecure: true|false
   #  tlsPeerAlternativeHostName: ...
+
+  # clusterFeatures:
+  #  enableImageHeater: true           # pull images to all nodes
+  #  httpProxyHaveHttpsAddress: true   # use only HTTPS
+  #  secureClusterTransports: true     # use only secure transports
+  #  httpProxyHaveChytAddress: true    # dedicated ClickHouse HTTP(S) API
+  #  rpcProxyHavePublicAddress: true   # dedicated RPC PROXY port for TLS, available since 25.3
 
   ui:
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#uispec
@@ -122,23 +134,27 @@ spec:
 
     cellTag: 1
 
+    # roles: [ chunk_host, cypress_node_host, transaction_coordinator ]
+
     loggers: *loggers
 
-    locations:
+    locations: &masterLocations
       - locationType: Logs
+        path: /yt/master-logs
+      - locationType: InitJobLogs
         path: /yt/master-logs
       - locationType: MasterChangelogs
         path: /yt/master-data/master-changelogs
       - locationType: MasterSnapshots
         path: /yt/master-data/master-snapshots
 
-    volumeMounts:
+    volumeMounts: &masterMounts
       - name: master-logs
         mountPath: /yt/master-logs
       - name: master-data
         mountPath: /yt/master-data
 
-    volumeClaimTemplates:
+    volumeClaimTemplates: &masterVolumeClaimTemplates
       - metadata:
           name: master-data
         spec:
@@ -148,6 +164,37 @@ spec:
               storage: 10Gi
       - metadata:
           name: master-logs
+        spec: *logsVolumeSpec
+
+
+  ## https://ytsaurus.tech/docs/en/admin-guide/cell-addition
+  # secondaryMasters:
+  #   - cellTag: 2
+  #     instanceCount: 1
+  #     # roles: [ chunk_host, cypress_node_host ]
+  #     loggers: *loggers
+  #     locations: *masterLocations
+  #     volumeMounts: *masterMounts
+  #     volumeClaimTemplates: *masterVolumeClaimTemplates
+
+
+  masterCaches:
+    instanceCount: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/master-caches-logs
+        medium: default
+
+    volumeMounts:
+      - name: master-caches-logs
+        mountPath: /yt/master-caches-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: master-caches-logs
         spec: *logsVolumeSpec
 
 
@@ -274,6 +321,11 @@ spec:
         #   minLogLevel: error
         #   writerType: stderr
 
+      # runtimeClassName: nvidia    # container runtime class for exec node
+
+      # gpuManager:
+      #   gpuInfoProvider: nvidia_smi   # GPU provider
+
       resources:
         # Allocate resources for exec node container
         requests:
@@ -339,23 +391,44 @@ spec:
           cpu: 10
           memory: 10Gi
 
+      ## Entrypoint wrapper for ytserver, required for cri.isolated=false
+      # entrypointWrapper:
+      #   - "/yt/scripts/setup-cgroup-v2.sh"  # Requried setup for Cgroup-v2
+      #   - "tini"
+      #   - "--"
+      #   - "/yt/scripts/install-crio.sh"     # CRI-O is still missing in public releases
+      #   - "/yt/scripts/start-crio.sh"       # Start non-isolated CRI service in background
+
       jobEnvironment:
         # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#jobenvironmentspec
         userSlots: 20
-        # Add CRI service sidecar
+
+        ## Disable jobs sidecar container, start CRI service instead from ytserver entrypointWrapper.
+        ## This might be required for GPU container runtime.
+        # isolated: false
+
+        # Enable CRI service jobs environment
         cri:
-          # criService: crio|containerd
+          criService: crio  # default is containerd
+          # sandboxImage: "registry.k8s.io/pause:3.10"
           apiRetryTimeoutSeconds: 180
           ## For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md
           # registryConfigPath: /config/registry
           ## For crio: https://kubernetes.io/docs/concepts/configuration/secret/#docker-config-secrets
           # imagePullSecret:
           #   name: image-pull-secret
-          ## Requried setup for Cgroup-v2
+
+          ## entrypoint wrapper for jobs sidecar container
           entrypointWrapper:
-            - "/yt/scripts/setup-cgroup-v2.sh"
+            - "/yt/scripts/setup-cgroup-v2.sh"  # Required setup for Cgroup-v2
             - "tini"
             - "--"
+            - "/yt/scripts/install-crio.sh"     # CRI-O is still missing in public releases
+
+        ## Setup for container runtime used in CRI service for jobs
+        # runtime:
+        #  nvidia: {} # use NVIDIA Container Runtime
+
       # Enable for TmpFS in jobs - umount leftover mounts on stop
       # initContainers:
       #   - |
@@ -382,6 +455,7 @@ spec:
       #      - /yt/scripts/wait-and-umount-submounts.sh
       #    args:
       #      - /yt/node-data/slots
+
 
   schedulers:
     # https://ytsaurus.tech/docs/en/admin-guide/components#scheduler
@@ -428,7 +502,7 @@ spec:
   tabletNodes:
     # https://ytsaurus.tech/docs/en/admin-guide/components#tablet-nodes
     # https://github.com/ytsaurus/ytsaurus-k8s-operator/blob/main/docs/api.md#tabletnodesspec
-    - instanceCount: 1
+    - instanceCount: 3
 
       loggers: *loggers
 
@@ -444,6 +518,44 @@ spec:
         - metadata:
             name: tablet-node-logs
           spec: *logsVolumeSpec
+
+
+  bundleController:
+    instanceCount: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/bundle-controller-logs
+
+    volumeMounts:
+      - name: bundle-controller-logs
+        mountPath: /yt/bundle-controller-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: bundle-controller-logs
+        spec: *logsVolumeSpec
+
+
+  queueAgents:
+    instanceCount: 1
+
+    loggers: *loggers
+
+    locations:
+      - locationType: Logs
+        path: /yt/queue-agent-logs
+
+    volumeMounts:
+      - name: queue-agent-logs
+        mountPath: /yt/queue-agent-logs
+
+    volumeClaimTemplates:
+      - metadata:
+          name: queue-agent-logs
+        spec: *logsVolumeSpec
 
 
   yqlAgents:
@@ -562,3 +674,32 @@ data:
         sleep 1
       done
     done
+
+  # Temporary solution for installing CRI-O, see: https://github.com/ytsaurus/ytsaurus/pull/1802
+  install-crio.sh: |
+    #!/bin/bash
+    # Install CRI-O and CRI tools, see https://cri-o.io/
+    set -eux -o pipefail
+    : ${K8S_VERSION=v1.36}
+    : ${CRIO_VERSION=v1.36}
+    mkdir -p /etc/apt/keyrings
+    curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key" -o /etc/apt/keyrings/kubernetes-apt-keyring.asc
+    curl -fsSL "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/${CRIO_VERSION}/deb/Release.key" -o /etc/apt/keyrings/cri-o-apt-keyring.asc
+    tee /etc/apt/sources.list.d/kubernetes.list <<EOF
+    deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/ /
+    EOF
+    tee /etc/apt/sources.list.d/cri-o.list <<EOF
+    deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.asc] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/${CRIO_VERSION}/deb/ /
+    EOF
+    sed "s|http://archive.ubuntu.com/ubuntu|http://azure.archive.ubuntu.com/ubuntu|g" -i /etc/apt/sources.list /etc/apt/sources.list.d/*
+    export DEBIAN_FRONTEND=noninteractive
+    apt update -q --error-on=any
+    apt install -y --no-install-recommends cri-tools cri-o
+    exec "$@"
+
+  # Wrapper to start crio as non-isolated CRI service.
+  start-crio.sh: |
+    #!/bin/bash
+    set -eux -o pipefail
+    crio --config /config/crio/crio.conf --config-dir "" &
+    exec "$@"
