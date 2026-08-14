@@ -35,10 +35,10 @@ jobs:
 
     steps:
       # https://github.com/actions/checkout
-      - name: checkout sources
+      - name: Checkout sources
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          ref: ${{ github.ref }}
           fetch-depth: 1
 
       # https://github.com/actions/setup-go

@@ -4,6 +4,9 @@ on:
   pull_request: {}
 
 env:
+  # https://github.com/actions/checkout?tab=readme-ov-file#push-a-commit-to-a-pr-using-the-built-in-token
+  GIT_COMMITTER_NAME: "github-actions[bot]"
+  GIT_COMMITTER_EMAIL: "41898282+github-actions[bot]@users.noreply.github.com"
   PR_BASE: ${{ github.event.pull_request.base.ref }}
   PR_HEAD: ${{ github.event.pull_request.head.sha }}
 
@@ -22,9 +25,17 @@ jobs:
 
       - name: Has latest commits
         run: |
+          set -eux -o pipefail
           if git merge-base --is-ancestor "origin/${PR_BASE}" HEAD; then
             echo "OK: PR branch is on top of the ${PR_BASE}."
+            exit 0
+          fi
+          COUNT=$(git rev-list --count "origin/${PR_BASE}" --not HEAD)
+          git checkout -d "origin/${PR_BASE}"
+          if git cherry-pick "${PR_HEAD}" --not "origin/${PR_BASE}"; then
+            echo "::warning::PR branch is ${COUNT} commit(s) behind ${PR_BASE} and can be rebased without conflicts."
+            exit 2
           else
-            echo "::error::PR branch is $(git rev-list --count "origin/${PR_BASE}" --not HEAD) commit(s) behind ${PR_BASE} and PROBABLY needs to be rebased."
+            echo "::error::PR branch is ${COUNT} commit(s) behind ${PR_BASE} and need to be rebased."
             exit 1
           fi
