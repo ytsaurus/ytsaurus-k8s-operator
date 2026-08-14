@@ -761,6 +761,7 @@ func getNativeClientConfigCarcass() (NativeClientConfig, error) {
 	var c NativeClientConfig
 
 	loggingBuilder := newLoggingBuilder(nil, "client")
+	loggingBuilder.addLogger(defaultClientStderrLoggerSpec())
 	c.Logging = loggingBuilder.logging
 
 	return c, nil
