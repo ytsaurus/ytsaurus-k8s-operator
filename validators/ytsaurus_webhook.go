@@ -112,7 +112,8 @@ func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *ytv1.Ytsaurus) field.
 func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus, mastersSpec, oldMastersSpec *ytv1.MastersSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
-	allErrors = append(allErrors, r.validateInstanceSpecWithTimbertruck(mastersSpec.InstanceSpec, &newYtsaurus.Spec.CommonSpec, mastersSpec.Timbertruck, path)...)
+	allErrors = append(allErrors, r.validateInstanceSpec(mastersSpec.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+	allErrors = append(allErrors, r.validateTimbertruckSpec(mastersSpec.Timbertruck, newYtsaurus.Spec.Timbertruck, mastersSpec.StructuredLoggers, mastersSpec.Locations, path)...)
 	allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus, mastersSpec, path)...)
 
 	if ytv1.FindFirstLocation(mastersSpec.Locations, ytv1.LocationTypeMasterChangelogs) == nil {
@@ -793,15 +794,9 @@ func (r *baseValidator) validatePodSpec(podSpec *ytv1.PodSpec, path *field.Path)
 }
 
 func (r *baseValidator) validateInstanceSpec(instanceSpec ytv1.InstanceSpec, commonSpec *ytv1.CommonSpec, path *field.Path) field.ErrorList {
-	return r.validateInstanceSpecWithTimbertruck(instanceSpec, commonSpec, nil, path)
-}
-
-func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.InstanceSpec, commonSpec *ytv1.CommonSpec, componentTimbertruck *ytv1.TimbertruckSpec, path *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
 
 	allErrors = append(allErrors, r.validatePodSpec(&instanceSpec.PodSpec, path)...)
-
-	allErrors = append(allErrors, r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path)...)
 
 	allErrors = append(allErrors, validateStructuredLoggers(instanceSpec.StructuredLoggers, path)...)
 
