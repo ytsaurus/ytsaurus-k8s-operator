@@ -914,7 +914,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -941,7 +941,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -2416,13 +2416,19 @@
         "clusterMaintenance": {
           "description": "Controls cluster maintenance.",
           "type": "object",
-          "required": [
-            "shutdown"
-          ],
           "properties": {
             "assignMasterCellsRoles": {
               "description": "Trigger master cells roles assignment.",
               "type": "boolean"
+            },
+            "downtime": {
+              "description": "Desired cluster service downtime for validating update plan. Default: Unsafe.",
+              "type": "string",
+              "enum": [
+                "Minor",
+                "Major",
+                "Unsafe"
+              ]
             },
             "shutdown": {
               "description": "Shutdown defines which components are scaled down to zero replicas during...",
@@ -3287,7 +3293,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -3314,7 +3320,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -5504,7 +5510,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -5531,7 +5537,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -7718,7 +7724,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -7745,7 +7751,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -9946,7 +9952,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -9973,7 +9979,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -12545,7 +12551,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -12572,7 +12578,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -14842,7 +14848,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -14869,7 +14875,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -17111,7 +17117,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -17138,7 +17144,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -19356,7 +19362,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -19383,7 +19389,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -21710,7 +21716,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -21737,7 +21743,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -23956,7 +23962,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -23983,7 +23989,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -26167,7 +26173,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -26194,7 +26200,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -28384,7 +28390,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -28411,7 +28417,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -30654,7 +30660,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -30681,7 +30687,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -32895,7 +32901,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -32922,7 +32928,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -35362,7 +35368,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -35389,7 +35395,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -37575,7 +37581,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -37602,7 +37608,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -39809,7 +39815,7 @@
                       "type": "string"
                     },
                     "lowWatermark": {
-                      "description": "Limit above which the volume is considered to be non-full.",
+                      "description": "Free disk space above which the location is considered to be non-full.",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -39836,7 +39842,7 @@
                       "minLength": 1
                     },
                     "quota": {
-                      "description": "Disk space quota, default is size of related volume.",
+                      "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                       "anyOf": [
                         {
@@ -42669,7 +42675,7 @@
                     "type": "string"
                   },
                   "lowWatermark": {
-                    "description": "Limit above which the volume is considered to be non-full.",
+                    "description": "Free disk space above which the location is considered to be non-full.",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {
@@ -42696,7 +42702,7 @@
                     "minLength": 1
                   },
                   "quota": {
-                    "description": "Disk space quota, default is size of related volume.",
+                    "description": "Disk space quota, default is storage limit of related volume, otherwise -...",
                     "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
                     "anyOf": [
                       {

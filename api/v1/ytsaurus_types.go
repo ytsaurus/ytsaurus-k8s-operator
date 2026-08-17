@@ -1103,6 +1103,22 @@ type YtsaurusSpec struct {
 	UI *UISpec `json:"ui,omitempty"`
 }
 
+type ClusterDowntime string
+
+const (
+	// For now undefined update downtime is an alias for "Unsafe".
+	ClusterDowntimeUndefined ClusterDowntime = ""
+	// Update with minor downtime.
+	// Requires rolling or on-delete update strategies for components in update plan.
+	// Allows only forward patch-level upgrade for version parsed from component image tag.
+	ClusterDowntimeMinor ClusterDowntime = "Minor"
+	// Update with major downtime.
+	// Forbids rolling and on-delete update strategies for components in update plan.
+	ClusterDowntimeMajor ClusterDowntime = "Major"
+	// No restrictions.
+	ClusterDowntimeUnsafe ClusterDowntime = "Unsafe"
+)
+
 type ClusterShutdown string
 
 const (
@@ -1118,10 +1134,13 @@ const (
 )
 
 type ClusterMaintenance struct {
+	// Desired cluster service downtime for validating update plan. Default: Unsafe.
+	//+kubebuilder:validation:Enum={"Minor","Major","Unsafe"}
+	Downtime ClusterDowntime `json:"downtime,omitempty"`
 	// Shutdown defines which components are scaled down to zero replicas during cluster maintenance.
 	// Component configs are not changed: cluster functions are degraded accordingly.
 	//+kubebuilder:validation:Enum={"Compute","Everything","ExceptMasters","Tablets"}
-	Shutdown ClusterShutdown `json:"shutdown"`
+	Shutdown ClusterShutdown `json:"shutdown,omitempty"`
 	// Trigger master cells roles assignment.
 	// +optional
 	AssignMasterCellsRoles bool `json:"assignMasterCellsRoles,omitempty"`

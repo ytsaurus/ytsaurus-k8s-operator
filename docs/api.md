@@ -332,6 +332,25 @@ _Appears in:_
 | `releaseStatus` _[ChytReleaseStatus](#chytreleasestatus)_ |  |  |  |
 
 
+#### ClusterDowntime
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ClusterMaintenance](#clustermaintenance)
+
+| Field | Description |
+| --- | --- |
+| `` | For now undefined update downtime is an alias for "Unsafe".<br /> |
+| `Minor` | Update with minor downtime.<br />Requires rolling or on-delete update strategies for components in update plan.<br />Allows only forward patch-level upgrade for version parsed from component image tag.<br /> |
+| `Major` | Update with major downtime.<br />Forbids rolling and on-delete update strategies for components in update plan.<br /> |
+| `Unsafe` | No restrictions.<br /> |
+
+
 #### ClusterFeatures
 
 
@@ -376,6 +395,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `downtime` _[ClusterDowntime](#clusterdowntime)_ | Desired cluster service downtime for validating update plan. Default: Unsafe. |  | Enum: [Minor Major Unsafe] <br /> |
 | `shutdown` _[ClusterShutdown](#clustershutdown)_ | Shutdown defines which components are scaled down to zero replicas during cluster maintenance.<br />Component configs are not changed: cluster functions are degraded accordingly. |  | Enum: [Compute Everything ExceptMasters Tablets] <br /> |
 | `assignMasterCellsRoles` _boolean_ | Trigger master cells roles assignment. |  |  |
 
@@ -1368,8 +1388,8 @@ _Appears in:_
 | `locationType` _[LocationType](#locationtype)_ |  |  |  |
 | `path` _string_ |  |  | MinLength: 1 <br /> |
 | `medium` _string_ |  | default |  |
-| `quota` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Disk space quota, default is size of related volume. |  |  |
-| `lowWatermark` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Limit above which the volume is considered to be non-full. |  |  |
+| `quota` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Disk space quota, default is storage limit of related volume, otherwise - unlimited. |  |  |
+| `lowWatermark` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Free disk space above which the location is considered to be non-full.<br />Default: min((quota or storage request)/10, 25GiB).<br />Below lowWatermark the location starts collecting trash.<br />Below lowWatermark/2 the location is considered to be full.<br />Below lowWatermark/4 the location stops accepting new writes. |  |  |
 | `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds. |  | Minimum: 60000 <br /> |
 
 
