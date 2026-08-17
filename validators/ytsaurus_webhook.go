@@ -36,6 +36,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
@@ -865,6 +866,41 @@ func (r *baseValidator) validatePodSpec(podSpec *ytv1.PodSpec, path *field.Path)
 	return allErrors
 }
 
+func (r *baseValidator) validateImageUpdate(
+	newImage *string,
+	oldImage *string,
+	commonSpec *ytv1.CommonSpec,
+	oldCommonSpec *ytv1.CommonSpec,
+	path *field.Path,
+) field.ErrorList {
+	var errs field.ErrorList
+	downtime := ptr.Deref(commonSpec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Downtime
+	if downtime != ytv1.ClusterDowntimeMinor || (oldImage == nil && oldCommonSpec == nil) {
+		return nil
+	}
+	newImg := ptr.Deref(newImage, oldCommonSpec.CoreImage)
+	oldImg := ptr.Deref(oldImage, oldCommonSpec.CoreImage)
+	if newImg == oldImg {
+		return nil
+	}
+	newVersion, err := version.ParseYtsaurusImageVersion(newImg)
+	if err != nil {
+		errs = append(errs, field.Invalid(path, newImg, fmt.Sprintf("cannot parse new image version: %v", err)))
+	}
+	oldVersion, err := version.ParseYtsaurusImageVersion(oldImg)
+	if err != nil {
+		errs = append(errs, field.Invalid(path, oldImg, fmt.Sprintf("cannot parse old image version: %v", err)))
+	}
+	if oldVersion != nil && newVersion != nil {
+		if newVersion.Major() != oldVersion.Major() || newVersion.Minor() != oldVersion.Minor() {
+			errs = append(errs, field.Forbidden(path, fmt.Sprintf("image update from version %v to %v is incompatible with minor downtime", oldVersion, newVersion)))
+		} else if newVersion.Patch() < oldVersion.Patch() {
+			errs = append(errs, field.Forbidden(path, fmt.Sprintf("image downgrade from version %v to %v is incompatible with minor downtime", oldVersion, newVersion)))
+		}
+	}
+	return errs
+}
+
 func (r *baseValidator) validateInstanceSpec(
 	instanceSpec ytv1.InstanceSpec,
 	oldInstanceSpec *ytv1.InstanceSpec,
@@ -912,6 +948,10 @@ func (r *baseValidator) validateInstanceSpec(
 					"location path is not in any volume mount"))
 			}
 		}
+	}
+
+	if oldInstanceSpec != nil {
+		allErrors = append(allErrors, r.validateImageUpdate(instanceSpec.Image, oldInstanceSpec.Image, commonSpec, oldCommonSpec, path.Child("image"))...)
 	}
 
 	return allErrors
@@ -1037,23 +1077,33 @@ func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.Com
 		}
 	}
 
+	downtime := ptr.Deref(newYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{}).Downtime
+
 	switch modeType {
 	case ytv1.ComponentUpdateModeTypeBulkUpdate:
+		if downtime == ytv1.ClusterDowntimeMinor {
+			errs = append(errs, field.Forbidden(path, "Bulk update is incompatible with minor downtime"))
+		}
 		if selector.Strategy != nil {
 			if selector.Strategy.RollingUpdate != nil {
 				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.Strategy.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
 			}
 		}
 	case ytv1.ComponentUpdateModeTypeRollingUpdate:
+		if downtime == ytv1.ClusterDowntimeMajor {
+			errs = append(errs, field.Forbidden(path, "Rolling update is incompatible with major downtime"))
+		}
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
 		}
-
 		if selector.Component.Type == ytv1.DataNodeType && selector.Component.Name == "" && len(newYtsaurus.Spec.DataNodes) > 1 && selector.Concurrency == nil {
 			errs = append(errs, field.Invalid(path.Child("concurrency"), modeType, "rolling update for several data node groups requires concurrency limit"))
 		}
 
 	case ytv1.ComponentUpdateModeTypeOnDelete:
+		if downtime == ytv1.ClusterDowntimeMajor {
+			errs = append(errs, field.Forbidden(path, "On-delete update is incompatible with major downtime"))
+		}
 		if selector.Component.Type == "" {
 			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
 		}

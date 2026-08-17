@@ -7,6 +7,8 @@ import (
 	"runtime/debug"
 
 	"github.com/Masterminds/semver/v3"
+
+	"github.com/distribution/reference"
 )
 
 // version provided by ldflags at compile-time
@@ -73,4 +75,23 @@ func GetParsedVersion() *Version {
 func ParseYtsaurusVersion(version string) (*Version, error) {
 	version = ytsaurusVersionPrefix.ReplaceAllString(version, "")
 	return ParseVersion(version)
+}
+
+func ExtractImageTag(image string) (string, error) {
+	ref, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		return "", err
+	}
+	if tagged, ok := ref.(reference.Tagged); ok {
+		return tagged.Tag(), nil
+	}
+	return "", fmt.Errorf("image reference without tag: %q", image)
+}
+
+func ParseYtsaurusImageVersion(image string) (*Version, error) {
+	tag, err := ExtractImageTag(image)
+	if err != nil {
+		return nil, err
+	}
+	return ParseYtsaurusVersion(tag)
 }
