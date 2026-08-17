@@ -122,7 +122,7 @@ jobs:
           make test-e2e
 
       - name: Make logs snapshot
-        if: always()
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           make logs-snapshot
@@ -135,7 +135,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Upload report
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: "Report for E2E tests ${{ matrix.e2e.name }}"
@@ -144,7 +144,7 @@ jobs:
 
       # https://github.com/actions/upload-artifact
       - name: Upload logs
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: "Logs from E2E tests ${{ matrix.e2e.name }}"
@@ -153,13 +153,13 @@ jobs:
 
   report:
     name: "Report test results"
-    if: always()
+    if: ${{ !cancelled() }}
     needs: check
     runs-on: ubuntu-latest
     steps:
       # https://github.com/dorny/test-reporter
       - name: Report results
-        if: always()
+        if: ${{ !cancelled() }}
         uses: dorny/test-reporter@v3
         with:
           artifact: "/Report (.*)/"
