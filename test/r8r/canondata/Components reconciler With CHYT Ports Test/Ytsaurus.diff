@@ -1,6 +1,6 @@
 --- base/Ytsaurus.yson
 +++ test/Ytsaurus.yson
-@@ -1,10 +1,10 @@
+@@ -1,12 +1,13 @@
  apiVersion: cluster.ytsaurus.tech/v1
  kind: Ytsaurus
  metadata:
@@ -9,11 +9,25 @@
    name: test-ytsaurus
    namespace: ytsaurus-components
 -  resourceVersion: "22"
-+  resourceVersion: "27"
++  resourceVersion: "36"
  spec:
-   clusterFeatures: {}
+-  clusterFeatures: {}
++  clusterFeatures:
++    httpProxyHaveChytAddress: true
    coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
-@@ -84,7 +84,7 @@
+   discovery:
+     instanceCount: 1
+@@ -76,6 +77,9 @@
+     - mountPath: /yt/master-data
+       name: master-data
+   terminationGracePeriodSeconds: 5
++  updatePlan:
++  - class: Everything
++    component: {}
+   useIpv4: false
+   useIpv6: false
+   usePorto: false
+@@ -84,7 +88,7 @@
    conditions:
    - lastTransitionTime: null
      message: 0.0.0-devel
@@ -22,7 +36,7 @@
      reason: Observed
      status: "True"
      type: OperatorVersion
-@@ -102,22 +102,16 @@
+@@ -102,22 +106,16 @@
      type: defaultMasterInitJobCompleted
    - lastTransitionTime: null
      message: Ready
@@ -47,7 +61,7 @@
    - lastTransitionTime: null
      message: Job yt-client-init-job-user completed in -1ns
      observedGeneration: 1
-@@ -131,18 +125,24 @@
+@@ -131,18 +129,24 @@
      status: "True"
      type: UpdateIsPossible
    - lastTransitionTime: null

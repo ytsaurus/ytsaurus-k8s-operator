@@ -9,7 +9,7 @@
    name: test-ytsaurus
    namespace: ytsaurus-components
 -  resourceVersion: "26"
-+  resourceVersion: "28"
++  resourceVersion: "31"
  spec:
    adminCredentials:
      name: test-ytsaurus-admin
@@ -22,7 +22,7 @@
      reason: Observed
      status: "True"
      type: OperatorVersion
-@@ -809,19 +809,21 @@
+@@ -809,19 +809,19 @@
      message: Ready 5 of 5; daemon set ih-ca is ready at 1 nodes; daemon set ih-ms
        is ready at 1 nodes; daemon set ih-strawberry is ready at 1 nodes; daemon set
        ih-ui is ready at 1 nodes; daemon set ih-yqla is ready at 1 nodes
@@ -32,11 +32,8 @@
      status: "True"
      type: ImageHeaterComplete
    - lastTransitionTime: null
--    message: Image heating is complete
+     message: Image heating is complete
 -    observedGeneration: 1
-+    message: Ready 5 of 5; daemon set ih-ca is ready at 1 nodes; daemon set ih-ms
-+      is ready at 1 nodes; daemon set ih-strawberry is ready at 1 nodes; daemon set
-+      ih-ui is ready at 1 nodes; daemon set ih-yqla is ready at 1 nodes
 +    observedGeneration: 2
      reason: Ready
      status: "True"
@@ -48,7 +45,7 @@
      reason: Ready
      status: "True"
      type: Master-2Ready
-@@ -839,55 +841,55 @@
+@@ -839,55 +839,49 @@
      type: defaultMasterInitJobCompleted
    - lastTransitionTime: null
      message: Ready
@@ -95,12 +92,11 @@
    - lastTransitionTime: null
      message: 'Pods are ready: 0 of 1, running 0, need 0'
 -    observedGeneration: 1
-+    observedGeneration: 2
-     reason: Ready
-     status: "True"
-     type: HttpProxyReady
-   - lastTransitionTime: null
-     message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    reason: Ready
+-    status: "True"
+-    type: HttpProxyReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
 -    observedGeneration: 1
 +    observedGeneration: 2
      reason: Ready
@@ -113,7 +109,7 @@
      reason: Ready
      status: "True"
      type: SchedulerReady
-@@ -905,7 +907,7 @@
+@@ -905,7 +899,7 @@
      type: yql-agent-environmentYqlAgentInitJobCompleted
    - lastTransitionTime: null
      message: 'Pods are ready: 0 of 0, running 0, need 0'
@@ -122,7 +118,7 @@
      reason: Ready
      status: "True"
      type: UIReady
-@@ -917,7 +919,7 @@
+@@ -917,7 +911,7 @@
      type: userYtsaurusClientInitJobCompleted
    - lastTransitionTime: null
      message: Ready
@@ -131,23 +127,26 @@
      reason: Ready
      status: "True"
      type: YqlAgentReady
-@@ -935,13 +937,13 @@
+@@ -934,18 +928,6 @@
+     status: "True"
      type: UpdateIsPossible
    - lastTransitionTime: null
-     message: Ready
+-    message: Ready
 -    observedGeneration: 1
-+    observedGeneration: 2
-     reason: Ready
-     status: "True"
-     type: YtsaurusClientReady
-   - lastTransitionTime: null
-     message: Ready
+-    reason: Ready
+-    status: "True"
+-    type: YtsaurusClientReady
+-  - lastTransitionTime: null
+-    message: Ready
 -    observedGeneration: 1
-+    observedGeneration: 2
-     reason: Ready
-     status: "True"
-     type: TimbertruckReady
-@@ -953,7 +955,7 @@
+-    reason: Ready
+-    status: "True"
+-    type: TimbertruckReady
+-  - lastTransitionTime: null
+     message: Job yt-strawberry-controller-init-job-cluster completed in -1ns
+     observedGeneration: 1
+     reason: InitJob
+@@ -953,17 +935,35 @@
      type: clusterStrawberryControllerInitJobCompleted
    - lastTransitionTime: null
      message: Ready
@@ -156,7 +155,28 @@
      reason: Ready
      status: "True"
      type: StrawberryControllerReady
-@@ -963,7 +965,7 @@
+   - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 2
++    reason: Ready
++    status: "True"
++    type: HttpProxyReady
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 2
++    reason: Ready
++    status: "True"
++    type: YtsaurusClientReady
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 2
++    reason: Ready
++    status: "True"
++    type: TimbertruckReady
++  - lastTransitionTime: null
+     message: Cluster state is Running
+-    observedGeneration: 1
++    observedGeneration: 2
      reason: Running
      status: "True"
      type: ReadyToWork

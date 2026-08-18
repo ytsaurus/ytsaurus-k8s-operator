@@ -474,8 +474,13 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				log.Info("Reconcile", "kind", req.Kind, "name", req.Name)
 				result, err := reconcilers[req.Kind].Reconcile(ctx, reconcilerRequest)
 				//nolint:staticcheck // Deprecated.
-				if result.Requeue || result.RequeueAfter > 0 {
-					log.Info("Requeue", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter, "error", err)
+				if result.RequeueAfter == consts.DefaultClusterStatusPollPeriod {
+					log.Info("Stuck", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter)
+					requestQueue = slices.Delete(requestQueue, index, index+1)
+				} else if err != nil {
+					log.Info("Error", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter, "error", err)
+				} else if result.Requeue || result.RequeueAfter > 0 {
+					log.Info("Requeue", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter)
 				} else {
 					log.Info("Complete", "kind", req.Kind, "name", req.Name)
 					requestQueue = slices.Delete(requestQueue, index, index+1)
@@ -953,13 +958,21 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		It("Test", func(ctx context.Context) {})
 	})
 
-	Context("With CHYT", Label("chyt"), func() {
-		BeforeEach(func(ctx context.Context) {
+	Context("With CHYT", Ordered, Label("chyt"), func() {
+		BeforeAll(func(ctx context.Context) {
 			chyt := ytBuilder.CreateChyt()
 			Expect(k8sClient.Create(ctx, chyt)).To(Succeed())
 			controllerObjects = append(controllerObjects, chyt)
 		})
 		It("Test", func(ctx context.Context) {})
+		Context("Ports", Ordered, func() {
+			BeforeAll(func(ctx context.Context) {
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
+				ytsaurus.Spec.ClusterFeatures.HTTPProxyHaveChytAddress = true
+				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
+			})
+			It("Test", func(ctx context.Context) {})
+		})
 	})
 
 	Context("With SPYT", Label("spyt"), func() {

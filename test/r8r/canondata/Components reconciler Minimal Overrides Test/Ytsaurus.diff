@@ -7,7 +7,7 @@
 +  generation: 3
 +  name: test-ytsaurus
 +  namespace: ytsaurus-components
-+  resourceVersion: "38"
++  resourceVersion: "43"
 +spec:
 +  clusterFeatures: {}
 +  configOverrides:
@@ -115,12 +115,6 @@
 +    status: "True"
 +    type: MasterReady
 +  - lastTransitionTime: null
-+    message: 'Pods are ready: 0 of 1, running 0, need 0'
-+    observedGeneration: 3
-+    reason: Ready
-+    status: "True"
-+    type: HttpProxyReady
-+  - lastTransitionTime: null
 +    message: Job yt-client-init-job-user completed in -1ns
 +    observedGeneration: 1
 +    reason: InitJob
@@ -132,6 +126,12 @@
 +    reason: HealthChecks
 +    status: "True"
 +    type: UpdateIsPossible
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: HttpProxyReady
 +  - lastTransitionTime: null
 +    message: 'Pods are ready: 0 of 1, running 0, need 0'
 +    observedGeneration: 3

@@ -12676,6 +12676,7 @@ spec:
                           type: object
                       type: object
                     chytProxy:
+                      description: Redefine CHYT ports, requires clusterFeatures.httpProxyHaveChytAddress.
                       properties:
                         httpNodePort:
                           format: int32

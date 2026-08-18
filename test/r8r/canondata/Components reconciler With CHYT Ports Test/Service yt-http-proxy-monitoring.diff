@@ -1,0 +1,19 @@
+--- base/Service yt-http-proxy-monitoring.yson
++++ test/Service yt-http-proxy-monitoring.yson
+@@ -1,6 +1,6 @@
+ metadata:
+   annotations:
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -19,7 +19,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "3"
+ spec:
+   ports:
+   - name: ytsaurus-metrics

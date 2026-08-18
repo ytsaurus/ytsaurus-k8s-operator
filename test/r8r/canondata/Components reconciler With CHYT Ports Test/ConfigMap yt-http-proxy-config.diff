@@ -1,0 +1,25 @@
+--- base/ConfigMap yt-http-proxy-config.yson
++++ test/ConfigMap yt-http-proxy-config.yson
+@@ -93,11 +93,14 @@
+         driver={
+         };
+         role="";
++        "chyt_http_server"={
++            port=8123;
++        };
+     }
+ metadata:
+   annotations:
+     ytsaurus.tech/config-hash: <censored>
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -115,5 +118,5 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ 

@@ -84,7 +84,7 @@
 +    uid: ""
 +  resourceVersion: "1"
 +- annotations:
-+    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "3"
 +  generation: 1
 +  labels:
 +    app.kubernetes.io/component: yt-http-proxy
@@ -102,7 +102,7 @@
 +    kind: Ytsaurus
 +    name: test-ytsaurus
 +    uid: ""
-+  resourceVersion: "1"
++  resourceVersion: "3"
 +- annotations:
 +    ytsaurus.tech/observed-generation: "1"
 +  generation: 1
