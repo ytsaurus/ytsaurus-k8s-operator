@@ -6,8 +6,20 @@
     };
     logging={
         writers={
+            stderr={
+                type=stderr;
+                format="plain_text";
+                "enable_system_messages"=%true;
+            };
         };
         rules=[
+            {
+                "min_level"=debug;
+                writers=[
+                    stderr;
+                ];
+                family="plain_text";
+            };
         ];
     };
     driver={
@@ -31,14 +43,6 @@
                 "ds-test-1.discovery-test.fake.svc.fake.zone:9020";
                 "ds-test-2.discovery-test.fake.svc.fake.zone:9020";
             ];
-        };
-        "bus_client"={
-            "encryption_mode"=required;
-            ca={
-                "file_name"="/tls/ca_bundle/ca.crt";
-            };
-            "verification_mode"=full;
-            "peer_alternative_host_name"="fake.svc.cluster.local";
         };
         "master_cache"={
             addresses=[

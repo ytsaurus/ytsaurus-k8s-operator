@@ -24,19 +24,6 @@ func defaultStderrLoggerSpec() ytv1.TextLoggerSpec {
 	}
 }
 
-func defaultClientStderrLoggerSpec() ytv1.TextLoggerSpec {
-	return ytv1.TextLoggerSpec{
-		BaseLoggerSpec: ytv1.BaseLoggerSpec{
-			Name:               "stderr",
-			MinLogLevel:        ytv1.LogLevelWarning,
-			Compression:        ytv1.LogCompressionNone,
-			UseTimestampSuffix: false,
-			Format:             ytv1.LogFormatPlainText,
-		},
-		WriterType: ytv1.LogWriterTypeStderr,
-	}
-}
-
 func defaultDebugLoggerSpec() ytv1.TextLoggerSpec {
 	return ytv1.TextLoggerSpec{
 		BaseLoggerSpec: ytv1.BaseLoggerSpec{

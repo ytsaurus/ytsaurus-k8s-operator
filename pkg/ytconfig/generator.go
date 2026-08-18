@@ -757,18 +757,20 @@ func (g *Generator) GetMasterConfig(spec *ytv1.MastersSpec) ([]byte, error) {
 	return marshallYsonConfig(c)
 }
 
-func getNativeClientConfigCarcass() (NativeClientConfig, error) {
+func getNativeClientConfigCarcass(loggers []ytv1.TextLoggerSpec) (NativeClientConfig, error) {
 	var c NativeClientConfig
 
 	loggingBuilder := newLoggingBuilder(nil, "client")
-	loggingBuilder.addLogger(defaultClientStderrLoggerSpec())
+	for _, loggerSpec := range loggers {
+		loggingBuilder.addLogger(loggerSpec)
+	}
 	c.Logging = loggingBuilder.logging
 
 	return c, nil
 }
 
 func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
-	c, err := getNativeClientConfigCarcass()
+	c, err := getNativeClientConfigCarcass(g.commonSpec.ClientLoggers)
 	if err != nil {
 		return nil, err
 	}

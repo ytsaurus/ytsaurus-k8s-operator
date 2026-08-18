@@ -545,6 +545,13 @@ func (in *CommonSpec) DeepCopyInto(out *CommonSpec) {
 		*out = new(corev1.LocalObjectReference)
 		**out = **in
 	}
+	if in.ClientLoggers != nil {
+		in, out := &in.ClientLoggers, &out.ClientLoggers
+		*out = make([]TextLoggerSpec, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.ImagePullSecrets != nil {
 		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
 		*out = make([]corev1.LocalObjectReference, len(*in))

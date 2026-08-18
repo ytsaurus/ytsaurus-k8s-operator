@@ -1017,6 +1017,11 @@ type CommonSpec struct {
 
 	ConfigOverrides *corev1.LocalObjectReference `json:"configOverrides,omitempty"`
 
+	// Loggers for the native client config (client.yson) used by init jobs and by any
+	// component's who uses native protoctols.
+	//+optional
+	ClientLoggers []TextLoggerSpec `json:"clientLoggers,omitempty"`
+
 	// Credentials for pulling "coreImage" and "image" set for components.
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }

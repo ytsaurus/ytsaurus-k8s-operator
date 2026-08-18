@@ -694,6 +694,27 @@ func TestGetBundleControllerConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetNativeClientConfigWithClientLoggers(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	ytsaurus.Spec.ClientLoggers = []ytv1.TextLoggerSpec{
+		{
+			BaseLoggerSpec: ytv1.BaseLoggerSpec{
+				Name:               "stderr",
+				MinLogLevel:        ytv1.LogLevelDebug,
+				Compression:        ytv1.LogCompressionNone,
+				UseTimestampSuffix: false,
+				Format:             ytv1.LogFormatPlainText,
+			},
+			WriterType: ytv1.LogWriterTypeStderr,
+		},
+	}
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetNativeClientConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetTabletBalancerConfig(t *testing.T) {
 	ytsaurus := getYtsaurusWithoutNodes()
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)

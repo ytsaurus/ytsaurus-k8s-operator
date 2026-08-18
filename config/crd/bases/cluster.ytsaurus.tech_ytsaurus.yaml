@@ -2069,6 +2069,88 @@ spec:
                     description: Name is the name of resource being referenced
                     type: string
                 type: object
+              clientLoggers:
+                description: Loggers for the native client config (client.
+                items:
+                  properties:
+                    categoriesFilter:
+                      properties:
+                        type:
+                          description: CategoriesFilterType string describes types
+                            of possible log CategoriesFilter.
+                          enum:
+                          - exclude
+                          - include
+                          type: string
+                        values:
+                          items:
+                            type: string
+                          minItems: 1
+                          type: array
+                      type: object
+                    compression:
+                      default: none
+                      enum:
+                      - none
+                      - gzip
+                      - zstd
+                      type: string
+                    enableAnchorProfiling:
+                      type: boolean
+                    format:
+                      default: plain_text
+                      enum:
+                      - plain_text
+                      - json
+                      - yson
+                      type: string
+                    minLogLevel:
+                      default: info
+                      description: LogLevel string describes possible Ytsaurus logging
+                        level.
+                      enum:
+                      - trace
+                      - debug
+                      - info
+                      - warning
+                      - error
+                      type: string
+                    name:
+                      minLength: 1
+                      type: string
+                    rotationPolicy:
+                      properties:
+                        maxSegmentCountToKeep:
+                          format: int64
+                          type: integer
+                        maxSegmentSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxTotalSizeToKeep:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        rotationPeriodMilliseconds:
+                          format: int64
+                          type: integer
+                      type: object
+                    useTimestampSuffix:
+                      default: false
+                      type: boolean
+                    writerType:
+                      description: LogWriterType string describes types of possible
+                        log writers.
+                      enum:
+                      - file
+                      - stderr
+                      type: string
+                  type: object
+                type: array
               clusterFeatures:
                 properties:
                   enableAnchorProfilingByDefault:

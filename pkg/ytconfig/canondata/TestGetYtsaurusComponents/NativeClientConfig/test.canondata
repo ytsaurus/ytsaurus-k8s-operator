@@ -6,20 +6,8 @@
     };
     logging={
         writers={
-            stderr={
-                type=stderr;
-                format="plain_text";
-                "enable_system_messages"=%true;
-            };
         };
         rules=[
-            {
-                "min_level"=warning;
-                writers=[
-                    stderr;
-                ];
-                family="plain_text";
-            };
         ];
     };
     driver={
