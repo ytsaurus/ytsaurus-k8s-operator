@@ -142,6 +142,9 @@ data:
             "physical_host"="{K8S_NODE_NAME}";
         };
         role="";
+        "memory_limits"={
+            total=2147483648;
+        };
         "cypress_user_manager"={
         };
         "cypress_token_authenticator"={

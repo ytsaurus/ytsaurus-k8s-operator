@@ -131,6 +131,9 @@ data:
         driver={
         };
         role="";
+        "memory_limits"={
+            total=2147483648;
+        };
     }
 metadata:
   annotations:
