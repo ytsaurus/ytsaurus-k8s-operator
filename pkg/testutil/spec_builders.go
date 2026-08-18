@@ -178,6 +178,7 @@ func init() {
 var (
 	masterVolumeSize   = resource.MustParse("5Gi")
 	dataNodeVolumeSize = resource.MustParse("10Gi")
+	dataNodeVolumeLim  = resource.MustParse("20Gi")
 	execNodeVolumeSize = resource.MustParse("5Gi")
 	logsVolumeSize     = resource.MustParse("1Gi")
 	logsSegmentSize    = resource.MustParse("100Mi")
@@ -249,6 +250,12 @@ func (b *YtsaurusBuilder) CreateVolumeClaim(name string, size resource.Quantity)
 			},
 		},
 	}
+}
+
+func (b *YtsaurusBuilder) CreateVolumeClaimWithLimit(name string, request, limit resource.Quantity) ytv1.EmbeddedPersistentVolumeClaim {
+	vol := b.CreateVolumeClaim(name, request)
+	vol.Spec.Resources.Limits = corev1.ResourceList{corev1.ResourceStorage: limit}
+	return vol
 }
 
 func (b *YtsaurusBuilder) addLogsVolume(spec *ytv1.InstanceSpec, name string) {
@@ -831,7 +838,7 @@ func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.I
 			},
 		},
 		VolumeClaimTemplates: []ytv1.EmbeddedPersistentVolumeClaim{
-			b.CreateVolumeClaim("node-data", dataNodeVolumeSize),
+			b.CreateVolumeClaimWithLimit("node-data", dataNodeVolumeSize, dataNodeVolumeLim),
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{

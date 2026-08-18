@@ -35,6 +35,8 @@ spec:
       accessModes:
       - ReadWriteOnce
       resources:
+        limits:
+          storage: 20Gi
         requests:
           storage: 10Gi
   volumeMounts:

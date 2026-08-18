@@ -154,7 +154,8 @@ data:
             "store_locations"=[
                 {
                     path="/yt/node-data/chunk-store";
-                    quota=10737418240;
+                    "min_disk_space"=1073741824;
+                    quota=21474836480;
                     "io_config"={
                         "enable_sync"=%false;
                     };

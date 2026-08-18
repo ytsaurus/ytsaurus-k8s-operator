@@ -206,10 +206,14 @@ type LocationSpec struct {
 	//+kubebuilder:default:=default
 	Medium string `json:"medium,omitempty"`
 
-	// Disk space quota, default is size of related volume.
+	// Disk space quota, default is storage limit of related volume, otherwise - unlimited.
 	//+optional
 	Quota *resource.Quantity `json:"quota,omitempty"`
-	// Limit above which the volume is considered to be non-full.
+	// Free disk space above which the location is considered to be non-full.
+	// Default: min((quota or storage request)/10, 25GiB).
+	// Below lowWatermark the location starts collecting trash.
+	// Below lowWatermark/2 the location is considered to be full.
+	// Below lowWatermark/4 the location stops accepting new writes.
 	//+optional
 	LowWatermark *resource.Quantity `json:"lowWatermark,omitempty"`
 	// Max TTL of trash in milliseconds.
