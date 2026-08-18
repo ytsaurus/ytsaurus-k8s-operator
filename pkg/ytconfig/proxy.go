@@ -71,21 +71,27 @@ type HTTPSServer struct {
 	Credentials HTTPSServerCredentials `yson:"credentials"`
 }
 
+type ProxyMemoryLimits struct {
+	Total int64 `yson:"total"`
+}
+
 type HTTPProxyServer struct {
 	CommonServer
-	Port            int          `yson:"port"`
-	Auth            Auth         `yson:"auth"`
-	Coordinator     Coordinator  `yson:"coordinator"`
-	Driver          Driver       `yson:"driver"`
-	Role            string       `yson:"role"`
-	HTTPSServer     *HTTPSServer `yson:"https_server,omitempty"`
-	ChytHttpServer  *HTTPServer  `yson:"chyt_http_server,omitempty"`
-	ChytHttpsServer *HTTPSServer `yson:"chyt_https_server,omitempty"`
+	Port            int                `yson:"port"`
+	Auth            Auth               `yson:"auth"`
+	Coordinator     Coordinator        `yson:"coordinator"`
+	Driver          Driver             `yson:"driver"`
+	Role            string             `yson:"role"`
+	MemoryLimits    *ProxyMemoryLimits `yson:"memory_limits,omitempty"`
+	HTTPSServer     *HTTPSServer       `yson:"https_server,omitempty"`
+	ChytHttpServer  *HTTPServer        `yson:"chyt_http_server,omitempty"`
+	ChytHttpsServer *HTTPSServer       `yson:"chyt_https_server,omitempty"`
 }
 
 type RPCProxyServer struct {
 	CommonServer
 	Role                      string                    `yson:"role"`
+	MemoryLimits              *ProxyMemoryLimits        `yson:"memory_limits,omitempty"`
 	CypressUserManager        CypressUserManager        `yson:"cypress_user_manager"`
 	CypressTokenAuthenticator CypressTokenAuthenticator `yson:"cypress_token_authenticator"`
 	OauthService              *OauthService             `yson:"oauth_service,omitempty"`
@@ -135,6 +141,10 @@ func getHTTPProxyServerCarcass(spec *ytv1.HTTPProxiesSpec) (HTTPProxyServer, err
 
 	c.Role = spec.Role
 
+	if memory := getResourceQuantity(&spec.Resources, corev1.ResourceMemory); !memory.IsZero() {
+		c.MemoryLimits = &ProxyMemoryLimits{Total: memory.Value()}
+	}
+
 	c.Logging = getHTTPProxyLogging(spec)
 
 	// FIXME handle DisableHTTP
@@ -175,6 +185,11 @@ func getRPCProxyServerCarcass(spec *ytv1.RPCProxiesSpec) (RPCProxyServer, error)
 	c.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.RPCProxyMonitoringPort)
 
 	c.Role = spec.Role
+
+	if memory := getResourceQuantity(&spec.Resources, corev1.ResourceMemory); !memory.IsZero() {
+		c.MemoryLimits = &ProxyMemoryLimits{Total: memory.Value()}
+	}
+
 	c.Logging = getRPCProxyLogging(spec)
 
 	return c, nil

@@ -160,6 +160,9 @@ data:
             "default_rpc_proxy_address_type"="public_rpc";
         };
         role="";
+        "memory_limits"={
+            total=2147483648;
+        };
         "https_server"={
             port=443;
             credentials={
