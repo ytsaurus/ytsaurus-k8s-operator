@@ -26,7 +26,9 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
-          cache-dependency-path: '**/go.mod'
+          cache-dependency-path: |
+            **/go.mod
+            ${{ job.workflow_file_path }}
 
       - name: Run code linters
         shell: bash
