@@ -8,6 +8,10 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   release:
     name: Run release
@@ -42,9 +46,14 @@ jobs:
           make build
 
       - name: Docker Hub login
+        if: env.HAS_DOCKER_HUB_SECRETS == 'true'
+        env:
+          HAS_DOCKER_HUB_SECRETS: ${{ secrets.DOCKER_HUB_LOGIN != '' && secrets.DOCKER_HUB_PASSWORD != '' }}
+          DOCKER_HUB_LOGIN: ${{ secrets.DOCKER_HUB_LOGIN }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
         shell: bash
         run: |
-          echo '${{ secrets.DOCKER_HUB_PASSWORD }}' | docker login --username ${{ secrets.DOCKER_HUB_LOGIN}} --password-stdin
+          printenv DOCKER_HUB_PASSWORD | docker login --username "${DOCKER_HUB_LOGIN}" --password-stdin
 
       # Uses the `docker/login-action` action to log in to the Container registry
       # using the account and password that will publish the packages.
@@ -57,9 +66,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
+        if: env.HAS_DOCKER_HUB_SECRETS == 'true'
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HAS_DOCKER_HUB_SECRETS: ${{ secrets.DOCKER_HUB_LOGIN != '' && secrets.DOCKER_HUB_PASSWORD != '' }}
         run: |
           make release RELEASE_VERSION=${{ inputs.release_version }} RELEASE_SUFFIX=${{ inputs.release_suffix }}
 
@@ -69,7 +79,10 @@ jobs:
     if: ${{ failure() }}
     steps:
       - name: Send telegram message
-        uses: appleboy/telegram-action@master
+        if: env.HAS_TELEGRAM_SECRETS == 'true'
+        env:
+          HAS_TELEGRAM_SECRETS: ${{ secrets.TELEGRAM_CHAT_ID != '' && secrets.TELEGRAM_TOKEN != '' }}
+        uses: appleboy/telegram-action@221e6b684967abe813051ee4a37dd61770a83ad3 # v1.0.1
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
