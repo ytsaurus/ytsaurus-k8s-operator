@@ -525,7 +525,7 @@ spec:
       ytsaurus
   # https://ytsaurus.tech/docs/en/admin-guide/releases#chyt
   # append "-relwithdebinfo" for image with debug symbols
-  image: ghcr.io/ytsaurus/chyt:2.18.3
+  image: ghcr.io/ytsaurus/chyt:2.18.6
   makeDefault: true
   createPublicClique: true
 
