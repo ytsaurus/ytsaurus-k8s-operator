@@ -60,7 +60,7 @@ type StoreLocation struct {
 	// Stop writes when available space becomes less than disable-writes watermark.
 	DisableWritesWatermark int64 `yson:"disable_writes_watermark,omitempty"`
 	// Start deleting trash when available space less than trash-cleanup watermark.
-	TrashCleanupWatermark int64 `yson:"trash_cleanup_watermark"`
+	TrashCleanupWatermark int64 `yson:"trash_cleanup_watermark,omitempty"`
 	// Maximum time before permanent deletion.
 	MaxTrashTtl *int64 `yson:"max_trash_ttl,omitempty"`
 }
@@ -364,28 +364,41 @@ func findVolume(volumeName string, spec ytv1.InstanceSpec) *ytv1.Volume {
 	return nil
 }
 
-func findQuotaForLocation(location ytv1.LocationSpec, spec ytv1.InstanceSpec) *int64 {
+func findQuotaForLocation(location ytv1.LocationSpec, spec ytv1.InstanceSpec) (request *int64, limit *int64) {
 	if quota := location.Quota; quota != nil {
-		return ptr.To(quota.Value())
+		val := ptr.To(quota.Value())
+		return val, val // NOTE: location quota overrides both storage request and limit.
 	}
 
 	mount := findVolumeMountForPath(location.Path, spec)
 	if mount == nil {
-		return nil
+		return nil, nil
 	}
 
+	var resources *corev1.VolumeResourceRequirements
 	if claim := findVolumeClaimTemplate(mount.Name, spec); claim != nil {
-		storage := claim.Spec.Resources.Requests.Storage()
-		if storage != nil && !storage.IsZero() {
-			return ptr.To(storage.Value())
-		}
+		resources = &claim.Spec.Resources
 	} else if volume := findVolume(mount.Name, spec); volume != nil {
 		if volume.EmptyDir != nil && volume.EmptyDir.SizeLimit != nil {
-			return ptr.To(volume.EmptyDir.SizeLimit.Value())
+			val := ptr.To(volume.EmptyDir.SizeLimit.Value())
+			return val, val
+		}
+		if volume.Ephemeral != nil && volume.Ephemeral.VolumeClaimTemplate != nil {
+			resources = &volume.Ephemeral.VolumeClaimTemplate.Spec.Resources
 		}
 	}
 
-	return nil
+	if resources != nil {
+		if storage := resources.Requests.Storage(); storage != nil && !storage.IsZero() {
+			request = ptr.To(storage.Value())
+		}
+		if storage := resources.Limits.Storage(); storage != nil && !storage.IsZero() {
+			limit = ptr.To(storage.Value())
+		}
+		return request, limit
+	}
+
+	return nil, nil
 }
 
 func fillClusterNodeServerCarcass(n *NodeServer, flavor NodeFlavor, spec ytv1.ClusterNodesSpec, is *ytv1.InstanceSpec) {
@@ -444,23 +457,26 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 			},
 		}
 
-		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
-			storeLocation.Quota = *quota
-
-			if location.LowWatermark != nil {
-				storeLocation.LowWatermark = location.LowWatermark.Value()
-				storeLocation.MinDiskSpace = storeLocation.LowWatermark
-			} else {
-				gb := float64(1024 * 1024 * 1024)
-				storeLocation.LowWatermark = int64(math.Min(0.1*float64(storeLocation.Quota), float64(25)*gb))
-			}
-
-			// These are just simple heuristics.
+		request, limit := findQuotaForLocation(location, spec.InstanceSpec)
+		if limit != nil {
+			// NOTE: Default quota comes from storage limit.
+			storeLocation.Quota = *limit
+		}
+		if location.LowWatermark != nil {
+			storeLocation.LowWatermark = location.LowWatermark.Value()
+		} else if request != nil {
+			// NOTE: Default low watermark is come from storage request.
+			storeLocation.LowWatermark = int64(math.Min(0.1*float64(*request), float64(consts.MaxChunkStoreLocationReserve)))
+		}
+		if storeLocation.LowWatermark != 0 {
+			storeLocation.MinDiskSpace = storeLocation.LowWatermark
+			// NOTE: These are just simple heuristics, otherwise use some ytserver defaults.
 			storeLocation.HighWatermark = storeLocation.LowWatermark / 2
 			storeLocation.DisableWritesWatermark = storeLocation.HighWatermark / 2
 			storeLocation.TrashCleanupWatermark = storeLocation.LowWatermark
-			storeLocation.MaxTrashTtl = location.MaxTrashMilliseconds
 		}
+		storeLocation.MaxTrashTtl = location.MaxTrashMilliseconds
+
 		c.DataNode.StoreLocations = append(c.DataNode.StoreLocations, storeLocation)
 	}
 
@@ -572,8 +588,9 @@ func fillJobEnvironmentCRI(
 	}
 
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
+		quota, _ := findQuotaForLocation(*location, spec.InstanceSpec)
 		jobEnv.CriImageCache = &CriImageCache{
-			Capacity:            findQuotaForLocation(*location, spec.InstanceSpec),
+			Capacity:            quota,
 			ImageSizeEstimation: envSpec.CRI.ImageSizeEstimation,
 			AlwaysPullLatest:    envSpec.CRI.AlwaysPullLatestImage,
 		}
@@ -662,7 +679,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			cacheLocation.MinDiskSpace = location.LowWatermark.Value()
 		}
 
-		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
+		if quota, _ := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
 			cacheLocation.Quota = *quota
 		}
 
@@ -685,7 +702,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			slotLocation.MinDiskSpace = location.LowWatermark.Value()
 		}
 
-		if quota := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
+		if quota, _ := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
 			slotLocation.DiskQuota = quota
 
 			// These are just simple heuristics.

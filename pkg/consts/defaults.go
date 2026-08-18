@@ -29,6 +29,8 @@ const DefaultHTTPProxyRole = "default"
 const DefaultName = "default"
 const DefaultMedium = "default"
 
+const MaxChunkStoreLocationReserve = 25 << 30 // 25GiB
+
 const MaxSlotLocationReserve = 10 << 30 // 10GiB
 
 const DefaultStrawberryControllerFamily = "chyt"
