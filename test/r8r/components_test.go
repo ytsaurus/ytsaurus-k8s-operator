@@ -415,8 +415,13 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				log.Info("Reconcile", "kind", req.Kind, "name", req.Name)
 				result, err := reconcilers[req.Kind].Reconcile(ctx, reconcilerRequest)
 				//nolint:staticcheck // Deprecated.
-				if result.Requeue || result.RequeueAfter > 0 {
-					log.Info("Requeue", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter, "error", err)
+				if err != nil {
+					log.Info("Error", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter, "error", err)
+				} else if result.RequeueAfter == consts.DefaultClusterStatusPollPeriod {
+					log.Info("Stuck", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter)
+					requestQueue = slices.Delete(requestQueue, index, index+1)
+				} else if result.Requeue || result.RequeueAfter > 0 {
+					log.Info("Requeue", "kind", req.Kind, "name", req.Name, "delay", result.RequeueAfter)
 				} else {
 					log.Info("Complete", "kind", req.Kind, "name", req.Name)
 					requestQueue = slices.Delete(requestQueue, index, index+1)
