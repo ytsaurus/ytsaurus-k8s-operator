@@ -162,7 +162,10 @@ func (f *flowTree) execute(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, com
 	)
 
 	err = ytsaurus.SaveUpdateState(ctx, nextStep.updateState)
-	return false, err
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (f *flowTree) chain(steps ...*flowStep) *flowTree {
