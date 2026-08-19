@@ -1,0 +1,95 @@
+--- base/Object List.yson
++++ test/Object List.yson
+@@ -41,7 +41,7 @@
+   resourceVersion: "1"
+ - annotations:
+     ytsaurus.tech/instance-hash: <censored>
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -59,9 +59,9 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
+-- annotations:
+-    ytsaurus.tech/observed-generation: "1"
++  resourceVersion: "3"
++- annotations:
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -79,9 +79,9 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
+-- annotations:
+-    ytsaurus.tech/observed-generation: "1"
++  resourceVersion: "3"
++- annotations:
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -99,7 +99,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ - annotations:
+     ytsaurus.tech/observed-generation: "1"
+   generation: 1
+@@ -312,7 +312,7 @@
+   resourceVersion: "1"
+ - annotations:
+     kubernetes.io/description: ""
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-client
+@@ -330,7 +330,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ - annotations:
+     ytsaurus.tech/config-hash: <censored>
+     ytsaurus.tech/observed-generation: "1"
+@@ -375,7 +375,7 @@
+   resourceVersion: "1"
+ - annotations:
+     ytsaurus.tech/config-hash: <censored>
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -393,9 +393,9 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
+-- annotations:
+-    ytsaurus.tech/observed-generation: "1"
++  resourceVersion: "2"
++- annotations:
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -414,7 +414,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "3"
+ - annotations:
+     ytsaurus.tech/config-hash: <censored>
+     ytsaurus.tech/observed-generation: "1"

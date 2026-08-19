@@ -1,0 +1,20 @@
+--- base/Object List.yson
++++ test/Object List.yson
+@@ -81,7 +81,7 @@
+     uid: ""
+   resourceVersion: "1"
+ - annotations:
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -99,7 +99,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ - annotations:
+     ytsaurus.tech/observed-generation: "1"
+   generation: 1

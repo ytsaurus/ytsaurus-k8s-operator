@@ -1,0 +1,77 @@
+--- base/Ytsaurus.yson
++++ test/Ytsaurus.yson
+@@ -1,10 +1,10 @@
+ apiVersion: cluster.ytsaurus.tech/v1
+ kind: Ytsaurus
+ metadata:
+-  generation: 1
++  generation: 2
+   name: test-ytsaurus
+   namespace: ytsaurus-components
+-  resourceVersion: "22"
++  resourceVersion: "27"
+ spec:
+   clusterFeatures: {}
+   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+@@ -84,7 +84,7 @@
+   conditions:
+   - lastTransitionTime: null
+     message: 0.0.0-devel
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Observed
+     status: "True"
+     type: OperatorVersion
+@@ -102,22 +102,16 @@
+     type: defaultMasterInitJobCompleted
+   - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Ready
+     status: "True"
+     type: MasterReady
+   - lastTransitionTime: null
+     message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Ready
+     status: "True"
+     type: DiscoveryReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 1
+-    reason: Ready
+-    status: "True"
+-    type: HttpProxyReady
+   - lastTransitionTime: null
+     message: Job yt-client-init-job-user completed in -1ns
+     observedGeneration: 1
+@@ -131,18 +125,24 @@
+     status: "True"
+     type: UpdateIsPossible
+   - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 2
++    reason: Ready
++    status: "True"
++    type: HttpProxyReady
++  - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Ready
+     status: "True"
+     type: YtsaurusClientReady
+   - lastTransitionTime: null
+     message: Cluster state is Running
+-    observedGeneration: 1
++    observedGeneration: 2
+     reason: Running
+     status: "True"
+     type: ReadyToWork
+-  observedGeneration: 1
++  observedGeneration: 2
+   state: Running
+   updateStatus: {}
+ 

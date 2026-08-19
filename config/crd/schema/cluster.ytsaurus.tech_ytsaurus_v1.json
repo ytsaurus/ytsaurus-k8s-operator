@@ -14721,6 +14721,7 @@
                 }
               },
               "chytProxy": {
+                "description": "Redefine CHYT ports, requires clusterFeatures.httpProxyHaveChytAddress.",
                 "type": "object",
                 "properties": {
                   "httpNodePort": {

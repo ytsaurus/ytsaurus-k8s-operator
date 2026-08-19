@@ -1,0 +1,18 @@
+--- base/ConfigMap yt-cypress-patch.yson
++++ test/ConfigMap yt-cypress-patch.yson
+@@ -87,7 +87,7 @@
+ metadata:
+   annotations:
+     kubernetes.io/description: ""
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-client
+@@ -105,5 +105,5 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ 

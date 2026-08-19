@@ -1063,7 +1063,7 @@ _Appears in:_
 | `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
-| `chytProxy` _[CHYTProxySpec](#chytproxyspec)_ |  |  |  |
+| `chytProxy` _[CHYTProxySpec](#chytproxyspec)_ | Redefine CHYT ports, requires clusterFeatures.httpProxyHaveChytAddress. |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
 

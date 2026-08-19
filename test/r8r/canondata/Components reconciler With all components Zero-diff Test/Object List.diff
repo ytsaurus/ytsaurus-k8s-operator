@@ -1,0 +1,20 @@
+--- base/Object List.yson
++++ test/Object List.yson
+@@ -215,7 +215,7 @@
+   resourceVersion: "1"
+ - annotations:
+     extra-pod-annotation: "true"
+-    ytsaurus.tech/observed-generation: "1"
++    ytsaurus.tech/observed-generation: "2"
+   generation: 1
+   labels:
+     app.kubernetes.io/component: yt-http-proxy
+@@ -233,7 +233,7 @@
+     kind: Ytsaurus
+     name: test-ytsaurus
+     uid: ""
+-  resourceVersion: "1"
++  resourceVersion: "2"
+ - annotations:
+     extra-pod-annotation: "true"
+     ytsaurus.tech/image-heater-targets: ca dnd ds end hp ms-2 msc rp sch

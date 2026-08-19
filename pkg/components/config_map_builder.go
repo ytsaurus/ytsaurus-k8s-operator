@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/google/go-cmp/cmp"
 	"go.ytsaurus.tech/yt/go/yson"
 	"sigs.k8s.io/yaml"
+
+	"github.com/pmezard/go-difflib/difflib"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +20,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
 const (
@@ -109,47 +110,17 @@ func (h *ConfigMapBuilder) AddGenerator(fileName string, format ConfigFormat, ge
 	})
 }
 
-func mergeMapsRecursively(dst, src map[string]interface{}) map[string]interface{} {
-	for key, srcVal := range src {
-		if dstVal, ok := dst[key]; ok {
-			srcMap, srcMapOk := mapify(srcVal)
-			dstMap, dstMapOk := mapify(dstVal)
-			if srcMapOk && dstMapOk {
-				srcVal = mergeMapsRecursively(dstMap, srcMap)
-			}
-		}
-		dst[key] = srcVal
-	}
-	return dst
-}
-
-func mapify(i interface{}) (map[string]interface{}, bool) {
-	value := reflect.ValueOf(i)
-	if value.Kind() == reflect.Map {
-		m := map[string]interface{}{}
-		for _, k := range value.MapKeys() {
-			m[k.String()] = value.MapIndex(k).Interface()
-		}
-		return m, true
-	}
-	return map[string]interface{}{}, false
-}
-
 func overrideYsonConfigs(base []byte, overrides []byte) ([]byte, error) {
-	b := map[string]interface{}{}
-	err := yson.Unmarshal(base, &b)
+	config := ypatch.OrderedValue{}
+	err := yson.Unmarshal(base, &config)
+	if err != nil {
+		return nil, err
+	}
+	err = yson.Unmarshal(overrides, &config)
 	if err != nil {
 		return base, err
 	}
-
-	o := map[string]interface{}{}
-	err = yson.Unmarshal(overrides, &o)
-	if err != nil {
-		return base, err
-	}
-
-	merged := mergeMapsRecursively(b, o)
-	return yson.MarshalFormat(merged, yson.FormatPretty)
+	return yson.MarshalFormat(&config, yson.FormatPretty)
 }
 
 func (h *ConfigMapBuilder) GetConfigMapName() string {
@@ -254,20 +225,23 @@ func (h *ConfigMapBuilder) needReload() (ComponentStatus, error) {
 		if err != nil {
 			return ComponentStatusBlocked("Config %s generation error: %v", descriptor.FileName, err), err
 		}
-		curConfig := h.getCurrentConfigValue(descriptor.FileName)
-		if !cmp.Equal(curConfig, newConfig) {
-			if curConfig == nil {
-				h.apiProxy.RecordNormal(
-					"Reconciliation",
-					fmt.Sprintf("Config %s needs creation", descriptor.FileName))
-				return ComponentStatusNeedUpdate("Config %s needs creation", descriptor.FileName), nil
-			} else {
-				configsDiff := cmp.Diff(string(curConfig), string(newConfig))
-				h.apiProxy.RecordNormal(
-					"Reconciliation",
-					fmt.Sprintf("Config %s needs reload. Diff: %s", descriptor.FileName, configsDiff))
-				return ComponentStatusNeedUpdate("Config %s needs reload", descriptor.FileName), nil
+		if curConfig := h.getCurrentConfigValue(descriptor.FileName); curConfig == nil && newConfig != nil {
+			h.apiProxy.RecordNormal("Reconciliation", fmt.Sprintf("Config %s needs creation", descriptor.FileName))
+			return ComponentStatusNeedUpdate("Config %s needs creation", descriptor.FileName), nil
+		} else if !bytes.Equal(curConfig, newConfig) {
+			diff := difflib.UnifiedDiff{
+				A:        difflib.SplitLines(string(curConfig)),
+				B:        difflib.SplitLines(string(newConfig)),
+				FromFile: "old/" + descriptor.FileName,
+				ToFile:   "new/" + descriptor.FileName,
+				Context:  3,
 			}
+			configsDiff, err := difflib.GetUnifiedDiffString(diff)
+			if err != nil {
+				return ComponentStatusBlocked("Config %s diff generation error: %v", descriptor.FileName, err), err
+			}
+			h.apiProxy.RecordNormal("Reconciliation", fmt.Sprintf("Config %s needs reload. Diff:\n%s", descriptor.FileName, configsDiff))
+			return ComponentStatusNeedUpdate("Config %s needs reload", descriptor.FileName), nil
 		}
 	}
 	if h.configMap.IsAnnotationChanged(consts.InitJobReasonAnnotationName) {
