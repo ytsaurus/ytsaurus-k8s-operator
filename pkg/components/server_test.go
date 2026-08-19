@@ -51,7 +51,7 @@ func makeOnDeletePod(name string, o podOpts) corev1.Pod {
 // scheduled and ready, the rest are neither (e.g. unschedulable/pending).
 func makeOnDeletePods(total, ready int) []corev1.Pod {
 	pods := make([]corev1.Pod, 0, total)
-	for i := 0; i < total; i++ {
+	for i := range total {
 		isReady := i < ready
 		pods = append(pods, makeOnDeletePod(fmt.Sprintf("tnd-%d", i), podOpts{
 			revision:  testUpdateRevision,
