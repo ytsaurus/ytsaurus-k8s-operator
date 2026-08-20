@@ -170,6 +170,10 @@ func (l *Labeller) GetFullComponentLabel() string {
 	return l.getGroupName(l.GetComponentLabel())
 }
 
+func (l *Labeller) GetServerConfigFileName() string {
+	return fmt.Sprintf("ytserver-%s.yson", consts.GetServiceKebabCase(l.ComponentType))
+}
+
 func (l *Labeller) GetCypressPatchConfigMapName() string {
 	return l.getName("yt-cypress-patch", "")
 }
