@@ -173,7 +173,8 @@ data:
                 "use_ipv4"=%false;
                 "yt_backends"=[
                     {
-                        "cluster_name"="http-proxies-lb.ytsaurus-components.svc.cluster.local";
+                        "cluster_name"="test-ytsaurus";
+                        "yt_proxy"="https://http-proxies-lb.ytsaurus-components.svc.cluster.local";
                         "jobs_per_operation"=1;
                         "max_jobs"=1;
                         "vanilla_job_lite"="/usr/bin/dq_vanilla_job.lite";
@@ -194,7 +195,7 @@ data:
                     };
                 ];
                 "yt_coordinator"={
-                    "cluster_name"="http-proxies-lb.ytsaurus-components.svc.cluster.local";
+                    "cluster_name"="https://http-proxies-lb.ytsaurus-components.svc.cluster.local";
                     "token_file"="/var/run/secrets/yql-agent-secret/token";
                     user="yql_agent";
                 };
