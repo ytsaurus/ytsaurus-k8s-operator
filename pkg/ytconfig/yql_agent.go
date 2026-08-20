@@ -70,6 +70,8 @@ type DQManagerConfig struct {
 type DQYTBackend struct {
 	// ClusterName is the target YT cluster name.
 	ClusterName string `yson:"cluster_name,omitempty"`
+	// YTProxy is the YT proxy URL for this backend.
+	YTProxy string `yson:"yt_proxy,omitempty"`
 	// JobsPerOperation limits jobs per spawned operation.
 	JobsPerOperation int `yson:"jobs_per_operation,omitempty"`
 	// MaxJobs limits total jobs for this backend.
@@ -455,9 +457,11 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 }
 
 func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec) {
-	// FIXME: In DQ "Cluster Name" is used both as YT proxy address and as cluster name in paths.
-	// Latter cannot handle "https://" prefix.
-	clusterHTTPAddress := g.GetHTTPProxiesBalancerHTTPAddress(consts.DefaultHTTPProxyRole)
+	// clusterName is the real YT cluster name.
+	clusterName := g.ytsaurus.Name
+	// ytProxy is the proxy address DQ uses to reach the cluster. It carries the
+	// "https://" scheme when the cluster exposes an HTTPS proxy address.
+	ytProxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 
 	cpuLimit := ptr.Deref(dq.CPULimit, resource.Quantity{})
 	memoryLimit := ptr.Deref(dq.MemoryLimit, resource.Quantity{})
@@ -476,13 +480,14 @@ func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec
 		GrpcPort:         ptr.To(consts.YQLAgentDQgRPCPort),
 		UseIPv4:          ptr.To(g.commonSpec.UseIPv4 && !g.commonSpec.UseIPv6),
 		YTCoordinator: &DQYTCoordinator{
-			ClusterName: clusterHTTPAddress,
+			ClusterName: ytProxy,
 			User:        consts.YQLAgentUserName,
 			TokenFile:   getTokenVolumePath(consts.YQLAgentTokenVolumeName),
 		},
 		YTBackends: []DQYTBackend{
 			{
-				ClusterName:    clusterHTTPAddress,
+				ClusterName:    clusterName,
+				YTProxy:        ytProxy,
 				User:           consts.YQLAgentExecUserName,
 				TokenFile:      getTokenVolumePath(consts.YQLExecTokenVolumeName),
 				VanillaJobLite: "/usr/bin/dq_vanilla_job.lite",
