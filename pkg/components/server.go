@@ -464,10 +464,6 @@ func evaluateOnDeleteCompletion(pods []corev1.Pod, updateRevision string, replic
 	for i := range pods {
 		pod := &pods[i]
 
-		if podIsTerminating(pod) {
-			return false, fmt.Sprintf("pod %s is terminating", pod.Name)
-		}
-
 		podRevision := pod.Labels[appsv1.StatefulSetRevisionLabel]
 		if podRevision != updateRevision {
 			return false, fmt.Sprintf("pod %s not updated: revision %q != updateRevision %q", pod.Name, podRevision, updateRevision)

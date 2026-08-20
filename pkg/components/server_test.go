@@ -110,11 +110,14 @@ func TestEvaluateOnDeleteCompletion(t *testing.T) {
 			wantDone: false,
 		},
 		{
-			name: "terminating pod blocks",
+			// A draining pod (terminating, so kubelet has flipped it to not-ready) is not
+			// counted toward readyCount, so completion still needs minReady other ready pods.
+			name: "draining pod not counted, below minReady blocks",
 			pods: func() []corev1.Pod {
-				pods := makeOnDeletePods(10, 10)
+				pods := makeOnDeletePods(10, 2)
 				now := metav1.Now()
 				pods[0].DeletionTimestamp = &now
+				pods[0].Status.Conditions = nil // draining: no longer scheduled/ready
 				return pods
 			}(),
 			replicas: 10,
