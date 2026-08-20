@@ -452,6 +452,35 @@ func (s *serverImpl) listPods(ctx context.Context) ([]corev1.Pod, error) {
 	return s.statefulSet.ListPods(ctx)
 }
 
+// evaluateOnDeleteCompletion decides whether an OnDelete-mode update is complete.
+// It returns done=true if every pod has been recreated at updateRevision and at least
+// minReady pods are scheduled and ready.
+func evaluateOnDeleteCompletion(pods []corev1.Pod, updateRevision string, replicas, minReady int32) (done bool, waitReason string) {
+	if len(pods) != int(replicas) {
+		return false, fmt.Sprintf("pod count mismatch: expected %d, got %d", replicas, len(pods))
+	}
+
+	var readyCount int32
+	for i := range pods {
+		pod := &pods[i]
+
+		podRevision := pod.Labels[appsv1.StatefulSetRevisionLabel]
+		if podRevision != updateRevision {
+			return false, fmt.Sprintf("pod %s not updated: revision %q != updateRevision %q", pod.Name, podRevision, updateRevision)
+		}
+
+		if podIsScheduled(pod) && podConditionIsTrue(pod, corev1.PodReady) {
+			readyCount++
+		}
+	}
+
+	if readyCount < minReady {
+		return false, fmt.Sprintf("not enough ready pods: %d ready < minReady %d", readyCount, minReady)
+	}
+
+	return true, ""
+}
+
 func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	logger := log.FromContext(ctx)
 
@@ -472,6 +501,7 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 	// In OnDelete mode, currentRevision doesn't automatically update to match updateRevision.
 	// see https://github.com/kubernetes/kubernetes/issues/106055
 	// to be 100% sure, will compare pods StatefulSetRevisionLabel with sts.Status.UpdateRevision
+	// Additionally, only minReadyInstanceCount pods need to be scheduled and ready.
 	isOnDelete := sts.Spec.UpdateStrategy.Type == appsv1.OnDeleteStatefulSetStrategyType
 
 	if isOnDelete {
@@ -482,51 +512,22 @@ func (s *serverImpl) arePodsUpdatedToNewRevision(ctx context.Context) bool {
 			return false
 		}
 
-		if len(pods) != int(*sts.Spec.Replicas) {
-			logger.Info("OnDelete update in progress: pod count mismatch",
+		minReady := s.getMinReadyInstanceCount(0)
+		done, waitReason := evaluateOnDeleteCompletion(pods, sts.Status.UpdateRevision, *sts.Spec.Replicas, minReady)
+		if !done {
+			logger.Info("OnDelete update in progress",
 				"component", s.labeller.GetFullComponentName(),
-				"expectedReplicas", *sts.Spec.Replicas,
-				"actualPods", len(pods))
+				"reason", waitReason,
+				"updateRevision", sts.Status.UpdateRevision,
+				"minReady", minReady)
 			return false
 		}
 
-		for _, pod := range pods {
-			if podIsTerminating(&pod) {
-				logger.Info("OnDelete update in progress: pod is terminating",
-					"component", s.labeller.GetFullComponentName(),
-					"pod", pod.Name)
-				return false
-			}
-
-			if !podIsScheduled(&pod) {
-				logger.Info("OnDelete update in progress: pod is not scheduled",
-					"component", s.labeller.GetFullComponentName(),
-					"pod", pod.Name)
-				return false
-			}
-
-			podRevision := pod.Labels[appsv1.StatefulSetRevisionLabel]
-			if podRevision != sts.Status.UpdateRevision {
-				logger.Info("OnDelete update in progress: pod not updated",
-					"component", s.labeller.GetFullComponentName(),
-					"pod", pod.Name,
-					"podRevision", podRevision,
-					"updateRevision", sts.Status.UpdateRevision)
-				return false
-			}
-
-			if !podConditionIsTrue(&pod, corev1.PodReady) {
-				logger.Info("OnDelete update in progress: pod not ready",
-					"component", s.labeller.GetFullComponentName(),
-					"pod", pod.Name)
-				return false
-			}
-		}
-
-		logger.Info("OnDelete update complete: all pods updated and ready",
+		logger.Info("OnDelete update complete: all pods at new revision and enough are ready",
 			"component", s.labeller.GetFullComponentName(),
 			"updateRevision", sts.Status.UpdateRevision,
-			"totalReplicas", *sts.Spec.Replicas)
+			"totalReplicas", *sts.Spec.Replicas,
+			"minReady", minReady)
 		return true
 	} else if sts.Status.CurrentRevision == sts.Status.UpdateRevision {
 		// For RollingUpdate mode, currentRevision will eventually match updateRevision
