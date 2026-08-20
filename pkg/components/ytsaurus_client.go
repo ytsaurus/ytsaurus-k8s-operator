@@ -407,7 +407,7 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 		return status, nil
 	}
 
-	if !yc.ytsaurus.IsStatusConditionTrue(consts.ConditionUpdateIsPossible) {
+	if !yc.ytsaurus.IsStatusConditionTrueAndObservedGeneration(consts.ConditionUpdateIsPossible) {
 		if dry {
 			return ComponentStatusPending("Cluster health checks"), nil
 		}
