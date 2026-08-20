@@ -7,6 +7,10 @@ on:
         type: string
         required: false
         default: ""
+      FOCUS:
+        type: string
+        required: false
+        default: ""
       DEBUG:
         type: string
         required: false
@@ -23,8 +27,13 @@ on:
         type: string
         required: false
         default: ""
+      FOCUS:
+        description: "Filter tests by regular expression"
+        type: string
+        required: false
+        default: ""
       DEBUG:
-        description: "DEBUG"
+        description: "Enable DEBUG: 1|asan|msan|race|fail"
         type: string
         required: false
         default: ""
@@ -35,7 +44,6 @@ on:
         default: ""
 
 env:
-  DEBUG: "${{ inputs.DEBUG }}"
   TEST_YTSAURUS_VERSION: "${{ inputs.TEST_YTSAURUS_VERSION }}"
   GINKGO_PROCS: "2"
   GINKGO_TIMEOUT: "2h"
@@ -62,13 +70,13 @@ jobs:
             filter: "multicell"
           - name: "other"
             filter: "!(update || tls || multicell)"
-          - name: "${{ inputs.e2e_filter }}"
+          - name: "${{ inputs.e2e_filter || inputs.FOCUS }}"
             filter: "${{ inputs.e2e_filter }}"
             from_input: true
         exclude:
           - e2e:
               # run only from_input part when defined and vice versa
-              from_input: ${{ ( ! inputs.e2e_filter ) && true || '' }}
+              from_input: ${{ ( ! inputs.e2e_filter && ! inputs.FOCUS ) && true || '' }}
 
     steps:
       # https://github.com/jlumbroso/free-disk-space
@@ -120,6 +128,8 @@ jobs:
       - name: Run ${{ matrix.e2e.name }} e2e tests
         env:
           GINKGO_LABEL_FILTER: ${{ matrix.e2e.filter }}
+          FOCUS: ${{ inputs.FOCUS }}
+          DEBUG: ${{ inputs.DEBUG }}
         shell: bash
         run: |
           make test-e2e
