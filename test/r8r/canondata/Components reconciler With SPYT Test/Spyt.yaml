@@ -1,3 +1,5 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Spyt
 metadata:
   generation: 1
   name: test-ytsaurus
