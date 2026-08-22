@@ -19,6 +19,9 @@ const (
 	MasterHydraPath    = "orchid/monitoring/hydra"
 
 	MasterCellDescriptorsPath = "//sys/@config/multicell_manager/cell_descriptors"
+
+	TabletCellsPath                  = "//sys/tablet_cells"
+	EnableTabletCellDecommissionPath = "//sys/@config/tablet_manager/tablet_cell_decommissioner/enable_tablet_cell_decommission"
 )
 
 func ComponentCypressPath(component ComponentType) string {

@@ -462,8 +462,8 @@ func (c *ClusterHealthReport) Collect(ctx context.Context, ytClient yt.Client) {
 	c.CollectNodes(ctx, ytClient, "//sys/exec_nodes")
 	c.CollectNodes(ctx, ytClient, "//sys/cluster_nodes")
 	c.CollectNodes(ctx, ytClient, "//sys/controller_agents/instances")
-	c.CollectTablets(ctx, ytClient, "//sys/tablet_cell_bundles", []string{"id", "health", "tablet_cell_ids", "tablet_actions", "tablet_cell_life_stage"})
-	c.CollectTablets(ctx, ytClient, "//sys/tablet_cells", []string{"id", "health", "tablet_cell_bundle", "tablet_cell_life_stage", "status"})
+	c.CollectTablets(ctx, ytClient, "//sys/tablet_cell_bundles", []string{"id", "health", "tablet_cell_life_stage", "tablet_cell_count", "tablet_cell_ids", "tablet_actions"})
+	c.CollectTablets(ctx, ytClient, "//sys/tablet_cells", []string{"id", "health", "local_health", "tablet_cell_bundle", "tablet_cell_life_stage", "status", "suspended", "total_statistics", "peers"})
 }
 
 type ClusterComponent struct {
