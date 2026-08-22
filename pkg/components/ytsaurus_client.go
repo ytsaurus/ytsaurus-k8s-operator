@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/go-logr/zapr"
 	ytlog "go.ytsaurus.tech/library/go/core/log"
 	ytlogzap "go.ytsaurus.tech/library/go/core/log/zap"
+	"golang.org/x/sync/errgroup"
 
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yson"
@@ -768,6 +770,33 @@ func (yc *YtsaurusClient) GetTabletCells(ctx context.Context) ([]ytv1.TabletCell
 	}
 	return tabletCellBundles, nil
 }
+
+// defaultTabletCellRemovalConcurrency bounds how many tablet cells are removed in
+// parallel. Override with the YTOP_TABLET_CELL_REMOVAL_CONCURRENCY env variable.
+const defaultTabletCellRemovalConcurrency = 32
+
+// tabletCellRemovalConcurrencyEnv is the env variable overriding the default above.
+const tabletCellRemovalConcurrencyEnv = "YTOP_TABLET_CELL_REMOVAL_CONCURRENCY"
+
+// getTabletCellRemovalConcurrency returns the configured parallelism, falling back to
+// the default when the env variable is unset or holds an invalid value.
+func getTabletCellRemovalConcurrency(ctx context.Context) int {
+	raw, ok := os.LookupEnv(tabletCellRemovalConcurrencyEnv)
+	if !ok {
+		return defaultTabletCellRemovalConcurrency
+	}
+	n, err := strconv.Atoi(raw)
+	if err == nil && n < 1 {
+		err = fmt.Errorf("value must be >= 1")
+	}
+	if err != nil {
+		log.FromContext(ctx).Error(err, "invalid "+tabletCellRemovalConcurrencyEnv+", using default",
+			"value", raw, "default", defaultTabletCellRemovalConcurrency)
+		return defaultTabletCellRemovalConcurrency
+	}
+	return n
+}
+
 func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
 	var tabletCells []string
 	err := yc.ytClient.ListNode(
@@ -780,16 +809,17 @@ func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
 		return err
 	}
 
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(getTabletCellRemovalConcurrency(ctx))
 	for _, tabletCell := range tabletCells {
-		err = yc.ytClient.RemoveNode(
-			ctx,
-			ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s", tabletCell)),
-			nil)
-		if err != nil {
-			return err
-		}
+		group.Go(func() error {
+			return yc.ytClient.RemoveNode(
+				groupCtx,
+				ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s", tabletCell)),
+				nil)
+		})
 	}
-	return nil
+	return group.Wait()
 }
 func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, error) {
 	var tabletCells []string
