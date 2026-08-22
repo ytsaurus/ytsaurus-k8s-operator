@@ -839,6 +839,14 @@ spec:
                   assignMasterCellsRoles:
                     description: Trigger master cells roles assignment.
                     type: boolean
+                  downtime:
+                    description: 'Desired cluster service downtime for validating
+                      update plan. Default: Unsafe.'
+                    enum:
+                    - Minor
+                    - Major
+                    - Unsafe
+                    type: string
                   shutdown:
                     description: Shutdown defines which components are scaled down
                       to zero replicas during...
@@ -848,8 +856,6 @@ spec:
                     - ExceptMasters
                     - Tablets
                     type: string
-                required:
-                - shutdown
                 type: object
               configOverrides:
                 description: LocalObjectReference contains enough information to let
@@ -1217,8 +1223,8 @@ spec:
                       anyOf:
                       - type: integer
                       - type: string
-                      description: Limit above which the volume is considered to be
-                        non-full.
+                      description: Free disk space above which the location is considered
+                        to be non-full.
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                     maxTrashMilliseconds:
@@ -1236,7 +1242,8 @@ spec:
                       anyOf:
                       - type: integer
                       - type: string
-                      description: Disk space quota, default is size of related volume.
+                      description: Disk space quota, default is storage limit of related
+                        volume, otherwise -...
                       pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                       x-kubernetes-int-or-string: true
                   type: object
