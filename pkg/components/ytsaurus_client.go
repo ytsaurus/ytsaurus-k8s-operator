@@ -223,15 +223,11 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 
 	case ytv1.UpdateStateWaitingForTabletCellsRemoved:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
-			removed, err := yc.AreTabletCellsRemoved(ctx)
-			if err != nil {
+			if count, err := yc.AreTabletCellsRemoved(ctx); err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
+			} else if count != 0 {
+				return ComponentStatusUpdating("Waiting for decommission of %v tablet cells", count), nil
 			}
-
-			if !removed {
-				return SimpleStatus(SyncStatusUpdating), nil
-			}
-
 			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
 				Type:    consts.ConditionTabletCellsRemoved,
 				Status:  metav1.ConditionTrue,
@@ -769,44 +765,36 @@ func (yc *YtsaurusClient) GetTabletCells(ctx context.Context) ([]ytv1.TabletCell
 	return tabletCellBundles, nil
 }
 func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
+	logger := log.FromContext(ctx)
 	var tabletCells []string
-	err := yc.ytClient.ListNode(
-		ctx,
-		ypath.Path("//sys/tablet_cells"),
-		&tabletCells,
-		nil)
-
-	if err != nil {
+	if err := yc.ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &tabletCells, nil); err != nil {
 		return err
 	}
-
+	if len(tabletCells) == 0 {
+		return nil
+	}
+	logger.Info("disabling tablet cell decommission")
+	if err := yc.ytClient.SetNode(ctx, ypath.Path(consts.EnableTabletCellDecommissionPath), false, nil); err != nil {
+		return err
+	}
+	logger.Info("removing tablet cells", "count", len(tabletCells))
+	var err error
 	for _, tabletCell := range tabletCells {
-		err = yc.ytClient.RemoveNode(
-			ctx,
-			ypath.Path(fmt.Sprintf("//sys/tablet_cells/%s", tabletCell)),
-			nil)
+		err = yc.ytClient.RemoveNode(ctx, ypath.Path(consts.TabletCellsPath).Child(tabletCell), nil)
 		if err != nil {
-			return err
+			break
 		}
 	}
-	return nil
+	logger.Info("enabling tablet cell decommission")
+	if err := yc.ytClient.SetNode(ctx, ypath.Path(consts.EnableTabletCellDecommissionPath), true, nil); err != nil {
+		logger.Error(err, "cannot enable tablet cell decommission")
+	}
+	return err
 }
-func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (bool, error) {
+func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (int, error) {
 	var tabletCells []string
-	err := yc.ytClient.ListNode(
-		ctx,
-		ypath.Path("//sys/tablet_cells"),
-		&tabletCells,
-		nil)
-
-	if err != nil {
-		return false, err
-	}
-
-	if len(tabletCells) != 0 {
-		return false, err
-	}
-	return true, nil
+	err := yc.ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &tabletCells, nil)
+	return len(tabletCells), err
 }
 func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context, bundles []ytv1.TabletCellBundleInfo) error {
 	for _, bundle := range bundles {
