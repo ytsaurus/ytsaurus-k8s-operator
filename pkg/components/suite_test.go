@@ -238,3 +238,7 @@ func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {
 func (fyc *FakeYtsaurusClient) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	return ComponentStatusReady()
 }
+
+func (fyc *FakeYtsaurusClient) ShouldSkipCypressOperations() bool {
+	return false
+}

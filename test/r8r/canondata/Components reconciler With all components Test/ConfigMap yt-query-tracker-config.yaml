@@ -1,5 +1,5 @@
 data:
-  ytserver-scheduler.yson: |-
+  ytserver-query-tracker.yson: |-
     {
         "address_resolver"={
             "enable_ipv4"=%true;
@@ -19,7 +19,7 @@ data:
             writers={
                 debug={
                     type=file;
-                    "file_name"="/yt/scheduler-logs/scheduler.debug.log.zstd";
+                    "file_name"="/yt/query-tracker-logs/query-tracker.debug.log.zstd";
                     format="plain_text";
                     "compression_method"=zstd;
                     "enable_compression"=%true;
@@ -59,8 +59,8 @@ data:
             "flush_period"=3000;
             "enable_anchor_profiling"=%true;
         };
-        "monitoring_port"=10011;
-        "rpc_port"=9011;
+        "monitoring_port"=10028;
+        "rpc_port"=9028;
         "bus_server"={
             "encryption_mode"=required;
             "cert_chain"={
@@ -141,10 +141,8 @@ data:
             "k8s_pod_namespace"="{K8S_POD_NAMESPACE}";
             "physical_host"="{K8S_NODE_NAME}";
         };
-        scheduler={
-            "operations_cleaner"={
-            };
-        };
+        user="query_tracker";
+        "create_state_tables_on_startup"=%true;
     }
 metadata:
   annotations:
@@ -154,13 +152,13 @@ metadata:
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
-    app.kubernetes.io/component: yt-scheduler
+    app.kubernetes.io/component: yt-query-tracker
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-scheduler
+    app.kubernetes.io/name: yt-query-tracker
     app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-scheduler
+    yt_component: test-ytsaurus-yt-query-tracker
     ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-scheduler-config
+  name: yt-query-tracker-config
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1

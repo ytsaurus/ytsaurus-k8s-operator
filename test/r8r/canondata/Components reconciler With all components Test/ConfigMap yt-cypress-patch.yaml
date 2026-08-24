@@ -189,6 +189,12 @@ data:
             };
         ];
     }
+  yt-query-tracker-cypress-patch.yson: |-
+    {
+    }
+  yt-queue-agent-cypress-patch.yson: |-
+    {
+    }
   yt-rpc-proxy-cypress-patch.yson: |-
     {
     }
@@ -196,6 +202,9 @@ data:
     {
     }
   yt-strawberry-controller-cypress-patch.yson: |-
+    {
+    }
+  yt-tablet-node-cypress-patch.yson: |-
     {
     }
   yt-timbertruck-cypress-patch.yson: |-

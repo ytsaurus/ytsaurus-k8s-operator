@@ -77,11 +77,11 @@ data:
     set -eux -o pipefail
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
-    /usr/bin/yt create user --attributes '{name="robot-ytsaurus-k8s-operator"}' --ignore-existing
-    /usr/bin/yt add-member robot-ytsaurus-k8s-operator superusers || true
-    while [ "$(/usr/bin/yt check-permission --format json robot-ytsaurus-k8s-operator administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
-    /usr/bin/yt create map_node '//sys/cypress_tokens/8d4f9aad77793c577f894af090fc889c987a9ab62f2e4cec63bd99e793601f89' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/8d4f9aad77793c577f894af090fc889c987a9ab62f2e4cec63bd99e793601f89/@user' 'robot-ytsaurus-k8s-operator'
+    /usr/bin/yt create user --attributes '{name="operation_archivarius"}' --ignore-existing
+    /usr/bin/yt add-member operation_archivarius superusers || true
+    while [ "$(/usr/bin/yt check-permission --format json operation_archivarius administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
+    /usr/bin/yt create map_node '//sys/cypress_tokens/681aebf18d40db2dfb4a6cc03678492e3abc6d2a004f5312c53a6a2cfd0bdee8' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/681aebf18d40db2dfb4a6cc03678492e3abc6d2a004f5312c53a6a2cfd0bdee8/@user' 'operation_archivarius'
 metadata:
   annotations:
     extra-pod-annotation: "true"
@@ -90,13 +90,13 @@ metadata:
     ytsaurus.tech/observed-generation: "1"
   generation: 1
   labels:
-    app.kubernetes.io/component: yt-client
+    app.kubernetes.io/component: yt-scheduler
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
-    app.kubernetes.io/name: yt-client
+    app.kubernetes.io/name: yt-scheduler
     app.kubernetes.io/part-of: yt-test-ytsaurus
-    yt_component: test-ytsaurus-yt-client
+    yt_component: test-ytsaurus-yt-scheduler
     ytsaurus.tech/cluster-name: test-ytsaurus
-  name: yt-client-init-job-user-config
+  name: yt-scheduler-init-job-user-config
   namespace: ytsaurus-components
   ownerReferences:
   - apiVersion: cluster.ytsaurus.tech/v1
