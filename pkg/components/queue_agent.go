@@ -157,7 +157,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusReady(), nil
 	}
 
-	if qa.server.getInstanceCount() == 0 {
+	if qa.server.getInstanceCount() == 0 || qa.ytsaurusClient.ShouldSkipCypressOperations() {
 		return ComponentStatusReady(), nil
 	}
 

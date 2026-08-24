@@ -176,7 +176,7 @@ func (tt *Timbertruck) handleTabletNodes(ctx context.Context, dry bool) (Compone
 	}
 
 	deliveryLoggers := tt.GetDeliveryLoggers()
-	if len(deliveryLoggers) == 0 {
+	if len(deliveryLoggers) == 0 || tt.ytsaurusClient.ShouldSkipCypressOperations() {
 		return ComponentStatusReady(), nil
 	}
 

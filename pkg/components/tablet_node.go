@@ -115,7 +115,7 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return status, err
 	}
 
-	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) {
+	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) || tn.ytsaurusClient.ShouldSkipCypressOperations() {
 		return ComponentStatusReady(), err
 	}
 

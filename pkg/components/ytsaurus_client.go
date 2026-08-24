@@ -36,6 +36,7 @@ import (
 type internalYtsaurusClient interface {
 	Component
 	GetYtClient() yt.Client
+	ShouldSkipCypressOperations() bool
 }
 
 type YtsaurusClient struct {
@@ -126,8 +127,8 @@ type TabletCellBundleHealth struct {
 	Health string `yson:"health,attr" json:"health"`
 }
 
-// shouldSkipCypressOperations returns true when no alive masters are expected.
-func (yc *YtsaurusClient) shouldSkipCypressOperations() bool {
+// ShouldSkipCypressOperations returns true when no alive masters are expected.
+func (yc *YtsaurusClient) ShouldSkipCypressOperations() bool {
 	resource := yc.ytsaurus.GetResource()
 	return resource.Spec.EphemeralCluster && ptr.Deref(resource.Spec.PrimaryMasters.MinReadyInstanceCount, 1) == 0
 }
@@ -435,7 +436,7 @@ func (yc *YtsaurusClient) NeedSyncCypressPatch() ComponentStatus {
 	}
 
 	if !yc.ytsaurus.IsStatusConditionTrue(consts.ConditionCypressPatchApplied) {
-		if yc.shouldSkipCypressOperations() {
+		if yc.ShouldSkipCypressOperations() {
 			return ComponentStatusReadyAfter("Cypress patch applying is skipped")
 		}
 		return ComponentStatusPending("Need to apply cypress patch")
@@ -515,7 +516,7 @@ func (yc *YtsaurusClient) UpdateTabletCellBundlesHealthCheck(ctx context.Context
 
 func (yc *YtsaurusClient) UpdateClusterHealthChecks(ctx context.Context) (err error) {
 	var updateIsPossible metav1.Condition
-	if !yc.shouldSkipCypressOperations() {
+	if !yc.ShouldSkipCypressOperations() {
 		err = errors.Join(
 			yc.UpdateMasterQuorumCheck(ctx),
 			yc.UpdateCounterHealthCheck(ctx, consts.LostVitalChunksCountPath, consts.ConditionLostVitalChunksCheck),
@@ -720,7 +721,7 @@ func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
 	if err := yc.cypressPatch.Sync(ctx); err != nil {
 		return err
 	}
-	if yc.shouldSkipCypressOperations() {
+	if yc.ShouldSkipCypressOperations() {
 		logger.Info("Skipping cypress patch apply in test")
 		yc.ytsaurus.RecordNormal("CypressPatch", "Skip patch apply in test")
 		return nil

@@ -143,7 +143,6 @@ data:
         };
         scheduler={
             "operations_cleaner"={
-                "enable_operation_archivation"=%false;
             };
         };
         "overrides_all_yaml"=%true;
