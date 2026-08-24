@@ -2549,6 +2549,7 @@ _Appears in:_
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
+| `tabletCellSlots` _integer_ | Count of slots for tablet cells on each tablet node, default is 4. |  |  |
 
 
 #### RemoteTabletNodesStatus
@@ -2968,6 +2969,7 @@ _Appears in:_
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
+| `tabletCellSlots` _integer_ | Count of slots for tablet cells on each tablet node, default is 4. |  |  |
 
 
 #### TextLoggerSpec

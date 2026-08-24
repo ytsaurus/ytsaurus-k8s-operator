@@ -777,6 +777,8 @@ type TabletNodesSpec struct {
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
+	// Count of slots for tablet cells on each tablet node, default is 4.
+	TabletCellSlots *int `json:"tabletCellSlots,omitempty"`
 }
 
 type OffshoreDataGatewaySpec struct {
