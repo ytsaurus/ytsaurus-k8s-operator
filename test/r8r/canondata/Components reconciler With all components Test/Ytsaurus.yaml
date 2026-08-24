@@ -766,6 +766,7 @@ spec:
       requests:
         cpu: "0"
         memory: "0"
+    tabletCellSlots: 5
     volumeClaimTemplates:
     - metadata:
         name: tablet-node-logs

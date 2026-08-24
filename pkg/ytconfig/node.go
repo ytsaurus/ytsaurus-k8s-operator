@@ -299,11 +299,29 @@ type BlockCache struct {
 	Uncompressed Cache `yson:"uncompressed_data"`
 }
 
+// NTabletNode::TResourceLimitsConfig
+type TabletNodeResourceLimits struct {
+	Slots *int `yson:"slots,omitempty"`
+}
+
+// NTabletNode::TTabletNodeConfig
 type TabletNode struct {
-	VersionedChunkMetaCache Cache `yson:"versioned_chunk_meta_cache"`
+	ResourceLimits *TabletNodeResourceLimits `yson:"resource_limits,omitempty"`
+
+	VersionedChunkMetaCache *Cache `yson:"versioned_chunk_meta_cache,omitempty"`
+}
+
+type CellarConfig struct {
+	Size int `yson:"size,omitempty"`
+}
+
+type CellarManager struct {
+	Tablet *CellarConfig `yson:"tablet,omitempty"`
 }
 
 type CellarNode struct {
+	CellarManager *CellarManager `yson:"cellar_manager,omitempty"`
+
 	DeduceProfilingTagFromBundleName *bool `yson:"deduce_profiling_tag_from_bundle_name,omitempty"`
 }
 
@@ -326,15 +344,17 @@ type ExecNodeServer struct {
 	JobResourceManager   JobResourceManager `yson:"job_resource_manager"`
 	ExecNode             ExecNode           `yson:"exec_node"`
 	DataNode             DataNode           `yson:"data_node"`
-	TabletNode           TabletNode         `yson:"tablet_node"`
+	TabletNode           *TabletNode        `yson:"tablet_node,omitempty"`
 	CachingObjectService Cache              `yson:"caching_object_service"`
 }
 
 type TabletNodeServer struct {
 	NodeServer
-	// TabletNode `yson:"tablet_node"`
-	CellarNode           *CellarNode `yson:"cellar_node,omitempty"`
-	CachingObjectService Cache       `yson:"caching_object_service"`
+
+	CellarNode *CellarNode `yson:"cellar_node,omitempty"`
+	TabletNode *TabletNode `yson:"tablet_node,omitempty"`
+
+	CachingObjectService Cache `yson:"caching_object_service"`
 }
 
 func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *corev1.VolumeMount {
@@ -667,6 +687,8 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
+	c.TabletNode = &TabletNode{VersionedChunkMetaCache: &Cache{}}
+
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
 		cacheLocation := CacheLocation{
 			DiskLocation: DiskLocation{
@@ -793,6 +815,14 @@ func getTabletNodeServerCarcass(spec *ytv1.TabletNodesSpec) (TabletNodeServer, e
 		TotalMemory:      nodeMemory.Value(),
 		TotalCpu:         ptr.To(float32(nodeCPU.AsApproximateFloat64())),
 		NodeDedicatedCpu: ptr.To(float32(nodeCPU.AsApproximateFloat64())),
+	}
+
+	if spec.TabletCellSlots != nil {
+		c.TabletNode = &TabletNode{
+			ResourceLimits: &TabletNodeResourceLimits{
+				Slots: ptr.To(*spec.TabletCellSlots),
+			},
+		}
 	}
 
 	c.Logging = getTabletNodeLogging(spec)

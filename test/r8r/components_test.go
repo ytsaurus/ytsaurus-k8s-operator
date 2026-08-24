@@ -678,6 +678,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithTabletNodes()
 			// Do not bootstrap tablet cell bundles.
 			ytsaurus.Spec.TabletNodes[0].MinReadyInstanceCount = ptr.To(int32(0))
+			ytsaurus.Spec.TabletNodes[0].TabletCellSlots = ptr.To(5)
 			ytBuilder.WithScheduler()
 			ytBuilder.WithControllerAgents()
 			ytBuilder.WithExecNodes()
