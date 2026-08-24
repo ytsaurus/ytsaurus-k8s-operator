@@ -153,6 +153,11 @@ data:
         "cellar_node"={
             "deduce_profiling_tag_from_bundle_name"=%false;
         };
+        "tablet_node"={
+            "resource_limits"={
+                slots=5;
+            };
+        };
         "caching_object_service"={
             capacity=0;
         };
