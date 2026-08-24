@@ -772,8 +772,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
 			ytBuilder.WithDataNodes()
-			// FIXME(khlebnikov): Do not bootstrap tablet cell bundles when not asked.
-			// ytBuilder.WithTabletNodes()
+			ytBuilder.WithTabletNodes()
+			// Do not bootstrap tablet cell bundles.
+			ytsaurus.Spec.TabletNodes[0].MinReadyInstanceCount = ptr.To(int32(0))
 			ytBuilder.WithScheduler()
 			ytBuilder.WithControllerAgents()
 			ytBuilder.WithExecNodes()

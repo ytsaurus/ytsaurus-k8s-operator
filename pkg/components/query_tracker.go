@@ -165,6 +165,10 @@ func (qt *QueryTracker) setup(ctx context.Context, dry bool) (ComponentStatus, e
 		}
 	}
 
+	if qt.ytsaurusClient.ShouldSkipCypressOperations() {
+		return ComponentStatusReady(), nil
+	}
+
 	var ytClient yt.Client
 	if !dry {
 		ytClient = qt.ytsaurusClient.GetYtClient()
