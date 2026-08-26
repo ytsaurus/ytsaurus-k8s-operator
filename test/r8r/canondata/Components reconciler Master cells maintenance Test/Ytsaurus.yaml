@@ -2,7 +2,7 @@ metadata:
   generation: 1
   name: test-ytsaurus
   namespace: ytsaurus-components
-  resourceVersion: "22"
+  resourceVersion: "15"
 spec:
   clusterFeatures: {}
   clusterMaintenance:
@@ -164,19 +164,7 @@ status:
     status: "True"
     type: HttpProxyReady
   - lastTransitionTime: null
-    message: Job yt-client-init-job-user completed in -1ns
-    observedGeneration: 1
-    reason: InitJob
-    status: "True"
-    type: userYtsaurusClientInitJobCompleted
-  - lastTransitionTime: null
-    message: Cypress operations skipped
-    observedGeneration: 1
-    reason: HealthChecks
-    status: "True"
-    type: UpdateIsPossible
-  - lastTransitionTime: null
-    message: Ready
+    message: HTTP proxy is shutdown
     observedGeneration: 1
     reason: Ready
     status: "True"
