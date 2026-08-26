@@ -10,7 +10,9 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/go-logr/logr"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
@@ -37,8 +39,17 @@ type BaseReconciler struct {
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 
+	ControllerName        string
 	WatchOperatorInstance string
 	ClusterDomain         string
+}
+
+func (r *BaseReconciler) LogConstructor(request *reconcile.Request) logr.Logger {
+	logger := log.Log.WithName(r.ControllerName)
+	if request != nil {
+		logger = logger.WithValues("controllerResource", request.String())
+	}
+	return logger
 }
 
 func (r *BaseReconciler) ShouldIgnoreResource(ctx context.Context, object client.Object) bool {

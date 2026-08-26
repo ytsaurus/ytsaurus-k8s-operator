@@ -157,6 +157,7 @@ func main() {
 		Metrics: metricsserver.Options{
 			BindAddress: metricsAddr,
 		},
+		Logger:                 ctrl.Log.WithName("manager"),
 		HealthProbeBindAddress: probeAddr,
 		PprofBindAddress:       os.Getenv("PPROF_BIND_ADDRESS"),
 		LeaderElection:         enableLeaderElection,
@@ -227,6 +228,7 @@ func main() {
 
 	baseReconciler := func(name string) controllers.BaseReconciler {
 		return controllers.BaseReconciler{
+			ControllerName:        name,
 			WatchOperatorInstance: watchOperatorInstance,
 			ClusterDomain:         clusterDomain,
 			Client:                mgr.GetClient(),

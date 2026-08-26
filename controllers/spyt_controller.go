@@ -77,6 +77,7 @@ func (r *SpytReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 // SetupWithManager sets up the controller with the Manager.
 func (r *SpytReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		WithLogConstructor(r.LogConstructor).
 		For(&ytv1.Spyt{}).
 		Owns(&batchv1.Job{}).
 		Owns(&corev1.Secret{}).
