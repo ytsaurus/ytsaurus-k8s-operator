@@ -77,6 +77,7 @@ func (r *ChytReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 // SetupWithManager sets up the controller with the Manager.
 func (r *ChytReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		WithLogConstructor(r.LogConstructor).
 		For(&ytv1.Chyt{}).
 		Owns(&batchv1.Job{}).
 		Owns(&corev1.Secret{}).

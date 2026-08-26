@@ -90,6 +90,7 @@ func (r *OffshoreDataGatewaysReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
+		WithLogConstructor(r.LogConstructor).
 		For(&ytv1.OffshoreDataGateways{}).
 		Watches(
 			&ytv1.RemoteYtsaurus{},
