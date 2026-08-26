@@ -157,6 +157,10 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusReady(), nil
 	}
 
+	if qa.server.getInstanceCount() == 0 {
+		return ComponentStatusReady(), nil
+	}
+
 	var ytClient yt.Client
 	if qa.ytsaurus.GetClusterState() != ytv1.ClusterStateUpdating {
 		if ytClientStatus := qa.ytsaurusClient.GetStatus(); !ytClientStatus.IsRunning() {
