@@ -44,3 +44,6 @@ const DefaultTimbertruckDirectoryPath = "//sys/admin/logs"
 const DefaultImageHeaterConcurrency = 100
 
 const DefaultClusterStatusPollPeriod = time.Minute
+
+const DefaultMasterChangelogsCountToKeep = 10
+const DefaultMasterSnapshotsCountToKeep = 10

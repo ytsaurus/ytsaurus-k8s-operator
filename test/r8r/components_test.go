@@ -24,6 +24,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
@@ -662,6 +663,11 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.DebugLogs = true
 			ytBuilder.CreateMinimal()
 			ytsaurus = ytBuilder.Ytsaurus
+
+			ytsaurus.Spec.PrimaryMasters.MaxChangelogCountToKeep = ptr.To(12)
+			ytsaurus.Spec.PrimaryMasters.MaxSnapshotCountToKeep = ptr.To(11)
+			ytsaurus.Spec.PrimaryMasters.Locations[0].Quota = ptr.To(resource.MustParse("1Gi"))
+			ytsaurus.Spec.PrimaryMasters.Locations[1].Quota = ptr.To(resource.MustParse("3Gi"))
 
 			ytBuilder.WithAdminUser()
 			ytBuilder.WithOverrides()

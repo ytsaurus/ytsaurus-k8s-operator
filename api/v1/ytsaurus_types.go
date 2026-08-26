@@ -528,7 +528,9 @@ type MastersSpec struct {
 
 	HostAddressLabel string `json:"hostAddressLabel,omitempty"`
 
-	MaxSnapshotCountToKeep  *int `json:"maxSnapshotCountToKeep,omitempty"`
+	// Snapshot count to keep, default: 10. Define Quota for MasterSnapshots location to limit by total size.
+	MaxSnapshotCountToKeep *int `json:"maxSnapshotCountToKeep,omitempty"`
+	// Changelog count to keep, default: 10. Define Quota for MasterChangelogs location to limit by total size.
 	MaxChangelogCountToKeep *int `json:"maxChangelogCountToKeep,omitempty"`
 
 	HydraPersistenceUploader *HydraPersistenceUploaderSpec `json:"hydraPersistenceUploader,omitempty"`

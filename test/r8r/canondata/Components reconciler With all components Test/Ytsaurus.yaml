@@ -391,8 +391,10 @@ spec:
     locations:
     - locationType: MasterChangelogs
       path: /yt/master-data/master-changelogs
+      quota: 1Gi
     - locationType: MasterSnapshots
       path: /yt/master-data/master-snapshots
+      quota: 3Gi
     - locationType: Logs
       path: /yt/master-logs
     - locationType: InitJobLogs
@@ -418,6 +420,8 @@ spec:
         maxTotalSizeToKeep: 1Gi
       useTimestampSuffix: false
       writerType: file
+    maxChangelogCountToKeep: 12
+    maxSnapshotCountToKeep: 11
     minReadyInstanceCount: 0
     nodeSelector:
       instance-node-selector: "true"
@@ -665,8 +669,10 @@ spec:
     locations:
     - locationType: MasterChangelogs
       path: /yt/master-data/master-changelogs
+      quota: 1Gi
     - locationType: MasterSnapshots
       path: /yt/master-data/master-snapshots
+      quota: 3Gi
     - locationType: Logs
       path: /yt/master-logs
     - locationType: InitJobLogs
@@ -690,6 +696,8 @@ spec:
         maxTotalSizeToKeep: 1Gi
       useTimestampSuffix: false
       writerType: file
+    maxChangelogCountToKeep: 12
+    maxSnapshotCountToKeep: 11
     minReadyInstanceCount: 0
     resources:
       limits:
