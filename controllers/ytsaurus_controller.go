@@ -100,12 +100,12 @@ func (r *YtsaurusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		WithLogConstructor(func(r *reconcile.Request) logr.Logger {
-			log := mgr.GetLogger()
-			if r != nil {
-				log = log.WithValues("ytsaurus", r.NamespacedName.String())
+		WithLogConstructor(func(request *reconcile.Request) logr.Logger {
+			logger := r.LogConstructor(request)
+			if request != nil {
+				logger = logger.WithValues("ytsaurus", request.NamespacedName.String())
 			}
-			return log
+			return logger
 		}).
 		For(&ytv1.Ytsaurus{}).
 		Owns(&appsv1.DaemonSet{}).

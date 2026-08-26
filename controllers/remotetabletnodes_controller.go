@@ -90,6 +90,7 @@ func (r *RemoteTabletNodesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
+		WithLogConstructor(r.LogConstructor).
 		For(&ytv1.RemoteTabletNodes{}).
 		Watches(
 			&ytv1.RemoteYtsaurus{},
