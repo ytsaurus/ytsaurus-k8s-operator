@@ -345,6 +345,11 @@ func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, 
 		return hpStatus.Blocker(), nil
 	}
 
+	switch yc.ytsaurus.GetClusterMaintenance().Shutdown {
+	case ytv1.ClusterShutdownEverything, ytv1.ClusterShutdownExceptMasters:
+		return ComponentStatusReadyAfter("HTTP proxy is shutdown"), nil
+	}
+
 	if yc.secret.NeedSync(consts.TokenSecretKey, "") {
 		if !dry {
 			s := yc.secret.Build()
