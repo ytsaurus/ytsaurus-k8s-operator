@@ -19,8 +19,10 @@ type MasterSnapshots struct {
 }
 
 type HydraManager struct {
-	MaxChangelogCountToKeep int `yson:"max_changelog_count_to_keep"`
-	MaxSnapshotCountToKeep  int `yson:"max_snapshot_count_to_keep"`
+	MaxChangelogCountToKeep int    `yson:"max_changelog_count_to_keep"`
+	MaxChangelogSizeToKeep  *int64 `yson:"max_changelog_size_to_keep,omitempty"`
+	MaxSnapshotCountToKeep  int    `yson:"max_snapshot_count_to_keep"`
+	MaxSnapshotSizeToKeep   *int64 `yson:"max_snapshot_size_to_keep,omitempty"`
 }
 
 type CypressManager struct {
@@ -63,25 +65,23 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	c.RPCPort = consts.MasterRPCPort
 	c.MonitoringPort = ptr.Deref(spec.MonitoringPort, consts.MasterMonitoringPort)
 
-	c.HydraManager.MaxSnapshotCountToKeep = 10
-	if spec.MaxSnapshotCountToKeep != nil {
-		c.HydraManager.MaxSnapshotCountToKeep = *spec.MaxSnapshotCountToKeep
-	}
-	c.HydraManager.MaxChangelogCountToKeep = 10
-	if spec.MaxChangelogCountToKeep != nil {
-		c.HydraManager.MaxChangelogCountToKeep = *spec.MaxChangelogCountToKeep
-	}
-
-	c.SecondaryMasters = nil
+	c.HydraManager.MaxChangelogCountToKeep = ptr.Deref(spec.MaxChangelogCountToKeep, int(consts.DefaultMasterChangelogsCountToKeep))
+	c.HydraManager.MaxSnapshotCountToKeep = ptr.Deref(spec.MaxSnapshotCountToKeep, int(consts.DefaultMasterSnapshotsCountToKeep))
 
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {
 		c.Changelogs.Path = location.Path
+		if location.Quota != nil {
+			c.HydraManager.MaxChangelogSizeToKeep = ptr.To(location.Quota.Value())
+		}
 	} else {
 		return c, fmt.Errorf("error creating master config: changelog location not found")
 	}
 
 	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterSnapshots); location != nil {
 		c.Snapshots.Path = location.Path
+		if location.Quota != nil {
+			c.HydraManager.MaxSnapshotSizeToKeep = ptr.To(location.Quota.Value())
+		}
 	} else {
 		return c, fmt.Errorf("error creating master config: snapshot location not found")
 	}

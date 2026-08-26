@@ -21867,9 +21867,11 @@
               }
             },
             "maxChangelogCountToKeep": {
+              "description": "Changelog count to keep, default: 10.",
               "type": "integer"
             },
             "maxSnapshotCountToKeep": {
+              "description": "Snapshot count to keep, default: 10.",
               "type": "integer"
             },
             "metricExporter": {
@@ -33052,9 +33054,11 @@
                 }
               },
               "maxChangelogCountToKeep": {
+                "description": "Changelog count to keep, default: 10.",
                 "type": "integer"
               },
               "maxSnapshotCountToKeep": {
+                "description": "Snapshot count to keep, default: 10.",
                 "type": "integer"
               },
               "metricExporter": {

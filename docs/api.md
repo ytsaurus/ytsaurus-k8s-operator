@@ -1660,8 +1660,8 @@ _Appears in:_
 | `hostAddresses` _string array_ |  |  |  |
 | `roles` _[MasterCellRole](#mastercellrole)_ | Roles assigned to this master cell. Explicit enlisting is preferred, because defaults could change.<br />In general, assigned or default roles cannot be removed later without risk of data loss. |  | Pattern: `^[a-z_]+$` <br /> |
 | `hostAddressLabel` _string_ |  |  |  |
-| `maxSnapshotCountToKeep` _integer_ |  |  |  |
-| `maxChangelogCountToKeep` _integer_ |  |  |  |
+| `maxSnapshotCountToKeep` _integer_ | Snapshot count to keep, default: 10. Define Quota for MasterSnapshots location to limit by total size. |  |  |
+| `maxChangelogCountToKeep` _integer_ | Changelog count to keep, default: 10. Define Quota for MasterChangelogs location to limit by total size. |  |  |
 | `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
 | `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |

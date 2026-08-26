@@ -238,8 +238,10 @@ data:
         };
         "use_new_hydra"=%true;
         "hydra_manager"={
-            "max_changelog_count_to_keep"=10;
-            "max_snapshot_count_to_keep"=10;
+            "max_changelog_count_to_keep"=12;
+            "max_changelog_size_to_keep"=1073741824;
+            "max_snapshot_count_to_keep"=11;
+            "max_snapshot_size_to_keep"=3221225472;
         };
         "cypress_manager"={
             "default_table_replication_factor"=3;
