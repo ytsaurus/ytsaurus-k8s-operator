@@ -538,9 +538,15 @@ func (m *Master) scriptWaitingMasterCellsRegistation() ([]string, error) {
 }
 
 func (m *Master) scriptMasterCellsSettlement() ([]string, error) {
+	clusterConn := m.cfgen.GetClusterConnection()
+	secondaryMasters, err := yson.MarshalFormat(clusterConn.SecondaryMasters, yson.FormatPretty)
+	if err != nil {
+		return nil, err
+	}
 	return JoinTextGenerators(
 		PlainTextGenerator(initJobWithNativeDriverPrologue()),
 		m.scriptMasterCellDescriptors,
+		PlainTextGenerator(fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/secondary_masters '%s'", string(secondaryMasters))),
 	)()
 }
 
