@@ -202,9 +202,12 @@ type SlotManager struct {
 	Locations      []SlotLocation `yson:"locations"`
 	JobEnvironment JobEnvironment `yson:"job_environment"`
 
-	DoNotSetUserId      *bool `yson:"do_not_set_user_id,omitempty"`
-	EnableTmpfs         *bool `yson:"enable_tmpfs,omitempty"`
-	DetachedTmpfsUmount *bool `yson:"detached_tmpfs_umount,omitempty"`
+	DoNotSetUserId       *bool `yson:"do_not_set_user_id,omitempty"`
+	EnableNonRootVolumes *bool `yson:"enable_non_root_volumes,omitempty"`
+	DetachedTmpfsUmount  *bool `yson:"detached_tmpfs_umount,omitempty"`
+
+	// COMPAT(krasovav)
+	EnableTmpfs *bool `yson:"enable_tmpfs,omitempty"`
 }
 
 type JobResourceLimits struct {
@@ -618,8 +621,8 @@ func fillJobEnvironmentCRI(
 	// FIXME(khlebnikov): For now running jobs as non-root is more likely broken.
 	execNode.SlotManager.DoNotSetUserId = ptr.To(ptr.Deref(envSpec.DoNotSetUserId, true))
 
-	// Enable tmpfs if exec node can mount and propagate into job container.
-	execNode.SlotManager.EnableTmpfs = ptr.To(func() bool {
+	// Enable non-root volumes if exec node can mount and propagate into job container.
+	execNode.SlotManager.EnableNonRootVolumes = ptr.To(func() bool {
 		if !spec.Privileged {
 			return false
 		}
@@ -634,6 +637,8 @@ func fillJobEnvironmentCRI(
 		}
 		return true
 	}())
+	// COMPAT(krasovav)
+	execNode.SlotManager.EnableTmpfs = execNode.SlotManager.EnableNonRootVolumes
 
 	// Forward environment variables set in docker image from job proxy to user job process.
 	execNode.JobProxy.ForwardAllEnvironmentVariables = ptr.To(true)
@@ -651,11 +656,13 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 		return fillJobEnvironmentCRI(execNode, spec, commonSpec, envSpec, jobEnv)
 	} else if commonSpec.UsePorto {
 		jobEnv.Type = JobEnvironmentTypePorto
-		execNode.SlotManager.EnableTmpfs = ptr.To(true)
-		// TODO(psushin): volume locations, root fs binds, etc.
+		execNode.SlotManager.EnableNonRootVolumes = ptr.To(true)
+		// COMPAT(krasovav)
+		execNode.SlotManager.EnableTmpfs = execNode.SlotManager.EnableNonRootVolumes
 	} else {
-		jobEnv.Type = JobEnvironmentTypeSimple
-		execNode.SlotManager.EnableTmpfs = ptr.To(spec.Privileged)
+		execNode.SlotManager.EnableNonRootVolumes = ptr.To(spec.Privileged)
+		// COMPAT(krasovav)
+		execNode.SlotManager.EnableTmpfs = execNode.SlotManager.EnableNonRootVolumes
 	}
 
 	return nil
