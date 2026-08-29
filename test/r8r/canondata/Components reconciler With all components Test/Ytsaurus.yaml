@@ -386,7 +386,7 @@ spec:
     dnsPolicy: None
     hostNetwork: false
     hydraPersistenceUploader:
-      image: ghcr.io/ytsaurus/sidecars:0.0.1
+      image: ghcr.io/ytsaurus/sidecars:0.0.2
     instanceCount: 1
     locations:
     - locationType: MasterChangelogs
@@ -445,7 +445,7 @@ spec:
       useTimestampSuffix: false
     terminationGracePeriodSeconds: 20
     timbertruck:
-      image: ghcr.io/ytsaurus/sidecars:0.0.1
+      image: ghcr.io/ytsaurus/sidecars:0.0.2
     tolerations:
     - key: instance-toleration
     volumeClaimTemplates:
@@ -476,7 +476,7 @@ spec:
     - emptyDir: {}
       name: logs
   queryTrackers:
-    image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
     instanceCount: 1
     locations:
     - locationType: Logs
@@ -759,7 +759,7 @@ spec:
       uploadReplicationFactor: 1
       useTmpfs: false
       workerCapacity: 128
-    image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+    image: ghcr.io/ytsaurus/query-tracker:0.1.2
     instanceCount: 1
     locations:
     - locationType: Logs
