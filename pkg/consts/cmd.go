@@ -35,6 +35,8 @@ const (
 	ClientConfigFileName = "client.yson"
 	ClientConfigPathEnv  = "YT_DRIVER_CONFIG_PATH"
 
+	YtserverAllConfigFileName = "ytserver-all.yson"
+
 	CypressPatchFileName         = "cypress-patch.yson"
 	PendingCypressPatchFileName  = "pending-cypress-patch.yson"
 	PreviousCypressPatchFileName = "previous-cypress-patch.yson"

@@ -504,7 +504,7 @@ _Appears in:_
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
-| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Configmap with patches for overriding options in generated configs.<br />See https://ytsaurus.tech/docs/en/admin-guide/config-overrides<br />Config overrides: "ytserver-all.yson", "\{filename\}", "\{configmap\}--\{filename\}".<br />Cypress patches: "cypress-patch.yson", "yt-\{component\}-cypress-patch.yson". |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
 
 
@@ -1921,7 +1921,7 @@ _Appears in:_
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
-| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Configmap with patches for overriding options in generated configs.<br />See https://ytsaurus.tech/docs/en/admin-guide/config-overrides<br />Config overrides: "ytserver-all.yson", "\{filename\}", "\{configmap\}--\{filename\}".<br />Cypress patches: "cypress-patch.yson", "yt-\{component\}-cypress-patch.yson". |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
@@ -2265,7 +2265,7 @@ _Appears in:_
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
-| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Configmap with patches for overriding options in generated configs.<br />See https://ytsaurus.tech/docs/en/admin-guide/config-overrides<br />Config overrides: "ytserver-all.yson", "\{filename\}", "\{configmap\}--\{filename\}".<br />Cypress patches: "cypress-patch.yson", "yt-\{component\}-cypress-patch.yson". |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
@@ -2367,7 +2367,7 @@ _Appears in:_
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
-| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Configmap with patches for overriding options in generated configs.<br />See https://ytsaurus.tech/docs/en/admin-guide/config-overrides<br />Config overrides: "ytserver-all.yson", "\{filename\}", "\{configmap\}--\{filename\}".<br />Cypress patches: "cypress-patch.yson", "yt-\{component\}-cypress-patch.yson". |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
@@ -2517,7 +2517,7 @@ _Appears in:_
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
-| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Configmap with patches for overriding options in generated configs.<br />See https://ytsaurus.tech/docs/en/admin-guide/config-overrides<br />Config overrides: "ytserver-all.yson", "\{filename\}", "\{configmap\}--\{filename\}".<br />Cypress patches: "cypress-patch.yson", "yt-\{component\}-cypress-patch.yson". |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
@@ -2549,6 +2549,7 @@ _Appears in:_
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
+| `tabletCellSlots` _integer_ | Count of slots for tablet cells on each tablet node, default is 4. |  |  |
 
 
 #### RemoteTabletNodesStatus
@@ -2968,6 +2969,7 @@ _Appears in:_
 | `tags` _string array_ | List of the node tags. |  |  |
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
+| `tabletCellSlots` _integer_ | Count of slots for tablet cells on each tablet node, default is 4. |  |  |
 
 
 #### TextLoggerSpec
@@ -3415,7 +3417,7 @@ _Appears in:_
 | `useShortNames` _boolean_ | Do not add resource name into names of resources under control.<br />When enabled resource should not share namespace with other Ytsaurus. | true |  |
 | `usePorto` _boolean_ |  | false |  |
 | `extraPodAnnotations` _object (keys:string, values:string)_ | Deprecated: Despite its name, it adds annotations to all resources. Use podAnnotations instead. |  |  |
-| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
+| `configOverrides` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Configmap with patches for overriding options in generated configs.<br />See https://ytsaurus.tech/docs/en/admin-guide/config-overrides<br />Config overrides: "ytserver-all.yson", "\{filename\}", "\{configmap\}--\{filename\}".<br />Cypress patches: "cypress-patch.yson", "yt-\{component\}-cypress-patch.yson". |  |  |
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ | Credentials for pulling "coreImage" and "image" set for components. |  |  |
 | `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
 | `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |

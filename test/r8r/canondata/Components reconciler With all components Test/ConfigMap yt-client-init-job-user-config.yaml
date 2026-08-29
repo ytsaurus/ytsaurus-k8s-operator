@@ -80,8 +80,8 @@ data:
     /usr/bin/yt create user --attributes '{name="robot-ytsaurus-k8s-operator"}' --ignore-existing
     /usr/bin/yt add-member robot-ytsaurus-k8s-operator superusers || true
     while [ "$(/usr/bin/yt check-permission --format json robot-ytsaurus-k8s-operator administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
-    /usr/bin/yt create map_node '//sys/cypress_tokens/0d0ddc7507a05e55c85c286718179e2a6c09fdc143f2989f12db0bab466f67cb' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/0d0ddc7507a05e55c85c286718179e2a6c09fdc143f2989f12db0bab466f67cb/@user' 'robot-ytsaurus-k8s-operator'
+    /usr/bin/yt create map_node '//sys/cypress_tokens/8d4f9aad77793c577f894af090fc889c987a9ab62f2e4cec63bd99e793601f89' --ignore-existing
+    /usr/bin/yt set '//sys/cypress_tokens/8d4f9aad77793c577f894af090fc889c987a9ab62f2e4cec63bd99e793601f89/@user' 'robot-ytsaurus-k8s-operator'
 metadata:
   annotations:
     extra-pod-annotation: "true"

@@ -51,11 +51,11 @@ func NewScheduler(
 		ytsaurus,
 		&resource.Spec.Schedulers.InstanceSpec,
 		"/usr/bin/ytserver-scheduler",
-		[]ConfigGenerator{{
-			"ytserver-scheduler.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetSchedulerConfig(resource.Spec.Schedulers) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetSchedulerConfig(resource.Spec.Schedulers)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.SchedulerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{

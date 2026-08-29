@@ -155,6 +155,7 @@ data:
             "verification_mode"=full;
             "peer_alternative_host_name"="test-ytsaurus";
         };
+        "overrides_all"=#;
     }
 metadata:
   annotations:

@@ -2437,7 +2437,7 @@
           }
         },
         "configOverrides": {
-          "description": "LocalObjectReference contains enough information to let you locate the...",
+          "description": "Configmap with patches for overriding options in generated configs.",
           "type": "object",
           "properties": {
             "name": {
@@ -38064,6 +38064,10 @@
                     }
                   }
                 }
+              },
+              "tabletCellSlots": {
+                "description": "Count of slots for tablet cells on each tablet node, default is 4.",
+                "type": "integer"
               },
               "tags": {
                 "description": "List of the node tags.",

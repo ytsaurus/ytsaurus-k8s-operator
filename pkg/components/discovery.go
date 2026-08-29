@@ -37,11 +37,11 @@ func NewDiscovery(
 		ytsaurus,
 		&resource.Spec.Discovery.InstanceSpec,
 		"/usr/bin/ytserver-discovery",
-		[]ConfigGenerator{{
-			"ytserver-discovery.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetDiscoveryConfig(&resource.Spec.Discovery)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.DiscoveryMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{

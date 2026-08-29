@@ -51,11 +51,11 @@ func NewTabletNode(
 		ytsaurus,
 		&spec.InstanceSpec,
 		"/usr/bin/ytserver-node",
-		[]ConfigGenerator{{
-			"ytserver-tablet-node.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetTabletNodeConfig(spec) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetTabletNodeConfig(spec)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.TabletNodeMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
@@ -115,7 +115,7 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return status, err
 	}
 
-	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) {
+	if !tn.doInitialization || tn.ytsaurus.IsStatusConditionTrue(tn.initBundlesCondition) || tn.ytsaurusClient.ShouldSkipCypressOperations() {
 		return ComponentStatusReady(), err
 	}
 

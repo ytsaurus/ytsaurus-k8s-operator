@@ -47,11 +47,11 @@ func NewQueueAgent(
 		ytsaurus,
 		&resource.Spec.QueueAgents.InstanceSpec,
 		"/usr/bin/ytserver-queue-agent",
-		[]ConfigGenerator{{
-			"ytserver-queue-agent.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetQueueAgentConfig(resource.Spec.QueueAgents)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.QueueAgentMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
@@ -157,7 +157,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusReady(), nil
 	}
 
-	if qa.server.getInstanceCount() == 0 {
+	if qa.server.getInstanceCount() == 0 || qa.ytsaurusClient.ShouldSkipCypressOperations() {
 		return ComponentStatusReady(), nil
 	}
 

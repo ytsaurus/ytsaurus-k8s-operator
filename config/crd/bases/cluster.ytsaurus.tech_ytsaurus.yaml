@@ -2113,8 +2113,8 @@ spec:
                 - shutdown
                 type: object
               configOverrides:
-                description: LocalObjectReference contains enough information to let
-                  you locate the...
+                description: Configmap with patches for overriding options in generated
+                  configs.
                 properties:
                   name:
                     default: ""
@@ -32620,6 +32620,10 @@ spec:
                             type: boolean
                         type: object
                       type: array
+                    tabletCellSlots:
+                      description: Count of slots for tablet cells on each tablet
+                        node, default is 4.
+                      type: integer
                     tags:
                       description: List of the node tags.
                       items:

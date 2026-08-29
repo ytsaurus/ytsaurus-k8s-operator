@@ -45,11 +45,11 @@ func NewQueryTracker(
 		ytsaurus,
 		&resource.Spec.QueryTrackers.InstanceSpec,
 		"/usr/bin/ytserver-query-tracker",
-		[]ConfigGenerator{{
-			"ytserver-query-tracker.yson",
-			ConfigFormatYson,
-			func() ([]byte, error) { return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers) },
-		}},
+		[]ConfigGenerator{
+			ServerConfigGenerator(l, func() ([]byte, error) {
+				return cfgen.GetQueryTrackerConfig(resource.Spec.QueryTrackers)
+			}),
+		},
 		cfgen.GetTimbertruckConfig,
 		consts.QueryTrackerMonitoringPort,
 		WithContainerPorts(corev1.ContainerPort{
@@ -163,6 +163,10 @@ func (qt *QueryTracker) setup(ctx context.Context, dry bool) (ComponentStatus, e
 		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
 			return tndStatus.Blocker(), nil
 		}
+	}
+
+	if qt.ytsaurusClient.ShouldSkipCypressOperations() {
+		return ComponentStatusReady(), nil
 	}
 
 	var ytClient yt.Client
