@@ -1,4 +1,5 @@
 data:
+  client.yson: '{overrides_client_yson=%true}'
   place-holder: ""
   ytserver-all.yaml: 'overrides_all_yaml: true'
   ytserver-all.yson: '{overrides_all_yson=%true}'

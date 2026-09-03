@@ -69,6 +69,7 @@ data:
                 "enable_master_cache_discovery"=%false;
             };
         };
+        "overrides_client_yson"=%true;
     }
   ytserver-master.yson: |-
     {
