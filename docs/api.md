@@ -332,6 +332,25 @@ _Appears in:_
 | `releaseStatus` _[ChytReleaseStatus](#chytreleasestatus)_ |  |  |  |
 
 
+#### ClusterDowntime
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ClusterMaintenance](#clustermaintenance)
+
+| Field | Description |
+| --- | --- |
+| `` | For now undefined update downtime is an alias for "Unsafe".<br /> |
+| `Minor` | Update with minor downtime.<br />Requires rolling or on-delete update strategies for components in update plan.<br />Allows only forward patch-level upgrade for version parsed from component image tag.<br /> |
+| `Major` | Update with major downtime.<br />Forbids rolling and on-delete update strategies for components in update plan.<br /> |
+| `Unsafe` | No restrictions.<br /> |
+
+
 #### ClusterFeatures
 
 
@@ -376,6 +395,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
+| `downtime` _[ClusterDowntime](#clusterdowntime)_ | Desired cluster service downtime for validating update plan. Default: Unsafe. |  | Enum: [Minor Major Unsafe] <br /> |
 | `shutdown` _[ClusterShutdown](#clustershutdown)_ | Shutdown defines which components are scaled down to zero replicas during cluster maintenance.<br />Component configs are not changed: cluster functions are degraded accordingly. |  | Enum: [Compute Everything ExceptMasters Tablets] <br /> |
 | `assignMasterCellsRoles` _boolean_ | Trigger master cells roles assignment. |  |  |
 
