@@ -19,6 +19,7 @@ metadata:
   annotations:
     extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
+    ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/init-job-reason: InitJob
     ytsaurus.tech/observed-generation: "1"
   generation: 1

@@ -100,7 +100,7 @@ func NewInitJob(
 			labeller,
 			apiProxy,
 			labeller.GetInitJobConfigMapName(name),
-			nil,
+			commonSpec.ConfigOverrides,
 			generators...,
 		),
 		scriptFileName: consts.InitJobScriptName,

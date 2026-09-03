@@ -767,6 +767,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithOverrides()
 			ytBuilder.Overrides.Data["ytserver-all.yaml"] = `overrides_all_yaml: true`
 			ytBuilder.Overrides.Data["ytserver-all.yson"] = `{overrides_all_yson=%true}`
+			ytBuilder.Overrides.Data["client.yson"] = `{overrides_client_yson=%true}`
 			ytBuilder.WithSecondaryMaster()
 			ytBuilder.WithMasterCaches()
 			ytBuilder.WithRPCProxies()
