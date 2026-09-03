@@ -143,10 +143,10 @@ type ResourceLimits struct {
 type DataNode struct {
 	StoreLocations []StoreLocation `yson:"store_locations"`
 	CacheLocations []CacheLocation `yson:"cache_locations"`
-	BlockCache     BlockCache      `yson:"block_cache"`
-	BlocksExtCache Cache           `yson:"blocks_ext_cache"`
-	ChunkMetaCache Cache           `yson:"chunk_meta_cache"`
-	BlockMetaCache Cache           `yson:"block_meta_cache"`
+	BlockCache     *BlockCache     `yson:"block_cache,omitempty"`
+	BlocksExtCache *Cache          `yson:"blocks_ext_cache"`
+	ChunkMetaCache *Cache          `yson:"chunk_meta_cache"`
+	BlockMetaCache *Cache          `yson:"block_meta_cache"`
 }
 
 type JobEnvironmentType string
@@ -291,50 +291,83 @@ type ExecNode struct {
 }
 
 type Cache struct {
-	Capacity int64 `yson:"capacity"`
+	Capacity *int64 `yson:"capacity,omitempty"`
+}
+
+func NoCache() *Cache {
+	return &Cache{Capacity: ptr.To(int64(0))}
 }
 
 type BlockCache struct {
-	Compressed   Cache `yson:"compressed_data"`
-	Uncompressed Cache `yson:"uncompressed_data"`
+	Compressed   *Cache `yson:"compressed_data,omitempty"`
+	Uncompressed *Cache `yson:"uncompressed_data,omitempty"`
 }
 
+// NTabletNode::TResourceLimitsConfig
+type TabletNodeResourceLimits struct {
+	Slots *int `yson:"slots,omitempty"`
+}
+
+// NTabletNode::TTabletNodeConfig
 type TabletNode struct {
-	VersionedChunkMetaCache Cache `yson:"versioned_chunk_meta_cache"`
+	ResourceLimits *TabletNodeResourceLimits `yson:"resource_limits,omitempty"`
+
+	VersionedChunkMetaCache *Cache `yson:"versioned_chunk_meta_cache,omitempty"`
+}
+
+type CellarConfig struct {
+	Size int `yson:"size,omitempty"`
+}
+
+type CellarManager struct {
+	Tablet *CellarConfig `yson:"tablet,omitempty"`
 }
 
 type CellarNode struct {
+	CellarManager *CellarManager `yson:"cellar_manager,omitempty"`
+
 	DeduceProfilingTagFromBundleName *bool `yson:"deduce_profiling_tag_from_bundle_name,omitempty"`
 }
 
 type NodeServer struct {
 	CommonServer
-	Flavors        []NodeFlavor   `yson:"flavors"`
+
+	Flavors []NodeFlavor `yson:"flavors"`
+
 	ResourceLimits ResourceLimits `yson:"resource_limits,omitempty"`
-	Tags           []string       `yson:"tags,omitempty"`
-	Rack           string         `yson:"rack,omitempty"`
-	SkynetHttpPort int32          `yson:"skynet_http_port"`
+
+	Tags []string `yson:"tags,omitempty"`
+	Rack string   `yson:"rack,omitempty"`
+
+	SkynetHttpPort int32 `yson:"skynet_http_port"`
 }
 
 type DataNodeServer struct {
 	NodeServer
+
+	CachingObjectService *Cache `yson:"caching_object_service,omitempty"`
+
 	DataNode DataNode `yson:"data_node"`
 }
 
 type ExecNodeServer struct {
 	NodeServer
-	JobResourceManager   JobResourceManager `yson:"job_resource_manager"`
-	ExecNode             ExecNode           `yson:"exec_node"`
-	DataNode             DataNode           `yson:"data_node"`
-	TabletNode           TabletNode         `yson:"tablet_node"`
-	CachingObjectService Cache              `yson:"caching_object_service"`
+
+	JobResourceManager JobResourceManager `yson:"job_resource_manager"`
+	ExecNode           ExecNode           `yson:"exec_node"`
+	DataNode           DataNode           `yson:"data_node"`
+	TabletNode         *TabletNode        `yson:"tablet_node,omitempty"`
+
+	CachingObjectService *Cache `yson:"caching_object_service,omitempty"`
 }
 
 type TabletNodeServer struct {
 	NodeServer
-	// TabletNode `yson:"tablet_node"`
-	CellarNode           *CellarNode `yson:"cellar_node,omitempty"`
-	CachingObjectService Cache       `yson:"caching_object_service"`
+
+	CellarNode *CellarNode `yson:"cellar_node,omitempty"`
+	TabletNode *TabletNode `yson:"tablet_node,omitempty"`
+
+	CachingObjectService *Cache `yson:"caching_object_service,omitempty"`
 }
 
 func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *corev1.VolumeMount {
@@ -448,6 +481,20 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 	fillClusterNodeServerCarcass(&c.NodeServer, NodeFlavorData, spec.ClusterNodesSpec, &spec.InstanceSpec)
 
 	c.ResourceLimits = getDataNodeResourceLimits(spec)
+
+	// FIXME(khlebnikov): Add safe defaults.
+	// c.CachingObjectService = NoCache()
+
+	// FIXME(khlebnikov): Add safe defaults.
+	c.DataNode = DataNode{
+		BlockCache: &BlockCache{
+			Compressed:   NoCache(),
+			Uncompressed: NoCache(),
+		},
+		BlocksExtCache: NoCache(),
+		BlockMetaCache: NoCache(),
+		ChunkMetaCache: NoCache(),
+	}
 
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
 		storeLocation := StoreLocation{
@@ -667,6 +714,25 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 
 	c.ResourceLimits = getExecNodeResourceLimits(spec)
 
+	// FIXME(khlebnikov): Add safe defaults.
+	c.CachingObjectService = NoCache()
+
+	// FIXME(khlebnikov): Add safe defaults.
+	c.DataNode = DataNode{
+		BlockCache: &BlockCache{
+			Compressed:   NoCache(),
+			Uncompressed: NoCache(),
+		},
+		BlocksExtCache: NoCache(),
+		BlockMetaCache: NoCache(),
+		ChunkMetaCache: NoCache(),
+	}
+
+	c.TabletNode = &TabletNode{
+		// FIXME(khlebnikov): Default is 10 GiB???
+		VersionedChunkMetaCache: NoCache(),
+	}
+
 	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
 		cacheLocation := CacheLocation{
 			DiskLocation: DiskLocation{
@@ -794,6 +860,17 @@ func getTabletNodeServerCarcass(spec *ytv1.TabletNodesSpec) (TabletNodeServer, e
 		TotalCpu:         ptr.To(float32(nodeCPU.AsApproximateFloat64())),
 		NodeDedicatedCpu: ptr.To(float32(nodeCPU.AsApproximateFloat64())),
 	}
+
+	if spec.TabletCellSlots != nil {
+		c.TabletNode = &TabletNode{
+			ResourceLimits: &TabletNodeResourceLimits{
+				Slots: ptr.To(*spec.TabletCellSlots),
+			},
+		}
+	}
+
+	// FIXME(khlebnikov): Add safe defaults.
+	c.CachingObjectService = NoCache()
 
 	c.Logging = getTabletNodeLogging(spec)
 
