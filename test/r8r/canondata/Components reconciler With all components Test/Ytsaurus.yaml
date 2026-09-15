@@ -190,6 +190,8 @@ spec:
         apiRetryTimeoutSeconds: 120
         imagePullSecret:
           name: image-pull-secret
+    jobHttpsCertificateSecret:
+      name: ytsaurus-job-https-cert
     jobResources:
       limits:
         cpu: "4"

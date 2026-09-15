@@ -1051,6 +1051,16 @@ spec:
                       is 5 per CPU.
                     type: integer
                 type: object
+              jobHttpsCertificateSecret:
+                description: Job HTTPS certificate. Reference to kubernetes.io/tls
+                  secret.
+                properties:
+                  name:
+                    default: ""
+                    description: Name of the referent.
+                    type: string
+                type: object
+                x-kubernetes-map-type: atomic
               jobImage:
                 description: Default docker image for user jobs.
                 type: string

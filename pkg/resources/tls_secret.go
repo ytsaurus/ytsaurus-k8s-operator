@@ -20,6 +20,13 @@ func NewTLSSecret(secretName string, volumeName string, mountPath string) *TLSSe
 	}
 }
 
+func NewTLSSecretOrNil(source *corev1.LocalObjectReference, volumeName, mountPath string) *TLSSecret {
+	if source == nil {
+		return nil
+	}
+	return NewTLSSecret(source.Name, volumeName, mountPath)
+}
+
 func (t *TLSSecret) AddVolume(podSpec *corev1.PodSpec) {
 	if t == nil {
 		return

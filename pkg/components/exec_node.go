@@ -14,6 +14,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -77,6 +78,12 @@ func NewExecNode(
 			spec:           &spec,
 			sidecarConfig:  sidecarConfig,
 			ytsaurusClient: yc,
+
+			jobHTTPSCertificateSecret: resources.NewTLSSecretOrNil(
+				spec.JobHTTPSCertificateSecret,
+				consts.JobHTTPSSecretVolumeName,
+				consts.JobHTTPSSecretMountPoint,
+			),
 		},
 		master: master,
 	}

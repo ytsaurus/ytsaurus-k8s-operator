@@ -183,6 +183,9 @@ spec:
         - mountPath: /etc/ssl/certs
           name: ca-root-bundle
           readOnly: true
+        - mountPath: /etc/ssl/ytsaurus-job-https
+          name: job-https-secret
+          readOnly: true
       dnsConfig:
         options:
         - name: global-dns-option
@@ -325,6 +328,9 @@ spec:
       - name: bus-client-secret
         secret:
           secretName: native-client-cert
+      - name: job-https-secret
+        secret:
+          secretName: ytsaurus-job-https-cert
       - name: image-pull-secret
         secret:
           items:

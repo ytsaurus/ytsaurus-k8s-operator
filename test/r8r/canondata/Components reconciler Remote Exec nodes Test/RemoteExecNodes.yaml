@@ -8,6 +8,8 @@ metadata:
 spec:
   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
   instanceCount: 1
+  jobHttpsCertificateSecret:
+    name: ytsaurus-job-https-cert
   jobImage: mirror.gcr.io/library/python:3.12-slim
   jobResources:
     limits:

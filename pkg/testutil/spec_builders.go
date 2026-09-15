@@ -465,6 +465,12 @@ func (b *YtsaurusBuilder) WithHTTPSProxies(httpsCert string, httpsOnly bool) {
 	}
 }
 
+func (b *YtsaurusBuilder) WithJobHTTPSCertificate(jobCert string) {
+	for i := range b.Ytsaurus.Spec.ExecNodes {
+		b.Ytsaurus.Spec.ExecNodes[i].JobHTTPSCertificateSecret = &corev1.LocalObjectReference{Name: jobCert}
+	}
+}
+
 func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithMasterCaches()
 	b.WithBootstrap()

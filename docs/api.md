@@ -957,6 +957,7 @@ _Appears in:_
 | `jobProxyLogManager` _[JobProxyLogManagerSpec](#jobproxylogmanagerspec)_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
+| `jobHttpsCertificateSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Job HTTPS certificate. Reference to kubernetes.io/tls secret.<br />Exposed in job environment as YT_JOB_HTTPS_CERTIFICATE_FILE YT_JOB_HTTPS_PRIVATE_KEY_FILE. |  |  |
 
 
 #### FileObjectReference
@@ -2407,6 +2408,7 @@ _Appears in:_
 | `jobProxyLogManager` _[JobProxyLogManagerSpec](#jobproxylogmanagerspec)_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
+| `jobHttpsCertificateSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Job HTTPS certificate. Reference to kubernetes.io/tls secret.<br />Exposed in job environment as YT_JOB_HTTPS_CERTIFICATE_FILE YT_JOB_HTTPS_PRIVATE_KEY_FILE. |  |  |
 
 
 #### RemoteExecNodesStatus
