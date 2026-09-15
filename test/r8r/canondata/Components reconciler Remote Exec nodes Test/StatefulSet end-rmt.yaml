@@ -87,6 +87,9 @@ spec:
           readOnly: true
         - mountPath: /config
           name: config
+        - mountPath: /etc/ssl/ytsaurus-job-https
+          name: job-https-secret
+          readOnly: true
       enableServiceLinks: false
       initContainers:
       - command:
@@ -176,6 +179,9 @@ spec:
         name: config-template
       - emptyDir: {}
         name: config
+      - name: job-https-secret
+        secret:
+          secretName: ytsaurus-job-https-cert
   updateStrategy: {}
   volumeClaimTemplates:
   - metadata:

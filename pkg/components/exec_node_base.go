@@ -30,6 +30,8 @@ type baseExecNode struct {
 	sidecarConfig *ConfigMapBuilder
 
 	imagePullSecret *resources.DockerSecret
+
+	jobHTTPSCertificateSecret *resources.TLSSecret
 }
 
 func (n *baseExecNode) Fetch(ctx context.Context) error {
@@ -107,6 +109,8 @@ func (n *baseExecNode) doBuildBase() error {
 		addResourceList(container.Resources.Limits, n.spec.JobResources.Limits)
 	}
 
+	n.jobHTTPSCertificateSecret.AddVolume(podSpec)
+
 	if n.criConfig.Service != ytv1.CRIServiceNone {
 		if secret := n.criConfig.Spec.ImagePullSecret; secret != nil {
 			n.imagePullSecret = resources.NewDockerSecret(secret.Name, consts.DockerSecretVolumeName, consts.DockerSecretMountPath)
@@ -119,12 +123,15 @@ func (n *baseExecNode) doBuildBase() error {
 		} else {
 			// CRI service is supposed to be started by exec node entrypoint wrapper.
 			n.addCRIServiceConfig(n.criConfig, podSpec, &podSpec.Containers[0])
+			n.jobHTTPSCertificateSecret.AddVolumeMount(&podSpec.Containers[0])
 		}
 
 		toolsEnv := n.criConfig.GetCRIToolsEnv()
 		for i := range podSpec.Containers {
 			podSpec.Containers[i].Env = append(podSpec.Containers[i].Env, toolsEnv...)
 		}
+	} else {
+		n.jobHTTPSCertificateSecret.AddVolumeMount(&podSpec.Containers[0])
 	}
 
 	if n.sidecarConfig != nil {
@@ -219,6 +226,7 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 	n.addCRIServiceConfig(cri, podSpec, &container)
 
 	n.server.addCARootBundle(&container)
+	n.jobHTTPSCertificateSecret.AddVolumeMount(&container)
 
 	// Replace mount propagation "Bidirectional" -> "HostToContainer".
 	// Tmpfs are propagated: exec-node -> host -> containerd.

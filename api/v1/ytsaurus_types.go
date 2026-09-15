@@ -767,6 +767,10 @@ type ExecNodesSpec struct {
 	JobResources *corev1.ResourceRequirements `json:"jobResources,omitempty"`
 	//+optional
 	JobEnvironment *JobEnvironmentSpec `json:"jobEnvironment,omitempty"`
+	// Job HTTPS certificate. Reference to kubernetes.io/tls secret.
+	// Exposed in job environment as YT_JOB_HTTPS_CERTIFICATE_FILE YT_JOB_HTTPS_PRIVATE_KEY_FILE.
+	//+optional
+	JobHTTPSCertificateSecret *corev1.LocalObjectReference `json:"jobHttpsCertificateSecret,omitempty"`
 }
 
 type TabletNodesSpec struct {

@@ -307,6 +307,16 @@ data:
                         export=%true;
                     };
                     {
+                        name="YT_JOB_HTTPS_CERTIFICATE_FILE";
+                        value="/etc/ssl/ytsaurus-job-https/tls.crt";
+                        export=%true;
+                    };
+                    {
+                        name="YT_JOB_HTTPS_PRIVATE_KEY_FILE";
+                        value="/etc/ssl/ytsaurus-job-https/tls.key";
+                        export=%true;
+                    };
+                    {
                         name="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
                         "file_name"="/tls/ca_bundle/ca.crt";
                         export=%false;
@@ -400,6 +410,13 @@ data:
                     address="127.0.0.1:9029";
                 };
             };
+            "root_fs_binds"=[
+                {
+                    "external_path"="/etc/ssl/ytsaurus-job-https";
+                    "internal_path"="/etc/ssl/ytsaurus-job-https";
+                    "read_only"=%true;
+                };
+            ];
             "job_proxy_authentication_manager"={
                 "cypress_cookie_manager"={
                 };

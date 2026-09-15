@@ -279,6 +279,7 @@ type ExecNode struct {
 	GpuManager    GpuManager    `yson:"gpu_manager"`
 	JobController JobController `yson:"job_controller"`
 	JobProxy      JobProxy      `yson:"job_proxy"`
+	RootFSBinds   []BindMount   `yson:"root_fs_binds,omitempty"`
 
 	JobProxyAuthenticationManagerLegacy  *Auth    `yson:"job_proxy_authentication_manager,omitempty"`
 	JobProxyLoggingLegacy                *Logging `yson:"job_proxy_logging,omitempty"`
@@ -693,6 +694,14 @@ func fillJobEnvironment(execNode *ExecNode, spec *ytv1.ExecNodesSpec, commonSpec
 	jobEnv := &execNode.SlotManager.JobEnvironment
 
 	jobEnv.StartUID = consts.StartUID
+
+	if spec.JobHTTPSCertificateSecret != nil {
+		execNode.RootFSBinds = append(execNode.RootFSBinds, BindMount{
+			InternalPath: consts.JobHTTPSSecretMountPoint,
+			ExternalPath: consts.JobHTTPSSecretMountPoint,
+			ReadOnly:     true,
+		})
+	}
 
 	if envSpec != nil && envSpec.CRI != nil {
 		return fillJobEnvironmentCRI(execNode, spec, commonSpec, envSpec, jobEnv)

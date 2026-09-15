@@ -13,6 +13,7 @@ const (
 	BusClientSecretMountPoint  = "/tls/bus_client_secret"
 	CABundleMountPoint         = "/tls/ca_bundle"
 	CARootBundleMountPoint     = "/etc/ssl/certs"
+	JobHTTPSSecretMountPoint   = "/etc/ssl/ytsaurus-job-https"
 	UIClustersConfigMountPoint = "/opt/app"
 	UICustomConfigMountPoint   = "/opt/app/dist/server/configs/custom"
 	UISecretsMountPoint        = "/opt/app/secrets"
@@ -67,6 +68,9 @@ const (
 	SSLCertDirKey       = "SSL_CERT_DIR"
 	RequestsCABundleKey = "REQUESTS_CA_BUNDLE"
 
+	JobHTTPSCertificateFileKey = "YT_JOB_HTTPS_CERTIFICATE_FILE"
+	JobHTTPSPrivateKeyFileKey  = "YT_JOB_HTTPS_PRIVATE_KEY_FILE"
+
 	TokenSecretKey = "YT_TOKEN"
 	TokenFileName  = "token"
 )
@@ -106,6 +110,7 @@ const (
 	BusClientSecretVolumeName = "bus-client-secret"
 	CARootBundleVolumeName    = "ca-root-bundle"
 	CABundleVolumeName        = "ca-bundle"
+	JobHTTPSSecretVolumeName  = "job-https-secret"
 	InitScriptVolumeName      = "init-script"
 	UIVaultVolumeName         = "vault"
 	UISecretsVolumeName       = "secrets"

@@ -829,6 +829,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithAllInstancePodOptions(&ytsaurus.Spec.PrimaryMasters.InstanceSpec)
 			ytBuilder.WithNativeTransportTLS("native-server-cert", "native-client-cert")
 			ytBuilder.WithHTTPSProxies("https-server-cert", false)
+			ytBuilder.WithJobHTTPSCertificate("ytsaurus-job-https-cert")
 		})
 		It("Test", func(ctx context.Context) {})
 		AfterEach(func() {
@@ -1010,6 +1011,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		Context("Exec nodes", func() {
 			BeforeEach(func(ctx context.Context) {
 				execNodes := ytBuilder.CreateRemoteExecNodes()
+				execNodes.Spec.JobHTTPSCertificateSecret = &corev1.LocalObjectReference{Name: "ytsaurus-job-https-cert"}
 				Expect(k8sClient.Create(ctx, execNodes)).To(Succeed())
 				controllerObjects = append(controllerObjects, execNodes)
 			})

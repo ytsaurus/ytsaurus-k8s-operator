@@ -1033,6 +1033,22 @@ func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, erro
 		)
 	}
 
+	if spec.JobHTTPSCertificateSecret != nil {
+		c.ExecNode.JobProxy.EnvironmentVariables = append(
+			c.ExecNode.JobProxy.EnvironmentVariables,
+			EnvironmentVariable{
+				Name:   consts.JobHTTPSCertificateFileKey,
+				Value:  ptr.To(path.Join(consts.JobHTTPSSecretMountPoint, corev1.TLSCertKey)),
+				Export: ptr.To(true),
+			},
+			EnvironmentVariable{
+				Name:   consts.JobHTTPSPrivateKeyFileKey,
+				Value:  ptr.To(path.Join(consts.JobHTTPSSecretMountPoint, corev1.TLSPrivateKeyKey)),
+				Export: ptr.To(true),
+			},
+		)
+	}
+
 	if c.ClusterConnection.BusClient != nil {
 		var clusterConnection ClusterConnection
 

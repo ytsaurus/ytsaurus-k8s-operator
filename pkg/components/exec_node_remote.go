@@ -9,6 +9,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -72,6 +73,12 @@ func NewRemoteExecNodes(
 			criConfig:     criConfig,
 			spec:          &spec,
 			sidecarConfig: sidecarConfig,
+
+			jobHTTPSCertificateSecret: resources.NewTLSSecretOrNil(
+				spec.JobHTTPSCertificateSecret,
+				consts.JobHTTPSSecretVolumeName,
+				consts.JobHTTPSSecretMountPoint,
+			),
 		},
 	}
 }
