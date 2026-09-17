@@ -999,6 +999,18 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		It("Test", func(ctx context.Context) {})
 	})
 
+	Context("With non-default medium", func() {
+		BeforeEach(func() {
+			ytsaurus.Spec.ClusterFeatures.DefaultPrimaryMedium = ptr.To("store")
+			ytBuilder.WithDataNodes()
+			ytsaurus.Spec.DataNodes[0].Locations[0].Medium = "store"
+			ytBuilder.WithExecNodes()
+			ytsaurus.Spec.ExecNodes[0].Locations[0].Medium = "cache"
+			ytsaurus.Spec.ExecNodes[0].Locations[1].Medium = "slot"
+		})
+		It("Test", func(ctx context.Context) {})
+	})
+
 	Context("Remote", func() {
 		BeforeEach(func(ctx context.Context) {
 			ytsaurus = nil

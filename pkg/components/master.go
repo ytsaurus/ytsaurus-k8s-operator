@@ -1,8 +1,10 @@
 package components
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -252,21 +254,29 @@ type Medium struct {
 func (m *Master) getExtraMedia() []Medium {
 	mediaMap := make(map[string]Medium)
 
+	if defaultPrimaryMedium := m.ytsaurus.GetClusterFeatures().DefaultPrimaryMedium; defaultPrimaryMedium != nil {
+		mediaMap[*defaultPrimaryMedium] = Medium{Name: *defaultPrimaryMedium}
+	}
+
 	for _, d := range m.ytsaurus.GetResource().Spec.DataNodes {
 		for _, l := range d.Locations {
-			if l.Medium == consts.DefaultMedium {
-				continue
-			}
-			mediaMap[l.Medium] = Medium{
-				Name: l.Medium,
+			if l.Medium != "" && l.Medium != consts.DefaultMedium {
+				mediaMap[l.Medium] = Medium{Name: l.Medium}
 			}
 		}
 	}
 
-	mediaSlice := make([]Medium, 0, len(mediaMap))
-	for _, v := range mediaMap {
-		mediaSlice = append(mediaSlice, v)
+	for _, d := range m.ytsaurus.GetResource().Spec.ExecNodes {
+		for _, l := range d.Locations {
+			if l.Medium != "" && l.Medium != consts.DefaultMedium {
+				mediaMap[l.Medium] = Medium{Name: l.Medium}
+			}
+		}
 	}
+
+	mediaSlice := slices.SortedFunc(maps.Values(mediaMap), func(a, b Medium) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
 
 	return mediaSlice
 }
@@ -283,6 +293,9 @@ func (m *Master) initMedia() string {
 
 		quotaPath := fmt.Sprintf("//sys/accounts/sys/@resource_limits/disk_space_per_medium/%s", medium.Name)
 		commands = append(commands, fmt.Sprintf("/usr/bin/yt get %s || /usr/bin/yt set %s %d", quotaPath, quotaPath, mediumInitQuota))
+	}
+	if defaultPrimaryMedium := m.ytsaurus.GetClusterFeatures().DefaultPrimaryMedium; defaultPrimaryMedium != nil {
+		commands = append(commands, fmt.Sprintf("/usr/bin/yt set //@primary_medium '%s'", *defaultPrimaryMedium))
 	}
 	return strings.Join(commands, "\n")
 }

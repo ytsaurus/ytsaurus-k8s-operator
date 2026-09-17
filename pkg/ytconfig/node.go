@@ -202,6 +202,8 @@ type SlotManager struct {
 	Locations      []SlotLocation `yson:"locations"`
 	JobEnvironment JobEnvironment `yson:"job_environment"`
 
+	DefaultMediumName string `yson:"default_medium_name,omitempty"`
+
 	DoNotSetUserId      *bool `yson:"do_not_set_user_id,omitempty"`
 	EnableTmpfs         *bool `yson:"enable_tmpfs,omitempty"`
 	DetachedTmpfsUmount *bool `yson:"detached_tmpfs_umount,omitempty"`
@@ -765,7 +767,11 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		return c, fmt.Errorf("error creating exec node config: no cache locations provided")
 	}
 
-	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
+	slotLocations := ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots)
+	if len(slotLocations) > 0 {
+		c.ExecNode.SlotManager.DefaultMediumName = slotLocations[0].Medium
+	}
+	for _, location := range slotLocations {
 		slotLocation := SlotLocation{
 			DiskLocation: DiskLocation{
 				Path:       location.Path,

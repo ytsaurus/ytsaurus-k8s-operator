@@ -1,0 +1,235 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: Ytsaurus
+metadata:
+  generation: 1
+  name: test-ytsaurus
+  namespace: ytsaurus-components
+  resourceVersion: "22"
+spec:
+  clusterFeatures:
+    defaultPrimaryMedium: store
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+  dataNodes:
+  - instanceCount: 3
+    locations:
+    - locationType: ChunkStore
+      medium: store
+      path: /yt/node-data/chunk-store
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: node-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          limits:
+            storage: 20Gi
+          requests:
+            storage: 10Gi
+    volumeMounts:
+    - mountPath: /yt/node-data
+      name: node-data
+  discovery:
+    instanceCount: 1
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+  ephemeralCluster: true
+  execNodes:
+  - instanceCount: 1
+    jobResources:
+      limits:
+        cpu: "4"
+        memory: 8Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    locations:
+    - locationType: ChunkCache
+      medium: cache
+      path: /yt/node-data/chunk-cache
+    - locationType: Slots
+      medium: slot
+      path: /yt/node-data/slots
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    privileged: false
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: node-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/node-data
+      name: node-data
+  httpProxies:
+  - instanceCount: 1
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    serviceType: NodePort
+    transport: {}
+  jobImage: mirror.gcr.io/library/python:3.12-slim
+  primaryMasters:
+    cellTag: 1
+    instanceCount: 1
+    locations:
+    - locationType: MasterChangelogs
+      path: /yt/master-data/master-changelogs
+    - locationType: MasterSnapshots
+      path: /yt/master-data/master-snapshots
+    loggers:
+    - minLogLevel: info
+      name: info-stderr
+      useTimestampSuffix: false
+      writerType: stderr
+    minReadyInstanceCount: 0
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "0"
+        memory: "0"
+    volumeClaimTemplates:
+    - metadata:
+        name: master-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+    volumeMounts:
+    - mountPath: /yt/master-data
+      name: master-data
+  terminationGracePeriodSeconds: 5
+  useIpv4: false
+  useIpv6: false
+  usePorto: false
+  useShortNames: true
+status:
+  conditions:
+  - lastTransitionTime: null
+    message: 0.0.0-devel
+    observedGeneration: 1
+    reason: Observed
+    status: "True"
+    type: OperatorVersion
+  - lastTransitionTime: null
+    message: Master cell roles initialized
+    observedGeneration: 1
+    reason: CellsInitialization
+    status: "True"
+    type: MasterCellsInitialized
+  - lastTransitionTime: null
+    message: Job yt-master-init-job-default completed in -1ns
+    observedGeneration: 1
+    reason: ClusterInitialization
+    status: "True"
+    type: defaultMasterInitJobCompleted
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: MasterReady
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: DiscoveryReady
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 3, running 0, need 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: DataNodeReady
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: ExecNodeReady
+  - lastTransitionTime: null
+    message: 'Pods are ready: 0 of 1, running 0, need 0'
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: HttpProxyReady
+  - lastTransitionTime: null
+    message: Job yt-client-init-job-user completed in -1ns
+    observedGeneration: 1
+    reason: InitJob
+    status: "True"
+    type: userYtsaurusClientInitJobCompleted
+  - lastTransitionTime: null
+    message: Cypress operations skipped
+    observedGeneration: 1
+    reason: HealthChecks
+    status: "True"
+    type: UpdateIsPossible
+  - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 1
+    reason: Ready
+    status: "True"
+    type: YtsaurusClientReady
+  - lastTransitionTime: null
+    message: Cluster state is Running
+    observedGeneration: 1
+    reason: Running
+    status: "True"
+    type: ReadyToWork
+  observedGeneration: 1
+  state: Running
+  updateStatus: {}
