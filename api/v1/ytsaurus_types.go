@@ -958,6 +958,8 @@ type ClusterFeatures struct {
 	EnableImageHeater bool `json:"enableImageHeater,omitempty"`
 	// Enable logging anchor profiling by default for loggers that don't explicitly disable it.
 	EnableAnchorProfilingByDefault bool `json:"enableAnchorProfilingByDefault,omitempty"`
+	// Set default primary medium at //@primary_medium during cluster initialization.
+	DefaultPrimaryMedium *string `json:"defaultPrimaryMedium,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.

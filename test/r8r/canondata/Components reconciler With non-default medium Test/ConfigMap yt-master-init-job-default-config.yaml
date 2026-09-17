@@ -14,7 +14,6 @@ data:
         };
         driver={
             "api_version"=4;
-            "default_rpc_proxy_address_type"="public_rpc";
             "cluster_name"="test-ytsaurus";
             "primary_master"={
                 addresses=[
@@ -28,48 +27,19 @@ data:
                 ];
                 "cell_id"="65726e65-ad6b7562-10259-79747361";
             };
-            "secondary_masters"=[
-                {
-                    addresses=[
-                        "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
-                    ];
-                    peers=[
-                        {
-                            address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
-                            voting=%true;
-                        };
-                    ];
-                    "cell_id"="65726e65-ad6b7562-20259-79747361";
-                };
-            ];
             "discovery_connection"={
                 addresses=[
                     "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
                 ];
             };
-            "bus_client"={
-                "encryption_mode"=required;
-                "cert_chain"={
-                    "file_name"="/tls/bus_client_secret/tls.crt";
-                };
-                "private_key"={
-                    "file_name"="/tls/bus_client_secret/tls.key";
-                };
-                ca={
-                    "file_name"="/tls/ca_bundle/ca.crt";
-                };
-                "verification_mode"=full;
-                "peer_alternative_host_name"="test-ytsaurus";
-            };
             "master_cache"={
                 addresses=[
-                    "msc-0.master-caches.ytsaurus-components.svc.cluster.local:9018";
+                    "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
                 ];
                 "cell_id"="65726e65-ad6b7562-10259-79747361";
                 "enable_master_cache_discovery"=%false;
             };
         };
-        "overrides_client_yson"=%true;
     }
   cluster-initialization.sh: |-
     #!/bin/bash
@@ -125,45 +95,14 @@ data:
             ];
             "cell_id"="65726e65-ad6b7562-10259-79747361";
         };
-        "secondary_masters"=[
-            {
-                addresses=[
-                    "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
-                ];
-                peers=[
-                    {
-                        address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
-                        voting=%true;
-                    };
-                ];
-                "cell_id"="65726e65-ad6b7562-20259-79747361";
-            };
-        ];
         "discovery_connection"={
             addresses=[
                 "ds-0.discovery.ytsaurus-components.svc.cluster.local:9020";
             ];
         };
-        "bus_client"={
-            "encryption_mode"=required;
-            "cert_chain"={
-                "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_CERTIFICATE";
-                "file_name"="/tls/bus_client_secret/tls.crt";
-            };
-            "private_key"={
-                "environment_variable"="YT_SECURE_VAULT_YT_BUS_CLIENT_PRIVATE_KEY";
-                "file_name"="/tls/bus_client_secret/tls.key";
-            };
-            ca={
-                "environment_variable"="YT_SECURE_VAULT_YT_BUS_CA_BUNDLE";
-                "file_name"="/tls/ca_bundle/ca.crt";
-            };
-            "verification_mode"=full;
-            "peer_alternative_host_name"="test-ytsaurus";
-        };
         "master_cache"={
             addresses=[
-                "msc-0.master-caches.ytsaurus-components.svc.cluster.local:9018";
+                "ms-0.masters.ytsaurus-components.svc.cluster.local:9010";
             ];
             "cell_id"="65726e65-ad6b7562-10259-79747361";
             "enable_master_cache_discovery"=%false;
@@ -173,24 +112,15 @@ data:
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     /usr/bin/yt set //sys/@cluster_name 'test-ytsaurus'
     fi
+    /usr/bin/yt get //sys/media/cache/@name || /usr/bin/yt create domestic_medium --attr '{name=cache;}' || /usr/bin/yt create medium --attr '{name=cache;}'
+    /usr/bin/yt get //sys/accounts/sys/@resource_limits/disk_space_per_medium/cache || /usr/bin/yt set //sys/accounts/sys/@resource_limits/disk_space_per_medium/cache 1073741824
+    /usr/bin/yt get //sys/media/slot/@name || /usr/bin/yt create domestic_medium --attr '{name=slot;}' || /usr/bin/yt create medium --attr '{name=slot;}'
+    /usr/bin/yt get //sys/accounts/sys/@resource_limits/disk_space_per_medium/slot || /usr/bin/yt set //sys/accounts/sys/@resource_limits/disk_space_per_medium/slot 1073741824
+    /usr/bin/yt get //sys/media/store/@name || /usr/bin/yt create domestic_medium --attr '{name=store;}' || /usr/bin/yt create medium --attr '{name=store;}'
+    /usr/bin/yt get //sys/accounts/sys/@resource_limits/disk_space_per_medium/store || /usr/bin/yt set //sys/accounts/sys/@resource_limits/disk_space_per_medium/store 1073741824
+    /usr/bin/yt set //@primary_medium 'store'
+    fi
 
-    /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
-    /usr/bin/yt add-member admin superusers || true
-    while [ "$(/usr/bin/yt check-permission --format json admin administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
-    /usr/bin/yt execute set_user_password '{user=admin;new_password_sha256="8e70fdbd0400b7a21539fd15fb4ab86c129f7cbd99261dbb0d95c18df8dec177"}'
-    /usr/bin/yt create map_node '//sys/cypress_tokens/10a4c7c9fc5206d6f36dc6944a81bb6f4a3cb0e25014ae3b12e6c3e52712292a' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/10a4c7c9fc5206d6f36dc6944a81bb6f4a3cb0e25014ae3b12e6c3e52712292a/@user' 'admin'
-    fi
-    if [ 'true' = 'true' ]; then
-    if [ $(/usr/bin/yt exists //sys/users/robot-hydra-persistence-uploader) = 'false' ]; then
-    /usr/bin/yt create user --attributes '{name="robot-hydra-persistence-uploader"}' --ignore-existing
-    /usr/bin/yt create map_node '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef' --ignore-existing
-    /usr/bin/yt set '//sys/cypress_tokens/885a9326e17d4a6182221351d148e4ee92d09760adaf10298af8778c84ca05ef/@user' 'robot-hydra-persistence-uploader'
-    /usr/bin/yt create map_node //sys/admin/snapshots -r -i
-    /usr/bin/yt set //sys/admin/snapshots/@acl '[{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[read;write;remove;create;];"inheritance_mode"="object_and_descendants";};]'
-    /usr/bin/yt set //sys/accounts/sys/@acl/end '{action=allow;subjects=["robot-hydra-persistence-uploader";];permissions=[use;];}'
-    fi
-    fi
     /usr/bin/yt remove //sys/@provision_lock -f
   master-cells-completion.sh: |-
     #!/bin/bash
@@ -215,18 +145,12 @@ data:
     set -eux -o pipefail
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
-    while test "$(/usr/bin/yt get --format json //sys/@registered_master_cell_tags | jq -c sort)" != '[2]'; do sleep 1; done
+    while test "$(/usr/bin/yt get --format json //sys/@registered_master_cell_tags | jq -c sort)" != '[]'; do sleep 1; done
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'false' ]; then
     exit 1
     fi
     test "$(/usr/bin/yt get //sys/@dynamically_propagated_masters_cell_tags)" = '[]'
     /usr/bin/yt set //sys/@config/multicell_manager/cell_descriptors '{
-        "2"={
-            roles=[
-                "cypress_node_host";
-                "chunk_host";
-            ];
-        };
     }'
     /usr/bin/yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true
     YT_LOG_LEVEL=Debug /usr/bin/yt execute build_master_snapshots '{ set_read_only=%true; wait_for_snapshot_completion=%true; retry=%true; }'
@@ -254,27 +178,9 @@ data:
     fi
     test "$(/usr/bin/yt get //sys/@dynamically_propagated_masters_cell_tags)" = '[]'
     /usr/bin/yt set //sys/@config/multicell_manager/cell_descriptors '{
-        "2"={
-            roles=[
-                "cypress_node_host";
-                "chunk_host";
-            ];
-        };
     }'
     /usr/bin/yt set //sys/@config/multicell_manager/remove_secondary_cell_default_roles %true
     /usr/bin/yt set //sys/@cluster_connection/secondary_masters '[
-        {
-            addresses=[
-                "ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
-            ];
-            peers=[
-                {
-                    address="ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010";
-                    voting=%true;
-                };
-            ];
-            "cell_id"="65726e65-ad6b7562-20259-79747361";
-        };
     ]'
   master-cells-wait-registration.sh: |-
     #!/bin/bash
@@ -283,7 +189,7 @@ data:
     set -eux -o pipefail
 
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
-    while test "$(/usr/bin/yt get --format json //sys/@registered_master_cell_tags | jq -c sort)" != '[2]'; do sleep 1; done
+    while test "$(/usr/bin/yt get --format json //sys/@registered_master_cell_tags | jq -c sort)" != '[]'; do sleep 1; done
   master-enter-read-only.sh: |-
     #!/bin/bash
     # YTsaurus init job script generated by ytsaurus-k8s-operator
@@ -293,8 +199,6 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     /usr/bin/yt get '//sys/primary_masters/ms-0.masters.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/election' || :
     /usr/bin/yt get '//sys/primary_masters/ms-0.masters.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/hydra' || :
-    /usr/bin/yt get '//sys/secondary_masters/2/ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/election' || :
-    /usr/bin/yt get '//sys/secondary_masters/2/ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/hydra' || :
     YT_LOG_LEVEL=Debug /usr/bin/yt execute build_master_snapshots '{ set_read_only=%true; wait_for_snapshot_completion=%true; retry=%true; }'
   master-exit-read-only.sh: |-
     #!/bin/bash
@@ -305,14 +209,10 @@ data:
     export YT_DRIVER_CONFIG_PATH=/config/client.yson
     /usr/bin/yt get '//sys/primary_masters/ms-0.masters.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/election' || :
     /usr/bin/yt get '//sys/primary_masters/ms-0.masters.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/hydra' || :
-    /usr/bin/yt get '//sys/secondary_masters/2/ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/election' || :
-    /usr/bin/yt get '//sys/secondary_masters/2/ms-2-0.masters-2.ytsaurus-components.svc.cluster.local:9010/orchid/monitoring/hydra' || :
     YT_LOG_LEVEL=Debug /usr/bin/yt execute master_exit_read_only '{}'
 metadata:
   annotations:
-    extra-pod-annotation: "true"
     ytsaurus.tech/config-hash: <censored>
-    ytsaurus.tech/config-overrides-version: "1"
     ytsaurus.tech/init-job-reason: ClusterInitialization
     ytsaurus.tech/observed-generation: "1"
   generation: 1

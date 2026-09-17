@@ -356,6 +356,7 @@ _Appears in:_
 | `secureClusterTransports` _boolean_ | Validate that only secure transports are allowed for cluster connections. |  |  |
 | `enableImageHeater` _boolean_ | Pull required images to all selected nodes before cluster initialization and update.<br />Alternatively ImageHeater could be enlisted in update plan for all or selected components. |  |  |
 | `enableAnchorProfilingByDefault` _boolean_ | Enable logging anchor profiling by default for loggers that don't explicitly disable it. |  |  |
+| `defaultPrimaryMedium` _string_ | Set default primary medium at //@primary_medium during cluster initialization. |  |  |
 
 
 #### ClusterMaintenance

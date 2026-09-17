@@ -158,6 +158,11 @@ func (tn *TabletNode) getBundleOptions(bundle string) map[string]any {
 		options["snapshot_account"] = "sys"
 	}
 
+	if defaultPrimaryMedium := tn.ytsaurus.GetClusterFeatures().DefaultPrimaryMedium; defaultPrimaryMedium != nil {
+		options["changelog_primary_medium"] = *defaultPrimaryMedium
+		options["snapshot_primary_medium"] = *defaultPrimaryMedium
+	}
+
 	bootstrap := tn.getBundleBootstrap(bundle)
 	if bootstrap != nil {
 		if bootstrap.ChangelogPrimaryMedium != nil {

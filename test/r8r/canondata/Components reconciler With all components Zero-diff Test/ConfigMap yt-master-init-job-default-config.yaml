@@ -173,8 +173,7 @@ data:
     if [ $(/usr/bin/yt exists //sys/@provision_lock) = 'true' ]; then
     /usr/bin/yt set //sys/@cluster_name 'test-ytsaurus'
     fi
-    /usr/bin/yt get //sys/media//@name || /usr/bin/yt create domestic_medium --attr '{name="";}' || /usr/bin/yt create medium --attr '{name="";}'
-    /usr/bin/yt get //sys/accounts/sys/@resource_limits/disk_space_per_medium/ || /usr/bin/yt set //sys/accounts/sys/@resource_limits/disk_space_per_medium/ 1073741824
+
     /usr/bin/yt create user --attributes '{name="admin"}' --ignore-existing
     /usr/bin/yt add-member admin superusers || true
     while [ "$(/usr/bin/yt check-permission --format json admin administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done

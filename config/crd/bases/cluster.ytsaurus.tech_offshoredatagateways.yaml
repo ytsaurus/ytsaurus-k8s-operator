@@ -807,6 +807,10 @@ spec:
                 type: object
               clusterFeatures:
                 properties:
+                  defaultPrimaryMedium:
+                    description: Set default primary medium at //@primary_medium during
+                      cluster initialization.
+                    type: string
                   enableAnchorProfilingByDefault:
                     description: Enable logging anchor profiling by default for loggers
                       that don't explicitly...
