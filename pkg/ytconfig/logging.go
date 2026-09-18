@@ -80,6 +80,7 @@ type LoggingWriter struct {
 	CompressionMethod    string `yson:"compression_method,omitempty"`
 	EnableCompression    bool   `yson:"enable_compression,omitempty"`
 	UseTimestampSuffix   bool   `yson:"use_timestamp_suffix,omitempty"`
+	UseDateTimeSuffix    bool   `yson:"use_logrotate_compatible_timestamp_suffix,omitempty"`
 	EnableSystemMessages bool   `yson:"enable_system_messages,omitempty"`
 
 	RotationPolicy *LogRotationPolicy `yson:"rotation_policy,omitempty"`
@@ -275,10 +276,12 @@ func createStructuredLoggingRule(spec ytv1.StructuredLoggerSpec) LoggingRule {
 }
 
 func createBaseLoggingWriter(componentName string, loggingDirectory string, writerType ytv1.LogWriterType, loggerSpec ytv1.BaseLoggerSpec) LoggingWriter {
-	loggingWriter := LoggingWriter{}
-
-	loggingWriter.WriterType = writerType
-	loggingWriter.Format = loggerSpec.Format
+	loggingWriter := LoggingWriter{
+		WriterType:         writerType,
+		Format:             loggerSpec.Format,
+		UseTimestampSuffix: loggerSpec.UseTimestampSuffix,
+		UseDateTimeSuffix:  loggerSpec.UseDateTimeSuffix,
+	}
 
 	if loggingWriter.WriterType == ytv1.LogWriterTypeFile {
 		loggingWriter.FileName = path.Join(loggingDirectory, fmt.Sprintf("%s.%s.log", componentName, loggerSpec.Name))
@@ -292,11 +295,7 @@ func createBaseLoggingWriter(componentName string, loggingDirectory string, writ
 		loggingWriter.EnableCompression = true
 		loggingWriter.CompressionMethod = string(loggerSpec.Compression)
 		loggingWriter.FileName += fmt.Sprintf(".%s", loggingWriter.CompressionMethod)
-	} else {
-		loggingWriter.EnableCompression = false
 	}
-
-	loggingWriter.UseTimestampSuffix = loggerSpec.UseTimestampSuffix
 
 	if loggerSpec.RotationPolicy != nil {
 		loggingWriter.RotationPolicy = &LogRotationPolicy{

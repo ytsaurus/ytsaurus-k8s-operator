@@ -101,6 +101,7 @@ data:
                     format="plain_text";
                     "compression_method"=zstd;
                     "enable_compression"=%true;
+                    "use_logrotate_compatible_timestamp_suffix"=%true;
                     "enable_system_messages"=%true;
                     "rotation_policy"={
                         "max_segment_size"=104857600;

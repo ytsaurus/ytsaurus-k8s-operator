@@ -56,7 +56,6 @@ spec:
       rotationPolicy:
         maxTotalSizeToKeep: "3145728"
         rotationPeriodMilliseconds: 900000
-      useTimestampSuffix: false
       writerType: file
     locations:
     - locationType: ChunkCache
@@ -125,13 +124,11 @@ spec:
       format: plain_text
       minLogLevel: info
       name: info
-      useTimestampSuffix: false
       writerType: file
     - compression: none
       format: plain_text
       minLogLevel: error
       name: error
-      useTimestampSuffix: false
       writerType: file
     - categoriesFilter:
         type: exclude
@@ -144,7 +141,6 @@ spec:
       rotationPolicy:
         maxTotalSizeToKeep: 10Gi
         rotationPeriodMilliseconds: 900000
-      useTimestampSuffix: false
       writerType: file
     maxSnapshotCountToKeep: 1543
     resources: {}

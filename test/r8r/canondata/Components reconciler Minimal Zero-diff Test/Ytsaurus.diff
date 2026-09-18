@@ -13,7 +13,7 @@
  spec:
    clusterFeatures: {}
    coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
-@@ -84,7 +84,7 @@
+@@ -81,7 +81,7 @@
    conditions:
    - lastTransitionTime: null
      message: 0.0.0-devel
@@ -22,7 +22,7 @@
      reason: Observed
      status: "True"
      type: OperatorVersion
-@@ -102,19 +102,19 @@
+@@ -99,19 +99,19 @@
      type: defaultMasterInitJobCompleted
    - lastTransitionTime: null
      message: Ready
@@ -45,7 +45,7 @@
      reason: Ready
      status: "True"
      type: HttpProxyReady
-@@ -126,23 +126,23 @@
+@@ -123,23 +123,23 @@
      type: userYtsaurusClientInitJobCompleted
    - lastTransitionTime: null
      message: Cypress operations skipped

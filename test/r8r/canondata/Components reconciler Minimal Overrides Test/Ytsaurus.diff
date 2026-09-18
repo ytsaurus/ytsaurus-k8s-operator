@@ -17,7 +17,7 @@
    coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
    discovery:
      instanceCount: 1
-@@ -76,6 +78,9 @@
+@@ -73,6 +75,9 @@
      - mountPath: /yt/master-data
        name: master-data
    terminationGracePeriodSeconds: 5
@@ -27,7 +27,7 @@
    useIpv4: false
    useIpv6: false
    usePorto: false
-@@ -84,7 +89,7 @@
+@@ -81,7 +86,7 @@
    conditions:
    - lastTransitionTime: null
      message: 0.0.0-devel
@@ -36,7 +36,7 @@
      reason: Observed
      status: "True"
      type: OperatorVersion
-@@ -102,19 +107,13 @@
+@@ -99,19 +104,13 @@
      type: defaultMasterInitJobCompleted
    - lastTransitionTime: null
      message: Ready
@@ -58,7 +58,7 @@
      reason: Ready
      status: "True"
      type: HttpProxyReady
-@@ -126,23 +125,29 @@
+@@ -123,23 +122,29 @@
      type: userYtsaurusClientInitJobCompleted
    - lastTransitionTime: null
      message: Cypress operations skipped
