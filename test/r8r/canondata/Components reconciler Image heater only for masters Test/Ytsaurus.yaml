@@ -13,7 +13,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
     resources:
@@ -29,7 +28,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
     resources:
@@ -53,7 +51,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     minReadyInstanceCount: 0
     resources:

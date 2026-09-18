@@ -1320,9 +1320,13 @@
                   }
                 }
               },
+              "useDateTimeSuffix": {
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "type": "boolean"
+              },
               "useTimestampSuffix": {
-                "type": "boolean",
-                "default": false
+                "description": "Append filename suffix \".YYYY-MM-DDThh:mm:ssZ\" at creation.",
+                "type": "boolean"
               },
               "writerType": {
                 "description": "LogWriterType string describes types of possible log writers.",
@@ -1552,9 +1556,13 @@
                   }
                 }
               },
+              "useDateTimeSuffix": {
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "type": "boolean"
+              },
               "useTimestampSuffix": {
-                "type": "boolean",
-                "default": false
+                "description": "Append filename suffix \".YYYY-MM-DDThh:mm:ssZ\" at creation.",
+                "type": "boolean"
               },
               "writerType": {
                 "description": "LogWriterType string describes types of possible log writers.",
@@ -1913,9 +1921,13 @@
                   }
                 }
               },
+              "useDateTimeSuffix": {
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "type": "boolean"
+              },
               "useTimestampSuffix": {
-                "type": "boolean",
-                "default": false
+                "description": "Append filename suffix \".YYYY-MM-DDThh:mm:ssZ\" at creation.",
+                "type": "boolean"
               }
             }
           }

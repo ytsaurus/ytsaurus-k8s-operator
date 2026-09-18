@@ -290,6 +290,7 @@ func (b *YtsaurusBuilder) CreateLoggersSpec() []ytv1.TextLoggerSpec {
 					MaxTotalSizeToKeep: ptr.To(logsVolumeSize),
 					MaxSegmentSize:     ptr.To(logsSegmentSize),
 				},
+				UseDateTimeSuffix: true,
 			},
 			WriterType: ytv1.LogWriterTypeFile,
 			CategoriesFilter: &ytv1.CategoriesFilter{
