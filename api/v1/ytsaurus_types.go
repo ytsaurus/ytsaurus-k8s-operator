@@ -324,9 +324,10 @@ type BaseLoggerSpec struct {
 	//+kubebuilder:default:=none
 	//+kubebuilder:validation:Enum=none;gzip;zstd
 	Compression LogCompression `json:"compression,omitempty"`
-	//+kubebuilder:default:=false
-	//+optional
-	UseTimestampSuffix    bool               `json:"useTimestampSuffix"`
+	// Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation.
+	UseTimestampSuffix bool `json:"useTimestampSuffix,omitempty"`
+	// Append filename suffix ".YYYYMMDD-hhmmss" after rotation.
+	UseDateTimeSuffix     bool               `json:"useDateTimeSuffix,omitempty"`
 	EnableAnchorProfiling *bool              `json:"enableAnchorProfiling,omitempty"`
 	RotationPolicy        *LogRotationPolicy `json:"rotationPolicy,omitempty"`
 }

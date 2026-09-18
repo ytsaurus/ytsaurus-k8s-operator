@@ -23,7 +23,6 @@ jobProxyLoggers:
   rotationPolicy:
     maxTotalSizeToKeep: "3145728"
     rotationPeriodMilliseconds: 900000
-  useTimestampSuffix: false
   writerType: file
 jobResources:
   limits:

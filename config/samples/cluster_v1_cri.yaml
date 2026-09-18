@@ -91,8 +91,10 @@ spec:
         compression: zstd
         minLogLevel: debug
         writerType: file
+        useDateTimeSuffix: true
         rotationPolicy: &rotationPolicy
-          maxTotalSizeToKeep: 1073741824 # 1GiB
+          maxTotalSizeToKeep: 1Gi
+          maxSegmentSize: 100Mi
           rotationPeriodMilliseconds: 900000 # 15Min
           maxSegmentCountToKeep: 1000
         categoriesFilter:
@@ -101,6 +103,7 @@ spec:
       - name: info
         minLogLevel: info
         writerType: file
+        useDateTimeSuffix: true
         rotationPolicy: *rotationPolicy
       - name: info-stderr
         minLogLevel: info
@@ -305,9 +308,10 @@ spec:
           compression: zstd
           minLogLevel: debug
           writerType: file
-          useTimestampSuffix: true
+          useDateTimeSuffix: true
           rotationPolicy: &rotationPolicyJobs
-            maxTotalSizeToKeep: 104857600  # 100Mi
+            maxTotalSizeToKeep: 100Mi
+            maxSegmentSize: 10Mi
             rotationPeriodMilliseconds: 900000  # 15Min
           categoriesFilter:
             type: exclude
@@ -315,6 +319,7 @@ spec:
         - name: info
           minLogLevel: info
           writerType: file
+          useDateTimeSuffix: true
           rotationPolicy: *rotationPolicyJobs
         # this file is append-only and not rotated
         # - name: error

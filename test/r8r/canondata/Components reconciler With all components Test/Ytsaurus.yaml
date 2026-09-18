@@ -35,7 +35,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -49,7 +48,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -84,7 +83,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -98,7 +96,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -142,7 +140,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -156,7 +153,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -213,7 +210,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -227,7 +223,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     privileged: false
@@ -273,7 +269,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -287,7 +282,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -326,7 +321,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -340,7 +334,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -408,7 +402,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -422,7 +415,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     maxChangelogCountToKeep: 12
     maxSnapshotCountToKeep: 11
@@ -446,7 +439,6 @@ spec:
     - category: Access
       format: json
       name: access
-      useTimestampSuffix: false
     terminationGracePeriodSeconds: 20
     timbertruck:
       image: ghcr.io/ytsaurus/sidecars:0.0.1
@@ -490,7 +482,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -504,7 +495,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -536,7 +527,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -550,7 +540,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -582,7 +572,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -596,7 +585,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -631,7 +620,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -645,7 +633,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -684,7 +672,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -698,7 +685,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     maxChangelogCountToKeep: 12
     maxSnapshotCountToKeep: 11
@@ -746,7 +733,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -760,7 +746,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:
@@ -820,7 +806,6 @@ spec:
     loggers:
     - minLogLevel: info
       name: info-stderr
-      useTimestampSuffix: false
       writerType: stderr
     - categoriesFilter:
         type: exclude
@@ -834,7 +819,7 @@ spec:
       rotationPolicy:
         maxSegmentSize: 100Mi
         maxTotalSizeToKeep: 1Gi
-      useTimestampSuffix: false
+      useDateTimeSuffix: true
       writerType: file
     minReadyInstanceCount: 0
     resources:

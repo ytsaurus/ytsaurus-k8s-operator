@@ -956,8 +956,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -1202,8 +1207,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -2986,8 +2996,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -3232,8 +3247,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -4885,8 +4905,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -5131,8 +5156,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -6790,8 +6820,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -7043,8 +7078,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -8702,8 +8742,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -8948,8 +8993,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -10754,8 +10804,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -10916,8 +10971,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -11177,8 +11237,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -12887,8 +12952,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -13142,8 +13212,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -14842,8 +14917,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -15096,8 +15176,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -16766,8 +16851,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -17012,8 +17102,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -18769,8 +18864,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -19035,8 +19135,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -20695,8 +20800,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -20941,8 +21051,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -22590,8 +22705,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -22836,8 +22956,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -24499,8 +24624,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -24756,8 +24886,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -26447,8 +26582,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -26693,8 +26833,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -28370,8 +28515,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -28636,8 +28786,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -30476,8 +30631,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -30722,8 +30882,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
@@ -32381,8 +32546,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -32634,8 +32804,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -34306,8 +34481,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                           writerType:
                             description: LogWriterType string describes types of possible
@@ -34569,8 +34749,13 @@ spec:
                                 format: int64
                                 type: integer
                             type: object
+                          useDateTimeSuffix:
+                            description: Append filename suffix ".YYYYMMDD-hhmmss"
+                              after rotation.
+                            type: boolean
                           useTimestampSuffix:
-                            default: false
+                            description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                              at creation.
                             type: boolean
                         type: object
                       type: array
@@ -36715,8 +36900,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                         writerType:
                           description: LogWriterType string describes types of possible
@@ -36961,8 +37151,13 @@ spec:
                               format: int64
                               type: integer
                           type: object
+                        useDateTimeSuffix:
+                          description: Append filename suffix ".YYYYMMDD-hhmmss" after
+                            rotation.
+                          type: boolean
                         useTimestampSuffix:
-                          default: false
+                          description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
+                            at creation.
                           type: boolean
                       type: object
                     type: array
