@@ -1057,7 +1057,7 @@ func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, erro
 		g.fillClusterConnection(&clusterConnection, spec.NativeTransport, jobProxyKeyring)
 
 		forwardSecret := func(node, proxy *PemBlob) {
-			if node != nil && proxy != nil {
+			if node != nil && proxy != nil && proxy.EnvironmentVariable != "" {
 				c.ExecNode.JobProxy.EnvironmentVariables = append(
 					c.ExecNode.JobProxy.EnvironmentVariables,
 					EnvironmentVariable{
@@ -1069,9 +1069,7 @@ func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, erro
 			}
 		}
 
-		if c.ClusterConnection.BusClient.VerificationMode != VerificationModeNone {
-			forwardSecret(keyring.BusCABundle, jobProxyKeyring.BusCABundle)
-		}
+		forwardSecret(keyring.BusCABundle, jobProxyKeyring.BusCABundle)
 		forwardSecret(keyring.BusClientCertificate, jobProxyKeyring.BusClientCertificate)
 		forwardSecret(keyring.BusClientPrivateKey, jobProxyKeyring.BusClientPrivateKey)
 
