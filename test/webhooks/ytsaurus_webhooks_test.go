@@ -621,6 +621,53 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Entry("YqlAgent", consts.YqlAgentType),
 			Entry("QueueAgent", consts.QueueAgentType),
 		)
+
+		DescribeTable("Update strategy respects the requested maintenance downtime",
+			func(downtime ytv1.ClusterDowntime, strategy *ytv1.ComponentUpdateStrategy, errMsg string) {
+				ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{Downtime: downtime}
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
+					Component: ytv1.Component{Type: consts.MasterType},
+					Strategy:  strategy,
+				}}
+
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring(errMsg)))
+			},
+			Entry("minor downtime rejects bulk updates",
+				ytv1.ClusterDowntimeMinor,
+				&ytv1.ComponentUpdateStrategy{},
+				"Bulk update is incompatible with minor downtime"),
+			Entry("major downtime rejects rolling updates",
+				ytv1.ClusterDowntimeMajor,
+				&ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}},
+				"Rolling update is incompatible with major downtime"),
+			Entry("major downtime rejects on-delete updates",
+				ytv1.ClusterDowntimeMajor,
+				&ytv1.ComponentUpdateStrategy{OnDelete: &ytv1.ComponentOnDeleteUpdateMode{}},
+				"On-delete update is incompatible with major downtime"),
+		)
+
+		DescribeTable("Minor downtime validates component image versions on update",
+			func(newImage, errMsg string) {
+				ytsaurus.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{Downtime: ytv1.ClusterDowntimeMinor}
+				ytsaurus.Spec.PrimaryMasters.Image = ptr.To("ghcr.io/ytsaurus/ytsaurus:stable-25.3.1")
+				Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
+
+				stored := &ytv1.Ytsaurus{}
+				Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ytsaurus.Name, Namespace: namespace}, stored)).Should(Succeed())
+				stored.Spec.PrimaryMasters.Image = ptr.To(newImage)
+
+				if errMsg == "" {
+					Expect(k8sClient.Update(ctx, stored)).Should(Succeed())
+				} else {
+					Expect(k8sClient.Update(ctx, stored)).Should(MatchError(ContainSubstring(errMsg)))
+				}
+				Expect(k8sClient.Delete(ctx, stored)).Should(Succeed())
+			},
+			Entry("accepts a forward patch update", "ghcr.io/ytsaurus/ytsaurus:stable-25.3.2", ""),
+			Entry("rejects a minor version update", "ghcr.io/ytsaurus/ytsaurus:stable-25.4.0", "incompatible with minor downtime"),
+			Entry("rejects a patch downgrade", "ghcr.io/ytsaurus/ytsaurus:stable-25.3.0", "image downgrade"),
+			Entry("rejects an unparseable new version", "ghcr.io/ytsaurus/ytsaurus:latest", "cannot parse new image version"),
+		)
 	})
 })
 

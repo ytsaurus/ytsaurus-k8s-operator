@@ -9,12 +9,11 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
-	"github.com/distribution/reference"
-
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -87,8 +86,8 @@ func (s *Spyt) buildQueryTrackerDynamicConfigCommand() string {
 	if len(sparkVersions) == 0 {
 		return ""
 	}
-	spytVersion := extractImageTag(s.spyt.GetResource().Spec.Image)
-	if spytVersion == "" {
+	spytVersion, err := version.ExtractImageTag(s.spyt.GetResource().Spec.Image)
+	if err != nil || spytVersion == "" {
 		return ""
 	}
 
@@ -98,17 +97,6 @@ func (s *Spyt) buildQueryTrackerDynamicConfigCommand() string {
 		sparkVersions[0],
 		spytVersion,
 	)
-}
-
-func extractImageTag(image string) string {
-	ref, err := reference.ParseNormalizedNamed(image)
-	if err != nil {
-		return ""
-	}
-	if tagged, ok := ref.(reference.Tagged); ok {
-		return tagged.Tag()
-	}
-	return ""
 }
 
 func (s *Spyt) createInitScript() string {
