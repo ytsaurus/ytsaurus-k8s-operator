@@ -137,14 +137,14 @@ func (j *InitJob) AddScript(fileName string, generator TextGeneratorFunc) {
 		if err != nil {
 			return nil, err
 		}
-		return []byte(strings.Join(text, "\n")), nil
+		return JoinTextLines(text), nil
 	})
 }
 
 // TODO: Migrate to AddScript.
 func (j *InitJob) AddInitJobScript(generator func() string) {
 	j.configs.AddGenerator(consts.InitJobScriptName, ConfigFormatText, func() ([]byte, error) {
-		return []byte(generator()), nil
+		return JoinTextLines([]string{generator()}), nil
 	})
 }
 

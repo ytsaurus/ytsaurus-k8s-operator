@@ -64,6 +64,20 @@ func YsonConfigGenerator(fileName string, generator ConfigGeneratorFunc) ConfigG
 	}
 }
 
+func JoinTextLines(text []string) []byte {
+	n := len(text)
+	for _, line := range text {
+		n += len(line)
+	}
+	var result strings.Builder
+	result.Grow(n)
+	for _, line := range text {
+		result.WriteString(line)
+		result.WriteString("\n")
+	}
+	return []byte(result.String())
+}
+
 func TextConfigGenerator(fileName string, generator TextGeneratorFunc) ConfigGenerator {
 	return ConfigGenerator{
 		FileName: fileName,
@@ -73,7 +87,7 @@ func TextConfigGenerator(fileName string, generator TextGeneratorFunc) ConfigGen
 			if err != nil {
 				return nil, err
 			}
-			return []byte(strings.Join(text, "\n")), nil
+			return JoinTextLines(text), nil
 		},
 	}
 }

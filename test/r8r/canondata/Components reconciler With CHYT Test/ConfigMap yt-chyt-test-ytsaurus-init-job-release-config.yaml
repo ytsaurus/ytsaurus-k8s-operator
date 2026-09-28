@@ -41,7 +41,8 @@ data:
             };
         };
     }
-  init-job-script.sh: /setup_cluster_for_chyt.sh --make-default
+  init-job-script.sh: |
+    /setup_cluster_for_chyt.sh --make-default
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>

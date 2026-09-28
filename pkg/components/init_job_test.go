@@ -32,11 +32,13 @@ import (
 const (
 	ytsaurusName = "testsaurus"
 
-	scriptBefore = "SCRIPT"
-	scriptAfter  = "UPDATED SCRIPT"
-
 	waitTimeout = 5 * time.Second
 	waitTick    = 300 * time.Millisecond
+)
+
+var (
+	scriptBefore = []string{"SCRIPT"}
+	scriptAfter  = []string{"UPDATED SCRIPT"}
 )
 
 var logger = GinkgoLogr
@@ -54,7 +56,7 @@ func syncJobUntilReady(job *InitJob) {
 	}, waitTimeout, waitTick).Should(Equal(SyncStatusReady))
 }
 
-func newTestJob(ytsaurus *apiproxy.Ytsaurus, script string, generators ...ConfigGenerator) *InitJob {
+func newTestJob(ytsaurus *apiproxy.Ytsaurus, script []string, generators ...ConfigGenerator) *InitJob {
 	resource := ytsaurus.GetResource()
 	return NewInitJob(
 		&labeller.Labeller{
@@ -72,7 +74,7 @@ func newTestJob(ytsaurus *apiproxy.Ytsaurus, script string, generators ...Config
 		},
 		append(generators,
 			YsonConfigGenerator(consts.ClientConfigFileName, func() ([]byte, error) { return []byte("dummy-cfg"), nil }),
-			TextConfigGenerator(consts.InitJobScriptName, func() ([]string, error) { return []string{script}, nil }),
+			TextConfigGenerator(consts.InitJobScriptName, func() ([]string, error) { return script, nil }),
 		)...,
 	)
 }
@@ -143,7 +145,7 @@ var _ = Describe("InitJob", func() {
 				"yt-master-init-job-dummy-config",
 				consts.InitJobScriptName,
 			)
-			Expect(cmData).To(Equal(scriptAfter))
+			Expect(cmData).To(Equal(string(JoinTextLines(scriptAfter))))
 		})
 	})
 })
