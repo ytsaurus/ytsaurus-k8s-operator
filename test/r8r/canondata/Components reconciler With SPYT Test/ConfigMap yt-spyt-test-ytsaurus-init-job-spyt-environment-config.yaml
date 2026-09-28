@@ -41,7 +41,8 @@ data:
             };
         };
     }
-  init-job-script.sh: /entrypoint.sh
+  init-job-script.sh: |
+    /entrypoint.sh
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>
