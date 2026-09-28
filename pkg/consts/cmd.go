@@ -59,6 +59,9 @@ const (
 	YQLAgentInitializationScriptName          = "yql-agent-initialization.sh"
 	YQLAgentUpdateScriptName                  = "yql-agent-update.sh"
 
+	ConfigOverridesHeaderPrefix = "header-"
+	ConfigOverridesFooterPrefix = "footer-"
+
 	UIClusterConfigFileName = "clusters-config.json"
 	UISecretFileName        = "yt-interface-secret.json"
 	CABundleFileName        = "ca.crt"

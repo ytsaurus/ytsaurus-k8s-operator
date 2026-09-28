@@ -1034,6 +1034,7 @@ type CommonSpec struct {
 	// See https://ytsaurus.tech/docs/en/admin-guide/config-overrides
 	// Config overrides: "ytserver-all.{yaml,yson}", "{name}.{yaml,yson}", "{configmap}--{name}.{yaml,yson}".
 	// Cypress patches: "cypress-patch.yson", "yt-{component}-cypress-patch.yson".
+	// Header/footer: "{header,footer}-{filename}", "{configmap}--{header,footer}-{filename}".
 	ConfigOverrides *corev1.LocalObjectReference `json:"configOverrides,omitempty"`
 
 	// Credentials for pulling "coreImage" and "image" set for components.

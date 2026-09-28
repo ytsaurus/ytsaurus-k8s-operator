@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -38,6 +39,8 @@ const (
 	ConfigFormatJsonWithJsPrologue ConfigFormat = "json_with_js_prologue"
 	ConfigFormatToml               ConfigFormat = "toml"
 	ConfigFormatYaml               ConfigFormat = "yaml"
+	ConfigFormatHeader             ConfigFormat = "header"
+	ConfigFormatFooter             ConfigFormat = "footer"
 )
 
 type TextGeneratorFunc func() ([]string, error)
@@ -140,6 +143,13 @@ func (h *ConfigMapBuilder) AddGenerator(fileName string, format ConfigFormat, ge
 }
 
 func overrideYsonConfigs(base []byte, overrides []byte, format ConfigFormat) ([]byte, error) {
+	switch format {
+	case ConfigFormatHeader:
+		return slices.Concat(overrides, base), nil
+	case ConfigFormatFooter:
+		return slices.Concat(base, overrides), nil
+	}
+
 	config := ypatch.OrderedValue{}
 	err := yson.Unmarshal(base, &config)
 	if err != nil {
@@ -185,6 +195,10 @@ func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error)
 			{descriptor.FileName, ConfigFormatYson}, // NOTE: Compat, we had yson overrides for toml.
 			{fmt.Sprintf("%s--%s.yaml", name, descriptor.ConfigOverridesName), ConfigFormatYaml},
 			{fmt.Sprintf("%s--%s", name, descriptor.FileName), ConfigFormatYson},
+			{consts.ConfigOverridesHeaderPrefix + descriptor.FileName, ConfigFormatHeader},
+			{consts.ConfigOverridesFooterPrefix + descriptor.FileName, ConfigFormatFooter},
+			{fmt.Sprintf("%s--%s%s", name, consts.ConfigOverridesHeaderPrefix, descriptor.FileName), ConfigFormatHeader},
+			{fmt.Sprintf("%s--%s%s", name, consts.ConfigOverridesFooterPrefix, descriptor.FileName), ConfigFormatFooter},
 		}
 		for _, override := range overrides {
 			if value, ok := h.overridesMap.Data[override.Name]; ok {
