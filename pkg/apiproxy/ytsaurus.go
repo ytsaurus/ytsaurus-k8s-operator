@@ -58,6 +58,10 @@ func (c *Ytsaurus) GetClusterMaintenance() ytv1.ClusterMaintenance {
 	return ptr.Deref(c.GetCommonSpec().ClusterMaintenance, ytv1.ClusterMaintenance{})
 }
 
+func (c *Ytsaurus) GetUpdatePlan() ytv1.UpdatePlan {
+	return c.GetResource().GetUpdatePlan()
+}
+
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
 	return c.ytsaurus.Status.State
 }
@@ -130,13 +134,21 @@ func (c *Ytsaurus) GetUpdatingComponents() []ytv1.Component {
 	return c.ytsaurus.Status.UpdateStatus.UpdatingComponents
 }
 
-func (c *Ytsaurus) IsUpdatingComponent(componentType consts.ComponentType, componentName string) bool {
-	for _, component := range c.GetUpdatingComponents() {
-		if component.Type == componentType && component.Name == componentName {
+func (c *Ytsaurus) IsUpdatingComponent(component ytv1.Component) bool {
+	for _, c := range c.GetUpdatingComponents() {
+		if c.Type == component.Type && c.Name == component.Name {
 			return true
 		}
 	}
 	return false
+}
+
+func (c *Ytsaurus) GetComponentUpdatePlan(component ytv1.Component) *ytv1.ComponentUpdateSelector {
+	updatePlan := c.ytsaurus.Spec.UpdatePlan
+	if index := updatePlan.Find(component); index >= 0 {
+		return updatePlan[index].DeepCopy()
+	}
+	return nil
 }
 
 func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
@@ -164,34 +176,13 @@ func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
 }
 
 // ShouldRunPreChecks is status-based and can flip to false after successful execution.
-func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, componentName string) bool {
-	// is RunPreChecks enabled for this component at all?
-	if !c.shouldEnablePreChecksFromSpec(componentType, componentName) {
+func (c *Ytsaurus) ShouldRunPreChecks(component ytv1.Component) bool {
+	plan := c.GetComponentUpdatePlan(component)
+	if plan == nil || plan.Strategy != nil && !ptr.Deref(plan.Strategy.RunPreChecks, true) {
 		return false
 	}
-
-	// have we already completed pre-checks for this component?
-	cond := meta.FindStatusCondition(
-		c.ytsaurus.Status.UpdateStatus.Conditions,
-		fmt.Sprintf("%sReady", componentName),
-	)
-	if cond != nil && cond.Status == metav1.ConditionTrue {
-		// interpret as "already completed"
-		return false
-	}
-	return true
-}
-
-func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentType, componentName string) bool {
-	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
-		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) {
-			if selector.Strategy != nil {
-				return ptr.Deref(selector.Strategy.RunPreChecks, true)
-			}
-		}
-	}
-	return true
+	// FIXME(khlebnikov): Condition name is wrong.
+	return !c.IsUpdateStatusConditionTrue(fmt.Sprintf("%sReady", component.Name))
 }
 
 func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
@@ -299,16 +290,11 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 }
 
 func (c *Ytsaurus) GetImageHeater(target string) *ytv1.ComponentUpdateSelector {
-	planned := false
-	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
-		if selector.Component.Type == ytv1.ImageHeaterType {
-			planned = true
-			if name := selector.Component.Name; name == "" || target == "" || name == target {
-				return ptr.To(selector)
-			}
-		}
+	component := ytv1.Component{Type: ytv1.ImageHeaterType, Name: target}
+	if plan := c.GetComponentUpdatePlan(component); plan != nil {
+		return plan
 	}
-	if !planned && c.GetClusterFeatures().EnableImageHeater {
+	if c.GetClusterFeatures().EnableImageHeater {
 		return ptr.To(ytv1.ComponentUpdateSelector{})
 	}
 	return nil

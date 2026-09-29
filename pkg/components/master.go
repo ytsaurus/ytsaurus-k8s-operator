@@ -584,7 +584,7 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if m.ytsaurus.IsUpdating() {
-		if !IsUpdatingComponent(m.ytsaurus, m) {
+		if !m.IsUpdatingComponent() {
 			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 
@@ -666,8 +666,8 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 		switch updateState {
 		case ytv1.UpdateStateWaitingForPodsRemoval:
 			// TODO: Cleanup, add separate update states for strategies.
-			switch getComponentUpdateStrategy(m.ytsaurus, consts.MasterType, m.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeOnDelete:
+			switch m.GetUpdateStrategy() {
+			case UpdateStrategyOnDelete:
 				if status, err := handleOnDeleteUpdatingClusterState(ctx, m.ytsaurus, m, &m.component, m.server, dry); status != nil {
 					return *status, err
 				}

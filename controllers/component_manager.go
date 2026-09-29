@@ -3,7 +3,10 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
+
+	"k8s.io/utils/ptr"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -414,7 +417,7 @@ func (cm *ComponentManager) arePodsRemoved() bool {
 		if cmp.GetType() == consts.YtsaurusClientType || cmp.GetType() == consts.ImageHeaterType {
 			continue
 		}
-		if components.IsUpdatingComponent(cm.ytsaurus, cmp) && !cm.areComponentPodsRemoved(cmp) {
+		if cm.ytsaurus.IsUpdatingComponent(cmp.GetComponent()) && !cm.areComponentPodsRemoved(cmp) {
 			return false
 		}
 	}
@@ -428,23 +431,13 @@ func (cm *ComponentManager) areComponentPodsRemoved(component components.Compone
 		cm.ytsaurus.IsUpdateStatusConditionTrue(component.GetLabeller().GetPodsUpdatedCondition())
 }
 
-func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
+func (cm *ComponentManager) applyUpdatePlan(updatePlan ytv1.UpdatePlan) {
 	cm.status.canUpdate = nil
 	cm.status.cannotUpdate = nil
 	count := make([]int32, len(updatePlan))
 	for _, component := range cm.status.needUpdate {
-		index := -1
-		for i, selector := range updatePlan {
-			if !canUpdateComponent(selector, component) {
-				continue
-			}
-			if selector.Concurrency != nil && *selector.Concurrency <= count[i] {
-				continue
-			}
-			index = i
-			break
-		}
-		if index >= 0 {
+		index := updatePlan.Find(component)
+		if index >= 0 && ptr.Deref(updatePlan[index].Concurrency, math.MaxInt32) > count[index] {
 			count[index] += 1
 			cm.status.canUpdate = append(cm.status.canUpdate, component)
 		} else {
@@ -470,18 +463,15 @@ func (cm *ComponentManager) initUpdateConditions(ctx context.Context) {
 // shouldRunPreUpdateStepsFor returns false when all updating components of the given type use OnDelete strategy
 func shouldRunPreUpdateStepsFor(
 	componentType consts.ComponentType,
-	updatePlan []ytv1.ComponentUpdateSelector,
+	updatePlan ytv1.UpdatePlan,
 	updatingComponents []ytv1.Component,
 ) bool {
 	for _, component := range updatingComponents {
 		if component.Type != componentType {
 			continue
 		}
-		for _, selector := range updatePlan {
-			if !canUpdateComponent(selector, component) {
-				continue
-			}
-			if selector.Strategy == nil || selector.Strategy.Type() != ytv1.ComponentUpdateModeTypeOnDelete {
+		if index := updatePlan.Find(component); index >= 0 {
+			if plan := updatePlan[index]; plan.Strategy == nil || plan.Strategy.OnDelete == nil {
 				return true // this component is NOT onDelete → must run pre-update steps
 			}
 			break
@@ -490,31 +480,10 @@ func shouldRunPreUpdateStepsFor(
 	return false
 }
 
-func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+func shouldRemoveTabletCellsOnUpdate(updatePlan ytv1.UpdatePlan, updatingComponents []ytv1.Component) bool {
 	return shouldRunPreUpdateStepsFor(consts.TabletNodeType, updatePlan, updatingComponents)
 }
 
-func shouldUseMasterHotUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
+func shouldUseMasterHotUpdate(updatePlan ytv1.UpdatePlan, updatingComponents []ytv1.Component) bool {
 	return !shouldRunPreUpdateStepsFor(consts.MasterType, updatePlan, updatingComponents)
-}
-
-func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {
-	switch selector.Class {
-	case consts.ComponentClassUnspecified:
-		if selector.Component.Type == component.Type && (selector.Component.Name == "" || selector.Component.Name == component.Name) {
-			return true
-		}
-	case consts.ComponentClassEverything:
-		return true
-	case consts.ComponentClassNothing:
-		return false
-	case consts.ComponentClassStateless:
-		switch component.Type {
-		case consts.DataNodeType, consts.TabletNodeType, consts.MasterType:
-			return false
-		default:
-			return true
-		}
-	}
-	return false
 }

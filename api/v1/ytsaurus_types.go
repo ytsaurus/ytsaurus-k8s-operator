@@ -1084,7 +1084,7 @@ type YtsaurusSpec struct {
 	// Defines components which are allowed to update.
 	// Can contain either single "class" item or several "component" items.
 	// When empty: update nothing
-	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
+	UpdatePlan UpdatePlan `json:"updatePlan,omitempty"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
@@ -1207,14 +1207,6 @@ type BundleControllerInfo struct {
 	Disabled *bool `json:"disabled,omitempty"`
 }
 
-type ComponentUpdateModeType string
-
-const (
-	ComponentUpdateModeTypeBulkUpdate    ComponentUpdateModeType = "BulkUpdate"
-	ComponentUpdateModeTypeRollingUpdate ComponentUpdateModeType = "RollingUpdate"
-	ComponentUpdateModeTypeOnDelete      ComponentUpdateModeType = "OnDelete"
-)
-
 // ComponentRollingUpdateMode configures the rolling update strategy.
 // The maxUnavailable budget is derived from the component's minReadyInstanceCount:
 // maxUnavailable = max(1, instanceCount - minReadyInstanceCount).
@@ -1244,22 +1236,28 @@ type ComponentUpdateSelector struct {
 	Strategy *ComponentUpdateStrategy `json:"strategy,omitempty"`
 }
 
-func (m *ComponentUpdateStrategy) Type() ComponentUpdateModeType {
-	switch {
-	case m.RollingUpdate != nil:
-		return ComponentUpdateModeTypeRollingUpdate
-	case m.OnDelete != nil:
-		return ComponentUpdateModeTypeOnDelete
-	default:
-		return ComponentUpdateModeTypeBulkUpdate
-	}
-}
+type UpdatePlan []ComponentUpdateSelector
 
-func (selector *ComponentUpdateSelector) GetUpdateStrategyType() ComponentUpdateModeType {
-	if selector == nil || selector.Strategy == nil {
-		return ""
+func (u UpdatePlan) Find(c Component) int {
+	for i, s := range u {
+		switch s.Class {
+		case ComponentClassNothing:
+			return -1
+		case ComponentClassEverything:
+			return i
+		case ComponentClassStateless:
+			switch c.Type {
+			case DataNodeType, TabletNodeType, MasterType:
+				return -1
+			default:
+				return i
+			}
+		}
+		if s.Component.Type == c.Type && (s.Component.Name == "" || s.Component.Name == c.Name) {
+			return i
+		}
 	}
-	return selector.Strategy.Type()
+	return -1
 }
 
 type UpdateStatus struct {
@@ -1348,12 +1346,12 @@ func (r *Ytsaurus) SetStatusConditions(conditions []metav1.Condition) {
 	r.Status.Conditions = conditions
 }
 
-func (r *Ytsaurus) GetUpdatePlan() []ComponentUpdateSelector {
+func (r *Ytsaurus) GetUpdatePlan() UpdatePlan {
 	// Update plan is defined in spec.
 	if len(r.Spec.UpdatePlan) != 0 {
 		return r.Spec.UpdatePlan
 	}
-	return []ComponentUpdateSelector{{
+	return UpdatePlan{{
 		Class: ComponentClassNothing,
 	}}
 }
