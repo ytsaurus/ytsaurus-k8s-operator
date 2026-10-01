@@ -783,6 +783,11 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithExecNodes()
 			ytBuilder.ImagePullSecret = &corev1.LocalObjectReference{Name: "image-pull-secret"}
 			ytBuilder.WithCRIJobEnvironment()
+			ytsaurus.Spec.ExecNodes[0].JobNetwork = &ytv1.JobNetworkSpec{
+				NetworkCapacity: ptr.To(int64(1000)),
+				StartPort:       ptr.To(29000),
+				PortCount:       ptr.To(1000),
+			}
 			ytBuilder.WithStrawberryController()
 			ytBuilder.WithQueryTracker()
 			ytBuilder.WithQueueAgent()

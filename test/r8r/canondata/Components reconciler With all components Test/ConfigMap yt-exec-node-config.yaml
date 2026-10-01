@@ -160,7 +160,10 @@ data:
         "job_resource_manager"={
             "resource_limits"={
                 "user_slots"=20;
+                network=1000;
             };
+            "start_port"=29000;
+            "port_count"=1000;
         };
         "exec_node"={
             "slot_manager"={
@@ -208,6 +211,7 @@ data:
             "job_controller"={
                 "resource_limits"={
                     "user_slots"=20;
+                    network=1000;
                 };
                 "gpu_manager"={
                     "gpu_info_source"={

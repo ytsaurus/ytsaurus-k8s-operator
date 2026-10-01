@@ -12385,6 +12385,29 @@
                 },
                 "x-kubernetes-map-type": "atomic"
               },
+              "jobNetwork": {
+                "description": "Job network options.",
+                "type": "object",
+                "properties": {
+                  "networkCapacity": {
+                    "description": "Abstract network capacity resource for job scheduling, default: 100.",
+                    "type": "integer",
+                    "format": "int64",
+                    "minimum": 0
+                  },
+                  "portCount": {
+                    "description": "Port count for job allocation as $YT_PORT_{N}, Default: 10000.",
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "startPort": {
+                    "description": "First port for job allocation as $YT_PORT_{N}, Default: 20000.",
+                    "type": "integer",
+                    "maximum": 65535,
+                    "minimum": 1024
+                  }
+                }
+              },
               "jobProxyLogManager": {
                 "type": "object",
                 "properties": {

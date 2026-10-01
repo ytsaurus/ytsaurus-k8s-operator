@@ -743,6 +743,19 @@ type JobEnvironmentSpec struct {
 	Runtime *JobRuntimeSpec `json:"runtime,omitempty"`
 }
 
+type JobNetworkSpec struct {
+	// Abstract network capacity resource for job scheduling, default: 100.
+	//+kubebuilder:validation:Minimum=0
+	NetworkCapacity *int64 `json:"networkCapacity,omitempty"`
+	// First port for job allocation as $YT_PORT_{N}, Default: 20000.
+	//+kubebuilder:validation:Minimum=1024
+	//+kubebuilder:validation:Maximum=65535
+	StartPort *int `json:"startPort,omitempty"`
+	// Port count for job allocation as $YT_PORT_{N}, Default: 10000.
+	//+kubebuilder:validation:Minimum=0
+	PortCount *int `json:"portCount,omitempty"`
+}
+
 type ExecNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
@@ -766,6 +779,8 @@ type ExecNodesSpec struct {
 	// Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests.
 	//+optional
 	JobResources *corev1.ResourceRequirements `json:"jobResources,omitempty"`
+	// Job network options.
+	JobNetwork *JobNetworkSpec `json:"jobNetwork,omitempty"`
 	//+optional
 	JobEnvironment *JobEnvironmentSpec `json:"jobEnvironment,omitempty"`
 	// Job HTTPS certificate. Reference to kubernetes.io/tls secret.
