@@ -209,8 +209,14 @@ type SlotManager struct {
 	DetachedTmpfsUmount *bool `yson:"detached_tmpfs_umount,omitempty"`
 }
 
+// NYT::NJobAgent::TResourceLimitsConfig
 type JobResourceLimits struct {
-	UserSlots *int `yson:"user_slots,omitempty"`
+	UserSlots    *int     `yson:"user_slots,omitempty"`
+	Cpu          *float32 `yson:"cpu,omitempty"`
+	Gpu          *int     `yson:"gpu,omitempty"`
+	UserMemory   *int64   `yson:"user_memory,omitempty"`
+	SystemMemory *int64   `yson:"system_memory,omitempty"`
+	Network      *int64   `yson:"network,omitempty"`
 }
 
 type GpuAgentSpec struct {
@@ -238,6 +244,9 @@ type JobController struct {
 
 type JobResourceManager struct {
 	ResourceLimits JobResourceLimits `yson:"resource_limits"`
+	StartPort      *int              `yson:"start_port,omitempty"`
+	PortCount      *int              `yson:"port_count,omitempty"`
+	PortSet        []int             `yson:"port_set,omitempty"`
 }
 
 type EnvironmentVariable struct {
@@ -306,7 +315,7 @@ type BlockCache struct {
 	Uncompressed *Cache `yson:"uncompressed_data,omitempty"`
 }
 
-// NTabletNode::TResourceLimitsConfig
+// NYT::NTabletNode::TResourceLimitsConfig
 type TabletNodeResourceLimits struct {
 	Slots *int `yson:"slots,omitempty"`
 }
@@ -803,12 +812,23 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		return c, fmt.Errorf("error creating exec node config: no slot locations provided")
 	}
 
+	var userSlots int
 	if spec.JobEnvironment != nil && spec.JobEnvironment.UserSlots != nil {
-		c.JobResourceManager.ResourceLimits.UserSlots = ptr.To(*spec.JobEnvironment.UserSlots)
+		userSlots = *spec.JobEnvironment.UserSlots
 	} else {
 		// Dummy heuristic.
 		jobCPU := ptr.Deref(c.ResourceLimits.TotalCpu, 0) - ptr.Deref(c.ResourceLimits.NodeDedicatedCpu, 0)
-		c.JobResourceManager.ResourceLimits.UserSlots = ptr.To(int(5 * max(1, jobCPU)))
+		userSlots = int(5 * max(1, jobCPU))
+	}
+
+	jobNetwork := ptr.Deref(spec.JobNetwork, ytv1.JobNetworkSpec{})
+	c.JobResourceManager = JobResourceManager{
+		ResourceLimits: JobResourceLimits{
+			UserSlots: ptr.To(userSlots),
+			Network:   jobNetwork.NetworkCapacity,
+		},
+		StartPort: jobNetwork.StartPort,
+		PortCount: jobNetwork.PortCount,
 	}
 
 	if err := fillJobEnvironment(&c.ExecNode, spec, commonSpec); err != nil {

@@ -10704,6 +10704,27 @@ spec:
                           type: string
                       type: object
                       x-kubernetes-map-type: atomic
+                    jobNetwork:
+                      description: Job network options.
+                      properties:
+                        networkCapacity:
+                          description: 'Abstract network capacity resource for job
+                            scheduling, default: 100.'
+                          format: int64
+                          minimum: 0
+                          type: integer
+                        portCount:
+                          description: 'Port count for job allocation as $YT_PORT_{N},
+                            Default: 10000.'
+                          minimum: 0
+                          type: integer
+                        startPort:
+                          description: 'First port for job allocation as $YT_PORT_{N},
+                            Default: 20000.'
+                          maximum: 65535
+                          minimum: 1024
+                          type: integer
+                      type: object
                     jobProxyLogManager:
                       properties:
                         directoryTraversalConcurrency:

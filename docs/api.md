@@ -958,6 +958,7 @@ _Appears in:_
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobProxyLogManager` _[JobProxyLogManagerSpec](#jobproxylogmanagerspec)_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests. |  |  |
+| `jobNetwork` _[JobNetworkSpec](#jobnetworkspec)_ | Job network options. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
 | `jobHttpsCertificateSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Job HTTPS certificate. Reference to kubernetes.io/tls secret.<br />Exposed in job environment as YT_JOB_HTTPS_CERTIFICATE_FILE YT_JOB_HTTPS_PRIVATE_KEY_FILE. |  |  |
 
@@ -1231,6 +1232,25 @@ _Appears in:_
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
 | `runtime` _[JobRuntimeSpec](#jobruntimespec)_ | Container Runtime configuration for CRI service. Default: runc. |  |  |
+
+
+#### JobNetworkSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [ExecNodesSpec](#execnodesspec)
+- [RemoteExecNodesSpec](#remoteexecnodesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `networkCapacity` _integer_ | Abstract network capacity resource for job scheduling, default: 100. |  | Minimum: 0 <br /> |
+| `startPort` _integer_ | First port for job allocation as $YT_PORT_\{N\}, Default: 20000. |  | Maximum: 65535 <br />Minimum: 1024 <br /> |
+| `portCount` _integer_ | Port count for job allocation as $YT_PORT_\{N\}, Default: 10000. |  | Minimum: 0 <br /> |
 
 
 #### JobProxyLogManagerSpec
@@ -2409,6 +2429,7 @@ _Appears in:_
 | `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
 | `jobProxyLogManager` _[JobProxyLogManagerSpec](#jobproxylogmanagerspec)_ |  |  |  |
 | `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests. |  |  |
+| `jobNetwork` _[JobNetworkSpec](#jobnetworkspec)_ | Job network options. |  |  |
 | `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
 | `jobHttpsCertificateSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Job HTTPS certificate. Reference to kubernetes.io/tls secret.<br />Exposed in job environment as YT_JOB_HTTPS_CERTIFICATE_FILE YT_JOB_HTTPS_PRIVATE_KEY_FILE. |  |  |
 

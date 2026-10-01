@@ -189,6 +189,10 @@ spec:
           name: image-pull-secret
     jobHttpsCertificateSecret:
       name: ytsaurus-job-https-cert
+    jobNetwork:
+      networkCapacity: 1000
+      portCount: 1000
+      startPort: 29000
     jobResources:
       limits:
         cpu: "4"
