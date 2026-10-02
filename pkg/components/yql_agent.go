@@ -183,7 +183,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var err error
 
 	if yqla.ytsaurus.IsUpdating() {
-		if !IsUpdatingComponent(yqla.ytsaurus, yqla) {
+		if !yqla.IsUpdatingComponent() {
 			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 		switch updateState := yqla.ytsaurus.GetUpdateState(); updateState {

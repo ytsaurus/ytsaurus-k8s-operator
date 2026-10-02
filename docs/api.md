@@ -618,8 +618,6 @@ _Appears in:_
 | `YtsaurusClient` |  |
 
 
-
-
 #### ComponentUpdateSelector
 
 
@@ -629,7 +627,7 @@ _Appears in:_
 
 
 _Appears in:_
-- [YtsaurusSpec](#ytsaurusspec)
+- [UpdatePlan](#updateplan)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -3154,6 +3152,25 @@ _Appears in:_
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
 
 
+#### UpdatePlan
+
+_Underlying type:_ _[ComponentUpdateSelector](#componentupdateselector)_
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `class` _[ComponentClass](#componentclass)_ | Selects components by class: Nothing, Everything, Stateless (except Master, DataNode, TabletNode). |  | Enum: [ Nothing Stateless Everything] <br /> |
+| `component` _[Component](#component)_ | Selects components by type and/or instance group name. |  |  |
+| `concurrency` _integer_ | Limits count of instance groups updated concurrently. |  | Minimum: 0 <br /> |
+| `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ | Defines update strategy for selected instance groups. |  |  |
+
+
 #### UpdateState
 
 _Underlying type:_ _string_
@@ -3461,7 +3478,7 @@ _Appears in:_
 | `adminCredentials` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to secret with initial "login", "password", "token" for administrator user.<br />If secret is not specified or does not exist default admin/password is no longer set. |  |  |
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ | Setting to false disables all operator actions. Default: true. | true |  |
-| `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
+| `updatePlan` _[UpdatePlan](#updateplan)_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |

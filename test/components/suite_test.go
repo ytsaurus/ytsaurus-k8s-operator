@@ -75,6 +75,8 @@ type FakeComponent struct {
 	status   ComponentStatus
 }
 
+var _ Component = (*FakeComponent)(nil)
+
 func NewFakeComponent(name string, compType consts.ComponentType) *FakeComponent {
 	return &FakeComponent{
 		name:     name,
@@ -115,8 +117,16 @@ func (fc *FakeComponent) NeedUpdate() ComponentStatus {
 	return ComponentStatusReady()
 }
 
-func (fc *FakeComponent) IsUpdating() bool {
+func (fc *FakeComponent) GetUpdateStrategy() UpdateStrategy {
+	return UpdateStrategyNone
+}
+
+func (fc *FakeComponent) IsUpdatingComponent() bool {
 	return false
+}
+
+func (fc *FakeComponent) UpdatePreCheck(ctx context.Context) ComponentStatus {
+	return ComponentStatusReady()
 }
 
 func (fc *FakeComponent) GetShortName() string {
@@ -175,10 +185,6 @@ func (fyc *FakeYtsaurusClient) GetYtClient() yt.Client {
 
 func (fyc *FakeYtsaurusClient) SetStatus(status ComponentStatus) {
 	fyc.status = status
-}
-
-func (fyc *FakeYtsaurusClient) UpdatePreCheck(ctx context.Context) ComponentStatus {
-	return ComponentStatusReady()
 }
 
 func (fyc *FakeYtsaurusClient) ShouldSkipCypressOperations() bool {
