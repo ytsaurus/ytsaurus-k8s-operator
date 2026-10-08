@@ -4,10 +4,6 @@ YTsaurus is a distributed storage and processing platform for big data with supp
 
 This operator helps you to deploy YTsaurus using Kubernetes.
 
-## Description
-Currently available in alpha-version and is capable to deploy a new YTsaurus cluster from scratch, primarily for testing purposes. Also can perform automated cluster upgrades with downtime.
-
-
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
@@ -19,22 +15,22 @@ Next you need to [choose release](https://ytsaurus.tech/docs/en/admin-guide/rele
 Currently operator supports YTsaurus releases >= 24.2, releases >= 25.2 are recommended.
 
 ### Running on the cluster
-1. Install Instances of Custom Resources:
-
-```sh
-kubectl apply -f config/samples/cluster_v1_demo.yaml
-```
-
-2. Build and push your image to the location specified by `IMG`:
+1. Build and push your image to the location specified by `IMG`:
 
 ```sh
 make docker-build docker-push IMG=<some-registry>/ytsaurus-k8s-operator:tag
 ```
 
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+2. Deploy the controller to the cluster with the image specified by `IMG`:
 
 ```sh
 make deploy IMG=<some-registry>/ytsaurus-k8s-operator:tag
+```
+
+3. Install Instances of Custom Resources:
+
+```sh
+kubectl apply -f config/samples/cluster_v1_demo.yaml
 ```
 
 ### Uninstall CRDs
@@ -44,8 +40,8 @@ To delete the CRDs from the cluster:
 make uninstall
 ```
 
-### Undeploy controller
-UnDeploy the controller to the cluster:
+### Undeploy
+UnDeploy the controller, CRDs, and all YTsaurus specs from the cluster:
 
 ```sh
 make undeploy
@@ -79,14 +75,20 @@ make run
 
 **NOTE:** You can also run this in one step by running: `make install run`
 
+### Deploying Kubernetes in Docker, operator Helm chart, and sample YTsaurus cluster
+
+```sh
+make kind-deploy-ytsaurus
+```
+
 ### Modifying the API definitions
 If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
 
 ```sh
-make manifests
+make generate
 ```
 
-**NOTE:** Run `make --help` for more information on all potential `make` targets
+**NOTE:** Run `make help` for more information on all potential `make` targets
 
 More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
