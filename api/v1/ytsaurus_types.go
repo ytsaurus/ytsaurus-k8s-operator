@@ -695,6 +695,19 @@ type CRIJobEnvironmentSpec struct {
 	ImagePullSecret *corev1.LocalObjectReference `json:"imagePullSecret,omitempty"`
 }
 
+type NRIPluginsSpec struct {
+	// Enable socket for external NRI plugins.
+	SocketPath *string `json:"socketPath,omitempty"`
+	// Launch NRI plugins from directory.
+	PluginDir *string `json:"pluginDir,omitempty"`
+	// NRI plugins configuration directory.
+	ConfigDir *string `json:"configDir,omitempty"`
+	// Registration timeout.
+	RegistrationTimeout *metav1.Duration `json:"registrationTimeout,omitempty"`
+	// Request timeout.
+	RequestTimeout *metav1.Duration `json:"requestTimeout,omitempty"`
+}
+
 // GPU information provider.
 // +enum
 type GPUInfoProviderType string
@@ -732,6 +745,9 @@ type JobEnvironmentSpec struct {
 	// CRI service configuration for running jobs in sidecar container.
 	//+optional
 	CRI *CRIJobEnvironmentSpec `json:"cri,omitempty"`
+	// NRI plugins configuration.
+	//+optional
+	NRI *NRIPluginsSpec `json:"nri,omitempty"`
 	// Pass artifacts as read-only bind-mounts rather than symlinks.
 	//+optional
 	UseArtifactBinds *bool `json:"useArtifactBinds,omitempty"`

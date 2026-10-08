@@ -10679,6 +10679,25 @@ spec:
                           description: Isolate job execution environment from exec
                             node or not, by default true when...
                           type: boolean
+                        nri:
+                          description: NRI plugins configuration.
+                          properties:
+                            configDir:
+                              description: NRI plugins configuration directory.
+                              type: string
+                            pluginDir:
+                              description: Launch NRI plugins from directory.
+                              type: string
+                            registrationTimeout:
+                              description: Registration timeout.
+                              type: string
+                            requestTimeout:
+                              description: Request timeout.
+                              type: string
+                            socketPath:
+                              description: Enable socket for external NRI plugins.
+                              type: string
+                          type: object
                         runtime:
                           description: 'Container Runtime configuration for CRI service.
                             Default: runc.'

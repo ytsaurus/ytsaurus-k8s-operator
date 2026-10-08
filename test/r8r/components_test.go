@@ -783,6 +783,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithExecNodes()
 			ytBuilder.ImagePullSecret = &corev1.LocalObjectReference{Name: "image-pull-secret"}
 			ytBuilder.WithCRIJobEnvironment()
+			ytBuilder.WithNRIPlugins()
 			ytsaurus.Spec.ExecNodes[0].JobNetwork = &ytv1.JobNetworkSpec{
 				NetworkCapacity: ptr.To(int64(1000)),
 				StartPort:       ptr.To(29000),
@@ -943,6 +944,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		BeforeEach(func() {
 			ytBuilder.WithExecNodes()
 			ytBuilder.WithCRIJobEnvironment()
+			ytBuilder.WithNRIPlugins()
 			ytBuilder.WithOverrides()
 		})
 		It("Test", func(ctx context.Context) {})
@@ -954,6 +956,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.ImagePullSecret = &corev1.LocalObjectReference{Name: "image-pull-secret"}
 			ytBuilder.WithExecNodes()
 			ytBuilder.WithCRIJobEnvironment()
+			ytBuilder.WithNRIPlugins()
 		})
 		It("Test", func(ctx context.Context) {})
 	})
