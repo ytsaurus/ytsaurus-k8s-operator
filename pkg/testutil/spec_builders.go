@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -810,6 +811,15 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 func (b *YtsaurusBuilder) WithCRIJobEnvironment() {
 	for i := range b.Ytsaurus.Spec.ExecNodes {
 		b.SetupCRIJobEnvironment(&b.Ytsaurus.Spec.ExecNodes[i])
+	}
+}
+
+func (b *YtsaurusBuilder) WithNRIPlugins() {
+	for i := range b.Ytsaurus.Spec.ExecNodes {
+		b.Ytsaurus.Spec.ExecNodes[i].JobEnvironment.NRI = &ytv1.NRIPluginsSpec{
+			PluginDir:      ptr.To("/usr/libexec/nri/plugins"),
+			RequestTimeout: &metav1.Duration{Duration: time.Second * 15},
+		}
 	}
 }
 

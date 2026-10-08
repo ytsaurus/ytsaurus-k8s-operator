@@ -36,6 +36,7 @@ const (
 type CRIConfigGenerator struct {
 	Service        ytv1.CRIServiceType
 	Spec           ytv1.CRIJobEnvironmentSpec
+	NRISpec        *ytv1.NRIPluginsSpec
 	Runtime        *ytv1.JobRuntimeSpec
 	Isolated       bool
 	StoragePath    *string
@@ -52,6 +53,7 @@ func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
 	criSpec := envSpec.CRI
 	config := &CRIConfigGenerator{
 		Spec:           *criSpec,
+		NRISpec:        envSpec.NRI,
 		Runtime:        envSpec.Runtime,
 		Service:        ptr.Deref(criSpec.CRIService, ytv1.CRIServiceContainerd),
 		Isolated:       ptr.Deref(envSpec.Isolated, true),
@@ -183,6 +185,29 @@ func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
 		crioMetrics["metrics_port"] = cri.MonitoringPort
 	}
 
+	if nriSpec := cri.NRISpec; nriSpec != nil {
+		nri := map[string]any{
+			"enable_nri":              nriSpec.SocketPath != nil || nriSpec.PluginDir != nil,
+			"nri_disable_connections": nriSpec.SocketPath == nil,
+		}
+		if sock := nriSpec.SocketPath; sock != nil {
+			nri["nri_listen"] = *sock
+		}
+		if dir := nriSpec.PluginDir; dir != nil {
+			nri["nri_plugin_dir"] = *dir
+		}
+		if dir := nriSpec.ConfigDir; dir != nil {
+			nri["nri_plugin_config_dir"] = *dir
+		}
+		if timeout := nriSpec.RegistrationTimeout; timeout != nil {
+			nri["nri_plugin_registration_timeout"] = timeout.Duration.String()
+		}
+		if timeout := nriSpec.RequestTimeout; timeout != nil {
+			nri["nri_plugin_request_timeout"] = timeout.Duration.String()
+		}
+		crio["nri"] = nri
+	}
+
 	if cri.Runtime != nil && cri.Runtime.Nvidia != nil {
 		crioRuntimeRuntimes[runtimeNameNvidia] = map[string]any{
 			"runtime_type": runtimeTypeOCI,
@@ -202,6 +227,28 @@ func (cri *CRIConfigGenerator) GetCRIOConfig() ([]byte, error) {
 func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 	runtimes, defaultRuntimeName := cri.getContainerdRuntimes()
 
+	plugins := map[string]any{
+		"io.containerd.grpc.v1.cri": map[string]any{
+			"sandbox_image":               cri.Spec.SandboxImage,
+			"restrict_oom_score_adj":      true,
+			"image_pull_progress_timeout": "5m0s",
+
+			"cni": map[string]any{
+				"conf_dir": "/etc/cni/net.d",
+				"bin_dir":  "/usr/local/lib/cni",
+			},
+
+			"containerd": map[string]any{
+				"default_runtime_name": defaultRuntimeName,
+				"runtimes":             runtimes,
+			},
+
+			"registry": map[string]any{
+				"config_path": cri.Spec.RegistryConfigPath,
+			},
+		},
+	}
+
 	// See https://github.com/containerd/containerd/blob/main/docs/cri/config.md
 	config := map[string]any{
 		"version": 2,
@@ -213,33 +260,36 @@ func (cri *CRIConfigGenerator) GetContainerdConfig() ([]byte, error) {
 			"gid":     0,
 		},
 
-		"plugins": map[string]any{
-			"io.containerd.grpc.v1.cri": map[string]any{
-				"sandbox_image":               cri.Spec.SandboxImage,
-				"restrict_oom_score_adj":      true,
-				"image_pull_progress_timeout": "5m0s",
-
-				"cni": map[string]any{
-					"conf_dir": "/etc/cni/net.d",
-					"bin_dir":  "/usr/local/lib/cni",
-				},
-
-				"containerd": map[string]any{
-					"default_runtime_name": defaultRuntimeName,
-					"runtimes":             runtimes,
-				},
-
-				"registry": map[string]any{
-					"config_path": cri.Spec.RegistryConfigPath,
-				},
-			},
-		},
+		"plugins": plugins,
 	}
 
 	if cri.MonitoringPort != 0 {
 		config["metrics"] = map[string]any{
 			"address": fmt.Sprintf(":%d", cri.MonitoringPort),
 		}
+	}
+
+	if nriSpec := cri.NRISpec; nriSpec != nil {
+		nri := map[string]any{
+			"disable":             nriSpec.SocketPath == nil && nriSpec.PluginDir == nil,
+			"disable_connections": nriSpec.SocketPath == nil,
+		}
+		if sock := nriSpec.SocketPath; sock != nil {
+			nri["socket_path"] = *sock
+		}
+		if dir := nriSpec.PluginDir; dir != nil {
+			nri["plugin_path"] = *dir
+		}
+		if dir := nriSpec.ConfigDir; dir != nil {
+			nri["plugin_config_path"] = *dir
+		}
+		if timeout := nriSpec.RegistrationTimeout; timeout != nil {
+			nri["plugin_registration_timeout"] = timeout.Duration.String()
+		}
+		if timeout := nriSpec.RequestTimeout; timeout != nil {
+			nri["plugin_request_timeout"] = timeout.Duration.String()
+		}
+		plugins["io.containerd.nri.v1.nri"] = nri
 	}
 
 	// TODO(khlebnikov): Refactor and remove this mess with formats.

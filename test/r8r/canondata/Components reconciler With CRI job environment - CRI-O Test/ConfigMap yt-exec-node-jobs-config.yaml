@@ -12,6 +12,11 @@ data:
         enable_metrics = true
         metrics_host = ""
         metrics_port = 10026
+      [crio.nri]
+        enable_nri = true
+        nri_disable_connections = true
+        nri_plugin_dir = "/usr/libexec/nri/plugins"
+        nri_plugin_request_timeout = "15s"
       [crio.runtime]
         cgroup_manager = "cgroupfs"
         conmon_cgroup = "pod"

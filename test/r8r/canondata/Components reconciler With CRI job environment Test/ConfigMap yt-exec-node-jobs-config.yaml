@@ -27,6 +27,11 @@ data:
               [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
                 SystemdCgroup = false
         [plugins."io.containerd.grpc.v1.cri".registry]
+      [plugins."io.containerd.nri.v1.nri"]
+        disable = false
+        disable_connections = true
+        plugin_path = "/usr/libexec/nri/plugins"
+        plugin_request_timeout = "15s"
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>

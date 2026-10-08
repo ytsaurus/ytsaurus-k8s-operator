@@ -1229,6 +1229,7 @@ _Appears in:_
 | `isolated` _boolean_ | Isolate job execution environment from exec node or not, by default true when possible. |  |  |
 | `userSlots` _integer_ | Count of slots for user jobs on each exec node, default is 5 per CPU. |  |  |
 | `cri` _[CRIJobEnvironmentSpec](#crijobenvironmentspec)_ | CRI service configuration for running jobs in sidecar container. |  |  |
+| `nri` _[NRIPluginsSpec](#nripluginsspec)_ | NRI plugins configuration. |  |  |
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
 | `runtime` _[JobRuntimeSpec](#jobruntimespec)_ | Container Runtime configuration for CRI service. Default: runc. |  |  |
@@ -1760,6 +1761,26 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `filter` _string array_ |  |  |  |
 | `gridStep` _integer_ |  |  |  |
+
+
+#### NRIPluginsSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobEnvironmentSpec](#jobenvironmentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `socketPath` _string_ | Enable socket for external NRI plugins. |  |  |
+| `pluginDir` _string_ | Launch NRI plugins from directory. |  |  |
+| `configDir` _string_ | NRI plugins configuration directory. |  |  |
+| `registrationTimeout` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta)_ | Registration timeout. |  |  |
+| `requestTimeout` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#duration-v1-meta)_ | Request timeout. |  |  |
 
 
 #### NvidiaRuntimeSpec

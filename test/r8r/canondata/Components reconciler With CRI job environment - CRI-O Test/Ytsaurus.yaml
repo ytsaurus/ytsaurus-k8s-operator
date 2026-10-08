@@ -31,6 +31,9 @@ spec:
         criService: crio
         imagePullSecret:
           name: image-pull-secret
+      nri:
+        pluginDir: /usr/libexec/nri/plugins
+        requestTimeout: 15s
     jobResources:
       limits:
         cpu: "4"
