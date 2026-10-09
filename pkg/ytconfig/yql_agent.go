@@ -70,7 +70,10 @@ type DQManagerConfig struct {
 type DQYTBackend struct {
 	// ClusterName is the target YT cluster name.
 	ClusterName string `yson:"cluster_name,omitempty"`
-	// YTProxy is the YT proxy URL for this backend.
+	// ProxyAddress is the YT proxy URL for this backend.
+	ProxyAddress string `yson:"proxy_address,omitempty"`
+	// YTProxy is a legacy alias for ProxyAddress.
+	// FIXME(khlebnikov): remove after migration - after QT 0.7
 	YTProxy string `yson:"yt_proxy,omitempty"`
 	// JobsPerOperation limits jobs per spawned operation.
 	JobsPerOperation int `yson:"jobs_per_operation,omitempty"`
@@ -122,6 +125,8 @@ type DQYTBackend struct {
 type DQYTCoordinator struct {
 	// ClusterName is the target YT cluster name.
 	ClusterName string `yson:"cluster_name,omitempty"`
+	// ProxyAddress is the YT proxy URL for this backend.
+	ProxyAddress string `yson:"proxy_address,omitempty"`
 	// Prefix is cypress path prefix for coordinator data.
 	Prefix string `yson:"prefix,omitempty"`
 	// TokenFile is path to token file used by coordinator.
@@ -480,13 +485,16 @@ func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec
 		GrpcPort:         ptr.To(consts.YQLAgentDQgRPCPort),
 		UseIPv4:          ptr.To(g.commonSpec.UseIPv4 && !g.commonSpec.UseIPv6),
 		YTCoordinator: &DQYTCoordinator{
-			ClusterName: ytProxy,
-			User:        consts.YQLAgentUserName,
-			TokenFile:   getTokenVolumePath(consts.YQLAgentTokenVolumeName),
+			// FIXME(khlebnikov): Switch to clusterName together with removing YTProxy
+			ClusterName:  ytProxy,
+			ProxyAddress: ytProxy,
+			User:         consts.YQLAgentUserName,
+			TokenFile:    getTokenVolumePath(consts.YQLAgentTokenVolumeName),
 		},
 		YTBackends: []DQYTBackend{
 			{
 				ClusterName:    clusterName,
+				ProxyAddress:   ytProxy,
 				YTProxy:        ytProxy,
 				User:           consts.YQLAgentExecUserName,
 				TokenFile:      getTokenVolumePath(consts.YQLExecTokenVolumeName),
