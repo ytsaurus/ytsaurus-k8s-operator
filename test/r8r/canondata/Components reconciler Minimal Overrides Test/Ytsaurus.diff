@@ -36,7 +36,7 @@
      reason: Observed
      status: "True"
      type: OperatorVersion
-@@ -99,19 +104,13 @@
+@@ -99,22 +104,10 @@
      type: defaultMasterInitJobCompleted
    - lastTransitionTime: null
      message: Ready
@@ -45,8 +45,8 @@
      reason: Ready
      status: "True"
      type: MasterReady
-   - lastTransitionTime: null
-     message: 'Pods are ready: 0 of 1, running 0, need 0'
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
 -    observedGeneration: 3
 -    reason: Ready
 -    status: "True"
@@ -54,11 +54,13 @@
 -  - lastTransitionTime: null
 -    message: 'Pods are ready: 0 of 1, running 0, need 0'
 -    observedGeneration: 3
-+    observedGeneration: 4
-     reason: Ready
-     status: "True"
-     type: HttpProxyReady
-@@ -123,23 +122,29 @@
+-    reason: Ready
+-    status: "True"
+-    type: HttpProxyReady
+   - lastTransitionTime: null
+     message: Job yt-client-init-job-user completed in -1ns
+     observedGeneration: 1
+@@ -123,23 +116,35 @@
      type: userYtsaurusClientInitJobCompleted
    - lastTransitionTime: null
      message: Cypress operations skipped
@@ -68,6 +70,12 @@
      status: "True"
      type: UpdateIsPossible
    - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 4
++    reason: Ready
++    status: "True"
++    type: HttpProxyReady
++  - lastTransitionTime: null
 +    message: 'Pods are ready: 0 of 1, running 0, need 0'
 +    observedGeneration: 4
 +    reason: Ready

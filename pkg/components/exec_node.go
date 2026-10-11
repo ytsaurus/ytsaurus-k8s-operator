@@ -124,9 +124,7 @@ func (n *ExecNode) UpdatePreCheck(ctx context.Context) ComponentStatus {
 	if n.ytsaurusClient.GetYtClient() == nil {
 		return ComponentStatusBlocked("YT client is not available")
 	}
-
-	strategy := getComponentUpdateStrategy(n.ytsaurus, n.GetType(), n.GetShortName())
-	if strategy == ytv1.ComponentUpdateModeTypeRollingUpdate {
+	if n.GetUpdateStrategy() == UpdateStrategyRolling {
 		return n.drainExecNodeForRollingUpdate(ctx)
 	}
 	return ComponentStatusReady()

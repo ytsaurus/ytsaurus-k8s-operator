@@ -620,7 +620,7 @@ func (yc *YtsaurusClient) BuildCypressPatch(ctx context.Context) (*corev1.Config
 			return nil, nil, fmt.Errorf("cannot format component cypress patch %s: %w", patchFileName, err)
 		}
 
-		if !yc.cypressPatch.Exists() || IsUpdatingComponent(yc.ytsaurus, component) ||
+		if !yc.cypressPatch.Exists() || component.IsUpdatingComponent() ||
 			yc.ytsaurus.GetClusterState() == ytv1.ClusterStateInitializing {
 			// Include empty patches for clarity.
 			cp.Data[patchFileName] = string(componentPatchData)

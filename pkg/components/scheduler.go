@@ -113,7 +113,7 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 	var err error
 
 	if s.ytsaurus.IsUpdating() {
-		if !IsUpdatingComponent(s.ytsaurus, s) {
+		if !s.IsUpdatingComponent() {
 			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 		switch updateState := s.ytsaurus.GetUpdateState(); updateState {

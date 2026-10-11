@@ -93,7 +93,7 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 	var err error
 
 	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(qt.ytsaurus, qt) {
+		if qt.IsUpdatingComponent() {
 			// Handle bulk update with pre-checks
 			if status, err := handleBulkUpdatingClusterState(ctx, qt.ytsaurus, qt, &qt.component, qt.server, dry); status != nil {
 				return *status, err

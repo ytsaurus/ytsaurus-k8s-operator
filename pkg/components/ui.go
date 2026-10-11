@@ -280,7 +280,7 @@ func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(u.ytsaurus, u) {
+		if u.IsUpdatingComponent() {
 			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
 					err = removePods(ctx, u.microservice, &u.component)

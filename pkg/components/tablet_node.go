@@ -80,9 +80,9 @@ func (tn *TabletNode) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 	var err error
 
 	if tn.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(tn.ytsaurus, tn) {
-			switch getComponentUpdateStrategy(tn.ytsaurus, tn.GetType(), tn.GetShortName()) {
-			case ytv1.ComponentUpdateModeTypeOnDelete:
+		if tn.IsUpdatingComponent() {
+			switch tn.GetUpdateStrategy() {
+			case UpdateStrategyOnDelete:
 				if status, err := handleOnDeleteUpdatingClusterState(ctx, tn.ytsaurus, tn, &tn.component, tn.server, dry); status != nil {
 					return *status, err
 				}

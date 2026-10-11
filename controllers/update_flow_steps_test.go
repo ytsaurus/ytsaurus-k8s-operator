@@ -244,7 +244,7 @@ var _ = Describe("BuildFlowTree", func() {
 
 var _ = Describe("ShouldRemoveTabletCellsOnUpdate", func() {
 	type testCase struct {
-		updatePlan         []ytv1.ComponentUpdateSelector
+		updatePlan         ytv1.UpdatePlan
 		updatingComponents []ytv1.Component
 		expected           bool
 	}
@@ -257,14 +257,14 @@ var _ = Describe("ShouldRemoveTabletCellsOnUpdate", func() {
 			expected: false,
 		}),
 		Entry("keeps removing tablet cells for bulk tablet updates", testCase{
-			updatePlan: []ytv1.ComponentUpdateSelector{{
+			updatePlan: ytv1.UpdatePlan{{
 				Component: ytv1.Component{Type: consts.TabletNodeType},
 			}},
 			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
 			expected:           true,
 		}),
 		Entry("skips removing tablet cells for onDelete tablet updates", testCase{
-			updatePlan: []ytv1.ComponentUpdateSelector{{
+			updatePlan: ytv1.UpdatePlan{{
 				Component: ytv1.Component{Type: consts.TabletNodeType},
 				Strategy: &ytv1.ComponentUpdateStrategy{
 					OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
