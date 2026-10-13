@@ -10,7 +10,7 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 
 You can install pre-built versions of operator via [helm chart](https://hub.docker.com/r/ytsaurus/ytop-chart).
 
-Next you need to [choose release](https://ytsaurus.tech/docs/en/admin-guide/releases), [check compatibility](https://ytsaurus.tech/docs/en/admin-guide/compatibility), [prepare the Ytsaurus specification](https://ytsaurus.tech/docs/en/admin-guide/prepare-spec), see provided [samples](config/samples) and [API Reference](docs/api.md).
+Next you need to [choose release](https://ytsaurus.tech/docs/en/admin-guide/releases), [check compatibility](https://ytsaurus.tech/docs/en/admin-guide/compatibility), [prepare the Ytsaurus specification](https://ytsaurus.tech/docs/en/admin-guide/prepare-spec), see provided [samples](config/samples), [guide](docs/guide.md), and [API Reference](docs/api.md).
 
 Currently operator supports YTsaurus releases >= 24.2, releases >= 25.2 are recommended.
 
