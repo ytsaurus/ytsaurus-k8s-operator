@@ -1,6 +1,8 @@
 package ytconfig
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 
@@ -8,6 +10,12 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
+)
+
+//nolint:gochecknoglobals //yes
+var (
+	YQLAgentVersion06 = version.MustParse("0.6.0")
 )
 
 // YQLGatewayAttr is a generic name/value setting with optional activation policy.
@@ -72,9 +80,6 @@ type DQYTBackend struct {
 	ClusterName string `yson:"cluster_name,omitempty"`
 	// ProxyAddress is the YT proxy URL for this backend.
 	ProxyAddress string `yson:"proxy_address,omitempty"`
-	// YTProxy is a legacy alias for ProxyAddress.
-	// FIXME(khlebnikov): remove after migration - after QT 0.7
-	YTProxy string `yson:"yt_proxy,omitempty"`
 	// JobsPerOperation limits jobs per spawned operation.
 	JobsPerOperation int `yson:"jobs_per_operation,omitempty"`
 	// MaxJobs limits total jobs for this backend.
@@ -461,12 +466,21 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 	return c, nil
 }
 
-func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec) {
+func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec, agentVersion *version.Version) error {
 	// clusterName is the real YT cluster name.
 	clusterName := g.ytsaurus.Name
-	// ytProxy is the proxy address DQ uses to reach the cluster. It carries the
-	// "https://" scheme when the cluster exposes an HTTPS proxy address.
-	ytProxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+	// proxyAddress is the proxy address DQ uses to reach the cluster.
+	// It carries the "https://" scheme when the cluster exposes an HTTPS proxy address.
+	proxyAddress := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
+
+	// Older versions has no option "proxy_address" and cannot support HTTPS.
+	if agentVersion == nil || agentVersion.LessThan(YQLAgentVersion06) {
+		if g.clusterFeatures.HTTPProxyHaveHTTPSAddress {
+			return fmt.Errorf("require YQL-agent version >= 0.6 to support HTTPS proxy address")
+		}
+		clusterName = proxyAddress
+		proxyAddress = ""
+	}
 
 	cpuLimit := ptr.Deref(dq.CPULimit, resource.Quantity{})
 	memoryLimit := ptr.Deref(dq.MemoryLimit, resource.Quantity{})
@@ -485,17 +499,15 @@ func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec
 		GrpcPort:         ptr.To(consts.YQLAgentDQgRPCPort),
 		UseIPv4:          ptr.To(g.commonSpec.UseIPv4 && !g.commonSpec.UseIPv6),
 		YTCoordinator: &DQYTCoordinator{
-			// FIXME(khlebnikov): Switch to clusterName together with removing YTProxy
-			ClusterName:  ytProxy,
-			ProxyAddress: ytProxy,
+			ClusterName:  clusterName,
+			ProxyAddress: proxyAddress,
 			User:         consts.YQLAgentUserName,
 			TokenFile:    getTokenVolumePath(consts.YQLAgentTokenVolumeName),
 		},
 		YTBackends: []DQYTBackend{
 			{
 				ClusterName:    clusterName,
-				ProxyAddress:   ytProxy,
-				YTProxy:        ytProxy,
+				ProxyAddress:   proxyAddress,
 				User:           consts.YQLAgentExecUserName,
 				TokenFile:      getTokenVolumePath(consts.YQLExecTokenVolumeName),
 				VanillaJobLite: "/usr/bin/dq_vanilla_job.lite",
@@ -522,4 +534,6 @@ func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec
 			},
 		},
 	}
+
+	return nil
 }
