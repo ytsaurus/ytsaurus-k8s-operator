@@ -790,8 +790,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				PortCount:       ptr.To(1000),
 			}
 			ytBuilder.WithStrawberryController()
-			ytBuilder.WithQueryTracker()
 			ytBuilder.WithQueueAgent()
+			ytBuilder.Images.QueryTracker = "localhost/query-tracker:0.6.0"
+			ytBuilder.WithQueryTracker()
 			ytBuilder.WithYqlAgent()
 			ytBuilder.WithYqlAgentDQ()
 			ytBuilder.WithHydraPersistenceUploader()
@@ -1063,6 +1064,27 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				offshoreNodes := ytBuilder.CreateOffshoreDataGateways()
 				Expect(k8sClient.Create(ctx, offshoreNodes)).To(Succeed())
 				controllerObjects = append(controllerObjects, offshoreNodes)
+			})
+			It("Test", func(ctx context.Context) {})
+		})
+	})
+
+	Context("With YQL-agent", func() {
+		Context("HTTP", func() {
+			BeforeEach(func() {
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
+				ytBuilder.WithYqlAgentDQ()
+			})
+			It("Test", func(ctx context.Context) {})
+		})
+		Context("HTTPS-only", func() {
+			BeforeEach(func() {
+				ytBuilder.WithHTTPSProxies("https-server-cert", true)
+				ytBuilder.Images.QueryTracker = "localhost/query-tracker:0.6.0"
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
+				ytBuilder.WithYqlAgentDQ()
 			})
 			It("Test", func(ctx context.Context) {})
 		})

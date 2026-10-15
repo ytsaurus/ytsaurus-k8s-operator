@@ -20,6 +20,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 )
 
 type masterCellInfo struct {
@@ -1242,6 +1243,8 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServ
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.YqlAgentType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
 
+	agentVersion := version.ParseImageVersion(ptr.Deref(spec.Image, ""))
+
 	clusterName := g.ytsaurus.Name
 	clusterAddress := g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)
 
@@ -1261,7 +1264,9 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServ
 
 	if dq := spec.DQEngine; dq != nil {
 		c.YQLAgent.EnableDQ = ptr.To(true)
-		g.fillYQLAgentDQEngine(&c.YQLAgent, dq)
+		if err := g.fillYQLAgentDQEngine(&c.YQLAgent, dq, agentVersion); err != nil {
+			return c, err
+		}
 	} else {
 		c.YQLAgent.EnableDQ = ptr.To(false)
 	}
