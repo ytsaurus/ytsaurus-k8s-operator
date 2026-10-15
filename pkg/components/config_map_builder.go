@@ -150,7 +150,11 @@ func overrideYsonConfigs(base []byte, overrides []byte, format ConfigFormat) ([]
 		return slices.Concat(base, overrides), nil
 	}
 
-	config := ypatch.OrderedValue{}
+	config := ypatch.OrderedValue{
+		Attributes: ypatch.OrderedMap{
+			Options: &ypatch.OrderedOptions{OmitNil: true},
+		},
+	}
 	err := yson.Unmarshal(base, &config)
 	if err != nil {
 		return nil, err

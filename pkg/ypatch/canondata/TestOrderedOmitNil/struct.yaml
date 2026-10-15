@@ -1,0 +1,17 @@
+Keys:
+- b
+- c
+- e
+- f
+Values:
+  b: 1
+  c:
+    d: 2
+  e: 3
+  f:
+    $attributes:
+      Keys:
+      - g
+      Values:
+        g: 4
+    $value: 5
