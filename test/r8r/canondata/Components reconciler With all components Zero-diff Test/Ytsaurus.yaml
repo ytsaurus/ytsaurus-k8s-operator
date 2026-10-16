@@ -479,7 +479,7 @@ spec:
     - emptyDir: {}
       name: logs
   queryTrackers:
-    image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+    image: localhost/query-tracker:0.6.0
     instanceCount: 1
     locations:
     - locationType: Logs
@@ -803,7 +803,7 @@ spec:
       uploadReplicationFactor: 1
       useTmpfs: false
       workerCapacity: 128
-    image: ghcr.io/ytsaurus/query-tracker:stable-0.1.2
+    image: localhost/query-tracker:0.6.0
     instanceCount: 1
     locations:
     - locationType: Logs
