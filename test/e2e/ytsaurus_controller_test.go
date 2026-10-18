@@ -2148,11 +2148,13 @@ exec "$@"`
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
 
+				By("Adding CRI job environment")
+				ytBuilder.WithCRIJobEnvironment()
+
 				By("Adding query-tracker and yql-agent")
 				ytBuilder.WithQueryTracker()
 				ytBuilder.WithYqlAgent()
-				// FIXME(khlebnikov): DQ is still broken.
-				// ytBuilder.WithYqlAgentDQ()
+				ytBuilder.WithYqlAgentDQ()
 			})
 
 			It("Checking YQL", func(ctx context.Context) {
