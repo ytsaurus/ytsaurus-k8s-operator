@@ -255,7 +255,7 @@ data:
                             family="plain_text";
                         };
                         {
-                            "min_level"=error;
+                            "min_level"=warning;
                             writers=[
                                 stderr;
                             ];
@@ -286,7 +286,7 @@ data:
                                 family="plain_text";
                             };
                             {
-                                "min_level"=error;
+                                "min_level"=warning;
                                 writers=[
                                     stderr;
                                 ];
@@ -457,7 +457,7 @@ data:
                         family="plain_text";
                     };
                     {
-                        "min_level"=error;
+                        "min_level"=warning;
                         writers=[
                             stderr;
                         ];
