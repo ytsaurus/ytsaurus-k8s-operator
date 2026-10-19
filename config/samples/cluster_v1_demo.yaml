@@ -109,8 +109,8 @@ spec:
           writerType: file
           rotationPolicy: *rotationPolicy
         # this file is append-only and not rotated
-        # - name: error
-        #   minLogLevel: error
+        # - name: stderr
+        #   minLogLevel: warning
         #   writerType: stderr
 
   tabletNodes:
