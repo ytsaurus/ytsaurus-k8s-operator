@@ -32,8 +32,8 @@ spec:
         minLogLevel: info
         writerType: file
         rotationPolicy: *rotationPolicy
-      - name: error
-        minLogLevel: error
+      - name: stderr
+        minLogLevel: warning
         writerType: stderr
 
   kafkaProxies:
@@ -144,8 +144,8 @@ spec:
           writerType: file
           rotationPolicy: *rotationPolicy
         # this file is append-only and not rotated
-        # - name: error
-        #   minLogLevel: error
+        # - name: stderr
+        #   minLogLevel: warning
         #   writerType: stderr
 
   schedulers:
