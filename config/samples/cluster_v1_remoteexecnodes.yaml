@@ -42,8 +42,8 @@ spec:
       minLogLevel: info
       writerType: file
       rotationPolicy: *rotationPolicy
-    - name: info-stderr
-      minLogLevel: info
+    - name: stderr
+      minLogLevel: warning
       writerType: stderr
 
   jobProxyLoggers:
@@ -63,8 +63,8 @@ spec:
       writerType: file
       rotationPolicy: *rotationPolicyJobs
     # this file is append-only and not rotated
-    # - name: error
-    #   minLogLevel: error
+    # - name: stderr
+    #   minLogLevel: warning
     #   writerType: stderr
 
   resources:
