@@ -313,6 +313,7 @@ spec:
             maxTotalSizeToKeep: 100Mi
             maxSegmentSize: 10Mi
             rotationPeriodMilliseconds: 900000  # 15Min
+            maxSegmentCountToKeep: 100
           categoriesFilter:
             type: exclude
             values: [ "Bus", "Concurrency" ]
