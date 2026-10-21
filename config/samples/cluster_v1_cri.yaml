@@ -105,8 +105,8 @@ spec:
         writerType: file
         useDateTimeSuffix: true
         rotationPolicy: *rotationPolicy
-      - name: info-stderr
-        minLogLevel: info
+      - name: stderr
+        minLogLevel: warning
         writerType: stderr
 
     locations:
@@ -313,6 +313,7 @@ spec:
             maxTotalSizeToKeep: 100Mi
             maxSegmentSize: 10Mi
             rotationPeriodMilliseconds: 900000  # 15Min
+            maxSegmentCountToKeep: 100
           categoriesFilter:
             type: exclude
             values: [ "Bus", "Concurrency" ]
@@ -322,8 +323,8 @@ spec:
           useDateTimeSuffix: true
           rotationPolicy: *rotationPolicyJobs
         # this file is append-only and not rotated
-        # - name: error
-        #   minLogLevel: error
+        # - name: stderr
+        #   minLogLevel: warning
         #   writerType: stderr
 
       # runtimeClassName: nvidia    # container runtime class for exec node
