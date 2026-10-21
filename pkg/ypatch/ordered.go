@@ -10,14 +10,19 @@ import (
 	"go.ytsaurus.tech/yt/go/yson"
 )
 
+type OrderedOptions struct {
+	OmitNil bool
+}
+
 type OrderedValue struct {
 	Attributes OrderedMap
 	Value      any
 }
 
 type OrderedMap struct {
-	Values map[string]any
-	Keys   []string
+	Values  map[string]any
+	Keys    []string
+	Options *OrderedOptions `json:"-"`
 }
 
 var (
@@ -40,6 +45,10 @@ func (m *OrderedMap) Get(key string) (any, bool) {
 }
 
 func (m *OrderedMap) Set(key string, value any) {
+	if omitValue(value, m.Options) {
+		m.Delete(key)
+		return
+	}
 	if m.Values == nil {
 		m.Values = map[string]any{}
 	}
@@ -70,14 +79,66 @@ func (m *OrderedMap) GetValue(key string) (any, bool) {
 	return nil, false
 }
 
-func (m *OrderedMap) GetMap(key string) (*OrderedMap, bool) {
-	value, ok := m.Values[key].(*OrderedMap)
-	return value, ok
+func (m *OrderedMap) NestValue(key string) *OrderedValue {
+	if value, found := m.Values[key]; found {
+		av, ok := value.(*OrderedValue)
+		if !ok {
+			av = &OrderedValue{Value: value}
+			m.Values[key] = av
+		}
+		return av
+	}
+	av := &OrderedValue{}
+	if m.Values == nil {
+		m.Values = map[string]any{}
+	}
+	m.Values[key] = av
+	m.Keys = append(m.Keys, key)
+	return av
 }
 
-func (m *OrderedMap) Merge(x map[string]any) {
-	for _, key := range slices.Sorted(maps.Keys(x)) {
-		m.Set(key, x[key])
+func (m *OrderedMap) GetMap(key string) (*OrderedMap, bool) {
+	if value, found := m.GetValue(key); found {
+		if x, ok := value.(*OrderedMap); ok {
+			return x, true
+		}
+	}
+	return nil, false
+}
+
+func (m *OrderedMap) NestMap(key string) *OrderedMap {
+	nested, ok := m.GetMap(key)
+	if !ok {
+		nested = &OrderedMap{Options: m.Options}
+		m.Set(key, nested)
+	}
+	return nested
+}
+
+func (m *OrderedMap) Merge(key string, value any) {
+	switch v := value.(type) {
+	case map[string]any:
+		nested := m.NestMap(key)
+		for _, k := range slices.Sorted(maps.Keys(v)) {
+			nested.Merge(k, v[k])
+		}
+	case *OrderedMap:
+		nested := m.NestMap(key)
+		for _, k := range v.Keys {
+			nested.Merge(k, v.Values[k])
+		}
+	case *OrderedValue:
+		nested := m.NestValue(key)
+		for _, k := range v.Attributes.Keys {
+			nested.Attributes.Merge(k, v.Attributes.Values[k])
+		}
+		m.Merge(key, v.Value)
+	default:
+		if omitValue(v, m.Options) {
+			m.Delete(key)
+		} else {
+			m.NestValue(key).Value = value
+		}
 	}
 }
 
@@ -143,7 +204,7 @@ func (m *OrderedMap) unmarshalBody(r *yson.Reader) error {
 			break
 		}
 		key := r.String()
-		if value, err := decodeInto(r, m.Values[key]); err != nil {
+		if value, err := decodeInto(r, m.Values[key], m.Options); err != nil {
 			return err
 		} else {
 			m.Set(key, value)
@@ -190,7 +251,7 @@ func (v *OrderedValue) UnmarshalJSON(b []byte) error {
 		attributes, hasAttributes := m["$attributes"].(map[string]any)
 		value, hasValue := m["$value"]
 		if hasAttributes && hasValue {
-			v.Attributes = OrderedMap{attributes, slices.Sorted(maps.Keys(attributes))}
+			v.Attributes = OrderedMap{Values: attributes, Keys: slices.Sorted(maps.Keys(attributes))}
 			v.Value = value
 			return nil
 		}
@@ -232,11 +293,11 @@ func (v *OrderedValue) UnmarshalYSON(r *yson.Reader) error {
 	} else {
 		r.Undo(event)
 	}
-	v.Value, err = decodeInto(r, v.Value)
+	v.Value, err = decodeInto(r, v.Value, v.Attributes.Options)
 	return err
 }
 
-func decodeAny(r *yson.Reader) (any, error) {
+func decodeAny(r *yson.Reader, options *OrderedOptions) (any, error) {
 	event, err := r.Next(false)
 	if err != nil {
 		return nil, err
@@ -244,13 +305,13 @@ func decodeAny(r *yson.Reader) (any, error) {
 	switch event {
 	case yson.EventBeginAttrs:
 		r.Undo(event)
-		v := OrderedValue{}
+		v := OrderedValue{Attributes: OrderedMap{Options: options}}
 		if err := v.UnmarshalYSON(r); err != nil {
 			return nil, err
 		}
 		return &v, nil
 	case yson.EventBeginMap:
-		m := OrderedMap{}
+		m := OrderedMap{Options: options}
 		if err := m.unmarshalBody(r); err != nil {
 			return nil, err
 		}
@@ -268,7 +329,7 @@ func decodeAny(r *yson.Reader) (any, error) {
 			if !hasItem {
 				break
 			}
-			item, err := decodeAny(r)
+			item, err := decodeAny(r, options)
 			if err != nil {
 				return nil, err
 			}
@@ -297,23 +358,48 @@ func decodeAny(r *yson.Reader) (any, error) {
 	return nil, fmt.Errorf("unexpected YSON event %v", event)
 }
 
-func decodeInto(r *yson.Reader, value any) (any, error) {
+func decodeInto(r *yson.Reader, value any, options *OrderedOptions) (any, error) {
 	switch v := value.(type) {
 	case *OrderedValue:
+		v.Attributes.Options = options
 		err := v.UnmarshalYSON(r)
 		return v, err
 	case *OrderedMap:
+		v.Options = options
 		switch peekEvent(r) {
 		case yson.EventBeginMap:
 			err := v.UnmarshalYSON(r)
 			return v, err
 		case yson.EventBeginAttrs:
-			av := OrderedValue{Value: value}
+			av := OrderedValue{Value: value, Attributes: OrderedMap{Options: options}}
 			err := av.UnmarshalYSON(r)
 			return &av, err
 		}
 	}
-	return decodeAny(r)
+	return decodeAny(r, options)
+}
+
+func omitValue(value any, options *OrderedOptions) bool {
+	if options == nil || !options.OmitNil {
+		return false
+	}
+	if value == nil {
+		return true
+	}
+	if v, ok := value.(*OrderedValue); ok {
+		if v != nil {
+			if v.Value != nil {
+				return false
+			}
+			for _, a := range v.Attributes.Values {
+				if a != nil {
+					return false
+				}
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func peekEvent(r *yson.Reader) yson.Event {

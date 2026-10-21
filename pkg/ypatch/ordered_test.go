@@ -149,3 +149,28 @@ func TestOrderedOverrideMergesContent(t *testing.T) {
 	canonize.AssertBlob(t, "marshaled.yson", marshaled)
 	require.Equal(t, []byte(output), marshaled)
 }
+
+func TestOrderedOmitNil(t *testing.T) {
+	input := "{a=#;b=1;c={d=2};e=3;f=<g=4>5}"
+	override := "{b=#;c={d=#};f=<g=#>#}"
+	output := "{\n    c={\n    };\n    e=3;\n}"
+
+	require.NoError(t, yson.Valid([]byte(input)))
+	require.NoError(t, yson.Valid([]byte(override)))
+	require.NoError(t, yson.Valid([]byte(output)))
+
+	m := OrderedMap{Options: &OrderedOptions{OmitNil: true}}
+	require.NoError(t, yson.Unmarshal([]byte(input), &m))
+	canonize.AssertBlob(t, "input.yson", []byte(input))
+	canonize.AssertStruct(t, "struct", m)
+
+	canonize.AssertBlob(t, "override.yson", []byte(override))
+	require.NoError(t, yson.Unmarshal([]byte(override), &m))
+	canonize.AssertStruct(t, "merged", m)
+
+	marshaled, err := yson.MarshalFormat(&m, yson.FormatPretty)
+	require.NoError(t, err)
+	require.NoError(t, yson.Valid(marshaled))
+	canonize.AssertBlob(t, "marshaled.yson", marshaled)
+	require.Equal(t, []byte(output), marshaled)
+}
