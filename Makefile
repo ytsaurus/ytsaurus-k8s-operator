@@ -1,13 +1,18 @@
+include $(wildcard Local.inc)
+
+LOCAL_REGISTRY ?=
+
+OPERATOR_IMAGE_LOCAL ?= $(if ${LOCAL_REGISTRY},${LOCAL_REGISTRY}/)${OPERATOR_IMAGE}
 
 # Image URL to use all building/pushing image targets.
-IMG ?= ${OPERATOR_IMAGE}:${OPERATOR_TAG}
+IMG ?= ${OPERATOR_IMAGE_LOCAL}:${OPERATOR_TAG}
 
 ## Name of kind cluster for all kind-* targets
 KIND_CLUSTER_NAME ?= ${USER}-yt-kind
 export KIND_CLUSTER_NAME
 
 ## Path to kind cluster config.
-KIND_CLUSTER_CONFIG ?=
+KIND_CLUSTER_CONFIG ?= $(if ${LOCAL_REGISTRY},config/kind/kind-with-registry.yaml)
 
 ## K8s context for kind cluster
 KIND_KUBE_CONTEXT ?= kind-$(KIND_CLUSTER_NAME)
@@ -74,6 +79,9 @@ else
 endif
 
 export CGO_ENABLED ?= 0
+
+## Docker implementation, for example DOCKER="buildah".
+DOCKER ?= docker
 
 DOCKER_BUILD_TARGET ?= release
 
@@ -310,10 +318,6 @@ kind-create-cluster: ## Create kind kubernetes cluster.
 	$(MAKE) k8s-install-trust-manager
 	$(MAKE) k8s-install-ytsaurus-dev-ca
 
-.PHONY: kind-create-cluster-with-registry
-kind-create-cluster-with-registry:
-	$(MAKE) kind-create-cluster KIND_CLUSTER_CONFIG=config/kind/kind-with-registry.yaml
-
 .PHONY: kind-use-context
 kind-use-context: ## Switch kubectl default context and namespace.
 	$(KUBECTL) config set-context $(KIND_KUBE_CONTEXT) --namespace $(YTSAURUS_NAMESPACE)
@@ -329,8 +333,7 @@ kind-delete-cluster: ## Delete kind kubernetes cluster.
 # https://distribution.github.io/distribution/about/configuration/
 # https://kind.sigs.k8s.io/docs/user/local-registry/
 
-REGISTRY_CONFIG_DIR=config/registry
-
+REGISTRY_CONFIG_DIR = config/registry
 REGISTRY_LOCAL_PORT = 5000
 REGISTRY_LOCAL_ADDR = localhost:${REGISTRY_LOCAL_PORT}
 REGISTRY_LOCAL_NAME = ${USER}-registry-localhost-${REGISTRY_LOCAL_PORT}
@@ -344,27 +347,32 @@ server = "http://${REGISTRY_LOCAL_NAME}:5000"
 endef
 export REGISTRY_LOCAL_CONFIG
 
-kind-create-local-registry: ## Create local docker registry for kind kubernetes cluster.
-	docker run --name ${REGISTRY_LOCAL_NAME} -d --restart=always \
+use-local-registry: ## Save LOCAL_REGISTRY setting.
+	printf "%s = %s\n" LOCAL_REGISTRY "${LOCAL_REGISTRY}" >>Local.inc
+
+create-local-registry: ## Create local docker registry.
+	${DOCKER} run --name ${REGISTRY_LOCAL_NAME} -d --restart=always \
 		--mount type=volume,src=${REGISTRY_LOCAL_NAME},dst=/var/lib/registry \
 		-p "127.0.0.1:${REGISTRY_LOCAL_PORT}:5000" \
 		registry:2
-	docker network connect "kind" ${REGISTRY_LOCAL_NAME}
+	${DOCKER} network connect "kind" ${REGISTRY_LOCAL_NAME}
 	mkdir -p ${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}
 	echo "$$REGISTRY_LOCAL_CONFIG" >${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}/hosts.toml
+	$(MAKE) use-local-registry LOCAL_REGISTRY=${REGISTRY_LOCAL_ADDR}
 
-kind-delete-local-registry: ## Delete local docker registry.
-	docker rm -f ${REGISTRY_LOCAL_NAME}
-	docker volume rm ${REGISTRY_LOCAL_NAME}
+delete-local-registry: ## Delete local docker registry.
+	${DOCKER} rm -f ${REGISTRY_LOCAL_NAME}
+	${DOCKER} volume rm ${REGISTRY_LOCAL_NAME}
 	rm -fr "${REGISTRY_CONFIG_DIR}/${REGISTRY_LOCAL_ADDR}"
+	rm -f Local.inc
 
 .PHONY: kind-load-test-images
 kind-load-test-images:
-	$(foreach img,$(LOAD_TEST_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
+	$(foreach img,$(LOAD_TEST_IMAGES),${DOCKER} pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
 .PHONY: kind-load-sample-images
 kind-load-sample-images:
-	$(foreach img,$(LOAD_SAMPLE_IMAGES),docker pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
+	$(foreach img,$(LOAD_SAMPLE_IMAGES),${DOCKER} pull -q $(img) && $(KIND) load docker-image --name $(KIND_CLUSTER_NAME) $(img);)
 
 .PHONY: k8s-install-cert-manager
 k8s-install-cert-manager:
@@ -395,7 +403,7 @@ k8s-install-ytsaurus-dev-ca:
 
 HELM_INSTALL_ARGS += $(OPERATOR_INSTANCE) $(OPERATOR_CHART)
 HELM_INSTALL_ARGS += --set metricsService.type=NodePort
-HELM_INSTALL_ARGS += --set controllerManager.manager.image.repository=${OPERATOR_IMAGE}
+HELM_INSTALL_ARGS += --set controllerManager.manager.image.repository=${OPERATOR_IMAGE_LOCAL}
 HELM_INSTALL_ARGS += --set controllerManager.manager.image.tag=${OPERATOR_TAG}
 HELM_INSTALL_ARGS += --set controllerManager.manager.instanceScope=${OPERATOR_INSTANCE_SCOPE}
 HELM_INSTALL_ARGS += --set controllerManager.manager.namespacedScope=${OPERATOR_NAMESPACED_SCOPE}
@@ -412,18 +420,28 @@ helm-install: ## Install helm chart from sources.
 	-$(KUBECTL) create namespace $(OPERATOR_NAMESPACE)
 	$(KUBECTL) label namespace $(OPERATOR_NAMESPACE) app.kubernetes.io/part-of=ytsaurus-dev
 	$(HELM) upgrade -n $(OPERATOR_NAMESPACE) --install --wait $(HELM_INSTALL_ARGS)
+
+helm-restart: ## Restart operator pods.
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout restart deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 	$(KUBECTL) -n $(OPERATOR_NAMESPACE) rollout status -w deployment -l app.kubernetes.io/instance=$(OPERATOR_INSTANCE)
 
 .PHONY: helm-kind-install
-helm-kind-install: helm-chart docker-build ## Build docker image, load into kind and install helm chart.
-	$(KIND) load docker-image --name $(KIND_CLUSTER_NAME) ${OPERATOR_IMAGE}:${OPERATOR_TAG}
+helm-kind-install: ## Build docker image, load into kind and install helm chart.
+	$(MAKE) helm-chart
+	$(MAKE) docker-build
+ifneq (${LOCAL_REGISTRY},)
+	$(MAKE) docker-push
+else
+	$(KIND) load docker-image --name $(KIND_CLUSTER_NAME) ${IMG}
+endif
 	$(MAKE) helm-install
+	$(MAKE) helm-restart
 
 .PHONY: helm-minikube-install
 helm-minikube-install: helm-chart ## Build docker image in minikube and install helm chart.
-	eval $$(minikube docker-env) && docker build ${DOCKER_BUILD_ARGS} -t ${OPERATOR_IMAGE}:${OPERATOR_TAG} .
+	eval $$(minikube docker-env) && ${DOCKER} build ${DOCKER_BUILD_ARGS} -t ${IMG} .
 	$(MAKE) helm-install
+	$(MAKE) helm-restart
 
 .PHONY: helm-uninstall
 helm-uninstall: ## Uninstal helm chart.
@@ -461,7 +479,7 @@ kind-undeploy-ytsaurus: ## Undeploy sample ytsaurus cluster.
 	-$(KUBECTL) -n $(YTSAURUS_NAMESPACE) delete pods --all --force
 	$(KUBECTL) delete namespace $(YTSAURUS_NAMESPACE)
 
-KIND_NODE_ADDR = $(shell docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(1))
+KIND_NODE_ADDR = $(shell ${DOCKER} inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(1))
 KIND_SERVICE_NODEPORT = $(shell $(KUBECTL) -n $(1) get service $(2) -o jsonpath="{.spec.ports[$(3)].nodePort}")
 
 KIND_YT_ENV += YT_PROXY=http://$(call KIND_NODE_ADDR,${KIND_CLUSTER_NAME}-control-plane):$(call KIND_SERVICE_NODEPORT,${YTSAURUS_NAMESPACE},http-proxies-lb,0)
@@ -497,18 +515,17 @@ run: generate-code manifests ## Run a controller from your host.
 	go run ${GOFLAGS} -ldflags "$(GO_LDFLAGS)" ./main.go --zap-devel
 
 .PHONY: docker-build
-docker-build: ## Build docker image with the manager.
-	docker build ${DOCKER_BUILD_ARGS} -t ${IMG} .
+docker-build: generate-code ## Build docker image with the manager.
+	${DOCKER} build ${DOCKER_BUILD_ARGS} -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
+	${DOCKER} push ${IMG}
 
 .PHONY: helm-chart
 helm-chart: manifests ## Generate helm chart.
 	rm -f $(OPERATOR_CHART_CRDS)/*.yaml
 	go run ./hack/helm-crds.go $(OPERATOR_CHART_CRDS)/ config/crd/bases/*.yaml
-	$(YQ) '.name="$(OPERATOR_CHART_NAME_RELEASE)" | .version="$(OPERATOR_VERSION)" | .appVersion="$(OPERATOR_VERSION)"' <config/helm/Chart.yaml >$(OPERATOR_CHART)/Chart.yaml
 
 update-samples-image:
 	sed "s#$(firstword $(subst :, ,$(YTSAURUS_SAMPLE_IMAGE))):.*#${YTSAURUS_SAMPLE_IMAGE}#" -i config/samples/*.yaml
@@ -547,14 +564,15 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	$(KUSTOMIZE) build config/default | $(KUBECTL) delete --ignore-not-found=$(ignore-not-found) -f -
 
 release: ## Release operator docker image and helm chart.
-	docker build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} .
-	docker push $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
-	docker tag $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} ghcr.io/$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
-	docker push ghcr.io/$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
+	${DOCKER} build ${DOCKER_BUILD_ARGS} -t $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} .
+	${DOCKER} push $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
+	${DOCKER} tag $(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION} ghcr.io/$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
+	${DOCKER} push ghcr.io/$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
 
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(OPERATOR_IMAGE_RELEASE):${RELEASE_VERSION}
 	$(MAKE) helm-chart
-	$(YQ) -i -P '.controllerManager.manager.image.repository = "$(OPERATOR_IMAGE_RELEASE)"' ytop-chart/values.yaml
+	$(YQ) '.name="$(OPERATOR_CHART_NAME_RELEASE)" | .version="$(OPERATOR_VERSION)" | .appVersion="$(OPERATOR_VERSION)"' <config/helm/Chart.yaml >$(OPERATOR_CHART)/Chart.yaml
+	$(YQ) -i -P '.controllerManager.manager.image.repository = "$(OPERATOR_IMAGE_RELEASE)"' $(OPERATOR_CHART)/values.yaml
 	helm package $(OPERATOR_CHART)
 	helm push $(OPERATOR_CHART_NAME_RELEASE)-${RELEASE_VERSION}.tgz oci://registry-1.docker.io/ytsaurus
 	helm push $(OPERATOR_CHART_NAME_RELEASE)-${RELEASE_VERSION}.tgz oci://ghcr.io/ytsaurus
