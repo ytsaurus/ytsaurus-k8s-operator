@@ -9,6 +9,7 @@ bin
 testbin/*
 cover.out
 report.xml
+Local.inc
 
 # Test binary, build with `go test -c`
 *.test

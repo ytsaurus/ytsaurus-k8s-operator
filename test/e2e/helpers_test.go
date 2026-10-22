@@ -54,7 +54,7 @@ func YsonPretty(value any) string {
 
 func getKindControlPlaneNode(ctx context.Context) corev1.Node {
 	nodeList := corev1.NodeList{}
-	err := k8sClient.List(ctx, &nodeList)
+	err := k8sClient.List(ctx, &nodeList, ctrlcli.MatchingLabels{"node-role.kubernetes.io/control-plane": ""})
 	Expect(err).Should(Succeed())
 	Expect(nodeList.Items).To(HaveLen(1))
 	Expect(nodeList.Items[0].Name).To(HaveSuffix("kind-control-plane"))

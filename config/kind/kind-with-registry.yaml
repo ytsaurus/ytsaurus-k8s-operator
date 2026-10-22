@@ -16,6 +16,7 @@ networking:
 # kubeProxyMode: "ipvs"
 # kubeProxyMode: "none"
 
+# https://kind.sigs.k8s.io/docs/user/configuration/#runtime-config
 runtimeConfig:
 # "api/alpha": "true"
 
@@ -55,12 +56,12 @@ nodes:
     hostPath: "config/registry"
     containerPath: "/etc/containerd/certs.d"
     readOnly: true
-- role: worker
-  extraMounts:
-  - *registry-config
-- role: worker
-  extraMounts:
-  - *registry-config
-- role: worker
-  extraMounts:
-  - *registry-config
+# - role: worker
+#   extraMounts:
+#   - *registry-config
+# - role: worker
+#   extraMounts:
+#   - *registry-config
+# - role: worker
+#   extraMounts:
+#   - *registry-config
