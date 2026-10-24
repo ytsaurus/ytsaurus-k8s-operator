@@ -104,7 +104,7 @@ data:
             "dq_manager_config"={
                 "interconnect_port"=9035;
                 "grpc_port"=9036;
-                "use_ipv4"=%false;
+                "use_ipv4"=%true;
                 "yt_backends"=[
                     {
                         "cluster_name"="http-proxies-lb.ytsaurus-components.svc.cluster.local";
