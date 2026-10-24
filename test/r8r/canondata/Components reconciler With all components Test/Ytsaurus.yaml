@@ -802,7 +802,7 @@ spec:
       memoryLimit: 2Gi
       uploadReplicationFactor: 1
       useTmpfs: false
-      workerCapacity: 128
+      workerCapacity: 10
     image: localhost/query-tracker:0.6.0
     instanceCount: 1
     locations:
