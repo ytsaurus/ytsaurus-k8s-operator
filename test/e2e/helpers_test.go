@@ -507,6 +507,11 @@ func ListClusterComponents(ctx context.Context, ytClient yt.Client) ([]ClusterCo
 		if compomentCypressPath == "" {
 			continue
 		}
+		if ok, err := ytClient.NodeExists(ctx, compomentCypressPath, nil); err != nil {
+			return nil, err
+		} else if !ok {
+			continue
+		}
 		var addresses []string
 		if err := ytClient.ListNode(ctx, compomentCypressPath, &addresses, nil); err != nil {
 			if yterrors.ContainsResolveError(err) {
