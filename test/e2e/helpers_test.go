@@ -566,8 +566,13 @@ func queryClickHouseID(ctx context.Context, httpClient *http.Client, ytProxyAddr
 }
 
 func makeQuery(ctx context.Context, ytClient yt.Client, engine yt.QueryEngine, query string) []map[string]any {
-	id, err := ytClient.StartQuery(ctx, engine, query, nil)
-	Expect(err).To(Succeed())
+	var id yt.QueryID
+	// The HTTP proxy learns about newly configured query tracker stages asynchronously.
+	Eventually(ctx, func(ctx context.Context) error {
+		var err error
+		id, err = ytClient.StartQuery(ctx, engine, query, nil)
+		return err
+	}, reactionTimeout, pollInterval).Should(Succeed())
 	log.Info("Query started", "id", id)
 
 	var previousState yt.QueryState
