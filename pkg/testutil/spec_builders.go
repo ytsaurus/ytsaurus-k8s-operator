@@ -671,7 +671,7 @@ func (b *YtsaurusBuilder) WithYqlAgentDQ() {
 	b.Ytsaurus.Spec.YQLAgents.DQEngine = &ytv1.YQLDQEngineSpec{
 		JobsPerOperation:        ptr.To(1),
 		MaxJobs:                 ptr.To(1),
-		WorkerCapacity:          ptr.To(128),
+		WorkerCapacity:          ptr.To(10),
 		CPULimit:                ptr.To(resource.MustParse("1")),
 		MemoryLimit:             ptr.To(resource.MustParse("2Gi")),
 		CacheSize:               ptr.To(resource.MustParse("4Gi")),
