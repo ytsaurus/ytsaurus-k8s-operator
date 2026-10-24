@@ -13,10 +13,7 @@ package validators
 import (
 	"context"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
@@ -26,29 +23,22 @@ import (
 //+kubebuilder:webhook:path=/validate-cluster-ytsaurus-tech-v1-remotetabletnodes,mutating=false,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=remotetabletnodes,verbs=create;update,versions=v1,name=vremotetabletnodes.kb.io,admissionReviewVersions=v1
 //+kubebuilder:webhook:path=/validate-cluster-ytsaurus-tech-v1-offshoredatagateways,mutating=false,failurePolicy=fail,sideEffects=None,groups=cluster.ytsaurus.tech,resources=offshoredatagateways,verbs=create;update,versions=v1,name=voffshoredatagateways.kb.io,admissionReviewVersions=v1
 
-func validateRemoteTimbertruck(commonSpec *ytv1.CommonSpec, instanceSpec *ytv1.InstanceSpec) field.ErrorList {
-	var allErrors field.ErrorList
+func validateRemoteTimbertruck(commonSpec *ytv1.CommonSpec, instanceSpec *ytv1.InstanceSpec) Results {
+	var results Results
 	specPath := field.NewPath("spec")
 	if commonSpec.Timbertruck != nil {
-		allErrors = append(allErrors, field.Forbidden(specPath.Child("timbertruck"), "timbertruck delivery is not supported for remote resources"))
+		results.Error(field.Forbidden(specPath.Child("timbertruck"), "timbertruck delivery is not supported for remote resources"))
 	}
 	for i, logger := range instanceSpec.StructuredLoggers {
 		if logger.EnableDelivery != nil {
-			allErrors = append(allErrors, field.Forbidden(
+			results.Error(field.Forbidden(
 				specPath.Child("structuredLoggers").Index(i).Child("enableDelivery"),
 				"timbertruck delivery is not supported for remote resources",
 			))
 		}
 	}
-	allErrors = append(allErrors, validateStructuredLoggers(instanceSpec.StructuredLoggers, specPath)...)
-	return allErrors
-}
-
-func remoteValidationError(gvk schema.GroupVersionKind, name string, errors field.ErrorList) error {
-	if len(errors) == 0 {
-		return nil
-	}
-	return apierrors.NewInvalid(gvk.GroupKind(), name, errors)
+	results.Append(validateStructuredLoggers(instanceSpec.StructuredLoggers, specPath))
+	return results
 }
 
 type remoteDataNodesValidator struct {
@@ -58,8 +48,11 @@ type remoteDataNodesValidator struct {
 func NewRemoteDataNodesValidator() *remoteDataNodesValidator {
 	r := &remoteDataNodesValidator{}
 	r.Object = &ytv1.RemoteDataNodes{}
-	r.Validate = func(_ context.Context, obj, _ *ytv1.RemoteDataNodes) (admission.Warnings, error) {
-		return nil, remoteValidationError(ytv1.GroupVersion.WithKind("RemoteDataNodes"), obj.Name, validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec))
+	r.Validate = func(_ context.Context, obj, _ *ytv1.RemoteDataNodes) Results {
+		if obj == nil {
+			return Results{}
+		}
+		return validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec)
 	}
 	return r
 }
@@ -71,8 +64,11 @@ type remoteExecNodesValidator struct {
 func NewRemoteExecNodesValidator() *remoteExecNodesValidator {
 	r := &remoteExecNodesValidator{}
 	r.Object = &ytv1.RemoteExecNodes{}
-	r.Validate = func(_ context.Context, obj, _ *ytv1.RemoteExecNodes) (admission.Warnings, error) {
-		return nil, remoteValidationError(ytv1.GroupVersion.WithKind("RemoteExecNodes"), obj.Name, validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec))
+	r.Validate = func(_ context.Context, obj, _ *ytv1.RemoteExecNodes) Results {
+		if obj == nil {
+			return Results{}
+		}
+		return validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec)
 	}
 	return r
 }
@@ -84,8 +80,11 @@ type remoteTabletNodesValidator struct {
 func NewRemoteTabletNodesValidator() *remoteTabletNodesValidator {
 	r := &remoteTabletNodesValidator{}
 	r.Object = &ytv1.RemoteTabletNodes{}
-	r.Validate = func(_ context.Context, obj, _ *ytv1.RemoteTabletNodes) (admission.Warnings, error) {
-		return nil, remoteValidationError(ytv1.GroupVersion.WithKind("RemoteTabletNodes"), obj.Name, validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec))
+	r.Validate = func(_ context.Context, obj, _ *ytv1.RemoteTabletNodes) Results {
+		if obj == nil {
+			return Results{}
+		}
+		return validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec)
 	}
 	return r
 }
@@ -97,8 +96,11 @@ type offshoreDataGatewaysValidator struct {
 func NewOffshoreDataGatewaysValidator() *offshoreDataGatewaysValidator {
 	r := &offshoreDataGatewaysValidator{}
 	r.Object = &ytv1.OffshoreDataGateways{}
-	r.Validate = func(_ context.Context, obj, _ *ytv1.OffshoreDataGateways) (admission.Warnings, error) {
-		return nil, remoteValidationError(ytv1.GroupVersion.WithKind("OffshoreDataGateways"), obj.Name, validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec))
+	r.Validate = func(_ context.Context, obj, _ *ytv1.OffshoreDataGateways) Results {
+		if obj == nil {
+			return Results{}
+		}
+		return validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec)
 	}
 	return r
 }

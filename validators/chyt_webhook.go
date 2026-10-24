@@ -19,8 +19,6 @@ package validators
 import (
 	"context"
 
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
 
@@ -38,6 +36,6 @@ func NewChytValidator() *chytValidator {
 	return r
 }
 
-func (r *chytValidator) evaluateChytValidation(ctx context.Context, newChyt, oldChyt *ytv1.Chyt) (admission.Warnings, error) {
-	return nil, nil
+func (r *chytValidator) evaluateChytValidation(ctx context.Context, newChyt, oldChyt *ytv1.Chyt) Results {
+	return Results{}
 }

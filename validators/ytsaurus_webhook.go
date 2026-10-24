@@ -32,8 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/utils/ptr"
 
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
@@ -53,12 +51,12 @@ type ytsaurusValidator struct {
 func NewYtsaurusValidator() *ytsaurusValidator {
 	r := &ytsaurusValidator{}
 	r.Object = &ytv1.Ytsaurus{}
-	r.Validate = r.evaluateYtsaurusValidation
+	r.Validate = r.validateYtsaurus
 	return r
 }
 
-func (r *baseValidator) validateTransportSecurity(spec *ytv1.RPCTransportSpec, commonSpec *ytv1.CommonSpec, path *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *baseValidator) validateTransportSecurity(spec *ytv1.RPCTransportSpec, commonSpec *ytv1.CommonSpec, path *field.Path) Results {
+	var results Results
 
 	features := ptr.Deref(commonSpec.ClusterFeatures, ytv1.ClusterFeatures{})
 
@@ -68,74 +66,74 @@ func (r *baseValidator) validateTransportSecurity(spec *ytv1.RPCTransportSpec, c
 
 	if spec == nil {
 		if features.SecureClusterTransports {
-			allErrors = append(allErrors, field.Required(path, "Secure cluster transport demands TLS setup"))
+			results.Error(field.Required(path, "Secure cluster transport demands TLS setup"))
 		}
-		return allErrors
+		return results
 	}
 
 	secretPath := path.Child("tlsSecret")
 	clientSecretPath := path.Child("tlsClientSecret")
 	if spec.TLSSecret == nil && (spec.TLSRequired || !spec.TLSInsecure) {
-		allErrors = append(allErrors, field.Required(secretPath, "TLS certificate for native transport is required"))
+		results.Error(field.Required(secretPath, "TLS certificate for native transport is required"))
 	}
 	if spec.TLSClientSecret == nil && (spec.TLSRequired && !spec.TLSInsecure) {
-		allErrors = append(allErrors, field.Required(clientSecretPath, "Client TLS certificate for native transport is required"))
+		results.Error(field.Required(clientSecretPath, "Client TLS certificate for native transport is required"))
 	}
 
 	if features.SecureClusterTransports {
 		if !spec.TLSRequired {
-			allErrors = append(allErrors, field.Forbidden(path.Child("tlsRequired"), "Secure cluster transport demands TLS-only native transport"))
+			results.Error(field.Forbidden(path.Child("tlsRequired"), "Secure cluster transport demands TLS-only native transport"))
 		}
 		if spec.TLSInsecure {
-			allErrors = append(allErrors, field.Forbidden(path.Child("tlsInsecure"), "Secure cluster transport demands TLS certificate validation"))
+			results.Error(field.Forbidden(path.Child("tlsInsecure"), "Secure cluster transport demands TLS certificate validation"))
 		}
 		if spec.TLSSecret == nil {
-			allErrors = append(allErrors, field.Required(secretPath, "Secure cluster transport demands TLS certificate for native transport"))
+			results.Error(field.Required(secretPath, "Secure cluster transport demands TLS certificate for native transport"))
 		}
 		if spec.TLSClientSecret == nil {
-			allErrors = append(allErrors, field.Required(clientSecretPath, "Secure cluster transport demands client TLS certificate for native transport"))
+			results.Error(field.Required(clientSecretPath, "Secure cluster transport demands client TLS certificate for native transport"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateDiscovery(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
-	allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.Discovery.InstanceSpec, &newYtsaurus.Spec.CommonSpec, field.NewPath("spec").Child("discovery"))...)
+	results.Append(r.validateInstanceSpec(newYtsaurus.Spec.Discovery.InstanceSpec, &newYtsaurus.Spec.CommonSpec, field.NewPath("spec").Child("discovery")))
 
-	return allErrors
+	return results
 }
 
 //nolint:cyclop,nestif //ok
-func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus, mastersSpec, oldMastersSpec *ytv1.MastersSpec, path *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus, mastersSpec, oldMastersSpec *ytv1.MastersSpec, path *field.Path) Results {
+	var results Results
 
-	allErrors = append(allErrors, r.validateInstanceSpecWithTimbertruck(mastersSpec.InstanceSpec, &newYtsaurus.Spec.CommonSpec, mastersSpec.Timbertruck, path)...)
-	allErrors = append(allErrors, r.validateHostAddresses(newYtsaurus, mastersSpec, path)...)
+	results.Append(r.validateInstanceSpecWithTimbertruck(mastersSpec.InstanceSpec, &newYtsaurus.Spec.CommonSpec, mastersSpec.Timbertruck, path))
+	results.Append(r.validateHostAddresses(newYtsaurus, mastersSpec, path))
 
 	if ytv1.FindFirstLocation(mastersSpec.Locations, ytv1.LocationTypeMasterChangelogs) == nil {
-		allErrors = append(allErrors, field.NotFound(path.Child("locations"), ytv1.LocationTypeMasterChangelogs))
+		results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeMasterChangelogs))
 	}
 
 	if ytv1.FindFirstLocation(mastersSpec.Locations, ytv1.LocationTypeMasterSnapshots) == nil {
-		allErrors = append(allErrors, field.NotFound(path.Child("locations"), ytv1.LocationTypeMasterSnapshots))
+		results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeMasterSnapshots))
 	}
 
 	if oldMastersSpec != nil && oldMastersSpec.CellTag != mastersSpec.CellTag {
-		allErrors = append(allErrors, field.Invalid(path.Child("cellTag"), mastersSpec.CellTag, "Could not be changed"))
+		results.Error(field.Invalid(path.Child("cellTag"), mastersSpec.CellTag, "Could not be changed"))
 	}
 
 	rolesPath := path.Child("roles")
 	isPrimary := mastersSpec.CellTag == newYtsaurus.Spec.PrimaryMasters.CellTag
 	isMulticell := len(newYtsaurus.Spec.SecondaryMasters) > 0
 	cellRoles := UniqueValues[ytv1.MasterCellRole]{}
-	allErrors = append(allErrors, cellRoles.InsertAll(ytv1.GetMasterCellRoles(mastersSpec.Roles, isPrimary, isMulticell), rolesPath)...)
+	results.Append(cellRoles.InsertAll(ytv1.GetMasterCellRoles(mastersSpec.Roles, isPrimary, isMulticell), rolesPath))
 	cellRolesChanged := false
 
 	if cellRoles.Count(ytv1.MasterCellRoleChunkHost, ytv1.MasterCellRoleDedicatedChunkHost) > 1 {
-		allErrors = append(allErrors, field.Forbidden(rolesPath, fmt.Sprintf("Master cell %v has role conflict: %v %v",
+		results.Error(field.Forbidden(rolesPath, fmt.Sprintf("Master cell %v has role conflict: %v %v",
 			mastersSpec.CellTag, ytv1.MasterCellRoleChunkHost, ytv1.MasterCellRoleDedicatedChunkHost)))
 	}
 
@@ -150,28 +148,28 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 					cellRoles.Count(ytv1.MasterCellRoleChunkHost, ytv1.MasterCellRoleDedicatedChunkHost) > 0 {
 					// Allow interchangeable chunk host roles.
 				} else {
-					allErrors = append(allErrors, field.Forbidden(rolesPath, fmt.Sprintf("Cell %v role could not be removed: %v", mastersSpec.CellTag, role)))
+					results.Error(field.Forbidden(rolesPath, fmt.Sprintf("Cell %v role could not be removed: %v", mastersSpec.CellTag, role)))
 				}
 			}
 		}
 		if isPrimary && isMulticell && !wasMulticell && mastersSpec.Roles == nil {
-			allErrors = append(allErrors, field.Required(rolesPath, "Upgrade to multicell requires filling roles for primary cell"))
+			results.Error(field.Required(rolesPath, "Upgrade to multicell requires filling roles for primary cell"))
 		}
 	}
 
 	newInstanceCount := mastersSpec.InstanceCount
 	newMinReady := min(newInstanceCount, ptr.Deref(mastersSpec.MinReadyInstanceCount, newInstanceCount))
 	if newInstanceCount > 0 && newMinReady <= newInstanceCount/2 && !newYtsaurus.Spec.EphemeralCluster {
-		allErrors = append(allErrors, field.Invalid(path.Child("minReadyInstanceCount"), newMinReady, "Must be bigger than half of instanceCount"))
+		results.Error(field.Invalid(path.Child("minReadyInstanceCount"), newMinReady, "Must be bigger than half of instanceCount"))
 	}
 	if newMinReady > newInstanceCount {
-		allErrors = append(allErrors, field.Invalid(path.Child("minReadyInstanceCount"), newMinReady, "Cannot be bigger than instanceCount"))
+		results.Error(field.Invalid(path.Child("minReadyInstanceCount"), newMinReady, "Cannot be bigger than instanceCount"))
 	}
 
 	instanceCountPath := path.Child("instanceCount")
 	if oldMastersSpec == nil {
 		if oldYtsaurus != nil && !isPrimary && newInstanceCount != 0 {
-			allErrors = append(allErrors, field.Forbidden(instanceCountPath, "New secondary master cell initially must have instanceCount = 0"))
+			results.Error(field.Forbidden(instanceCountPath, "New secondary master cell initially must have instanceCount = 0"))
 		}
 	} else {
 		oldInstanceCount := oldMastersSpec.InstanceCount
@@ -180,18 +178,18 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 			if !slices.ContainsFunc(newYtsaurus.Status.UpdateStatus.MasterCellsMaintenance, func(info ytv1.MasterCellMaintenanceInfo) bool {
 				return info.CellTag == mastersSpec.CellTag && info.Unregistered
 			}) {
-				allErrors = append(allErrors, field.Invalid(instanceCountPath, mastersSpec.InstanceCount, "Master cell must be unregistered"))
+				results.Error(field.Invalid(instanceCountPath, mastersSpec.InstanceCount, "Master cell must be unregistered"))
 			}
 		}
 		if newInstanceCount < 1 && oldInstanceCount > 0 {
-			allErrors = append(allErrors, field.Invalid(instanceCountPath, mastersSpec.InstanceCount, "Cannot remove last instance"))
+			results.Error(field.Invalid(instanceCountPath, mastersSpec.InstanceCount, "Cannot remove last instance"))
 		}
 		if newInstanceCount/2 < oldInstanceCount-oldMinReady {
-			allErrors = append(allErrors, field.Invalid(instanceCountPath, mastersSpec.InstanceCount,
+			results.Error(field.Invalid(instanceCountPath, mastersSpec.InstanceCount,
 				"Cannot shrink without possibility of losing quorum, increase minReadyInstanceCount first"))
 		}
 		if newInstanceCount > oldMinReady*2-1 && oldInstanceCount > 1 {
-			allErrors = append(allErrors, field.Invalid(instanceCountPath, mastersSpec.InstanceCount,
+			results.Error(field.Invalid(instanceCountPath, mastersSpec.InstanceCount,
 				fmt.Sprintf("Cannot grow bigger than previous minReadyInstanceCount*2-1 (%d) in one step", oldMinReady*2-1)))
 		}
 
@@ -199,33 +197,33 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 		newMaintenance := ptr.Deref(newYtsaurus.Spec.ClusterMaintenance, ytv1.ClusterMaintenance{})
 		if oldMaintenance.Shutdown != ytv1.ClusterShutdownExceptMasters || newMaintenance.Shutdown != ytv1.ClusterShutdownExceptMasters {
 			if oldInstanceCount != newInstanceCount {
-				allErrors = append(allErrors, field.Forbidden(instanceCountPath, "Could be changed only during master cells maintenance"))
+				results.Error(field.Forbidden(instanceCountPath, "Could be changed only during master cells maintenance"))
 			}
 			if cellRolesChanged {
-				allErrors = append(allErrors, field.Forbidden(rolesPath, "Could be changed only during master cells maintenance"))
+				results.Error(field.Forbidden(rolesPath, "Could be changed only during master cells maintenance"))
 			}
 		}
 		if oldInstanceCount > 0 && cellRolesChanged && (oldMaintenance.AssignMasterCellsRoles || !newMaintenance.AssignMasterCellsRoles) {
-			allErrors = append(allErrors, field.Forbidden(rolesPath, "Could be changed only together with enabling assignMasterCellsRoles"))
+			results.Error(field.Forbidden(rolesPath, "Could be changed only together with enabling assignMasterCellsRoles"))
 		}
 	}
 
 	if mastersSpec.InstanceCount > 1 && !newYtsaurus.Spec.EphemeralCluster {
 		if affinity := mastersSpec.Affinity; affinity == nil || affinity.PodAntiAffinity == nil {
-			allErrors = append(allErrors, field.Required(path.Child("affinity").Child("podAntiAffinity"),
+			results.Error(field.Required(path.Child("affinity").Child("podAntiAffinity"),
 				"Masters should be placed on different nodes"))
 		}
 	}
 
-	allErrors = append(allErrors, r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, mastersSpec.Locations, path)...)
+	results.Append(r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, mastersSpec.Locations, path))
 
-	allErrors = append(allErrors, r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars"))...)
+	results.Append(r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars")))
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	mastersSpec := &newYtsaurus.Spec.PrimaryMasters
 	path := field.NewPath("spec").Child("primaryMasters")
@@ -235,24 +233,24 @@ func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv
 		oldMastersSpec = &oldYtsaurus.Spec.PrimaryMasters
 	}
 
-	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
+	results.Append(r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path))
 
 	if mastersSpec.InstanceCount < 1 {
-		allErrors = append(allErrors, field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot be below 1"))
+		results.Error(field.Invalid(path.Child("instanceCount"), mastersSpec.InstanceCount, "Cannot be below 1"))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	cellTags := UniqueValues[uint16]{}
 	cellTags.Insert(newYtsaurus.Spec.PrimaryMasters.CellTag, field.NewPath("spec").Child("primaryMasters").Child("cellTag"))
 
 	// TODO(khlebnikov): Add option for RPC port to collocate primary and secondary masters in host network.
 	hostAddresses := UniqueValues[string]{}
-	allErrors = append(allErrors, hostAddresses.InsertAll(newYtsaurus.Spec.PrimaryMasters.HostAddresses, field.NewPath("spec").Child("primaryMasters").Child("hostAddresses"))...)
+	results.Append(hostAddresses.InsertAll(newYtsaurus.Spec.PrimaryMasters.HostAddresses, field.NewPath("spec").Child("primaryMasters").Child("hostAddresses")))
 
 	secondaryMastersPath := field.NewPath("spec").Child("secondaryMasters")
 	for i := range newYtsaurus.Spec.SecondaryMasters {
@@ -262,17 +260,17 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 		if oldYtsaurus != nil && len(oldYtsaurus.Spec.SecondaryMasters) > i {
 			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i]
 		}
-		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
-		allErrors = append(allErrors, cellTags.Insert(mastersSpec.CellTag, path.Child("cellTag"))...)
-		allErrors = append(allErrors, hostAddresses.InsertAll(mastersSpec.HostAddresses, path.Child("hostAddresses"))...)
+		results.Append(r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path))
+		results.Append(cellTags.Insert(mastersSpec.CellTag, path.Child("cellTag")))
+		results.Append(hostAddresses.InsertAll(mastersSpec.HostAddresses, path.Child("hostAddresses")))
 	}
 
 	if cnt := len(cellTags) - 1; cnt > consts.MaxSecondaryMasterCells {
-		allErrors = append(allErrors, field.TooMany(secondaryMastersPath, cnt, consts.MaxSecondaryMasterCells))
+		results.Error(field.TooMany(secondaryMastersPath, cnt, consts.MaxSecondaryMasterCells))
 	}
 	for cellTag, path := range cellTags {
 		if cellTag < consts.MinValidCellTag || cellTag > consts.MaxValidCellTag {
-			allErrors = append(allErrors, field.Invalid(path, cellTag, fmt.Sprintf("Cell tag must be in range %v..%v", consts.MinValidCellTag, consts.MaxValidCellTag)))
+			results.Error(field.Invalid(path, cellTag, fmt.Sprintf("Cell tag must be in range %v..%v", consts.MinValidCellTag, consts.MaxValidCellTag)))
 		}
 	}
 
@@ -282,34 +280,34 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 			oldMastersSpec := &oldYtsaurus.Spec.SecondaryMasters[i]
 			if oldMastersSpec.InstanceCount > 0 {
 				path := field.NewPath("spec").Child("secondaryMasters").Index(i)
-				allErrors = append(allErrors, field.Forbidden(path, "Cannot remove cell with instances"))
+				results.Error(field.Forbidden(path, "Cannot remove cell with instances"))
 			}
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *ytv1.Ytsaurus, mastersSpec *ytv1.MastersSpec, fieldPath *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateHostAddresses(newYtsaurus *ytv1.Ytsaurus, mastersSpec *ytv1.MastersSpec, fieldPath *field.Path) Results {
+	var results Results
 
 	hostAddressesFieldPath := fieldPath.Child("hostAddresses")
 	if !ptr.Deref(mastersSpec.HostNetwork, ptr.Deref(newYtsaurus.Spec.HostNetwork, false)) && len(mastersSpec.HostAddresses) != 0 {
-		allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("hostNetwork"),
+		results.Error(field.Required(field.NewPath("spec").Child("hostNetwork"),
 			fmt.Sprintf("%s doesn't make sense without hostNetwork=true", hostAddressesFieldPath.String())))
 	}
 
 	if len(mastersSpec.HostAddresses) != 0 && len(mastersSpec.HostAddresses) != int(mastersSpec.InstanceCount) {
 		instanceCountFieldPath := fieldPath.Child("instanceCount")
-		allErrors = append(allErrors, field.Invalid(hostAddressesFieldPath, mastersSpec.HostAddresses,
+		results.Error(field.Invalid(hostAddressesFieldPath, mastersSpec.HostAddresses,
 			fmt.Sprintf("%s list length should be equal to %s", hostAddressesFieldPath.String(), instanceCountFieldPath.String())))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	features := ptr.Deref(newYtsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{})
 	httpRoles := make(map[string]bool)
@@ -317,24 +315,24 @@ func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *ytv1.Ytsaurus) fiel
 	for i, hp := range newYtsaurus.Spec.HTTPProxies {
 		path := field.NewPath("spec").Child("httpProxies").Index(i)
 		if _, exists := httpRoles[hp.Role]; exists {
-			allErrors = append(allErrors, field.Duplicate(path.Child("role"), hp.Role))
+			results.Error(field.Duplicate(path.Child("role"), hp.Role))
 		}
 		if hp.Role == consts.DefaultHTTPProxyRole {
 			hasDefaultHTTPProxy = true
 		}
 		httpRoles[hp.Role] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(hp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(hp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if features.HTTPProxyHaveHTTPSAddress && hp.Transport.HTTPSSecret == nil {
-			allErrors = append(allErrors, field.Required(
+			results.Error(field.Required(
 				path.Child("transport").Child("httpsSecret"),
 				"Cluster feature httpProxyHaveHttpsAddress requires HTTPS for all HTTP proxies",
 			))
 		}
 
 		if features.SecureClusterTransports && !hp.Transport.DisableHTTP {
-			allErrors = append(allErrors, field.Forbidden(
+			results.Error(field.Forbidden(
 				path.Child("transport").Child("disableHttp"),
 				"Secure cluster transport demands HTTPS-only proxies",
 			))
@@ -342,109 +340,109 @@ func (r *ytsaurusValidator) validateHTTPProxies(newYtsaurus *ytv1.Ytsaurus) fiel
 	}
 
 	if !hasDefaultHTTPProxy {
-		allErrors = append(allErrors, field.Required(
+		results.Error(field.Required(
 			field.NewPath("spec").Child("httpProxies"),
 			fmt.Sprintf("HTTP proxy with `%s` role should exist", consts.DefaultHTTPProxyRole)))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateRPCProxies(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateRPCProxies(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	features := ptr.Deref(newYtsaurus.Spec.ClusterFeatures, ytv1.ClusterFeatures{})
 	rpcRoles := make(map[string]bool)
 	for i, rp := range newYtsaurus.Spec.RPCProxies {
 		path := field.NewPath("spec").Child("rpcProxies").Index(i)
 		if _, exists := rpcRoles[rp.Role]; exists {
-			allErrors = append(allErrors, field.Duplicate(path.Child("role"), rp.Role))
+			results.Error(field.Duplicate(path.Child("role"), rp.Role))
 		}
 		rpcRoles[rp.Role] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(rp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		transportPath := path.Child("transport")
 		if rp.Transport.TLSRequired && rp.Transport.TLSSecret == nil {
-			allErrors = append(allErrors, field.Required(transportPath.Child("tlsSecret"), "TLS-only RPC proxy requires certificate"))
+			results.Error(field.Required(transportPath.Child("tlsSecret"), "TLS-only RPC proxy requires certificate"))
 		}
 
 		if features.SecureClusterTransports {
 			if !rp.Transport.TLSRequired {
-				allErrors = append(allErrors, field.Required(transportPath.Child("tlsRequired"), "Secure cluster transport demands TLS-only RPC proxies"))
+				results.Error(field.Required(transportPath.Child("tlsRequired"), "Secure cluster transport demands TLS-only RPC proxies"))
 			}
 			if rp.Transport.TLSInsecure {
-				allErrors = append(allErrors, field.Forbidden(transportPath.Child("tlsInsecure"), "Secure cluster transport demands TLS certificate validation"))
+				results.Error(field.Forbidden(transportPath.Child("tlsInsecure"), "Secure cluster transport demands TLS certificate validation"))
 			}
 			if rp.Transport.TLSSecret == nil {
-				allErrors = append(allErrors, field.Required(transportPath.Child("tlsSecret"), "Secure cluster transport demands RPC proxy certificate"))
+				results.Error(field.Required(transportPath.Child("tlsSecret"), "Secure cluster transport demands RPC proxy certificate"))
 			}
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateTCPProxies(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateTCPProxies(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	tcpRoles := make(map[string]bool)
 	for i, rp := range newYtsaurus.Spec.TCPProxies {
 		path := field.NewPath("spec").Child("tcpProxies").Index(i)
 		if _, exists := tcpRoles[rp.Role]; exists {
-			allErrors = append(allErrors, field.Duplicate(path.Child("role"), rp.Role))
+			results.Error(field.Duplicate(path.Child("role"), rp.Role))
 		}
 		tcpRoles[rp.Role] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(rp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(rp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	names := make(map[string]bool)
 	for i, dn := range newYtsaurus.Spec.DataNodes {
 		path := field.NewPath("spec").Child("dataNodes").Index(i)
 
 		if _, exists := names[dn.Name]; exists {
-			allErrors = append(allErrors, field.Duplicate(path.Child("name"), dn.Name))
+			results.Error(field.Duplicate(path.Child("name"), dn.Name))
 		}
 		names[dn.Name] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(dn.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(dn.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if ytv1.FindFirstLocation(dn.Locations, ytv1.LocationTypeChunkStore) == nil {
-			allErrors = append(allErrors, field.NotFound(path.Child("locations"), ytv1.LocationTypeChunkStore))
+			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeChunkStore))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
 func (r *baseValidator) validateHydraPersistenceUploaderSpec(
-	hydraPersistenceUploader *ytv1.HydraPersistenceUploaderSpec, locations []ytv1.LocationSpec, parentPath *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+	hydraPersistenceUploader *ytv1.HydraPersistenceUploaderSpec, locations []ytv1.LocationSpec, parentPath *field.Path) Results {
+	var results Results
 
 	if hydraPersistenceUploader == nil {
-		return allErrors
+		return results
 	}
 
 	if hydraPersistenceUploader.Image == nil {
-		allErrors = append(allErrors, field.Required(parentPath.Child("hydraPersistenceUploader", "image"), "hydraPersistenceUploader image is required"))
+		results.Error(field.Required(parentPath.Child("hydraPersistenceUploader", "image"), "hydraPersistenceUploader image is required"))
 	}
 
-	allErrors = append(allErrors, requireLocations(
+	results.Append(requireLocations(
 		parentPath.Child("locations"),
 		locations,
 		"hydraPersistenceUploader",
 		ytv1.LocationTypeMasterSnapshots,
 		ytv1.LocationTypeMasterChangelogs,
-	)...)
+	))
 
-	return allErrors
+	return results
 }
 
 // validateTimbertruckSpec validates timbertruck log delivery for a single component. Delivery is
@@ -457,8 +455,8 @@ func (r *baseValidator) validateTimbertruckSpec(
 	structuredLoggers []ytv1.StructuredLoggerSpec,
 	locations []ytv1.LocationSpec,
 	parentPath *field.Path,
-) field.ErrorList {
-	var allErrors field.ErrorList
+) Results {
+	var results Results
 
 	anyPerLogDelivery := false
 	for _, logger := range structuredLoggers {
@@ -471,51 +469,51 @@ func (r *baseValidator) validateTimbertruckSpec(
 	legacyMaster := componentTimbertruck != nil
 
 	if !anyPerLogDelivery && !legacyMaster {
-		return allErrors
+		return results
 	}
 
 	hasImage := func(tt *ytv1.TimbertruckSpec) bool {
 		return tt != nil && tt.Image != nil && *tt.Image != ""
 	}
 	if !hasImage(componentTimbertruck) && !hasImage(commonTimbertruck) {
-		allErrors = append(allErrors, field.Required(parentPath.Child("timbertruck", "image"),
+		results.Error(field.Required(parentPath.Child("timbertruck", "image"),
 			"timbertruck image is required (set it here or in spec.timbertruck.image) when log delivery is enabled"))
 	}
 	if legacyMaster && len(structuredLoggers) == 0 {
-		allErrors = append(allErrors, field.Required(parentPath.Child("structuredLoggers"),
+		results.Error(field.Required(parentPath.Child("structuredLoggers"),
 			"structuredLoggers must be configured when timbertruck is enabled"))
 	}
-	allErrors = append(allErrors, requireLocations(
+	results.Append(requireLocations(
 		parentPath.Child("locations"),
 		locations,
 		"timbertruck",
 		ytv1.LocationTypeLogs,
-	)...)
-	return allErrors
+	))
+	return results
 }
 
-func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, parentPath *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, parentPath *field.Path) Results {
+	var results Results
 
 	for loggerIdx, logger := range structuredLoggers {
 		loggerPath := parentPath.Child("structuredLoggers").Index(loggerIdx)
 
 		if (logger.Category != nil) == (logger.CategoriesFilter != nil) {
-			allErrors = append(allErrors, field.Invalid(loggerPath, logger.Name,
+			results.Error(field.Invalid(loggerPath, logger.Name,
 				"exactly one of category and categoriesFilter must be set"))
 		}
 		if logger.Category != nil && *logger.Category == "" {
-			allErrors = append(allErrors, field.Required(loggerPath.Child("category"),
+			results.Error(field.Required(loggerPath.Child("category"),
 				"category must not be empty"))
 		}
 		// Without both, the rule ends up with no category restriction and matches every category.
 		if filter := logger.CategoriesFilter; filter != nil && (filter.Type == "" || len(filter.Values) == 0) {
-			allErrors = append(allErrors, field.Required(loggerPath.Child("categoriesFilter"),
+			results.Error(field.Required(loggerPath.Child("categoriesFilter"),
 				"categoriesFilter requires type and values"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
 func requireLocations(
@@ -523,17 +521,17 @@ func requireLocations(
 	locations []ytv1.LocationSpec,
 	reason string,
 	locationTypes ...ytv1.LocationType,
-) field.ErrorList {
-	var allErrors field.ErrorList
+) Results {
+	var results Results
 	for _, locationType := range locationTypes {
 		if ytv1.FindFirstLocation(locations, locationType) == nil {
-			allErrors = append(allErrors, field.Required(
+			results.Error(field.Required(
 				locationsPath,
 				fmt.Sprintf("%s location must be configured for %s", locationType, reason),
 			))
 		}
 	}
-	return allErrors
+	return results
 }
 
 // validateExtraTimbertruckComponents validates timbertruck log delivery for the server components
@@ -541,15 +539,15 @@ func requireLocations(
 // a per-log enableDelivery flag. It mirrors the runtime enumeration in components so the webhook and
 // the operator agree on which components may deliver logs. componentTimbertruck is always nil here
 // because only masters carry a component-level timbertruck spec.
-func (r *ytsaurusValidator) validateExtraTimbertruckComponents(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateExtraTimbertruckComponents(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 	commonTimbertruck := newYtsaurus.Spec.Timbertruck
 	specPath := field.NewPath("spec")
 
 	validate := func(instanceSpec *ytv1.InstanceSpec, path *field.Path) {
-		allErrors = append(allErrors, r.validateTimbertruckSpec(nil, commonTimbertruck,
-			instanceSpec.StructuredLoggers, instanceSpec.Locations, path)...)
-		allErrors = append(allErrors, validateStructuredLoggers(instanceSpec.StructuredLoggers, path)...)
+		results.Append(r.validateTimbertruckSpec(nil, commonTimbertruck,
+			instanceSpec.StructuredLoggers, instanceSpec.Locations, path))
+		results.Append(validateStructuredLoggers(instanceSpec.StructuredLoggers, path))
 	}
 
 	if mc := newYtsaurus.Spec.MasterCaches; mc != nil {
@@ -568,203 +566,203 @@ func (r *ytsaurusValidator) validateExtraTimbertruckComponents(newYtsaurus *ytv1
 		validate(&tb.InstanceSpec, specPath.Child("tabletBalancers"))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *baseValidator) validateSidecars(sidecars []string, path *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *baseValidator) validateSidecars(sidecars []string, path *field.Path) Results {
+	var results Results
 
 	names := make(map[string]bool)
 	for i, sidecarSpec := range sidecars {
 		sidecar := corev1.Container{}
 		if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecar); err != nil {
-			allErrors = append(allErrors, field.Invalid(path.Index(i), sidecarSpec, err.Error()))
+			results.Error(field.Invalid(path.Index(i), sidecarSpec, err.Error()))
 		}
 		if _, exists := names[sidecar.Name]; exists {
-			allErrors = append(allErrors, field.Duplicate(path.Index(i).Child("name"), sidecar.Name))
+			results.Error(field.Duplicate(path.Index(i).Child("name"), sidecar.Name))
 		}
 		names[sidecar.Name] = true
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	names := make(map[string]bool)
 	for i, en := range newYtsaurus.Spec.ExecNodes {
 		path := field.NewPath("spec").Child("execNodes").Index(i)
 
 		if _, exists := names[en.Name]; exists {
-			allErrors = append(allErrors, field.Duplicate(path.Child("name"), en.Name))
+			results.Error(field.Duplicate(path.Child("name"), en.Name))
 		}
 		names[en.Name] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(en.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(en.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if ytv1.FindFirstLocation(en.Locations, ytv1.LocationTypeChunkCache) == nil {
-			allErrors = append(allErrors, field.NotFound(path.Child("locations"), ytv1.LocationTypeChunkCache))
+			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeChunkCache))
 		}
 
 		if ytv1.FindFirstLocation(en.Locations, ytv1.LocationTypeSlots) == nil {
-			allErrors = append(allErrors, field.NotFound(path.Child("locations"), ytv1.LocationTypeSlots))
+			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeSlots))
 		}
 
 		if en.InitContainers != nil {
-			allErrors = append(allErrors, r.validateSidecars(en.InitContainers, path.Child("initContainers"))...)
+			results.Append(r.validateSidecars(en.InitContainers, path.Child("initContainers")))
 		}
 		if en.Sidecars != nil {
-			allErrors = append(allErrors, r.validateSidecars(en.Sidecars, path.Child("sidecars"))...)
+			results.Append(r.validateSidecars(en.Sidecars, path.Child("sidecars")))
 		}
 	}
 
 	if len(newYtsaurus.Spec.ExecNodes) > 0 {
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+			results.Error(field.Required(field.NewPath("spec").Child("schedulers"),
 				"execNodes doesn't make sense without schedulers"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateSchedulers(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateSchedulers(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	if newYtsaurus.Spec.Schedulers != nil {
 		path := field.NewPath("spec").Child("schedulers")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.Schedulers.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.Schedulers.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if newYtsaurus.Spec.ControllerAgents == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("controllerAgents"),
+			results.Error(field.Required(field.NewPath("spec").Child("controllerAgents"),
 				"schedulers doesn't make sense without controllerAgents"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateControllerAgents(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateControllerAgents(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	if newYtsaurus.Spec.ControllerAgents != nil {
 		path := field.NewPath("spec").Child("controllerAgents")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.ControllerAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.ControllerAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+			results.Error(field.Required(field.NewPath("spec").Child("schedulers"),
 				"controllerAgents doesn't make sense without schedulers"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateTabletNodes(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateTabletNodes(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	names := make(map[string]bool)
 	for i, tn := range newYtsaurus.Spec.TabletNodes {
 		path := field.NewPath("spec").Child("tabletNodes").Index(i)
 
 		if _, exists := names[tn.Name]; exists {
-			allErrors = append(allErrors, field.Duplicate(path.Child("name"), tn.Name))
+			results.Error(field.Duplicate(path.Child("name"), tn.Name))
 		}
 		names[tn.Name] = true
 
-		allErrors = append(allErrors, r.validateInstanceSpec(tn.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(tn.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateChyt(_ *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateChyt(_ *ytv1.Ytsaurus) Results {
+	var results Results
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateStrawberry(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateStrawberry(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	if newYtsaurus.Spec.StrawberryController != nil {
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+			results.Error(field.Required(field.NewPath("spec").Child("schedulers"),
 				"schedulers are required for strawberry"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateQueryTrackers(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateQueryTrackers(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	if newYtsaurus.Spec.QueryTrackers != nil {
 		path := field.NewPath("spec").Child("queryTrackers")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueryTrackers.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.QueryTrackers.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if len(newYtsaurus.Spec.TabletNodes) == 0 {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"),
+			results.Error(field.Required(field.NewPath("spec").Child("tabletNodes"),
 				"tabletNodes are required for queryTrackers"))
 		}
 
 		if newYtsaurus.Spec.Schedulers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("schedulers"),
+			results.Error(field.Required(field.NewPath("spec").Child("schedulers"),
 				"schedulers are required for queryTrackers"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateQueueAgents(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateQueueAgents(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	if newYtsaurus.Spec.QueueAgents != nil {
 		path := field.NewPath("spec").Child("queueAgents")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.QueueAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.QueueAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if len(newYtsaurus.Spec.TabletNodes) == 0 {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("tabletNodes"),
+			results.Error(field.Required(field.NewPath("spec").Child("tabletNodes"),
 				"tabletNodes are required for queueAgents"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateSpyt(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateSpyt(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 	path := field.NewPath("spec").Child("spyt")
 
 	if newYtsaurus.Spec.Spyt != nil {
-		allErrors = append(allErrors, field.Invalid(path, newYtsaurus.Spec.Spyt,
+		results.Error(field.Invalid(path, newYtsaurus.Spec.Spyt,
 			"spyt is deprecated here, use Spyt resource instead"))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateYQLAgents(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateYQLAgents(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	if newYtsaurus.Spec.YQLAgents != nil {
 		path := field.NewPath("spec").Child("YQLAgents")
-		allErrors = append(allErrors, r.validateInstanceSpec(newYtsaurus.Spec.YQLAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path)...)
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.YQLAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if newYtsaurus.Spec.QueryTrackers == nil {
-			allErrors = append(allErrors, field.Required(field.NewPath("spec").Child("queryTrackers"),
+			results.Error(field.Required(field.NewPath("spec").Child("queryTrackers"),
 				"yqlAgents doesn't make sense without queryTrackers"))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateUi(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateUi(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	if newYtsaurus.Spec.UI != nil && newYtsaurus.Spec.UI.Secure {
 		for i, hp := range newYtsaurus.Spec.HTTPProxies {
@@ -772,7 +770,7 @@ func (r *ytsaurusValidator) validateUi(newYtsaurus *ytv1.Ytsaurus) field.ErrorLi
 				continue
 			}
 			if hp.Transport.HTTPSSecret == nil {
-				allErrors = append(allErrors, field.Required(
+				results.Error(field.Required(
 					field.NewPath("spec", "httpProxies").Index(i).Child("transport", "httpsSecret"),
 					fmt.Sprintf("configured HTTPS for proxy with `%s` role is required for ui.secure", consts.DefaultHTTPProxyRole)))
 			}
@@ -780,47 +778,47 @@ func (r *ytsaurusValidator) validateUi(newYtsaurus *ytv1.Ytsaurus) field.ErrorLi
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *baseValidator) validatePodSpec(podSpec *ytv1.PodSpec, path *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *baseValidator) validatePodSpec(podSpec *ytv1.PodSpec, path *field.Path) Results {
+	var results Results
 
-	allErrors = append(allErrors, v1validation.ValidateLabels(podSpec.PodLabels, path.Child("podLabels"))...)
-	allErrors = append(allErrors, validation.ValidateAnnotations(podSpec.PodAnnotations, path.Child("podAnnotations"))...)
+	results.AppendErrors(v1validation.ValidateLabels(podSpec.PodLabels, path.Child("podLabels")))
+	results.AppendErrors(validation.ValidateAnnotations(podSpec.PodAnnotations, path.Child("podAnnotations")))
 
-	return allErrors
+	return results
 }
 
-func (r *baseValidator) validateInstanceSpec(instanceSpec ytv1.InstanceSpec, commonSpec *ytv1.CommonSpec, path *field.Path) field.ErrorList {
+func (r *baseValidator) validateInstanceSpec(instanceSpec ytv1.InstanceSpec, commonSpec *ytv1.CommonSpec, path *field.Path) Results {
 	return r.validateInstanceSpecWithTimbertruck(instanceSpec, commonSpec, nil, path)
 }
 
-func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.InstanceSpec, commonSpec *ytv1.CommonSpec, componentTimbertruck *ytv1.TimbertruckSpec, path *field.Path) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.InstanceSpec, commonSpec *ytv1.CommonSpec, componentTimbertruck *ytv1.TimbertruckSpec, path *field.Path) Results {
+	var results Results
 
-	allErrors = append(allErrors, r.validatePodSpec(&instanceSpec.PodSpec, path)...)
+	results.Append(r.validatePodSpec(&instanceSpec.PodSpec, path))
 
-	allErrors = append(allErrors, r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path)...)
+	results.Append(r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path))
 
-	allErrors = append(allErrors, validateStructuredLoggers(instanceSpec.StructuredLoggers, path)...)
+	results.Append(validateStructuredLoggers(instanceSpec.StructuredLoggers, path))
 
 	if instanceSpec.EnableAntiAffinity != nil {
-		allErrors = append(allErrors, field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,
+		results.Error(field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,
 			"EnableAntiAffinity is deprecated, use Affinity instead"))
 	}
 
-	allErrors = append(allErrors, r.validateTransportSecurity(instanceSpec.NativeTransport, commonSpec, path.Child("nativeTransport"))...)
+	results.Append(r.validateTransportSecurity(instanceSpec.NativeTransport, commonSpec, path.Child("nativeTransport")))
 
 	for mountIdx, volumeMount := range instanceSpec.VolumeMounts {
 		if strings.HasSuffix(volumeMount.MountPath, "/") {
-			allErrors = append(allErrors, field.Invalid(path.Child("volumeMounts").Index(mountIdx), volumeMount.MountPath,
+			results.Error(field.Invalid(path.Child("volumeMounts").Index(mountIdx), volumeMount.MountPath,
 				"mount path must not end with '/'"))
 		}
 		for _, previousMount := range instanceSpec.VolumeMounts[:mountIdx] {
 			if previousMount.MountPath == volumeMount.MountPath ||
 				strings.HasPrefix(previousMount.MountPath, volumeMount.MountPath+"/") {
-				allErrors = append(allErrors, field.Invalid(path.Child("volumeMounts").Index(mountIdx), volumeMount.MountPath,
+				results.Error(field.Invalid(path.Child("volumeMounts").Index(mountIdx), volumeMount.MountPath,
 					fmt.Sprintf("volume mount completely covers previous volume mount %q", previousMount.MountPath)))
 			}
 		}
@@ -829,59 +827,59 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	if instanceSpec.Locations != nil {
 		for locationIdx, location := range instanceSpec.Locations {
 			if strings.HasSuffix(location.Path, "/") {
-				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location,
+				results.Error(field.Invalid(path.Child("locations").Index(locationIdx), location,
 					"location path must not end with '/'"))
 			}
 			if components.FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path) == nil {
-				allErrors = append(allErrors, field.Invalid(path.Child("locations").Index(locationIdx), location,
+				results.Error(field.Invalid(path.Child("locations").Index(locationIdx), location,
 					"location path is not in any volume mount"))
 			}
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateExistsYtsaurus(ctx context.Context, newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 
 	var ytsaurusList ytv1.YtsaurusList
 	err := r.Client.List(ctx, &ytsaurusList, &client.ListOptions{Namespace: newYtsaurus.Namespace})
 	r.Log.Info("validateExistsYTsaurus", "ytsaurusList", ytsaurusList)
 
 	if err != nil && !apierrors.IsNotFound(err) {
-		allErrors = append(allErrors, field.InternalError(field.NewPath("k8sClient"), err))
-		return allErrors
+		results.Error(field.InternalError(field.NewPath("k8sClient"), err))
+		return results
 	}
 
 	// if ytsaurus is already exists and it's the same one, it is an update operation
 	if len(ytsaurusList.Items) == 1 && ytsaurusList.Items[0].Name == newYtsaurus.Name {
-		return allErrors
+		return results
 	} else if len(ytsaurusList.Items) == 0 {
 		// it's the creation operation for the first ytsaurus object
-		return allErrors
+		return results
 	} else {
-		allErrors = append(allErrors, field.Forbidden(field.NewPath("metadata").Child("namespace"),
+		results.Error(field.Forbidden(field.NewPath("metadata").Child("namespace"),
 			fmt.Sprintf("A Ytsaurus object already exists in the given namespace %s", newYtsaurus.Namespace)))
 	}
 
-	return allErrors
+	return results
 }
 
-func (r *baseValidator) validateCommonSpec(spec *ytv1.CommonSpec) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *baseValidator) validateCommonSpec(spec *ytv1.CommonSpec) Results {
+	var results Results
 	path := field.NewPath("spec")
 
 	if features := spec.ClusterFeatures; features != nil {
 		if features.SecureClusterTransports {
 			if !features.RPCProxyHavePublicAddress {
-				allErrors = append(allErrors, field.Required(
+				results.Error(field.Required(
 					path.Child("clusterFeatures").Child("rpcProxyHavePublicAddress"),
 					"Secure cluster transport demands public address for RPC proxies",
 				))
 			}
 			if !features.HTTPProxyHaveHTTPSAddress {
-				allErrors = append(allErrors, field.Required(
+				results.Error(field.Required(
 					path.Child("clusterFeatures").Child("httpProxyHaveHttpsAddress"),
 					"Secure cluster transport demands HTTPS for HTTP proxies",
 				))
@@ -889,14 +887,14 @@ func (r *baseValidator) validateCommonSpec(spec *ytv1.CommonSpec) field.ErrorLis
 		}
 	}
 
-	allErrors = append(allErrors, validation.ValidateAnnotations(spec.ExtraPodAnnotations, path.Child("extraPodAnnotations"))...)
-	allErrors = append(allErrors, r.validateTransportSecurity(spec.NativeTransport, spec, path.Child("nativeTransport"))...)
+	results.AppendErrors(validation.ValidateAnnotations(spec.ExtraPodAnnotations, path.Child("extraPodAnnotations")))
+	results.Append(r.validateTransportSecurity(spec.NativeTransport, spec, path.Child("nativeTransport")))
 
-	return allErrors
+	return results
 }
 
-func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
 	planPath := field.NewPath("spec").Child("updatePlan")
 	exclusiveClass := consts.ComponentClassUnspecified
 
@@ -904,38 +902,38 @@ func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytv1.Ytsaurus) field.Err
 		for i, entry := range newYtsaurus.Spec.UpdatePlan {
 			entryPath := planPath.Index(i)
 			if entry.Class != consts.ComponentClassUnspecified && (entry.Component.Type != "" || entry.Component.Name != "") {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Only one of component or class should be specified"))
+				results.Error(field.Invalid(entryPath.Child("component"), entry.Component, "Only one of component or class should be specified"))
 			}
 			if entry.Class == consts.ComponentClassUnspecified && entry.Component.Type == "" && entry.Component.Name == "" {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Either component or class should be specified"))
+				results.Error(field.Invalid(entryPath.Child("component"), entry.Component, "Either component or class should be specified"))
 			}
 			if entry.Component.Type != "" && !slices.Contains(consts.LocalComponentTypes, entry.Component.Type) {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component").Child("type"), entry.Component.Type, "Unknown component type"))
+				results.Error(field.Invalid(entryPath.Child("component").Child("type"), entry.Component.Type, "Unknown component type"))
 			}
 			if exclusiveClass != consts.ComponentClassUnspecified {
-				allErrors = append(allErrors, field.Invalid(entryPath, entry, fmt.Sprintf("Update plan already contains class %s", exclusiveClass)))
+				results.Error(field.Invalid(entryPath, entry, fmt.Sprintf("Update plan already contains class %s", exclusiveClass)))
 			}
 
 			switch entry.Class {
 			case consts.ComponentClassNothing, consts.ComponentClassEverything:
 				exclusiveClass = entry.Class
 				if i > 0 {
-					allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Should be first and only entry"))
+					results.Error(field.Invalid(entryPath.Child("class"), entry.Class, "Should be first and only entry"))
 				}
 			case consts.ComponentClassStateless, consts.ComponentClassUnspecified:
 			default:
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
+				results.Error(field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
 			}
 
-			allErrors = append(allErrors, validateUpdateModeForSelector(newYtsaurus, entry, entryPath.Child("updateMode"))...)
+			results.Append(validateUpdateModeForSelector(newYtsaurus, entry, entryPath.Child("updateMode")))
 		}
 	}
 
-	return allErrors
+	return results
 }
 
-func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.ComponentUpdateSelector, path *field.Path) field.ErrorList {
-	var errs field.ErrorList
+func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.ComponentUpdateSelector, path *field.Path) Results {
+	var results Results
 
 	modeType := selector.GetUpdateStrategyType()
 	bulkOnlyComponentTypes := map[consts.ComponentType]struct{}{
@@ -946,19 +944,19 @@ func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.Com
 
 	// strategy currently supported only for concrete components
 	if selector.Class != consts.ComponentClassUnspecified && modeType != "" {
-		errs = append(errs, field.Invalid(path.Child("strategy"), modeType, "strategy is supported only for specific components, not for component classes"))
-		return errs
+		results.Error(field.Invalid(path.Child("strategy"), modeType, "strategy is supported only for specific components, not for component classes"))
+		return results
 	}
 
 	if selector.Class == consts.ComponentClassUnspecified {
 		if selector.Component.Type == "" && selector.Strategy != nil {
-			errs = append(errs, field.Invalid(path, selector.Strategy, "component.type must be set to use strategy"))
-			return errs
+			results.Error(field.Invalid(path, selector.Strategy, "component.type must be set to use strategy"))
+			return results
 		}
 		// validate bulk-only restriction
 		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != "" && modeType != ytv1.ComponentUpdateModeTypeBulkUpdate {
-			errs = append(errs, field.Invalid(path.Child("strategy"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
-			return errs
+			results.Error(field.Invalid(path.Child("strategy"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
+			return results
 		}
 	}
 
@@ -966,70 +964,61 @@ func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.Com
 	case ytv1.ComponentUpdateModeTypeBulkUpdate:
 		if selector.Strategy != nil {
 			if selector.Strategy.RollingUpdate != nil {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.Strategy.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
+				results.Error(field.Invalid(path.Child("rollingUpdate"), selector.Strategy.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
 			}
 		}
 	case ytv1.ComponentUpdateModeTypeRollingUpdate:
 		if selector.Component.Type == "" {
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
+			results.Error(field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
 		}
 
 		if selector.Component.Type == ytv1.DataNodeType && selector.Component.Name == "" && len(newYtsaurus.Spec.DataNodes) > 1 && selector.Concurrency == nil {
-			errs = append(errs, field.Invalid(path.Child("concurrency"), modeType, "rolling update for several data node groups requires concurrency limit"))
+			results.Error(field.Invalid(path.Child("concurrency"), modeType, "rolling update for several data node groups requires concurrency limit"))
 		}
 
 	case ytv1.ComponentUpdateModeTypeOnDelete:
 		if selector.Component.Type == "" {
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
+			results.Error(field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
 		}
 	}
 
-	return errs
+	return results
 }
 
-func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
-	var allErrors field.ErrorList
+func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
+
+	if newYtsaurus == nil {
+		return results
+	}
 
 	if err := ValidateVersionConstraint(newYtsaurus.Spec.RequiresOperatorVersion); err != nil {
-		allErrors = append(allErrors, err)
+		results.Error(err)
 	}
 
-	allErrors = append(allErrors, r.validateCommonSpec(&newYtsaurus.Spec.CommonSpec)...)
-	allErrors = append(allErrors, r.validatePodSpec(&newYtsaurus.Spec.PodSpec, field.NewPath("spec"))...)
-	allErrors = append(allErrors, r.validateDiscovery(newYtsaurus)...)
-	allErrors = append(allErrors, r.validatePrimaryMasters(newYtsaurus, oldYtsaurus)...)
-	allErrors = append(allErrors, r.validateSecondaryMasters(newYtsaurus, oldYtsaurus)...)
-	allErrors = append(allErrors, r.validateHTTPProxies(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateRPCProxies(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateTCPProxies(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateDataNodes(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateExecNodes(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateSchedulers(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateControllerAgents(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateTabletNodes(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateChyt(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateStrawberry(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateQueryTrackers(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateQueueAgents(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateSpyt(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateYQLAgents(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateUi(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateExtraTimbertruckComponents(newYtsaurus)...)
-	allErrors = append(allErrors, r.validateExistsYtsaurus(ctx, newYtsaurus)...)
-	allErrors = append(allErrors, r.validateUpdatePlan(newYtsaurus)...)
+	results.Append(r.validateCommonSpec(&newYtsaurus.Spec.CommonSpec))
+	results.Append(r.validatePodSpec(&newYtsaurus.Spec.PodSpec, field.NewPath("spec")))
+	results.Append(r.validateDiscovery(newYtsaurus))
+	results.Append(r.validatePrimaryMasters(newYtsaurus, oldYtsaurus))
+	results.Append(r.validateSecondaryMasters(newYtsaurus, oldYtsaurus))
+	results.Append(r.validateHTTPProxies(newYtsaurus))
+	results.Append(r.validateRPCProxies(newYtsaurus))
+	results.Append(r.validateTCPProxies(newYtsaurus))
+	results.Append(r.validateDataNodes(newYtsaurus))
+	results.Append(r.validateExecNodes(newYtsaurus))
+	results.Append(r.validateSchedulers(newYtsaurus))
+	results.Append(r.validateControllerAgents(newYtsaurus))
+	results.Append(r.validateTabletNodes(newYtsaurus))
+	results.Append(r.validateChyt(newYtsaurus))
+	results.Append(r.validateStrawberry(newYtsaurus))
+	results.Append(r.validateQueryTrackers(newYtsaurus))
+	results.Append(r.validateQueueAgents(newYtsaurus))
+	results.Append(r.validateSpyt(newYtsaurus))
+	results.Append(r.validateYQLAgents(newYtsaurus))
+	results.Append(r.validateUi(newYtsaurus))
+	results.Append(r.validateExtraTimbertruckComponents(newYtsaurus))
+	results.Append(r.validateExistsYtsaurus(ctx, newYtsaurus))
+	results.Append(r.validateUpdatePlan(newYtsaurus))
 
-	return allErrors
-}
-
-func (r *ytsaurusValidator) evaluateYtsaurusValidation(ctx context.Context, newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) (admission.Warnings, error) {
-	if newYtsaurus == nil {
-		return nil, nil
-	}
-
-	allErrors := r.validateYtsaurus(ctx, newYtsaurus, oldYtsaurus)
-	if len(allErrors) == 0 {
-		return nil, nil
-	}
-
-	return nil, apierrors.NewInvalid(ytv1.YtsaurusGVK.GroupKind(), newYtsaurus.Name, allErrors)
+	return results
 }
