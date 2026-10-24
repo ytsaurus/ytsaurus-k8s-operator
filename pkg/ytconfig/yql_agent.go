@@ -497,7 +497,7 @@ func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec
 	yql.DQManagerConfig = &DQManagerConfig{
 		InterconnectPort: ptr.To(consts.YQLAgentDQInterconnectPort),
 		GrpcPort:         ptr.To(consts.YQLAgentDQgRPCPort),
-		UseIPv4:          ptr.To(g.commonSpec.UseIPv4 && !g.commonSpec.UseIPv6),
+		UseIPv4:          ptr.To(!g.commonSpec.UseIPv6),
 		YTCoordinator: &DQYTCoordinator{
 			ClusterName:  clusterName,
 			ProxyAddress: proxyAddress,
