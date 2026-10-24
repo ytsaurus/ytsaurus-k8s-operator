@@ -418,6 +418,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	JustBeforeEach(func(ctx context.Context) {
 		// NOTE: Testcase should skip optional cases at "BeforeEach" stage.
 		Expect(ytsaurus.Spec.CoreImage).ToNot(BeEmpty(), "ytsaurus core image is not specified")
+		Expect(ytsaurus.Spec.CoreImage).To(Equal(ytBuilder.Images.Core), "ytsaurus core image should match yt builder images")
 
 		if imagePullSecret := os.Getenv("E2E_IMAGE_PULL_SECRET"); imagePullSecret != "" {
 			By("Creating image pull secret")
@@ -824,6 +825,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					ytBuilder.WithNamedDataNodes(ptr.To("dn-t"))
 
 					By("Setting old core image for testing upgrade")
+					ytBuilder.Images = testutil.Images[oldEpoch]
 					ytsaurus.Spec.CoreImage = oldImage
 					By("Setting ClassEverything for the update plan")
 					ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{Class: consts.ComponentClassEverything}}
@@ -898,6 +900,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					ytBuilder.WithSecondaryMaster()
 
 					By("Setting old core image for testing upgrade")
+					ytBuilder.Images = testutil.Images[oldEpoch]
 					ytsaurus.Spec.CoreImage = oldImage.Core
 
 					By("Update plan: class Everything")
@@ -1904,6 +1907,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				"queryTracker", images.QueryTracker,
 			)
 			ytBuilder.Images = images
+			ytsaurus.Spec.CoreImage = images.Core
 		})
 
 		Context("With CRI job environment", Label(ytVersion, "cri", "containerd"), func() {
@@ -2202,8 +2206,6 @@ exec "$@"`
 				}
 
 				By("Adding all components")
-				ytsaurus.Spec.CoreImage = images.Core
-				ytBuilder.Images = images
 				ytBuilder.WithBaseComponents()
 				ytBuilder.WithRPCProxies()
 
