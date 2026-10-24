@@ -1,5 +1,8 @@
 # vim: set filetype=make :
 
+# Put personal options into test-env-local.inc
+include $(wildcard test-env-local.inc)
+
 export YTSAURUS_JOB_IMAGE ?= mirror.gcr.io/library/python:3.12-slim
 
 # https://ytsaurus.tech/docs/en/admin-guide/releases
@@ -18,40 +21,42 @@ export YTSAURUS_REGISTRY
 # skopeo inspect --format '{{range .RepoTags}}{{.}}\n{{end -}}' docker://ghcr.io/ytsaurus/ytsaurus-nightly
 
 ## Current "CURR" ytsaurus version or epoch for tests: X.Y[.Z], NIGHTLY, LATEST, PREVIOUS, LEGACY, MEDIEVAL, ANCIENT
-TEST_YTSAURUS_VERSION ?= PREVIOUS
+override TEST_YTSAURUS_VERSION := $(or ${TEST_YTSAURUS_VERSION},PREVIOUS)
 export TEST_YTSAURUS_VERSION
 
 export YTSAURUS_IMAGE ?= ${YTSAURUS_REGISTRY}/ytsaurus
 
-export YTSAURUS_IMAGE_26_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-2026-04-13-232323d199f95159982a5d8efc41460a26fc0c33
-export YTSAURUS_IMAGE_25_4_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.4-2026-04-11-23dcadd5de5524728bd474dd11620f323e218757
-export YTSAURUS_IMAGE_25_3_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.3-2026-03-25-97fa8a3ae882ac3d556241ad367677c69d8ec26f
-export YTSAURUS_IMAGE_25_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.2-2026-03-13-9805a6fd1c4bbd327f0c49bca6db18bf0a76bb79
+export YTSAURUS_IMAGE_26_3_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-2026-10-09-af133131cb97646244d6be9e9a608c7ff5b6ed6f
+export YTSAURUS_IMAGE_26_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-26.2-2026-10-08-c4f329f8e0073e869b29ce8c1043e87ebad78e57
+export YTSAURUS_IMAGE_26_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-26.1-2026-10-07-4ff7086c5c13ac2f6ee64a9be6f1710da76f3a1e
+export YTSAURUS_IMAGE_25_4_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.4-2026-10-06-98ad930ca037547fc866e3decdde7d98673be695
+export YTSAURUS_IMAGE_25_3_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.3-2026-07-29-151a441ed08dbab506859d15fa48179ea7e98985
+export YTSAURUS_IMAGE_25_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.2-2026-05-07-19431d7dc6ea4bb963ae1e933c4063ffedf54db9
 export YTSAURUS_IMAGE_25_1_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-25.1-2025-09-30-da1f6800979c77f5a19f44dc18d970bb5a70ac03
 export YTSAURUS_IMAGE_24_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-24.2-2025-09-05-522db86a58d4950019121180a35c9b56d0d8af76
 
 ## ytsaurus latest+1 version
-YTSAURUS_VERSION_NIGHTLY ?= 25.4.99
+YTSAURUS_VERSION_NIGHTLY ?= # 26.1.99 is broken
 export YTSAURUS_VERSION_NIGHTLY
 
 ## ytsaurus latest version
-YTSAURUS_VERSION_LATEST ?= 25.3.1
+YTSAURUS_VERSION_LATEST ?= # 25.4.1 is broken
 export YTSAURUS_VERSION_LATEST
 
 ## ytsaurus latest-1 version
-YTSAURUS_VERSION_PREVIOUS ?= 25.2.2
+YTSAURUS_VERSION_PREVIOUS ?= 25.3.1
 export YTSAURUS_VERSION_PREVIOUS
 
 ## ytsaurus latest-2 version
-YTSAURUS_VERSION_LEGACY ?= 25.1.0
+YTSAURUS_VERSION_LEGACY ?= 25.2.2
 export YTSAURUS_VERSION_LEGACY
 
 ## ytsaurus latest-3 version
-YTSAURUS_VERSION_MEDIEVAL ?= 24.2.1
+YTSAURUS_VERSION_MEDIEVAL ?= 25.1.0
 export YTSAURUS_VERSION_MEDIEVAL
 
 ## ytsaurus latest-4 version
-YTSAURUS_VERSION_ANCIENT ?= 24.1.0
+YTSAURUS_VERSION_ANCIENT ?= 24.2.1
 export YTSAURUS_VERSION_ANCIENT
 
 # https://github.com/orgs/ytsaurus/packages/container/package/sidecars
@@ -59,11 +64,11 @@ export YTSAURUS_VERSION_ANCIENT
 
 export SIDECARS_IMAGE ?= ${YTSAURUS_REGISTRY}/sidecars
 
-export SIDECARS_VERSION_LATEST ?= 0.0.1
-export SIDECARS_VERSION_PREVIOUS ?= 0.0.1
-export SIDECARS_VERSION_LEGACY ?= 0.0.1
-export SIDECARS_VERSION_MEDIEVAL ?= 0.0.1
-export SIDECARS_VERSION_ANCIENT ?= 0.0.1
+export SIDECARS_VERSION_LATEST ?= 0.0.2
+export SIDECARS_VERSION_PREVIOUS ?= 0.0.2
+export SIDECARS_VERSION_LEGACY ?= 0.0.2
+export SIDECARS_VERSION_MEDIEVAL ?= 0.0.2
+export SIDECARS_VERSION_ANCIENT ?= 0.0.2
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/query-tracker-nightly
@@ -71,15 +76,15 @@ export SIDECARS_VERSION_ANCIENT ?= 0.0.1
 
 export QUERY_TRACKER_IMAGE ?= ${YTSAURUS_REGISTRY}/query-tracker
 
-export QUERY_TRACKER_VERSION_LATEST ?= 0.1.2
+export QUERY_TRACKER_VERSION_LATEST ?= 0.4.1
 export QUERY_TRACKER_VERSION_PREVIOUS ?= 0.1.2
-export QUERY_TRACKER_VERSION_LEGACY ?= 0.0.11
-export QUERY_TRACKER_VERSION_MEDIEVAL ?= 0.0.11
-export QUERY_TRACKER_VERSION_ANCIENT ?= 0.0.10
+export QUERY_TRACKER_VERSION_LEGACY ?= 0.1.2
+export QUERY_TRACKER_VERSION_MEDIEVAL ?= 0.1.2
+export QUERY_TRACKER_VERSION_ANCIENT ?= 0.1.2
 
-export QUERY_TRACKER_IMAGE_NIGHTLY ?= ${QUERY_TRACKER_IMAGE}-nightly:dev-2026-01-30-14313a1279bd3f096e4d621722d06f4dd511ce98
+export QUERY_TRACKER_IMAGE_NIGHTLY ?= ${QUERY_TRACKER_IMAGE}-nightly:dev-2026-10-09-af133131cb97646244d6be9e9a608c7ff5b6ed6f
 
-export QUERY_TRACKER_IMAGE_0_1_2 ?= ${QUERY_TRACKER_IMAGE}:stable-0.1.2
+export QUERY_TRACKER_IMAGE_0_4_1 ?= ${QUERY_TRACKER_IMAGE}:stable-0.4.1
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/strawberry
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/strawberry-nightly
@@ -87,13 +92,13 @@ export QUERY_TRACKER_IMAGE_0_1_2 ?= ${QUERY_TRACKER_IMAGE}:stable-0.1.2
 
 export STRAWBERRY_IMAGE ?= ${YTSAURUS_REGISTRY}/strawberry
 
-export STRAWBERRY_VERSION_LATEST ?= 0.0.17
-export STRAWBERRY_VERSION_PREVIOUS ?= 0.0.17
-export STRAWBERRY_VERSION_LEGACY ?= 0.0.16
-export STRAWBERRY_VERSION_MEDIEVAL ?= 0.0.15
-export STRAWBERRY_VERSION_ANCIENT ?= 0.0.14
+export STRAWBERRY_VERSION_LATEST ?= 0.0.18
+export STRAWBERRY_VERSION_PREVIOUS ?= 0.0.18
+export STRAWBERRY_VERSION_LEGACY ?= 0.0.18
+export STRAWBERRY_VERSION_MEDIEVAL ?= 0.0.18
+export STRAWBERRY_VERSION_ANCIENT ?= 0.0.18
 
-export STRAWBERRY_IMAGE_NIGHTLY ?= ${STRAWBERRY_IMAGE}-nightly:dev-2026-01-30-8551ddfc8cba5a5c2cc72d1cd2de3f8cdc206280
+export STRAWBERRY_IMAGE_NIGHTLY ?= ${STRAWBERRY_IMAGE}-nightly:dev-2026-10-14-c9931c9ef455e646c90bb3b188754cd4fa3df5c4
 
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/chyt
 # https://github.com/ytsaurus/ytsaurus/pkgs/container/chyt-nightly
@@ -101,15 +106,13 @@ export STRAWBERRY_IMAGE_NIGHTLY ?= ${STRAWBERRY_IMAGE}-nightly:dev-2026-01-30-85
 
 export CHYT_IMAGE ?= ${YTSAURUS_REGISTRY}/chyt
 
-export CHYT_VERSION_LATEST ?= 2.18.3
-export CHYT_VERSION_PREVIOUS ?= 2.18.3
-export CHYT_VERSION_LEGACY ?= 2.17.4
-export CHYT_VERSION_MEDIEVAL ?= 2.17.4
-export CHYT_VERSION_ANCIENT ?= 2.16.0
+export CHYT_VERSION_LATEST ?= 2.19.0
+export CHYT_VERSION_PREVIOUS ?= 2.18.6
+export CHYT_VERSION_LEGACY ?= 2.18.6
+export CHYT_VERSION_MEDIEVAL ?= 2.18.6
+export CHYT_VERSION_ANCIENT ?= 2.18.6
 
-export CHYT_IMAGE_NIGHTLY ?= ${CHYT_IMAGE}-nightly:dev-2026-04-07-752404dcf7c2a667678958024a78be7f665d93e2
-
-export CHYT_IMAGE_2_18_2 ?= ${CHYT_IMAGE}:stable-2.18.2
+export CHYT_IMAGE_NIGHTLY ?= ${CHYT_IMAGE}-nightly:dev-2026-10-09-af133131cb97646244d6be9e9a608c7ff5b6ed6f
 
 define LOAD_TEST_IMAGES
 $(YTSAURUS_IMAGE_$(subst .,_,$(YTSAURUS_VERSION_LATEST)))

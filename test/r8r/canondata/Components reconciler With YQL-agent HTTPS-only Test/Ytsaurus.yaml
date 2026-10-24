@@ -15,7 +15,7 @@ spec:
     name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
     httpProxyHaveHttpsAddress: true
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
   discovery:
     instanceCount: 1
     loggers:
@@ -117,7 +117,7 @@ spec:
       memoryLimit: 2Gi
       uploadReplicationFactor: 1
       useTmpfs: false
-      workerCapacity: 128
+      workerCapacity: 10
     image: localhost/query-tracker:0.6.0
     instanceCount: 1
     loggers:
