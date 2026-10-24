@@ -659,14 +659,34 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	JustBeforeEach(func(ctx context.Context) {
 		By("Checking cluster components")
-		clusterComponents, err := ListClusterComponents(ctx, ytClient)
-		Expect(err).To(Succeed())
-
 		componentGroups := func(componentType consts.ComponentType) []string {
 			names, err := generator.GetComponentNames(componentType)
 			Expect(err).To(Succeed())
 			return append(names, remoteComponentNames[componentType]...)
 		}
+
+		// DQ warmup can delay YQL agent registration beyond pod readiness.
+		var clusterComponents []ClusterComponent
+		Eventually(ctx, func(g Gomega, ctx context.Context) {
+			var err error
+			clusterComponents, err = ListClusterComponents(ctx, ytClient)
+			g.Expect(err).To(Succeed())
+			instances := map[consts.ComponentType]int{}
+			for _, component := range clusterComponents {
+				instances[component.Type]++
+			}
+			for _, componentType := range consts.LocalComponentTypes {
+				if consts.ComponentCypressPath(componentType) == "" {
+					continue
+				}
+				groups := componentGroups(componentType)
+				if len(groups) == 0 {
+					g.Expect(instances[componentType]).To(BeZero(), "component %q", componentType)
+				} else {
+					g.Expect(instances[componentType]).To(BeNumerically(">=", len(groups)), "component %q", componentType)
+				}
+			}
+		}, bootstrapTimeout, pollInterval).Should(Succeed())
 
 		instances := map[consts.ComponentType]int{}
 		for _, component := range clusterComponents {
