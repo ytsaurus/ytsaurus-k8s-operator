@@ -407,8 +407,6 @@ spec:
       path: /yt/master-logs
     - locationType: InitJobLogs
       path: /yt/master-logs
-    - locationType: Logs
-      path: /yt/logs
     loggers:
     - minLogLevel: info
       name: info-stderr

@@ -524,11 +524,6 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		It("Should accept HydraPersistenceUploader with proper locations and mounts", func() {
 			ytsaurus.Spec.PrimaryMasters.HydraPersistenceUploader = &ytv1.HydraPersistenceUploaderSpec{Image: ptr.To("ghcr.io/ytsaurus/sidecars:0.0.0")}
 
-			ytsaurus.Spec.PrimaryMasters.Locations = append(ytsaurus.Spec.PrimaryMasters.Locations,
-				ytv1.LocationSpec{LocationType: ytv1.LocationTypeMasterSnapshots, Path: "/yt/master-data/snapshots"},
-				ytv1.LocationSpec{LocationType: ytv1.LocationTypeMasterChangelogs, Path: "/yt/master-data/changelogs"},
-			)
-
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(Succeed())
 			Expect(k8sClient.Delete(ctx, ytsaurus)).Should(Succeed())
 		})

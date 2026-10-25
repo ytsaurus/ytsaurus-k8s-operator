@@ -89,11 +89,11 @@ var _ = Describe("Tablet node test", func() {
 						InstanceCount: 1,
 						Locations: []ytv1.LocationSpec{
 							{
-								LocationType: "MasterChangelogs",
+								LocationType: ytv1.LocationTypeMasterChangelogs,
 								Path:         "/yt/master-data/master-changelogs",
 							},
 							{
-								LocationType: "MasterSnapshots",
+								LocationType: ytv1.LocationTypeMasterSnapshots,
 								Path:         "/yt/master-data/master-snapshots",
 							},
 						},
@@ -132,7 +132,7 @@ var _ = Describe("Tablet node test", func() {
 							InstanceCount: 1,
 							Locations: []ytv1.LocationSpec{
 								{
-									LocationType: "ChunkStore",
+									LocationType: ytv1.LocationTypeChunkStore,
 									Path:         "/yt/node-data/chunk-store",
 								},
 							},
