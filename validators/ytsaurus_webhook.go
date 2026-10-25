@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -492,11 +493,94 @@ func (r *baseValidator) validateTimbertruckSpec(
 	return results
 }
 
+func validateLogRotationPolicy(policy *ytv1.LogRotationPolicy, path *field.Path) Results {
+	var results Results
+
+	if policy == nil {
+		results.Warning(field.Required(path, "logs are not rotated by default"))
+		return results
+	}
+
+	if policy.MaxTotalSizeToKeep == nil {
+		results.Warning(field.Required(path.Child("maxTotalSizeToKeep"), "total size limit is required"))
+	} else if policy.MaxSegmentSize == nil {
+		results.Warning(field.Required(path.Child("maxSegmentSize"), "maxTotalSizeToKeep does not work correctly without maxSegmentSize"))
+	} else if policy.MaxSegmentSize.Cmp(*policy.MaxTotalSizeToKeep) > 0 {
+		results.Warning(field.Invalid(path.Child("maxSegmentSize"), *policy.MaxSegmentSize, "bigger than maxTotalSizeToKeep"))
+	} else if count := policy.MaxSegmentCountToKeep; count != nil && policy.MaxTotalSizeToKeep.Value() > *count*policy.MaxSegmentSize.Value() {
+		results.Warning(field.Invalid(path.Child("maxSegmentCountToKeep"), *policy.MaxSegmentCountToKeep, "lower than maxTotalSizeToKeep / maxSegmentSize"))
+	}
+
+	if policy.RotationPeriodMilliseconds != nil {
+		if policy.MaxSegmentCountToKeep == nil {
+			results.Warning(field.Required(path.Child("maxSegmentCountToKeep"), "rotationPeriodMilliseconds could swarm files without maxSegmentCountToKeep"))
+		} else if *policy.MaxSegmentCountToKeep**policy.RotationPeriodMilliseconds < (time.Hour * 24).Milliseconds() {
+			results.Warning(field.Invalid(path.Child("maxSegmentCountToKeep"), *policy.MaxSegmentCountToKeep, "maxSegmentCountToKeep * rotationPeriodMilliseconds < 24 hours"))
+		}
+	}
+
+	return results
+}
+
+func validateLoggerBase(logger *ytv1.BaseLoggerSpec, writerType ytv1.LogWriterType, loggerPath *field.Path) Results {
+	var results Results
+	if writerType == ytv1.LogWriterTypeFile {
+		if logger.UseTimestampSuffix && logger.UseDateTimeSuffix {
+			results.Error(field.Forbidden(loggerPath.Child("useTimestampSuffix"), "must be one of useDateTimeSuffix or useTimestampSuffix"))
+		}
+		if logger.UseTimestampSuffix && !logger.UseDateTimeSuffix {
+			results.Warning(field.Required(loggerPath.Child("useTimestampSuffix"), "useDateTimeSuffix is recommended instead of useTimestampSuffix as human and logrotate friendly"))
+		}
+		results.Append(validateLogRotationPolicy(logger.RotationPolicy, loggerPath.Child("rotationPolicy")))
+	} else if logger.RotationPolicy != nil {
+		results.Warning(field.Forbidden(loggerPath.Child("rotationPolicy"), "only for file writer"))
+	}
+	return results
+}
+
+func validateLoggers(loggers []ytv1.TextLoggerSpec, path *field.Path) Results {
+	var results Results
+	var hasWarningLevel bool
+	for i, logger := range loggers {
+		loggerPath := path.Index(i)
+
+		results.Append(validateLoggerBase(&logger.BaseLoggerSpec, logger.WriterType, loggerPath))
+
+		switch logger.MinLogLevel {
+		case ytv1.LogLevelTrace, ytv1.LogLevelDebug:
+			noisyCategories := true
+			if filter := logger.CategoriesFilter; filter != nil {
+				switch filter.Type {
+				case ytv1.CategoriesFilterTypeExclude:
+					noisyCategories = !slices.Contains(filter.Values, "Bus") || !slices.Contains(filter.Values, "Concurrency")
+				case ytv1.CategoriesFilterTypeInclude:
+					noisyCategories = len(filter.Values) == 0 || slices.Contains(filter.Values, "Bus") || slices.Contains(filter.Values, "Concurrency")
+				}
+			}
+			if noisyCategories {
+				results.Warning(field.Required(loggerPath.Child("categoriesFilter"), "debug level categories Bus and Concurrency are noisy as trace level"))
+			}
+			if logger.WriterType == ytv1.LogWriterTypeFile && (logger.Compression == ytv1.LogCompressionNone || logger.Compression == "") {
+				results.Warning(field.Required(loggerPath.Child("compression"), "compression is recommended for debug and trace levels"))
+			}
+			fallthrough
+		case ytv1.LogLevelInfo, ytv1.LogLevelWarning:
+			hasWarningLevel = true
+		}
+	}
+	if len(loggers) > 0 && !hasWarningLevel {
+		results.Warning(field.Required(path, "at least warning level logging is recommended"))
+	}
+	return results
+}
+
 func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, parentPath *field.Path) Results {
 	var results Results
 
 	for loggerIdx, logger := range structuredLoggers {
 		loggerPath := parentPath.Child("structuredLoggers").Index(loggerIdx)
+
+		results.Append(validateLoggerBase(&logger.BaseLoggerSpec, ytv1.LogWriterTypeFile, loggerPath))
 
 		if (logger.Category != nil) == (logger.CategoriesFilter != nil) {
 			results.Error(field.Invalid(loggerPath, logger.Name,
@@ -634,6 +718,8 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) Result
 		if apihelpers.FindFirstLocation(en.Locations, ytv1.LocationTypeSlots) == nil {
 			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeSlots))
 		}
+
+		results.Append(validateLoggers(en.JobProxyLoggers, path.Child("jobProxyLoggers")))
 
 		if en.InitContainers != nil {
 			results.Append(r.validateSidecars(en.InitContainers, path.Child("initContainers")))
@@ -834,6 +920,8 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	results.Append(r.validatePodSpec(&instanceSpec.PodSpec, path))
 
 	results.Append(r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path))
+
+	results.Append(validateLoggers(instanceSpec.Loggers, path.Child("loggers")))
 
 	results.Append(validateStructuredLoggers(instanceSpec.StructuredLoggers, path))
 
