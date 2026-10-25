@@ -404,6 +404,7 @@ spec:
       path: /yt/master-data/master-snapshots
       quota: 3Gi
     - locationType: Logs
+      lowWatermark: 123M
       path: /yt/master-logs
     - locationType: InitJobLogs
       path: /yt/master-logs

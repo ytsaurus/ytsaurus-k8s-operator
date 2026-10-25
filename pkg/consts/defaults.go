@@ -33,6 +33,10 @@ const MaxChunkStoreLocationReserve = 25 << 30 // 25GiB
 
 const MaxSlotLocationReserve = 10 << 30 // 10GiB
 
+const DefaultLogsLocationReserve = 100 << 20 // 100MiB
+const MaxLogsLocationReserve = 1 << 30       // 1GiB
+const DefaultLogsPath = "/var/log"
+
 const DefaultStrawberryControllerFamily = "chyt"
 
 func GetDefaultStrawberryControllerFamilies() []string {

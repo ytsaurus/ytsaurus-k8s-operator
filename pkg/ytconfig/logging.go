@@ -10,6 +10,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 func defaultStderrLoggerSpec() ytv1.TextLoggerSpec {
@@ -87,11 +88,16 @@ type LoggingWriter struct {
 	RotationPolicy *LogRotationPolicy `yson:"rotation_policy,omitempty"`
 }
 
+// NYT::NLogging::TLogManagerConfig
 type Logging struct {
 	Writers map[string]LoggingWriter `yson:"writers"`
 	Rules   []LoggingRule            `yson:"rules"`
 
-	FlushPeriod           int  `yson:"flush_period,omitempty"`
+	FlushPeriod int `yson:"flush_period,omitempty"`
+
+	CheckSpacePeriod int    `yson:"check_space_period,omitempty"`
+	MinDiskSpace     *int64 `yson:"min_disk_space,omitempty"`
+
 	EnableAnchorProfiling bool `yson:"enable_anchor_profiling,omitempty"`
 }
 
@@ -112,14 +118,6 @@ type loggingBuilder struct {
 	logging          Logging
 }
 
-func ChooseLoggingPath(location *ytv1.LocationSpec) string {
-	loggingDirectory := "/var/log"
-	if location != nil {
-		loggingDirectory = location.Path
-	}
-	return loggingDirectory
-}
-
 func ChooseJobProxyLoggingPath(spec *ytv1.InstanceSpec) string {
 	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
 		return location.Path + "/job-proxy"
@@ -129,11 +127,9 @@ func ChooseJobProxyLoggingPath(spec *ytv1.InstanceSpec) string {
 
 const JobProxyLogSymlinksPath = "/var/log/job-proxy-logs"
 
-func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggingBuilder {
-	loggingDirectory := ChooseLoggingPath(location)
-
+func newLoggingBuilder(componentName string) loggingBuilder {
 	return loggingBuilder{
-		loggingDirectory: loggingDirectory,
+		loggingDirectory: consts.DefaultLogsPath,
 		componentName:    componentName,
 		logging: Logging{
 			Rules:   make([]LoggingRule, 0),
