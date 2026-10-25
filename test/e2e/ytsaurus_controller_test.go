@@ -36,6 +36,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -2974,13 +2975,12 @@ var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func(
 	})
 
 	Context("Spec Version Constraint Lock", func() {
-		const (
-			operatorVersion = version.DevelVersion
-		)
+		const operatorVersionPlaceholder = "${OPERATOR_VERSION}"
 
 		var (
-			builder  *testutil.YtsaurusBuilder
-			ytsaurus *ytv1.Ytsaurus
+			builder         *testutil.YtsaurusBuilder
+			ytsaurus        *ytv1.Ytsaurus
+			operatorVersion string
 		)
 
 		newYtsaurus := func() *ytv1.Ytsaurus {
@@ -2994,19 +2994,28 @@ var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func(
 			return builder.Ytsaurus
 		}
 
+		BeforeAll(func(ctx context.Context) {
+			By("Reading the deployed operator version")
+			probe := newYtsaurus()
+			probe.Name = "operator-version-probe"
+			Expect(k8sClient.Create(ctx, probe)).To(Succeed())
+			EventuallyYtsaurus(ctx, probe, reactionTimeout).Should(HaveStatusConditionTrue(consts.ConditionOperatorVersion))
+			operatorVersion = meta.FindStatusCondition(probe.Status.Conditions, consts.ConditionOperatorVersion).Message
+			Expect(k8sClient.Delete(ctx, probe)).To(Succeed())
+		})
+
 		BeforeEach(func() {
 			ytsaurus = newYtsaurus()
 		})
 
-		// A known string is required for tests to work reliably, other there is no way to
-		// write proper assertions, at least not easily.
-		It("Expect the tests to use a sentinel version string", func() {
-			Expect(version.GetVersion()).To(Equal(operatorVersion))
+		It("Operator reports a valid version", func() {
+			_, err := version.ParseVersion(operatorVersion)
+			Expect(err).To(Succeed())
 		})
 
 		DescribeTable("YT Spec version requirement works for all available operators",
 			func(constraint string, errMsg string) {
-				ytsaurus.Spec.RequiresOperatorVersion = constraint
+				ytsaurus.Spec.RequiresOperatorVersion = strings.ReplaceAll(constraint, operatorVersionPlaceholder, operatorVersion)
 
 				err := k8sClient.Create(context.Background(), ytsaurus)
 				if errMsg != "" {
@@ -3024,15 +3033,15 @@ var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func(
 
 			Entry("Handles empty version in spec", "", ""),
 			Entry("Rejects invalid version constraint", "abcd", `spec.requiresOperatorVersion: Invalid value: "abcd": improper constraint: "abcd"`),
-			Entry("Handles success case for exact version match", operatorVersion, ""),
+			Entry("Handles success case for exact version match", operatorVersionPlaceholder, ""),
 			Entry("Handles failure case for exact version match", "= 2.0.0", "current operator version .* does not satisfy the spec version constraint: .*"),
 			Entry("Handles success case for not equal", "!= 2.0.0", ""),
-			Entry("Handles failure case for not equal", "!= "+operatorVersion, "current operator version .* does not satisfy the spec version constraint: .*"),
+			Entry("Handles failure case for not equal", "!= "+operatorVersionPlaceholder, "current operator version .* does not satisfy the spec version constraint: .*"),
 			Entry("Handles success case for greater version", "> 0.0.0-beta", ""),
 			Entry("Handles failure case for greater version", "> 2.0.0", "current operator version .* does not satisfy the spec version constraint: .*"),
 			Entry("Handles success case for lower version", "< 2.0.0", ""),
-			Entry("Handles failure case for lower version", "< "+operatorVersion, "current operator version .* does not satisfy the spec version constraint: .*"),
-			Entry("Handles success case for any patch version", "~"+operatorVersion, ""),
+			Entry("Handles failure case for lower version", "< "+operatorVersionPlaceholder, "current operator version .* does not satisfy the spec version constraint: .*"),
+			Entry("Handles success case for any patch version", "~"+operatorVersionPlaceholder, ""),
 			Entry("Handles failure case for any patch version", "~2.0", "current operator version .* does not satisfy the spec version constraint: .*"),
 		)
 	})

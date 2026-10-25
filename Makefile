@@ -51,7 +51,7 @@ TRUST_MANAGER_VERSION ?= v0.22.1
 OPERATOR_IMAGE ?= ytsaurus/k8s-operator
 
 ## YTsaurus operator image tag.
-OPERATOR_TAG ?= 0.0.0-devel
+OPERATOR_TAG ?= $(shell git show -s --date=format:%y%m%d%H%M --abbrev=16 --pretty=0.0.%cd-devel-%h)
 
 OPERATOR_CHART ?= ytop-chart
 export OPERATOR_CHART
