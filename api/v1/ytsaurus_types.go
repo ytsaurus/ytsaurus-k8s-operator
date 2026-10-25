@@ -210,13 +210,15 @@ type LocationSpec struct {
 	//+optional
 	Quota *resource.Quantity `json:"quota,omitempty"`
 	// Free disk space above which the location is considered to be non-full.
-	// Default: min((quota or storage request)/10, 25GiB).
+	// Has effect for ChunkStore, ChunkCache, Logs, Slots.
+	// Default for ChunkStore: min((quota or storage request)/10, 25GiB).
+	// Default for Logs: min((quota or storage request)/10, 1GiB) or 100MiB.
 	// Below lowWatermark the location starts collecting trash.
 	// Below lowWatermark/2 the location is considered to be full.
 	// Below lowWatermark/4 the location stops accepting new writes.
 	//+optional
 	LowWatermark *resource.Quantity `json:"lowWatermark,omitempty"`
-	// Max TTL of trash in milliseconds.
+	// Max TTL of trash in milliseconds for ChunkStore.
 	//+kubebuilder:validation:Minimum:=60000
 	MaxTrashMilliseconds *int64 `json:"maxTrashMilliseconds,omitempty"`
 }

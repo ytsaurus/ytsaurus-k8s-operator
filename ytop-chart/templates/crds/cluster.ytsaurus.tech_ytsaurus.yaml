@@ -867,7 +867,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -2907,7 +2907,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -4816,7 +4816,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -6731,7 +6731,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -8653,7 +8653,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -10925,7 +10925,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -12906,7 +12906,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -14871,7 +14871,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -16805,7 +16805,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -18818,7 +18818,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -20754,7 +20754,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -22659,7 +22659,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -24578,7 +24578,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -26536,7 +26536,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -28469,7 +28469,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -30585,7 +30585,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -32500,7 +32500,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -34435,7 +34435,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -36854,7 +36854,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
