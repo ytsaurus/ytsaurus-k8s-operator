@@ -3,6 +3,7 @@ package ytconfig
 import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"go.ytsaurus.tech/yt/go/yson"
 	"k8s.io/utils/ptr"
 )
@@ -216,7 +217,20 @@ type IOEngine struct {
 }
 
 func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.TextLoggerSpec) Logging {
-	loggingBuilder := newLoggingBuilder(apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), componentName)
+	loggingBuilder := newLoggingBuilder(componentName)
+
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
+		minDiskSpace := int64(consts.DefaultLogsLocationReserve)
+		if location.LowWatermark != nil {
+			minDiskSpace = location.LowWatermark.Value()
+		} else if requests, _ := apihelpers.FindQuotaForLocation(location, spec); requests != nil && !requests.IsZero() {
+			minDiskSpace = min(requests.Value()/10, consts.MaxLogsLocationReserve)
+		}
+		loggingBuilder.loggingDirectory = location.Path
+		loggingBuilder.logging.CheckSpacePeriod = 5000
+		loggingBuilder.logging.MinDiskSpace = ptr.To(minDiskSpace)
+	}
+
 	if len(spec.Loggers) > 0 {
 		for _, loggerSpec := range spec.Loggers {
 			loggingBuilder.addLogger(loggerSpec)

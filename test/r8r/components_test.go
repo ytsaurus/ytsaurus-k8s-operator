@@ -802,6 +802,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			// (see resolveTimbertruckDelivery); add them so the master actually gets a sidecar.
 			masterLogs := apihelpers.FindFirstLocation(ytsaurus.Spec.PrimaryMasters.Locations, ytv1.LocationTypeLogs)
 			Expect(masterLogs).ToNot(BeNil())
+			masterLogs.LowWatermark = ptr.To(resource.MustParse("123M"))
 			ytsaurus.Spec.PrimaryMasters.InstanceSpec.Volumes = append(
 				ytsaurus.Spec.PrimaryMasters.InstanceSpec.Volumes,
 				ytv1.Volume{

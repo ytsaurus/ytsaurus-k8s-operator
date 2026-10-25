@@ -1393,8 +1393,8 @@ _Appears in:_
 | `path` _string_ |  |  | MinLength: 1 <br /> |
 | `medium` _string_ |  | default |  |
 | `quota` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Disk space quota, default is storage limit of related volume, otherwise - unlimited. |  |  |
-| `lowWatermark` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Free disk space above which the location is considered to be non-full.<br />Default: min((quota or storage request)/10, 25GiB).<br />Below lowWatermark the location starts collecting trash.<br />Below lowWatermark/2 the location is considered to be full.<br />Below lowWatermark/4 the location stops accepting new writes. |  |  |
-| `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds. |  | Minimum: 60000 <br /> |
+| `lowWatermark` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Free disk space above which the location is considered to be non-full.<br />Has effect for ChunkStore, ChunkCache, Logs, Slots.<br />Default for ChunkStore: min((quota or storage request)/10, 25GiB).<br />Default for Logs: min((quota or storage request)/10, 1GiB) or 100MiB.<br />Below lowWatermark the location starts collecting trash.<br />Below lowWatermark/2 the location is considered to be full.<br />Below lowWatermark/4 the location stops accepting new writes. |  |  |
+| `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds for ChunkStore. |  | Minimum: 60000 <br /> |
 
 
 #### LocationType
