@@ -859,15 +859,28 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	}
 
 	if instanceSpec.Locations != nil {
+		singletonTypes := []ytv1.LocationType{
+			ytv1.LocationTypeLogs,
+			ytv1.LocationTypeMasterChangelogs,
+			ytv1.LocationTypeMasterSnapshots,
+			ytv1.LocationTypeImageCache,
+			ytv1.LocationTypeInitJobLogs,
+		}
+		seenTypes := map[ytv1.LocationType]bool{}
 		for locationIdx, location := range instanceSpec.Locations {
+			locationPath := path.Child("locations").Index(locationIdx)
 			if strings.HasSuffix(location.Path, "/") {
-				results.Error(field.Invalid(path.Child("locations").Index(locationIdx), location,
-					"location path must not end with '/'"))
+				results.Error(field.Invalid(locationPath.Child("path"), location.Path, "location path must not end with '/'"))
 			}
 			if apihelpers.FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path) == nil {
-				results.Error(field.Invalid(path.Child("locations").Index(locationIdx), location,
-					"location path is not in any volume mount"))
+				results.Error(field.Invalid(locationPath.Child("path"), location.Path, "location path is not in any volume mount"))
 			}
+			if slices.Contains(singletonTypes, location.LocationType) {
+				if seenTypes[location.LocationType] {
+					results.Error(field.Invalid(locationPath.Child("locationType"), location.LocationType, "duplicate location type"))
+				}
+			}
+			seenTypes[location.LocationType] = true
 		}
 	}
 
