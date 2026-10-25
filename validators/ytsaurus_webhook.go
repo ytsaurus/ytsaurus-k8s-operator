@@ -534,36 +534,62 @@ func requireLocations(
 	return results
 }
 
-// validateExtraTimbertruckComponents validates timbertruck log delivery for the server components
-// that are not covered by a dedicated validateInstanceSpec call but can still opt into delivery via
-// a per-log enableDelivery flag. It mirrors the runtime enumeration in components so the webhook and
-// the operator agree on which components may deliver logs. componentTimbertruck is always nil here
-// because only masters carry a component-level timbertruck spec.
-func (r *ytsaurusValidator) validateExtraTimbertruckComponents(newYtsaurus *ytv1.Ytsaurus) Results {
+func (r *ytsaurusValidator) validateMasterCaches(newYtsaurus *ytv1.Ytsaurus) Results {
 	var results Results
-	commonTimbertruck := newYtsaurus.Spec.Timbertruck
-	specPath := field.NewPath("spec")
 
-	validate := func(instanceSpec *ytv1.InstanceSpec, path *field.Path) {
-		results.Append(r.validateTimbertruckSpec(nil, commonTimbertruck,
-			instanceSpec.StructuredLoggers, instanceSpec.Locations, path))
-		results.Append(validateStructuredLoggers(instanceSpec.StructuredLoggers, path))
+	if newYtsaurus.Spec.MasterCaches != nil {
+		path := field.NewPath("spec").Child("masterCaches")
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.MasterCaches.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 	}
 
-	if mc := newYtsaurus.Spec.MasterCaches; mc != nil {
-		validate(&mc.InstanceSpec, specPath.Child("masterCaches"))
+	return results
+}
+
+func (r *ytsaurusValidator) validateKafkaProxies(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
+
+	kafkaRoles := make(map[string]bool)
+	for i, kp := range newYtsaurus.Spec.KafkaProxies {
+		path := field.NewPath("spec").Child("kafkaProxies").Index(i)
+		if _, exists := kafkaRoles[kp.Role]; exists {
+			results.Error(field.Duplicate(path.Child("role"), kp.Role))
+		}
+		kafkaRoles[kp.Role] = true
+
+		results.Append(r.validateInstanceSpec(kp.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 	}
-	for i := range newYtsaurus.Spec.KafkaProxies {
-		validate(&newYtsaurus.Spec.KafkaProxies[i].InstanceSpec, specPath.Child("kafkaProxies").Index(i))
+
+	return results
+}
+
+func (r *ytsaurusValidator) validateCypressProxies(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
+
+	if newYtsaurus.Spec.CypressProxies != nil {
+		path := field.NewPath("spec").Child("cypressProxies")
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.CypressProxies.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 	}
-	if cp := newYtsaurus.Spec.CypressProxies; cp != nil {
-		validate(&cp.InstanceSpec, specPath.Child("cypressProxies"))
+
+	return results
+}
+
+func (r *ytsaurusValidator) validateBundleController(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
+
+	if newYtsaurus.Spec.BundleController != nil {
+		path := field.NewPath("spec").Child("bundleController")
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.BundleController.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 	}
-	if bc := newYtsaurus.Spec.BundleController; bc != nil {
-		validate(&bc.InstanceSpec, specPath.Child("bundleController"))
-	}
-	if tb := newYtsaurus.Spec.TabletBalancer; tb != nil {
-		validate(&tb.InstanceSpec, specPath.Child("tabletBalancers"))
+
+	return results
+}
+
+func (r *ytsaurusValidator) validateTabletBalancer(newYtsaurus *ytv1.Ytsaurus) Results {
+	var results Results
+
+	if newYtsaurus.Spec.TabletBalancer != nil {
+		path := field.NewPath("spec").Child("tabletBalancers")
+		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.TabletBalancer.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 	}
 
 	return results
@@ -687,6 +713,9 @@ func (r *ytsaurusValidator) validateStrawberry(newYtsaurus *ytv1.Ytsaurus) Resul
 	var results Results
 
 	if newYtsaurus.Spec.StrawberryController != nil {
+		path := field.NewPath("spec").Child("strawberry")
+		results.Append(r.validatePodSpec(&newYtsaurus.Spec.StrawberryController.PodSpec, path))
+
 		if newYtsaurus.Spec.Schedulers == nil {
 			results.Error(field.Required(field.NewPath("spec").Child("schedulers"),
 				"schedulers are required for strawberry"))
@@ -749,7 +778,7 @@ func (r *ytsaurusValidator) validateYQLAgents(newYtsaurus *ytv1.Ytsaurus) Result
 	var results Results
 
 	if newYtsaurus.Spec.YQLAgents != nil {
-		path := field.NewPath("spec").Child("YQLAgents")
+		path := field.NewPath("spec").Child("yqlAgents")
 		results.Append(r.validateInstanceSpec(newYtsaurus.Spec.YQLAgents.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
 		if newYtsaurus.Spec.QueryTrackers == nil {
@@ -763,6 +792,11 @@ func (r *ytsaurusValidator) validateYQLAgents(newYtsaurus *ytv1.Ytsaurus) Result
 
 func (r *ytsaurusValidator) validateUi(newYtsaurus *ytv1.Ytsaurus) Results {
 	var results Results
+
+	if newYtsaurus.Spec.UI != nil {
+		path := field.NewPath("spec").Child("ui")
+		results.Append(r.validatePodSpec(&newYtsaurus.Spec.UI.PodSpec, path))
+	}
 
 	if newYtsaurus.Spec.UI != nil && newYtsaurus.Spec.UI.Secure {
 		for i, hp := range newYtsaurus.Spec.HTTPProxies {
@@ -1001,9 +1035,11 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	results.Append(r.validateDiscovery(newYtsaurus))
 	results.Append(r.validatePrimaryMasters(newYtsaurus, oldYtsaurus))
 	results.Append(r.validateSecondaryMasters(newYtsaurus, oldYtsaurus))
+	results.Append(r.validateMasterCaches(newYtsaurus))
 	results.Append(r.validateHTTPProxies(newYtsaurus))
 	results.Append(r.validateRPCProxies(newYtsaurus))
 	results.Append(r.validateTCPProxies(newYtsaurus))
+	results.Append(r.validateKafkaProxies(newYtsaurus))
 	results.Append(r.validateDataNodes(newYtsaurus))
 	results.Append(r.validateExecNodes(newYtsaurus))
 	results.Append(r.validateSchedulers(newYtsaurus))
@@ -1013,10 +1049,12 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus, o
 	results.Append(r.validateStrawberry(newYtsaurus))
 	results.Append(r.validateQueryTrackers(newYtsaurus))
 	results.Append(r.validateQueueAgents(newYtsaurus))
+	results.Append(r.validateCypressProxies(newYtsaurus))
+	results.Append(r.validateBundleController(newYtsaurus))
+	results.Append(r.validateTabletBalancer(newYtsaurus))
 	results.Append(r.validateSpyt(newYtsaurus))
 	results.Append(r.validateYQLAgents(newYtsaurus))
 	results.Append(r.validateUi(newYtsaurus))
-	results.Append(r.validateExtraTimbertruckComponents(newYtsaurus))
 	results.Append(r.validateExistsYtsaurus(ctx, newYtsaurus))
 	results.Append(r.validateUpdatePlan(newYtsaurus))
 
