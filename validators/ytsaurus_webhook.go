@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -492,6 +493,69 @@ func (r *baseValidator) validateTimbertruckSpec(
 	return results
 }
 
+func validateLogRotationPolicy(policy *ytv1.LogRotationPolicy, path *field.Path) Results {
+	var results Results
+
+	if policy == nil {
+		results.Warning(field.Required(path, "logs are not rotated by default"))
+	} else if policy.MaxTotalSizeToKeep == nil {
+		results.Warning(field.Required(path.Child("maxTotalSizeToKeep"), "total size limit is required"))
+	} else if policy.MaxSegmentSize == nil {
+		results.Warning(field.Required(path.Child("maxSegmentSize"), "maxTotalSizeToKeep does not work correctly without maxSegmentSize"))
+	} else if policy.MaxSegmentSize.Cmp(*policy.MaxTotalSizeToKeep) > 0 {
+		results.Warning(field.Invalid(path.Child("maxSegmentSize"), *policy.MaxSegmentSize, "bigger than maxTotalSizeToKeep"))
+	} else if policy.MaxSegmentCountToKeep != nil && policy.MaxTotalSizeToKeep.Value() > *policy.MaxSegmentCountToKeep*policy.MaxSegmentSize.Value() {
+		results.Warning(field.Invalid(path.Child("maxSegmentCountToKeep"), *policy.MaxSegmentCountToKeep, "lower than maxTotalSizeToKeep / maxSegmentSize"))
+	}
+
+	if policy != nil && policy.RotationPeriodMilliseconds != nil {
+		if policy.MaxSegmentCountToKeep == nil {
+			results.Warning(field.Required(path.Child("maxSegmentCountToKeep"), "rotationPeriodMilliseconds could swarm files without maxSegmentCountToKeep"))
+		} else if *policy.MaxSegmentCountToKeep**policy.RotationPeriodMilliseconds < (time.Hour * 24).Milliseconds() {
+			results.Warning(field.Invalid(path.Child("maxSegmentCountToKeep"), *policy.MaxSegmentCountToKeep, "maxSegmentCountToKeep * rotationPeriodMilliseconds < 24 hours"))
+		}
+	}
+
+	return results
+}
+
+func validateLoggers(loggers []ytv1.TextLoggerSpec, path *field.Path) Results {
+	var results Results
+	var hasWarningLevel bool
+	for i, logger := range loggers {
+		loggerPath := path.Index(i)
+		if logger.UseDateTimeSuffix && logger.UseTimestampSuffix {
+			results.Error(field.Forbidden(loggerPath.Child("useDateTimeSuffix"), "must be one of useDateTimeSuffix or useTimestampSuffix"))
+		}
+		if logger.WriterType == ytv1.LogWriterTypeFile {
+			results.Append(validateLogRotationPolicy(logger.RotationPolicy, loggerPath.Child("rotationPolicy")))
+			if !logger.UseDateTimeSuffix {
+				results.Warning(field.Required(loggerPath.Child("useDateTimeSuffix"), "useDateTimeSuffix is recommended"))
+			}
+		} else if logger.RotationPolicy != nil {
+			results.Warning(field.Forbidden(loggerPath.Child("rotationPolicy"), "only for file writer"))
+		}
+		switch logger.MinLogLevel {
+		case ytv1.LogLevelTrace, ytv1.LogLevelDebug:
+			if logger.CategoriesFilter == nil ||
+				(logger.CategoriesFilter.Type == ytv1.CategoriesFilterTypeExclude &&
+					(!slices.Contains(logger.CategoriesFilter.Values, "Bus") || !slices.Contains(logger.CategoriesFilter.Values, "Concurrency"))) {
+				results.Warning(field.Required(loggerPath.Child("categoriesFilter"), "debug level categories Bus and Concurrency are noisy as trace level"))
+			}
+			if logger.Compression == ytv1.LogCompressionNone || logger.Compression == "" {
+				results.Warning(field.Required(loggerPath.Child("compression"), "compression is recommended for debug and trace levels"))
+			}
+			fallthrough
+		case ytv1.LogLevelInfo, ytv1.LogLevelWarning:
+			hasWarningLevel = true
+		}
+	}
+	if len(loggers) > 0 && !hasWarningLevel {
+		results.Warning(field.Required(path, "at least warning level logging is recommended"))
+	}
+	return results
+}
+
 func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, parentPath *field.Path) Results {
 	var results Results
 
@@ -634,6 +698,8 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) Result
 		if apihelpers.FindFirstLocation(en.Locations, ytv1.LocationTypeSlots) == nil {
 			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeSlots))
 		}
+
+		results.Append(validateLoggers(en.JobProxyLoggers, path.Child("jobProxyLoggers")))
 
 		if en.InitContainers != nil {
 			results.Append(r.validateSidecars(en.InitContainers, path.Child("initContainers")))
@@ -834,6 +900,8 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	results.Append(r.validatePodSpec(&instanceSpec.PodSpec, path))
 
 	results.Append(r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path))
+
+	results.Append(validateLoggers(instanceSpec.Loggers, path.Child("loggers")))
 
 	results.Append(validateStructuredLoggers(instanceSpec.StructuredLoggers, path))
 

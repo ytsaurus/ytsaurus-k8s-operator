@@ -328,7 +328,7 @@ type BaseLoggerSpec struct {
 	Compression LogCompression `json:"compression,omitempty"`
 	// Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation.
 	UseTimestampSuffix bool `json:"useTimestampSuffix,omitempty"`
-	// Append filename suffix ".YYYYMMDD-hhmmss" after rotation.
+	// Append filename suffix ".YYYYMMDD-hhmmss" after rotation (recommended).
 	UseDateTimeSuffix     bool               `json:"useDateTimeSuffix,omitempty"`
 	EnableAnchorProfiling *bool              `json:"enableAnchorProfiling,omitempty"`
 	RotationPolicy        *LogRotationPolicy `json:"rotationPolicy,omitempty"`

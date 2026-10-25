@@ -1374,7 +1374,7 @@
                 }
               },
               "useDateTimeSuffix": {
-                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation (recommended).",
                 "type": "boolean"
               },
               "useTimestampSuffix": {
@@ -1610,7 +1610,7 @@
                 }
               },
               "useDateTimeSuffix": {
-                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation (recommended).",
                 "type": "boolean"
               },
               "useTimestampSuffix": {
@@ -1975,7 +1975,7 @@
                 }
               },
               "useDateTimeSuffix": {
-                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation (recommended).",
                 "type": "boolean"
               },
               "useTimestampSuffix": {
