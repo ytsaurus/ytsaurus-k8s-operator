@@ -1200,7 +1200,7 @@ spec:
                       type: object
                     useDateTimeSuffix:
                       description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                        rotation.
+                        rotation (recommended).
                       type: boolean
                     useTimestampSuffix:
                       description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -1367,7 +1367,7 @@ spec:
                       type: object
                     useDateTimeSuffix:
                       description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                        rotation.
+                        rotation (recommended).
                       type: boolean
                     useTimestampSuffix:
                       description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -1640,7 +1640,7 @@ spec:
                       type: object
                     useDateTimeSuffix:
                       description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                        rotation.
+                        rotation (recommended).
                       type: boolean
                     useTimestampSuffix:
                       description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"

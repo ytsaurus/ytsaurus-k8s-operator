@@ -42,7 +42,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ | Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation. |  |  |
-| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation. |  |  |
+| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation (recommended). |  |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 
@@ -2859,7 +2859,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ | Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation. |  |  |
-| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation. |  |  |
+| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation (recommended). |  |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `category` _string_ | Exactly one of category and categoriesFilter must be set. |  |  |
@@ -3060,7 +3060,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ | Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation. |  |  |
-| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation. |  |  |
+| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation (recommended). |  |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `writerType` _[LogWriterType](#logwritertype)_ |  |  | Enum: [file stderr] <br /> |
