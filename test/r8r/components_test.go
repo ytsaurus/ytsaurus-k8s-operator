@@ -48,6 +48,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/controllers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/canonize"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
@@ -799,13 +800,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.WithTimbertruck()
 			// Timbertruck delivery requires a logs location and at least one structured logger
 			// (see resolveTimbertruckDelivery); add them so the master actually gets a sidecar.
-			ytsaurus.Spec.PrimaryMasters.InstanceSpec.Locations = append(
-				ytsaurus.Spec.PrimaryMasters.InstanceSpec.Locations,
-				ytv1.LocationSpec{
-					LocationType: ytv1.LocationTypeLogs,
-					Path:         "/yt/logs",
-				},
-			)
+			masterLogs := apihelpers.FindFirstLocation(ytsaurus.Spec.PrimaryMasters.Locations, ytv1.LocationTypeLogs)
+			Expect(masterLogs).ToNot(BeNil())
 			ytsaurus.Spec.PrimaryMasters.InstanceSpec.Volumes = append(
 				ytsaurus.Spec.PrimaryMasters.InstanceSpec.Volumes,
 				ytv1.Volume{
