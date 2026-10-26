@@ -9,6 +9,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 )
 
 func defaultStderrLoggerSpec() ytv1.TextLoggerSpec {
@@ -120,7 +121,7 @@ func ChooseLoggingPath(location *ytv1.LocationSpec) string {
 }
 
 func ChooseJobProxyLoggingPath(spec *ytv1.InstanceSpec) string {
-	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
 		return location.Path + "/job-proxy"
 	}
 	return "/var/log/job-proxy"
@@ -215,7 +216,7 @@ func (builder *jobProxyLoggingBuilder) buildJobProxyLogManager() JobProxyLogMana
 	}
 
 	if builder.getMode() == ytv1.JobProxyLoggingModePerJobDirectory {
-		for _, location := range ytv1.FindAllLocations(builder.spec.Locations, ytv1.LocationTypeJobProxyLogs) {
+		for _, location := range apihelpers.FindAllLocations(builder.spec.Locations, ytv1.LocationTypeJobProxyLogs) {
 			logManager.Locations = append(
 				logManager.Locations,
 				JobProxyLogManagerLocation{Path: location.Path},

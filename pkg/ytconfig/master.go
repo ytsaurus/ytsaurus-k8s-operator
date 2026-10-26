@@ -6,6 +6,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
@@ -68,7 +69,7 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 	c.HydraManager.MaxChangelogCountToKeep = ptr.Deref(spec.MaxChangelogCountToKeep, int(consts.DefaultMasterChangelogsCountToKeep))
 	c.HydraManager.MaxSnapshotCountToKeep = ptr.Deref(spec.MaxSnapshotCountToKeep, int(consts.DefaultMasterSnapshotsCountToKeep))
 
-	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterChangelogs); location != nil {
 		c.Changelogs.Path = location.Path
 		if location.Quota != nil {
 			c.HydraManager.MaxChangelogSizeToKeep = ptr.To(location.Quota.Value())
@@ -77,7 +78,7 @@ func getMasterServerCarcass(spec *ytv1.MastersSpec) (MasterServer, error) {
 		return c, fmt.Errorf("error creating master config: changelog location not found")
 	}
 
-	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterSnapshots); location != nil {
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeMasterSnapshots); location != nil {
 		c.Snapshots.Path = location.Path
 		if location.Quota != nil {
 			c.HydraManager.MaxSnapshotSizeToKeep = ptr.To(location.Quota.Value())

@@ -6,6 +6,7 @@ import (
 	"path"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -307,7 +308,7 @@ func resolveTimbertruckDelivery(componentTT, commonTT *ytv1.TimbertruckSpec, ins
 	if image == "" {
 		return nil
 	}
-	logsLocation := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeLogs)
+	logsLocation := apihelpers.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeLogs)
 	if logsLocation == nil {
 		return nil
 	}
