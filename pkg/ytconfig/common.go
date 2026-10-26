@@ -2,6 +2,7 @@ package ytconfig
 
 import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"go.ytsaurus.tech/yt/go/yson"
 	"k8s.io/utils/ptr"
 )
@@ -215,7 +216,7 @@ type IOEngine struct {
 }
 
 func createLogging(spec *ytv1.InstanceSpec, componentName string, defaultLoggerSpecs []ytv1.TextLoggerSpec) Logging {
-	loggingBuilder := newLoggingBuilder(ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), componentName)
+	loggingBuilder := newLoggingBuilder(apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs), componentName)
 	if len(spec.Loggers) > 0 {
 		for _, loggerSpec := range spec.Loggers {
 			loggingBuilder.addLogger(loggerSpec)
