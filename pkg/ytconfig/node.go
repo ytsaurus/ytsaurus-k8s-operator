@@ -2,8 +2,6 @@ package ytconfig
 
 import (
 	"fmt"
-	"math"
-	"strings"
 	"time"
 
 	"go.ytsaurus.tech/yt/go/yson"
@@ -15,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
@@ -382,70 +381,6 @@ type TabletNodeServer struct {
 	CachingObjectService *Cache `yson:"caching_object_service,omitempty"`
 }
 
-func findVolumeMountForPath(locationPath string, spec ytv1.InstanceSpec) *corev1.VolumeMount {
-	for _, mount := range spec.VolumeMounts {
-		if strings.HasPrefix(locationPath, mount.MountPath) {
-			return &mount
-		}
-	}
-	return nil
-}
-
-func findVolumeClaimTemplate(volumeName string, spec ytv1.InstanceSpec) *ytv1.EmbeddedPersistentVolumeClaim {
-	for _, claim := range spec.VolumeClaimTemplates {
-		if claim.Name == volumeName {
-			return &claim
-		}
-	}
-	return nil
-}
-
-func findVolume(volumeName string, spec ytv1.InstanceSpec) *ytv1.Volume {
-	for _, volume := range spec.Volumes {
-		if volume.Name == volumeName {
-			return &volume
-		}
-	}
-	return nil
-}
-
-func findQuotaForLocation(location ytv1.LocationSpec, spec ytv1.InstanceSpec) (request *int64, limit *int64) {
-	if quota := location.Quota; quota != nil {
-		val := ptr.To(quota.Value())
-		return val, val // NOTE: location quota overrides both storage request and limit.
-	}
-
-	mount := findVolumeMountForPath(location.Path, spec)
-	if mount == nil {
-		return nil, nil
-	}
-
-	var resources *corev1.VolumeResourceRequirements
-	if claim := findVolumeClaimTemplate(mount.Name, spec); claim != nil {
-		resources = &claim.Spec.Resources
-	} else if volume := findVolume(mount.Name, spec); volume != nil {
-		if volume.EmptyDir != nil && volume.EmptyDir.SizeLimit != nil {
-			val := ptr.To(volume.EmptyDir.SizeLimit.Value())
-			return val, val
-		}
-		if volume.Ephemeral != nil && volume.Ephemeral.VolumeClaimTemplate != nil {
-			resources = &volume.Ephemeral.VolumeClaimTemplate.Spec.Resources
-		}
-	}
-
-	if resources != nil {
-		if storage := resources.Requests.Storage(); storage != nil && !storage.IsZero() {
-			request = ptr.To(storage.Value())
-		}
-		if storage := resources.Limits.Storage(); storage != nil && !storage.IsZero() {
-			limit = ptr.To(storage.Value())
-		}
-		return request, limit
-	}
-
-	return nil, nil
-}
-
 func fillClusterNodeServerCarcass(n *NodeServer, flavor NodeFlavor, spec ytv1.ClusterNodesSpec, is *ytv1.InstanceSpec) {
 	switch flavor {
 	case NodeFlavorData:
@@ -508,7 +443,7 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 		ChunkMetaCache: NoCache(),
 	}
 
-	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
+	for _, location := range apihelpers.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkStore) {
 		storeLocation := StoreLocation{
 			DiskLocation: DiskLocation{
 				Path:       location.Path,
@@ -516,16 +451,16 @@ func getDataNodeServerCarcass(spec *ytv1.DataNodesSpec) (DataNodeServer, error) 
 			},
 		}
 
-		request, limit := findQuotaForLocation(location, spec.InstanceSpec)
+		request, limit := apihelpers.FindQuotaForLocation(location, &spec.InstanceSpec)
 		if limit != nil {
 			// NOTE: Default quota comes from storage limit.
-			storeLocation.Quota = *limit
+			storeLocation.Quota = limit.Value()
 		}
 		if location.LowWatermark != nil {
 			storeLocation.LowWatermark = location.LowWatermark.Value()
 		} else if request != nil {
 			// NOTE: Default low watermark is come from storage request.
-			storeLocation.LowWatermark = int64(math.Min(0.1*float64(*request), float64(consts.MaxChunkStoreLocationReserve)))
+			storeLocation.LowWatermark = min(request.Value()/10, consts.MaxChunkStoreLocationReserve)
 		}
 		if storeLocation.LowWatermark != 0 {
 			storeLocation.MinDiskSpace = storeLocation.LowWatermark
@@ -646,12 +581,13 @@ func fillJobEnvironmentCRI(
 		}
 	}
 
-	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
-		quota, _ := findQuotaForLocation(*location, spec.InstanceSpec)
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
 		jobEnv.CriImageCache = &CriImageCache{
-			Capacity:            quota,
 			ImageSizeEstimation: envSpec.CRI.ImageSizeEstimation,
 			AlwaysPullLatest:    envSpec.CRI.AlwaysPullLatestImage,
+		}
+		if quota, _ := apihelpers.FindQuotaForLocation(location, &spec.InstanceSpec); quota != nil {
+			jobEnv.CriImageCache.Capacity = ptr.To(quota.Value())
 		}
 		if ratio := envSpec.CRI.ImageCompressionRatioEstimation; ratio != nil {
 			jobEnv.CriImageCache.ImageCompressionRatioEstimation = ptr.To(float32(*ratio))
@@ -665,7 +601,7 @@ func fillJobEnvironmentCRI(
 	execNode.UseArtifactBindsLegacy = ptr.To(ptr.Deref(envSpec.UseArtifactBinds, true))
 	if !*execNode.UseArtifactBindsLegacy {
 		// Bind mount chunk cache into job containers if artifact are passed via symlinks.
-		for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
+		for _, location := range apihelpers.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
 			jobEnv.JobProxyBindMounts = append(jobEnv.JobProxyBindMounts, BindMount{
 				InternalPath: location.Path,
 				ExternalPath: location.Path,
@@ -685,8 +621,8 @@ func fillJobEnvironmentCRI(
 		if !ptr.Deref(envSpec.Isolated, true) {
 			return true
 		}
-		for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
-			mount := findVolumeMountForPath(location.Path, spec.InstanceSpec)
+		for _, location := range apihelpers.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots) {
+			mount := apihelpers.FindVolumeMountForPath(spec.InstanceSpec.VolumeMounts, location.Path)
 			if mount == nil || mount.MountPropagation == nil || *mount.MountPropagation != corev1.MountPropagationBidirectional {
 				return false
 			}
@@ -753,7 +689,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		VersionedChunkMetaCache: NoCache(),
 	}
 
-	for _, location := range ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
+	for _, location := range apihelpers.FindAllLocations(spec.Locations, ytv1.LocationTypeChunkCache) {
 		cacheLocation := CacheLocation{
 			DiskLocation: DiskLocation{
 				Path:       location.Path,
@@ -765,8 +701,8 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			cacheLocation.MinDiskSpace = location.LowWatermark.Value()
 		}
 
-		if quota, _ := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
-			cacheLocation.Quota = *quota
+		if quota, _ := apihelpers.FindQuotaForLocation(location, &spec.InstanceSpec); quota != nil {
+			cacheLocation.Quota = quota.Value()
 		}
 
 		c.DataNode.CacheLocations = append(c.DataNode.CacheLocations, cacheLocation)
@@ -776,7 +712,7 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 		return c, fmt.Errorf("error creating exec node config: no cache locations provided")
 	}
 
-	slotLocations := ytv1.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots)
+	slotLocations := apihelpers.FindAllLocations(spec.Locations, ytv1.LocationTypeSlots)
 	if len(slotLocations) > 0 {
 		c.ExecNode.SlotManager.DefaultMediumName = slotLocations[0].Medium
 	}
@@ -792,11 +728,11 @@ func getExecNodeServerCarcass(spec *ytv1.ExecNodesSpec, commonSpec *ytv1.CommonS
 			slotLocation.MinDiskSpace = location.LowWatermark.Value()
 		}
 
-		if quota, _ := findQuotaForLocation(location, spec.InstanceSpec); quota != nil {
-			slotLocation.DiskQuota = quota
+		if quota, _ := apihelpers.FindQuotaForLocation(location, &spec.InstanceSpec); quota != nil {
+			slotLocation.DiskQuota = ptr.To(quota.Value())
 
 			// These are just simple heuristics.
-			slotLocation.DiskUsageWatermark = ptr.To(min(*quota/10, consts.MaxSlotLocationReserve))
+			slotLocation.DiskUsageWatermark = ptr.To(min(quota.Value()/10, consts.MaxSlotLocationReserve))
 		} else {
 			// Do not reserve anything if total disk size is unknown.
 			slotLocation.DiskUsageWatermark = ptr.To(int64(0))

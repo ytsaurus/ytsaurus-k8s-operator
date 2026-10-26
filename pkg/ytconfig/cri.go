@@ -9,6 +9,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
@@ -59,7 +60,7 @@ func NewCRIConfigGenerator(spec *ytv1.ExecNodesSpec) *CRIConfigGenerator {
 		Isolated:       ptr.Deref(envSpec.Isolated, true),
 		MonitoringPort: ptr.Deref(criSpec.MonitoringPort, consts.CRIServiceMonitoringPort),
 	}
-	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeImageCache); location != nil {
 		config.StoragePath = &location.Path
 	}
 	return config

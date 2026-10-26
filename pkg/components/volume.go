@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,24 +77,12 @@ func createVolumeMounts(specVolumeMounts []corev1.VolumeMount) []corev1.VolumeMo
 	return volumeMounts
 }
 
-// FindVolumeMountForPath returns the volume mount that path resides in.
-// Mounts are scanned backward: the kubelet applies mounts in order, so the
-// last mount covering a path is the one visible in the container.
-func FindVolumeMountForPath(volumeMounts []corev1.VolumeMount, path string) *corev1.VolumeMount {
-	for i, mount := range slices.Backward(volumeMounts) {
-		if path == mount.MountPath || strings.HasPrefix(path, mount.MountPath+"/") {
-			return &volumeMounts[i]
-		}
-	}
-	return nil
-}
-
 func resolveLocationMounts(
 	instanceSpec *ytv1.InstanceSpec,
 	requiredLocations ...ytv1.LocationType,
 ) ([]corev1.VolumeMount, error) {
 	for _, requiredLocation := range requiredLocations {
-		if ytv1.FindFirstLocation(instanceSpec.Locations, requiredLocation) == nil {
+		if apihelpers.FindFirstLocation(instanceSpec.Locations, requiredLocation) == nil {
 			return nil, fmt.Errorf("no location of type %q found", requiredLocation)
 		}
 	}
@@ -102,7 +91,7 @@ func resolveLocationMounts(
 		if !slices.Contains(requiredLocations, location.LocationType) {
 			continue
 		}
-		volumeMount := FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path)
+		volumeMount := apihelpers.FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path)
 		if volumeMount == nil {
 			return nil, fmt.Errorf("no volume mount covers location %q (path %q)", location.LocationType, location.Path)
 		}
