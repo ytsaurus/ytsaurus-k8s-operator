@@ -15,6 +15,7 @@ import (
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
@@ -106,7 +107,7 @@ func NewInitJob(
 		scriptFileName: consts.InitJobScriptName,
 	}
 
-	if location := ytv1.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeInitJobLogs); location != nil {
+	if location := apihelpers.FindFirstLocation(instanceSpec.Locations, ytv1.LocationTypeInitJobLogs); location != nil {
 		initJob.logFilePath = path.Join(location.Path, initJob.Name()+".log")
 	}
 

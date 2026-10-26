@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/utils/ptr"
 
-	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -113,11 +113,11 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 	results.Append(r.validateInstanceSpecWithTimbertruck(mastersSpec.InstanceSpec, &newYtsaurus.Spec.CommonSpec, mastersSpec.Timbertruck, path))
 	results.Append(r.validateHostAddresses(newYtsaurus, mastersSpec, path))
 
-	if ytv1.FindFirstLocation(mastersSpec.Locations, ytv1.LocationTypeMasterChangelogs) == nil {
+	if apihelpers.FindFirstLocation(mastersSpec.Locations, ytv1.LocationTypeMasterChangelogs) == nil {
 		results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeMasterChangelogs))
 	}
 
-	if ytv1.FindFirstLocation(mastersSpec.Locations, ytv1.LocationTypeMasterSnapshots) == nil {
+	if apihelpers.FindFirstLocation(mastersSpec.Locations, ytv1.LocationTypeMasterSnapshots) == nil {
 		results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeMasterSnapshots))
 	}
 
@@ -414,7 +414,7 @@ func (r *ytsaurusValidator) validateDataNodes(newYtsaurus *ytv1.Ytsaurus) Result
 
 		results.Append(r.validateInstanceSpec(dn.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
-		if ytv1.FindFirstLocation(dn.Locations, ytv1.LocationTypeChunkStore) == nil {
+		if apihelpers.FindFirstLocation(dn.Locations, ytv1.LocationTypeChunkStore) == nil {
 			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeChunkStore))
 		}
 	}
@@ -524,7 +524,7 @@ func requireLocations(
 ) Results {
 	var results Results
 	for _, locationType := range locationTypes {
-		if ytv1.FindFirstLocation(locations, locationType) == nil {
+		if apihelpers.FindFirstLocation(locations, locationType) == nil {
 			results.Error(field.Required(
 				locationsPath,
 				fmt.Sprintf("%s location must be configured for %s", locationType, reason),
@@ -627,11 +627,11 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) Result
 
 		results.Append(r.validateInstanceSpec(en.InstanceSpec, &newYtsaurus.Spec.CommonSpec, path))
 
-		if ytv1.FindFirstLocation(en.Locations, ytv1.LocationTypeChunkCache) == nil {
+		if apihelpers.FindFirstLocation(en.Locations, ytv1.LocationTypeChunkCache) == nil {
 			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeChunkCache))
 		}
 
-		if ytv1.FindFirstLocation(en.Locations, ytv1.LocationTypeSlots) == nil {
+		if apihelpers.FindFirstLocation(en.Locations, ytv1.LocationTypeSlots) == nil {
 			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeSlots))
 		}
 
@@ -864,7 +864,7 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 				results.Error(field.Invalid(path.Child("locations").Index(locationIdx), location,
 					"location path must not end with '/'"))
 			}
-			if components.FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path) == nil {
+			if apihelpers.FindVolumeMountForPath(instanceSpec.VolumeMounts, location.Path) == nil {
 				results.Error(field.Invalid(path.Child("locations").Index(locationIdx), location,
 					"location path is not in any volume mount"))
 			}
