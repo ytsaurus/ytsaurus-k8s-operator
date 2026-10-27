@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/api/validation"
 	v1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -574,6 +575,32 @@ func validateLoggers(loggers []ytv1.TextLoggerSpec, path *field.Path) Results {
 	return results
 }
 
+func validateLogsDiskUsage(spec *ytv1.InstanceSpec, path *field.Path) Results {
+	var results Results
+	if len(spec.Loggers) == 0 {
+		results.Warning(field.Required(path, "default text loggers include an unbounded file writer"))
+		return results
+	}
+	var maxLogsTotalSizes []*resource.Quantity
+	for _, logger := range spec.Loggers {
+		if logger.WriterType == ytv1.LogWriterTypeFile {
+			maxLogsTotalSizes = append(maxLogsTotalSizes, apihelpers.MaxLogsTotalSize(logger.RotationPolicy))
+		}
+	}
+	for _, logger := range spec.StructuredLoggers {
+		maxLogsTotalSizes = append(maxLogsTotalSizes, apihelpers.MaxLogsTotalSize(logger.RotationPolicy))
+	}
+	maxLogsTotalSize := apihelpers.SumQuantity(maxLogsTotalSizes...)
+	var quota *resource.Quantity
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
+		quota, _ = apihelpers.FindQuotaForLocation(location, spec)
+	}
+	if maxLogsTotalSize == nil || quota != nil && maxLogsTotalSize.Cmp(*quota) > 0 {
+		results.Warning(field.Invalid(path, maxLogsTotalSize, fmt.Sprintf("logs disk usage %v could exceed logs location quota %v", maxLogsTotalSize, quota)))
+	}
+	return results
+}
+
 func validateStructuredLoggers(structuredLoggers []ytv1.StructuredLoggerSpec, parentPath *field.Path) Results {
 	var results Results
 
@@ -719,6 +746,7 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) Result
 			results.Error(field.NotFound(path.Child("locations"), ytv1.LocationTypeSlots))
 		}
 
+		// TODO: Think about job proxy logs quota estimation.
 		results.Append(validateLoggers(en.JobProxyLoggers, path.Child("jobProxyLoggers")))
 
 		if en.InitContainers != nil {
@@ -924,6 +952,8 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	results.Append(validateLoggers(instanceSpec.Loggers, path.Child("loggers")))
 
 	results.Append(validateStructuredLoggers(instanceSpec.StructuredLoggers, path))
+
+	results.Append(validateLogsDiskUsage(&instanceSpec, path))
 
 	if instanceSpec.EnableAntiAffinity != nil {
 		results.Error(field.Invalid(path.Child("EnableAntiAffinity"), instanceSpec.EnableAntiAffinity,
