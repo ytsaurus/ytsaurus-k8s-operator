@@ -507,6 +507,11 @@ func ListClusterComponents(ctx context.Context, ytClient yt.Client) ([]ClusterCo
 		if compomentCypressPath == "" {
 			continue
 		}
+		if ok, err := ytClient.NodeExists(ctx, compomentCypressPath, nil); err != nil {
+			return nil, err
+		} else if !ok {
+			continue
+		}
 		var addresses []string
 		if err := ytClient.ListNode(ctx, compomentCypressPath, &addresses, nil); err != nil {
 			if yterrors.ContainsResolveError(err) {
@@ -566,8 +571,13 @@ func queryClickHouseID(ctx context.Context, httpClient *http.Client, ytProxyAddr
 }
 
 func makeQuery(ctx context.Context, ytClient yt.Client, engine yt.QueryEngine, query string) []map[string]any {
-	id, err := ytClient.StartQuery(ctx, engine, query, nil)
-	Expect(err).To(Succeed())
+	var id yt.QueryID
+	// The HTTP proxy learns about newly configured query tracker stages asynchronously.
+	Eventually(ctx, func(ctx context.Context) error {
+		var err error
+		id, err = ytClient.StartQuery(ctx, engine, query, nil)
+		return err
+	}, reactionTimeout, pollInterval).Should(Succeed())
 	log.Info("Query started", "id", id)
 
 	var previousState yt.QueryState
@@ -587,13 +597,13 @@ func makeQuery(ctx context.Context, ytClient yt.Client, engine yt.QueryEngine, q
 
 	result, err := ytClient.GetQuery(ctx, id, nil)
 	Expect(err).To(Succeed())
+	Expect(result.State).To(HaveValue(Equal(yt.QueryStateCompleted)), "query %v failed: %v", id, result.Err)
 
 	if ptr.Deref(result.ResultCount, 0) == 0 {
 		log.Info("Query result", "id", id, "result_count", 0)
 		return nil
 	}
 
-	Expect(result.State).To(HaveValue(Equal(yt.QueryStateCompleted)))
 	Expect(result.ResultCount).To(HaveValue(Equal(int64(1))))
 
 	_, err = ytClient.GetQueryResult(ctx, id, 0, nil)

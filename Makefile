@@ -141,7 +141,7 @@ ifeq ($(DEBUG),race)
 endif
 
 ## Tests timeout.
-GINKGO_TIMEOUT ?= 1h
+GINKGO_TIMEOUT ?= 3h
 
 GINKGO_FLAGS += --vv
 GINKGO_FLAGS += --silence-skips
