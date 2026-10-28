@@ -22,8 +22,10 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -33,6 +35,28 @@ import (
 	"github.com/go-logr/logr"
 )
 
+type Results struct {
+	Errors   field.ErrorList
+	Warnings []error
+}
+
+func (r *Results) Append(results Results) {
+	r.Errors = append(r.Errors, results.Errors...)
+	r.Warnings = append(r.Warnings, results.Warnings...)
+}
+
+func (r *Results) Error(err *field.Error) {
+	r.Errors = append(r.Errors, err)
+}
+
+func (r *Results) AppendErrors(errors field.ErrorList) {
+	r.Errors = append(r.Errors, errors...)
+}
+
+func (r *Results) Warning(err error) {
+	r.Warnings = append(r.Warnings, err)
+}
+
 // customValidator implements admission.CustomValidator
 type customValidator[T client.Object] struct {
 	Log       logr.Logger
@@ -40,7 +64,7 @@ type customValidator[T client.Object] struct {
 	Object    T
 	nilObject T
 	ObjectGVK schema.GroupVersionKind
-	Validate  func(ctx context.Context, newObj, oldObj T) (admission.Warnings, error)
+	Validate  func(ctx context.Context, newObj, oldObj T) Results
 }
 
 func (r *customValidator[T]) SetupWebhookWithManager(mgr ctrl.Manager) error {
@@ -67,7 +91,7 @@ func (r *customValidator[T]) ValidateCreate(ctx context.Context, obj runtime.Obj
 		return nil, fmt.Errorf("expected a %v but got a %T", r.ObjectGVK, obj)
 	}
 	r.Log.Info("validate create", "name", newObject.GetName())
-	return r.Validate(ctx, newObject, r.nilObject)
+	return r.evaluateValidation(ctx, newObject, r.nilObject, newObject.GetName())
 }
 
 func (r *customValidator[T]) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
@@ -80,7 +104,7 @@ func (r *customValidator[T]) ValidateUpdate(ctx context.Context, oldObj, newObj 
 		return nil, fmt.Errorf("expected a %v but got a %T", r.ObjectGVK, newObj)
 	}
 	r.Log.Info("validate update", "name", oldObject.GetName())
-	return r.Validate(ctx, newObject, oldObject)
+	return r.evaluateValidation(ctx, newObject, oldObject, newObject.GetName())
 }
 
 func (r *customValidator[T]) ValidateDelete(ctx context.Context, oldObj runtime.Object) (admission.Warnings, error) {
@@ -89,5 +113,17 @@ func (r *customValidator[T]) ValidateDelete(ctx context.Context, oldObj runtime.
 		return nil, fmt.Errorf("expected a %v but got a %T", r.ObjectGVK, oldObj)
 	}
 	r.Log.Info("validate delete", "name", oldObject.GetName())
-	return r.Validate(ctx, r.nilObject, oldObject)
+	return r.evaluateValidation(ctx, r.nilObject, oldObject, oldObject.GetName())
+}
+
+func (r *customValidator[T]) evaluateValidation(ctx context.Context, newObj, oldObj T, name string) (admission.Warnings, error) {
+	results := r.Validate(ctx, newObj, oldObj)
+	var warnings admission.Warnings
+	for _, warning := range results.Warnings {
+		warnings = append(warnings, warning.Error())
+	}
+	if len(results.Errors) == 0 {
+		return warnings, nil
+	}
+	return warnings, apierrors.NewInvalid(r.ObjectGVK.GroupKind(), name, results.Errors)
 }

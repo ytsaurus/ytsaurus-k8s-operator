@@ -54,13 +54,13 @@ var (
 		},
 	}
 	testLocationChunkStore = ytv1.LocationSpec{
-		LocationType: "ChunkStore",
+		LocationType: ytv1.LocationTypeChunkStore,
 		Path:         "/yt/hdd1/chunk-store",
 		Medium:       "nvme",
 	}
 	testMaxTrashMilliseconds       int64 = 60000
 	testLocationChunkStoreMaxTrash       = ytv1.LocationSpec{
-		LocationType:         "ChunkStore",
+		LocationType:         ytv1.LocationTypeChunkStore,
 		Path:                 "/yt/hdd1/chunk-store",
 		Medium:               "nvme",
 		MaxTrashMilliseconds: &testMaxTrashMilliseconds,
@@ -68,25 +68,25 @@ var (
 	testLocationChunkStoreQuota        = resource.MustParse("1Ti")
 	testLocationChunkStoreLowWatermark = resource.MustParse("50Gi")
 	testLocationChunkStoreWatermark    = ytv1.LocationSpec{
-		LocationType: "ChunkStore",
+		LocationType: ytv1.LocationTypeChunkStore,
 		Path:         "/yt/hdd1/chunk-store",
 		Medium:       "nvme",
 		Quota:        &testLocationChunkStoreQuota,
 		LowWatermark: &testLocationChunkStoreLowWatermark,
 	}
 	testLocationChunkCache = ytv1.LocationSpec{
-		LocationType: "ChunkCache",
+		LocationType: ytv1.LocationTypeChunkCache,
 		Path:         "/yt/hdd1/chunk-cache",
 	}
 	testLocationSlotsQuota = resource.MustParse("5Gi")
 	testLocationSlots      = ytv1.LocationSpec{
-		LocationType: "Slots",
+		LocationType: ytv1.LocationTypeSlots,
 		Path:         "/yt/hdd2/slots",
 		Quota:        &testLocationSlotsQuota,
 	}
 	testLocationImageCacheQuota = resource.MustParse("4Gi")
 	testLocationImageCache      = ytv1.LocationSpec{
-		LocationType: "ImageCache",
+		LocationType: ytv1.LocationTypeImageCache,
 		Path:         "/yt/hdd1/images",
 		Quota:        &testLocationImageCacheQuota,
 	}

@@ -9,13 +9,15 @@ import (
 	"k8s.io/utils/ptr"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 )
 
 func defaultStderrLoggerSpec() ytv1.TextLoggerSpec {
 	return ytv1.TextLoggerSpec{
 		BaseLoggerSpec: ytv1.BaseLoggerSpec{
 			Name:               "stderr",
-			MinLogLevel:        ytv1.LogLevelError,
+			MinLogLevel:        ytv1.LogLevelWarning,
 			Compression:        ytv1.LogCompressionNone,
 			UseTimestampSuffix: false,
 			Format:             ytv1.LogFormatPlainText,
@@ -86,11 +88,16 @@ type LoggingWriter struct {
 	RotationPolicy *LogRotationPolicy `yson:"rotation_policy,omitempty"`
 }
 
+// NYT::NLogging::TLogManagerConfig
 type Logging struct {
 	Writers map[string]LoggingWriter `yson:"writers"`
 	Rules   []LoggingRule            `yson:"rules"`
 
-	FlushPeriod           int  `yson:"flush_period,omitempty"`
+	FlushPeriod int `yson:"flush_period,omitempty"`
+
+	CheckSpacePeriod int    `yson:"check_space_period,omitempty"`
+	MinDiskSpace     *int64 `yson:"min_disk_space,omitempty"`
+
 	EnableAnchorProfiling bool `yson:"enable_anchor_profiling,omitempty"`
 }
 
@@ -111,16 +118,8 @@ type loggingBuilder struct {
 	logging          Logging
 }
 
-func ChooseLoggingPath(location *ytv1.LocationSpec) string {
-	loggingDirectory := "/var/log"
-	if location != nil {
-		loggingDirectory = location.Path
-	}
-	return loggingDirectory
-}
-
 func ChooseJobProxyLoggingPath(spec *ytv1.InstanceSpec) string {
-	if location := ytv1.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
+	if location := apihelpers.FindFirstLocation(spec.Locations, ytv1.LocationTypeLogs); location != nil {
 		return location.Path + "/job-proxy"
 	}
 	return "/var/log/job-proxy"
@@ -128,11 +127,9 @@ func ChooseJobProxyLoggingPath(spec *ytv1.InstanceSpec) string {
 
 const JobProxyLogSymlinksPath = "/var/log/job-proxy-logs"
 
-func newLoggingBuilder(location *ytv1.LocationSpec, componentName string) loggingBuilder {
-	loggingDirectory := ChooseLoggingPath(location)
-
+func newLoggingBuilder(componentName string) loggingBuilder {
 	return loggingBuilder{
-		loggingDirectory: loggingDirectory,
+		loggingDirectory: consts.DefaultLogsPath,
 		componentName:    componentName,
 		logging: Logging{
 			Rules:   make([]LoggingRule, 0),
@@ -215,7 +212,7 @@ func (builder *jobProxyLoggingBuilder) buildJobProxyLogManager() JobProxyLogMana
 	}
 
 	if builder.getMode() == ytv1.JobProxyLoggingModePerJobDirectory {
-		for _, location := range ytv1.FindAllLocations(builder.spec.Locations, ytv1.LocationTypeJobProxyLogs) {
+		for _, location := range apihelpers.FindAllLocations(builder.spec.Locations, ytv1.LocationTypeJobProxyLogs) {
 			logManager.Locations = append(
 				logManager.Locations,
 				JobProxyLogManagerLocation{Path: location.Path},

@@ -60,20 +60,20 @@ func (u UniqueValues[T]) Count(value ...T) int {
 	return count
 }
 
-func (u UniqueValues[T]) Insert(value T, path *field.Path) field.ErrorList {
+func (u UniqueValues[T]) Insert(value T, path *field.Path) Results {
 	if dup, found := u[value]; found {
 		err := field.Duplicate(path, value)
 		err.Detail = "duplicates: " + dup.String()
-		return field.ErrorList{err}
+		return Results{Errors: field.ErrorList{err}}
 	}
 	u[value] = path
-	return nil
+	return Results{}
 }
 
-func (u UniqueValues[T]) InsertAll(slice []T, path *field.Path) field.ErrorList {
-	var errors field.ErrorList
+func (u UniqueValues[T]) InsertAll(slice []T, path *field.Path) Results {
+	var results Results
 	for i, value := range slice {
-		errors = append(errors, u.Insert(value, path.Index(i))...)
+		results.Append(u.Insert(value, path.Index(i)))
 	}
-	return errors
+	return results
 }

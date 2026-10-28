@@ -862,7 +862,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -953,7 +953,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -1204,7 +1204,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -2902,7 +2902,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -2993,7 +2993,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -3244,7 +3244,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -4811,7 +4811,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -4902,7 +4902,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -5153,7 +5153,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -6726,7 +6726,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -6817,7 +6817,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -7075,7 +7075,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -8648,7 +8648,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -8739,7 +8739,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -8990,7 +8990,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -10841,7 +10841,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -10917,7 +10917,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -11008,7 +11008,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -11274,7 +11274,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -12898,7 +12898,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -12989,7 +12989,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -13249,7 +13249,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -14863,7 +14863,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -14954,7 +14954,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -15213,7 +15213,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -16797,7 +16797,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -16888,7 +16888,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -17139,7 +17139,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -18810,7 +18810,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -18901,7 +18901,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -19172,7 +19172,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -20746,7 +20746,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -20837,7 +20837,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -21088,7 +21088,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -22651,7 +22651,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -22742,7 +22742,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -22993,7 +22993,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -24570,7 +24570,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -24661,7 +24661,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -24923,7 +24923,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -26528,7 +26528,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -26619,7 +26619,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -26870,7 +26870,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -28461,7 +28461,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -28552,7 +28552,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -28823,7 +28823,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -30577,7 +30577,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -30668,7 +30668,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -30919,7 +30919,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -32492,7 +32492,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -32583,7 +32583,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -32841,7 +32841,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -34427,7 +34427,7 @@ spec:
                             pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                             x-kubernetes-int-or-string: true
                           maxTrashMilliseconds:
-                            description: Max TTL of trash in milliseconds.
+                            description: Max TTL of trash in milliseconds for ChunkStore.
                             format: int64
                             minimum: 60000
                             type: integer
@@ -34518,7 +34518,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -34786,7 +34786,7 @@ spec:
                             type: object
                           useDateTimeSuffix:
                             description: Append filename suffix ".YYYYMMDD-hhmmss"
-                              after rotation.
+                              after rotation (recommended).
                             type: boolean
                           useTimestampSuffix:
                             description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -36846,7 +36846,7 @@ spec:
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxTrashMilliseconds:
-                          description: Max TTL of trash in milliseconds.
+                          description: Max TTL of trash in milliseconds for ChunkStore.
                           format: int64
                           minimum: 60000
                           type: integer
@@ -36937,7 +36937,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"
@@ -37188,7 +37188,7 @@ spec:
                           type: object
                         useDateTimeSuffix:
                           description: Append filename suffix ".YYYYMMDD-hhmmss" after
-                            rotation.
+                            rotation (recommended).
                           type: boolean
                         useTimestampSuffix:
                           description: Append filename suffix ".YYYY-MM-DDThh:mm:ssZ"

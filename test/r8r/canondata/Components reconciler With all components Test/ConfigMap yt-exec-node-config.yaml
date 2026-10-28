@@ -58,6 +58,8 @@ data:
                 };
             ];
             "flush_period"=3000;
+            "check_space_period"=5000;
+            "min_disk_space"=107374182;
             "enable_anchor_profiling"=%true;
         };
         "monitoring_port"=10029;
@@ -253,7 +255,7 @@ data:
                             family="plain_text";
                         };
                         {
-                            "min_level"=error;
+                            "min_level"=warning;
                             writers=[
                                 stderr;
                             ];
@@ -284,7 +286,7 @@ data:
                                 family="plain_text";
                             };
                             {
-                                "min_level"=error;
+                                "min_level"=warning;
                                 writers=[
                                     stderr;
                                 ];
@@ -455,7 +457,7 @@ data:
                         family="plain_text";
                     };
                     {
-                        "min_level"=error;
+                        "min_level"=warning;
                         writers=[
                             stderr;
                         ];

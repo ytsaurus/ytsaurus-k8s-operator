@@ -42,7 +42,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ | Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation. |  |  |
-| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation. |  |  |
+| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation (recommended). |  |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 
@@ -1393,8 +1393,8 @@ _Appears in:_
 | `path` _string_ |  |  | MinLength: 1 <br /> |
 | `medium` _string_ |  | default |  |
 | `quota` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Disk space quota, default is storage limit of related volume, otherwise - unlimited. |  |  |
-| `lowWatermark` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Free disk space above which the location is considered to be non-full.<br />Default: min((quota or storage request)/10, 25GiB).<br />Below lowWatermark the location starts collecting trash.<br />Below lowWatermark/2 the location is considered to be full.<br />Below lowWatermark/4 the location stops accepting new writes. |  |  |
-| `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds. |  | Minimum: 60000 <br /> |
+| `lowWatermark` _[Quantity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#quantity-resource-api)_ | Free disk space above which the location is considered to be non-full.<br />Has effect for ChunkStore, ChunkCache, Logs, Slots.<br />Default for ChunkStore: min((quota or storage request)/10, 25GiB).<br />Default for Logs: min((quota or storage request)/10, 1GiB) or 100MiB.<br />Below lowWatermark the location starts collecting trash.<br />Below lowWatermark/2 the location is considered to be full.<br />Below lowWatermark/4 the location stops accepting new writes. |  |  |
+| `maxTrashMilliseconds` _integer_ | Max TTL of trash in milliseconds for ChunkStore. |  | Minimum: 60000 <br /> |
 
 
 #### LocationType
@@ -2859,7 +2859,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ | Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation. |  |  |
-| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation. |  |  |
+| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation (recommended). |  |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `category` _string_ | Exactly one of category and categoriesFilter must be set. |  |  |
@@ -3060,7 +3060,7 @@ _Appears in:_
 | `minLogLevel` _[LogLevel](#loglevel)_ |  | info | Enum: [trace debug info warning error] <br /> |
 | `compression` _[LogCompression](#logcompression)_ |  | none | Enum: [none gzip zstd] <br /> |
 | `useTimestampSuffix` _boolean_ | Append filename suffix ".YYYY-MM-DDThh:mm:ssZ" at creation. |  |  |
-| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation. |  |  |
+| `useDateTimeSuffix` _boolean_ | Append filename suffix ".YYYYMMDD-hhmmss" after rotation (recommended). |  |  |
 | `enableAnchorProfiling` _boolean_ |  |  |  |
 | `rotationPolicy` _[LogRotationPolicy](#logrotationpolicy)_ |  |  |  |
 | `writerType` _[LogWriterType](#logwritertype)_ |  |  | Enum: [file stderr] <br /> |

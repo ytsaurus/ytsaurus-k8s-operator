@@ -338,11 +338,11 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 					Resources:             *defaultNodeResources.DeepCopy(),
 					Locations: []ytv1.LocationSpec{
 						{
-							LocationType: "MasterChangelogs",
+							LocationType: ytv1.LocationTypeMasterChangelogs,
 							Path:         "/yt/master-data/master-changelogs",
 						},
 						{
-							LocationType: "MasterSnapshots",
+							LocationType: ytv1.LocationTypeMasterSnapshots,
 							Path:         "/yt/master-data/master-snapshots",
 						},
 					},
@@ -850,7 +850,7 @@ func (b *YtsaurusBuilder) CreateDataNodeInstanceSpec(instanceCount int32) ytv1.I
 		Loggers:               b.CreateLoggersSpec(),
 		Locations: []ytv1.LocationSpec{
 			{
-				LocationType: "ChunkStore",
+				LocationType: ytv1.LocationTypeChunkStore,
 				Path:         "/yt/node-data/chunk-store",
 			},
 		},
