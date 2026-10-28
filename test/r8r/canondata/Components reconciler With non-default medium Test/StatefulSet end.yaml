@@ -57,7 +57,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
         name: ytserver
         ports:
         - containerPort: 10029
@@ -106,7 +106,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
         name: prepare-locations
         resources:
           limits:
@@ -150,7 +150,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
         name: postprocess-config
         resources:
           limits:

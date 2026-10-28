@@ -15,7 +15,7 @@ spec:
     name: ytsaurus-dev-ca-root-bundle
   clusterFeatures:
     httpProxyHaveHttpsAddress: true
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
   discovery:
     instanceCount: 1
     loggers:

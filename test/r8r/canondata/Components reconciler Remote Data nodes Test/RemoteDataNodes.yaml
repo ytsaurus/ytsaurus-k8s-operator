@@ -6,7 +6,7 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "3"
 spec:
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
   instanceCount: 3
   locations:
   - locationType: ChunkStore

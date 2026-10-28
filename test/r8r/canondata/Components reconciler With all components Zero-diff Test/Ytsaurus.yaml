@@ -70,7 +70,7 @@ spec:
     volumeMounts:
     - mountPath: /yt/controller-agent-logs
       name: controller-agent-logs
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
   dataNodes:
   - instanceCount: 3
     locations:
@@ -391,7 +391,7 @@ spec:
     dnsPolicy: None
     hostNetwork: false
     hydraPersistenceUploader:
-      image: ghcr.io/ytsaurus/sidecars:0.0.1
+      image: ghcr.io/ytsaurus/sidecars:0.0.2
     instanceCount: 1
     locations:
     - locationType: MasterChangelogs
@@ -448,7 +448,7 @@ spec:
       name: access
     terminationGracePeriodSeconds: 20
     timbertruck:
-      image: ghcr.io/ytsaurus/sidecars:0.0.1
+      image: ghcr.io/ytsaurus/sidecars:0.0.2
     tolerations:
     - key: instance-toleration
     volumeClaimTemplates:
@@ -728,7 +728,7 @@ spec:
       name: master-logs
   setHostnameAsFqdn: false
   strawberry:
-    image: ghcr.io/ytsaurus/strawberry:0.0.17
+    image: ghcr.io/ytsaurus/strawberry:0.0.18
     resources: {}
   tabletNodes:
   - instanceCount: 3

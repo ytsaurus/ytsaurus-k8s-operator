@@ -8,7 +8,7 @@ metadata:
 spec:
   clusterFeatures:
     defaultPrimaryMedium: store
-  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+  coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
   dataNodes:
   - instanceCount: 3
     locations:

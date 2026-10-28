@@ -55,7 +55,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
         name: ytsaurus-init
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError

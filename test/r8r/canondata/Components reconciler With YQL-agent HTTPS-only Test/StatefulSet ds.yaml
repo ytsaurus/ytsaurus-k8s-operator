@@ -63,7 +63,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
         name: ytserver
         ports:
         - containerPort: 10020
@@ -117,7 +117,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
         name: prepare-locations
         resources:
           limits:
@@ -166,7 +166,7 @@ spec:
           value: /etc/ssl/certs
         - name: REQUESTS_CA_BUNDLE
           value: /etc/ssl/certs/ca-certificates.crt
-        image: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+        image: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
         name: postprocess-config
         resources:
           limits:

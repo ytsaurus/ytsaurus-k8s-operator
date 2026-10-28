@@ -12,7 +12,7 @@
 +  resourceVersion: "30"
  spec:
    clusterFeatures: {}
-   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.3.1
 @@ -81,7 +81,7 @@
    conditions:
    - lastTransitionTime: null
