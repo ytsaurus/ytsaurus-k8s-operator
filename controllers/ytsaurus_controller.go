@@ -65,12 +65,15 @@ func (r *YtsaurusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	logger := log.FromContext(ctx)
 
 	var ytsaurus ytv1.Ytsaurus
-	if err := r.Get(ctx, req.NamespacedName, &ytsaurus); err != nil {
+	if actual, err := r.TryGetActual(ctx, req.NamespacedName, &ytsaurus); err != nil {
 		logger.Error(err, "unable to fetch Ytsaurus")
 		// we'll ignore not-found errors, since they can't be fixed by an immediate
 		// requeue (we'll need to wait for a new notification), and we can get them
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	} else if !actual {
+		logger.Info("Cached Ytsaurus resource is stale", "resourceVersion", ytsaurus.GetResourceVersion())
+		return ctrl.Result{}, nil
 	}
 
 	if !ptr.Deref(ytsaurus.Spec.IsManaged, true) || r.ShouldIgnoreResource(ctx, &ytsaurus) {
