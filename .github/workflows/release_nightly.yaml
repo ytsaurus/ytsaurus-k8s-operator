@@ -12,5 +12,5 @@ jobs:
     uses: ./.github/workflows/subflow_release.yaml
     secrets: inherit
     with:
-      release_version: 0.0.$(git rev-list --count HEAD)-dev-${GITHUB_SHA}
+      release_version: $(git show -s --date=format:%y%m%d%H%M --abbrev=16 --pretty=0.0.%cd-dev-%h)
       release_suffix: "-nightly"

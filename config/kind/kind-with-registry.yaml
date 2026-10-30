@@ -55,12 +55,12 @@ nodes:
     hostPath: "config/registry"
     containerPath: "/etc/containerd/certs.d"
     readOnly: true
-- role: worker
-  extraMounts:
-  - *registry-config
-- role: worker
-  extraMounts:
-  - *registry-config
-- role: worker
-  extraMounts:
-  - *registry-config
+# - role: worker
+#   extraMounts:
+#   - *registry-config
+# - role: worker
+#   extraMounts:
+#   - *registry-config
+# - role: worker
+#   extraMounts:
+#   - *registry-config
