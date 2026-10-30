@@ -8,7 +8,11 @@ metadata:
     app.kubernetes.io/managed-by: ytsaurus-k8s-operator
     app.kubernetes.io/name: yt-master
     app.kubernetes.io/part-of: yt-test-ytsaurus
+    cell-role.ytsaurus.tech/chunk-host: ""
+    cell-role.ytsaurus.tech/cypress-node-host: ""
     yt_component: test-ytsaurus-yt-master-3
+    ytsaurus.tech/cell-id: 65726e65-ad6b7562-30259-79747361
+    ytsaurus.tech/cell-tag: "3"
     ytsaurus.tech/cluster-name: test-ytsaurus
   name: ms-3
   namespace: ytsaurus-components
@@ -36,6 +40,8 @@ spec:
         app.kubernetes.io/managed-by: ytsaurus-k8s-operator
         app.kubernetes.io/name: yt-master
         app.kubernetes.io/part-of: yt-test-ytsaurus
+        cell-role.ytsaurus.tech/chunk-host: ""
+        cell-role.ytsaurus.tech/cypress-node-host: ""
         yt_component: test-ytsaurus-yt-master-3
         ytsaurus.tech/cell-id: 65726e65-ad6b7562-30259-79747361
         ytsaurus.tech/cell-tag: "3"

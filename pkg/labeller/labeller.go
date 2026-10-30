@@ -3,8 +3,11 @@ package labeller
 import (
 	"fmt"
 	"maps"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -58,6 +61,10 @@ func (l *Labeller) GetClusterDomain() string {
 func (l *Labeller) GetCellName(cellTag uint16) string {
 	// Decimal like in cypress: "//sys/secondary_masters/{cell-tag}/{address}".
 	return fmt.Sprintf("%d", cellTag)
+}
+
+func (l *Labeller) GetCellRoleLabelName(role ytv1.MasterCellRole) string {
+	return consts.YTCellRoleLabelPrefix + strings.ReplaceAll(string(role), "_", "-")
 }
 
 // getGroupName converts <name> into <name>[-group]
