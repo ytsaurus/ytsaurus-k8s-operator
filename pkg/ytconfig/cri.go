@@ -3,6 +3,7 @@ package ytconfig
 import (
 	"fmt"
 	"path"
+	"slices"
 
 	"k8s.io/utils/ptr"
 
@@ -360,4 +361,53 @@ func (cri *CRIConfigGenerator) GetAdditionalEnvironmentVariables(spec *ytv1.Exec
 		// for gpuagent_runner.sh
 		"YT_GPU_PROVIDER": gpuProvider,
 	}
+}
+
+func (cri *CRIConfigGenerator) GetCommand(wrapper []string) (command []string, args []string) {
+	var configs string
+	switch cri.Service {
+	case ytv1.CRIServiceContainerd:
+		configs = consts.ContainerdConfigMountPoint
+		args = []string{"--config", path.Join(configs, consts.ContainerdConfigFileName)}
+	case ytv1.CRIServiceCRIO:
+		configs = consts.CRIOConfigMountPoint
+		args = []string{"--config", path.Join(configs, consts.CRIOConfigFileName), "--config-dir", ""}
+	}
+
+	command = append(command, "/bin/bash", path.Join(configs, consts.SetupCgroupScriptName))
+	command = append(command, wrapper...)
+	if !slices.Contains(command, "tini") {
+		command = append(command, "tini", "--")
+	}
+	command = append(command, string(cri.Service))
+
+	return command, args
+}
+
+// GetSetupCgroupScript generates script to setup nested cgroup v2:
+// - setup cgroup namespace
+// - move itself into sub-cgroup "init"
+// - disable OOM group kill for container and enable for "init"
+//
+//nolint:dupword //no
+func (cri *CRIConfigGenerator) GetSetupCgroupScript() ([]byte, error) {
+	script := `#!/bin/bash
+set -eux -o pipefail
+findmnt /sys/fs/cgroup || mount -t cgroup2 cgroup2 /sys/fs/cgroup
+if [ "$(cat /proc/self/cgroup)" != "0::/" ] ; then
+  umount /sys/fs/cgroup
+  exec unshare --cgroup /bin/bash "$0" "$@"
+fi
+mkdir /sys/fs/cgroup/init
+echo $$ >/sys/fs/cgroup/init/cgroup.procs
+controllers=($(</sys/fs/cgroup/cgroup.controllers))
+echo ${controllers[@]/#/+} >/sys/fs/cgroup/cgroup.subtree_control
+echo 1 >/sys/fs/cgroup/init/memory.oom.group
+echo 0 >/sys/fs/cgroup/memory.oom.group
+exec "$@"
+`
+	if cri.Spec.DeprecatedCgroupV1 {
+		script = "#!/bin/bash\nexec \"$@\"\n"
+	}
+	return []byte(script), nil
 }

@@ -217,6 +217,7 @@ type YtsaurusBuilder struct {
 	Namespace    string
 	SandboxImage *string
 	CRIService   *ytv1.CRIServiceType
+	CgroupV1     bool
 	Ytsaurus     *ytv1.Ytsaurus
 	Overrides    *corev1.ConfigMap
 	Chyt         *ytv1.Chyt
@@ -804,6 +805,7 @@ func (b *YtsaurusBuilder) SetupCRIJobEnvironment(node *ytv1.ExecNodesSpec) {
 			SandboxImage:           b.SandboxImage,
 			APIRetryTimeoutSeconds: ptr.To(int32(120)),
 			ImagePullSecret:        b.ImagePullSecret,
+			DeprecatedCgroupV1:     b.CgroupV1,
 		},
 	}
 }

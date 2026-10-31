@@ -81,6 +81,8 @@ const (
 const (
 	JobsContainerName = "jobs"
 
+	SetupCgroupScriptName = "setup-cgroup.sh"
+
 	CRIServiceSocketName = "cri.sock"
 
 	CRIOConfigVolumeName          = "config-crio"

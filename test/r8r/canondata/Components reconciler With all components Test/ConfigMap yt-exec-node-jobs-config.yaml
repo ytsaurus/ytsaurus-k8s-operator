@@ -1,37 +1,57 @@
 data:
-  containerd.toml: |
-    root = "/yt/node-data/image-cache"
-    version = 2
-
-    [grpc]
-      address = "/yt/node-data/image-cache/containerd.sock"
-      gid = 0
-      uid = 0
-
-    [metrics]
-      address = ":10026"
-
-    [plugins]
-      [plugins."io.containerd.grpc.v1.cri"]
-        image_pull_progress_timeout = "5m0s"
-        restrict_oom_score_adj = true
-        [plugins."io.containerd.grpc.v1.cri".cni]
-          bin_dir = "/usr/local/lib/cni"
-          conf_dir = "/etc/cni/net.d"
-        [plugins."io.containerd.grpc.v1.cri".containerd]
-          default_runtime_name = "runc"
-          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
-            [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-              runtime_type = "io.containerd.runc.v2"
-              sandbox_mode = "podsandbox"
-              [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-                SystemdCgroup = false
-        [plugins."io.containerd.grpc.v1.cri".registry]
-      [plugins."io.containerd.nri.v1.nri"]
-        disable = false
-        disable_connections = true
-        plugin_path = "/usr/libexec/nri/plugins"
-        plugin_request_timeout = "15s"
+  crio.conf: |
+    [crio]
+      root = "/yt/node-data/image-cache"
+      [crio.api]
+        listen = "/yt/node-data/image-cache/cri.sock"
+      [crio.image]
+        global_auth_file = "/config/image-pull-secret/config.json"
+        pause_image_auth_file = "/config/image-pull-secret/config.json"
+        signature_policy = "/config/crio/policy.json"
+      [crio.metrics]
+        enable_metrics = true
+        metrics_host = ""
+        metrics_port = 10026
+      [crio.nri]
+        enable_nri = true
+        nri_disable_connections = true
+        nri_plugin_dir = "/usr/libexec/nri/plugins"
+        nri_plugin_request_timeout = "15s"
+      [crio.runtime]
+        cgroup_manager = "cgroupfs"
+        conmon_cgroup = "pod"
+        default_runtime = "crun"
+        privileged_seccomp_profile = "/config/crio/seccomp-privileged.json"
+        [crio.runtime.runtimes]
+          [crio.runtime.runtimes.crun]
+            allowed_annotations = ["io.kubernetes.cri-o.ShmSize"]
+            monitor_cgroup = "pod"
+            monitor_path = "/usr/libexec/crio/conmon"
+            runtime_path = "/usr/libexec/crio/crun"
+            runtime_type = "oci"
+          [crio.runtime.runtimes.runc]
+            allowed_annotations = ["io.kubernetes.cri-o.ShmSize"]
+            monitor_cgroup = "pod"
+            monitor_path = "/usr/libexec/crio/conmon"
+            runtime_path = "/usr/libexec/crio/runc"
+            runtime_type = "oci"
+  policy.json: '{"default":[{"type":"insecureAcceptAnything"}]}'
+  seccomp-privileged.json: '{"defaultAction":"SCMP_ACT_ALLOW"}'
+  setup-cgroup.sh: |
+    #!/bin/bash
+    set -eux -o pipefail
+    findmnt /sys/fs/cgroup || mount -t cgroup2 cgroup2 /sys/fs/cgroup
+    if [ "$(cat /proc/self/cgroup)" != "0::/" ] ; then
+      umount /sys/fs/cgroup
+      exec unshare --cgroup /bin/bash "$0" "$@"
+    fi
+    mkdir /sys/fs/cgroup/init
+    echo $$ >/sys/fs/cgroup/init/cgroup.procs
+    controllers=($(</sys/fs/cgroup/cgroup.controllers))
+    echo ${controllers[@]/#/+} >/sys/fs/cgroup/cgroup.subtree_control
+    echo 1 >/sys/fs/cgroup/init/memory.oom.group
+    echo 0 >/sys/fs/cgroup/memory.oom.group
+    exec "$@"
 metadata:
   annotations:
     extra-pod-annotation: "true"

@@ -5,7 +5,6 @@
 # See notes below about:
 # - ephemeralCluster
 # - Enabling TmpFS in jobs
-# - Setup for Cgroup-v2
 #
 # Documentation for YTsaurus specification:
 # https://ytsaurus.tech/docs/en/admin-guide/prepare-spec
@@ -398,7 +397,8 @@ spec:
 
       ## Entrypoint wrapper for ytserver, required for cri.isolated=false
       # entrypointWrapper:
-      #   - "/yt/scripts/setup-cgroup-v2.sh"  # Requried setup for Cgroup-v2
+      #   - "/bin/bash"
+      #   - "/config/crio/setup-cgroup.sh"    # Requried setup for Cgroup-v2
       #   - "tini"
       #   - "--"
       #   - "/yt/scripts/install-crio.sh"     # CRI-O is still missing in public releases
@@ -425,9 +425,6 @@ spec:
 
           ## entrypoint wrapper for jobs sidecar container
           entrypointWrapper:
-            - "/yt/scripts/setup-cgroup-v2.sh"  # Required setup for Cgroup-v2
-            - "tini"
-            - "--"
             - "/yt/scripts/install-crio.sh"     # CRI-O is still missing in public releases
 
         ## Setup for container runtime used in CRI service for jobs
@@ -641,23 +638,6 @@ kind: ConfigMap
 metadata:
   name: yt-scripts
 data:
-  # Setup cgroup namespace for Cgroup-v2 and move itself into sub-cgroup "init".
-  setup-cgroup-v2.sh: |
-    #!/bin/bash
-    set -eux
-    findmnt /sys/fs/cgroup || mount -t cgroup2 cgroup2 /sys/fs/cgroup
-    if [ -f /sys/fs/cgroup/cgroup.controllers ] ; then
-        if [ "$(cat /proc/self/cgroup)" != "0::/" ] ; then
-          umount /sys/fs/cgroup
-          exec unshare --cgroup "$0" "$@"
-        fi
-        mkdir /sys/fs/cgroup/init
-        echo $$ >/sys/fs/cgroup/init/cgroup.procs
-        controllers=($(</sys/fs/cgroup/cgroup.controllers))
-        echo ${controllers[@]/#/+} >/sys/fs/cgroup/cgroup.subtree_control
-    fi
-    exec "$@"
-
   # Wait for SIGTERM and then umount submounts for paths from arguments.
   wait-and-umount-submounts.sh: |
     #!/bin/bash

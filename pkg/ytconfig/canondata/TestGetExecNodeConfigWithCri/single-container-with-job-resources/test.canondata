@@ -141,6 +141,7 @@
                     "image_endpoint"="unix:///yt/hdd1/images/containerd.sock";
                     namespace=yt;
                     "base_cgroup"="/yt";
+                    "memory_oom_group"=%true;
                 };
                 "cri_image_cache"={
                     capacity=4294967296;
