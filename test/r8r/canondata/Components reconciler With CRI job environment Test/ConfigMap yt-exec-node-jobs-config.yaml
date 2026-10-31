@@ -32,6 +32,21 @@ data:
         disable_connections = true
         plugin_path = "/usr/libexec/nri/plugins"
         plugin_request_timeout = "15s"
+  setup-cgroup.sh: |
+    #!/bin/bash
+    set -eux -o pipefail
+    findmnt /sys/fs/cgroup || mount -t cgroup2 cgroup2 /sys/fs/cgroup
+    if [ "$(cat /proc/self/cgroup)" != "0::/" ] ; then
+      umount /sys/fs/cgroup
+      exec unshare --cgroup /bin/bash "$0" "$@"
+    fi
+    mkdir /sys/fs/cgroup/init
+    echo $$ >/sys/fs/cgroup/init/cgroup.procs
+    controllers=($(</sys/fs/cgroup/cgroup.controllers))
+    echo ${controllers[@]/#/+} >/sys/fs/cgroup/cgroup.subtree_control
+    echo 1 >/sys/fs/cgroup/init/memory.oom.group
+    echo 0 >/sys/fs/cgroup/memory.oom.group
+    exec "$@"
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>

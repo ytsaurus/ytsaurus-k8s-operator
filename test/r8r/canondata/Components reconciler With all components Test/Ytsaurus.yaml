@@ -185,6 +185,9 @@ spec:
     jobEnvironment:
       cri:
         apiRetryTimeoutSeconds: 120
+        criService: crio
+        entrypointWrapper:
+        - wrapper
         imagePullSecret:
           name: image-pull-secret
       nri:

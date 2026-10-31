@@ -191,11 +191,12 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `criService` _[CRIServiceType](#criservicetype)_ | CRI service: containerd (default), crio, none. |  | Enum: [containerd crio none] <br /> |
 | `monitoringPort` _integer_ | CRI service monitoring port, default is 10026, set 0 to disable. |  |  |
-| `entrypointWrapper` _string array_ | Specifies wrapper for CRI service command, default: ["tini", "--"]. |  |  |
+| `entrypointWrapper` _string array_ | Specifies additional wrapper for CRI service command. |  |  |
 | `sandboxImage` _string_ | Sandbox (pause) image. |  |  |
 | `apiRetryTimeoutSeconds` _integer_ | Timeout for retrying CRI API calls. |  |  |
 | `criNamespace` _string_ | CRI namespace for jobs containers. |  |  |
 | `baseCgroup` _string_ | Base cgroup for jobs. |  |  |
+| `deprecatedCgroupV1` _boolean_ | Handle deprecated cgroup-v1 setup. |  |  |
 | `registryConfigPath` _string_ | For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md |  |  |
 | `imageSizeEstimation` _integer_ | Initial estimation for space required for pulling image into cache. |  |  |
 | `imageCompressionRatioEstimation` _integer_ | Multiplier for image size to account space used by unpacked images. |  |  |

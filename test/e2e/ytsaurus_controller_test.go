@@ -322,6 +322,17 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			ytBuilder.DebugLogs = true
 		}
 
+		switch os.Getenv("E2E_CGROUP_V1") {
+		case "":
+			if cgroup, err := os.ReadFile("/proc/self/cgroup"); err == nil && strings.HasPrefix(string(cgroup), "0::") {
+				break
+			}
+			fallthrough
+		case "1":
+			By("Using cgroup v1")
+			ytBuilder.CgroupV1 = true
+		}
+
 		By("Creating minimal Ytsaurus spec")
 		ytBuilder.CreateMinimal()
 		ytBuilder.WithAdminUser()

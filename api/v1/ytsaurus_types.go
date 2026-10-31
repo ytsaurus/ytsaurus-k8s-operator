@@ -659,7 +659,7 @@ type CRIJobEnvironmentSpec struct {
 	// CRI service monitoring port, default is 10026, set 0 to disable.
 	// +optional
 	MonitoringPort *int32 `json:"monitoringPort,omitempty"`
-	// Specifies wrapper for CRI service command, default: ["tini", "--"].
+	// Specifies additional wrapper for CRI service command.
 	//+optional
 	EntrypointWrapper []string `json:"entrypointWrapper,omitempty"`
 	// Sandbox (pause) image.
@@ -674,6 +674,9 @@ type CRIJobEnvironmentSpec struct {
 	// Base cgroup for jobs.
 	//+optional
 	BaseCgroup *string `json:"baseCgroup,omitempty"`
+	// Handle deprecated cgroup-v1 setup.
+	//+optional
+	DeprecatedCgroupV1 bool `json:"deprecatedCgroupV1,omitempty"`
 	// For containerd: https://github.com/containerd/containerd/blob/main/docs/hosts.md
 	//+optional
 	RegistryConfigPath *string `json:"registryConfigPath,omitempty"`

@@ -116,6 +116,7 @@ data:
                         "image_endpoint"="unix:///yt/node-data/image-cache/cri.sock";
                         namespace=yt;
                         "base_cgroup"="/yt";
+                        "memory_oom_group"=%true;
                     };
                     "cri_image_cache"={
                         capacity=5368709120;

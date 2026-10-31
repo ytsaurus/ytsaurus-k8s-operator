@@ -165,7 +165,8 @@ type CriExecutor struct {
 	Namespace       string        `yson:"namespace"`
 	BaseCgroup      string        `yson:"base_cgroup"`
 	RuntimeHandler  string        `yson:"runtime_handler,omitempty"`
-	CpuPeriod       yson.Duration `yson:"cpu_period,omitempty"`
+	CPUPeriod       yson.Duration `yson:"cpu_period,omitempty"`
+	MemoryOOMGroup  *bool         `yson:"memory_oom_group,omitempty"`
 }
 
 type CriImageCache struct {
@@ -636,6 +637,7 @@ func fillJobEnvironmentCRI(
 		ImageEndpoint:   endpoint,
 		Namespace:       ptr.Deref(envSpec.CRI.CRINamespace, consts.CRINamespace),
 		BaseCgroup:      ptr.Deref(envSpec.CRI.BaseCgroup, consts.CRIBaseCgroup),
+		MemoryOOMGroup:  ptr.To(!envSpec.CRI.DeprecatedCgroupV1),
 	}
 
 	if timeout := envSpec.CRI.APIRetryTimeoutSeconds; timeout != nil {

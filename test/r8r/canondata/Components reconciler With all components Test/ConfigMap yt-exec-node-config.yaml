@@ -182,10 +182,11 @@ data:
                         "retry_backoff_time"=1000;
                         "retry_attempts"=120;
                         "retry_timeout"=120000;
-                        "runtime_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
-                        "image_endpoint"="unix:///yt/node-data/image-cache/containerd.sock";
+                        "runtime_endpoint"="unix:///yt/node-data/image-cache/cri.sock";
+                        "image_endpoint"="unix:///yt/node-data/image-cache/cri.sock";
                         namespace=yt;
                         "base_cgroup"="/yt";
+                        "memory_oom_group"=%true;
                     };
                     "cri_image_cache"={
                         capacity=5368709120;
