@@ -369,6 +369,7 @@ spec:
         # Add CRI service sidecar
         cri:
           # criService: crio|containerd
+          # deprecatedCgroupV1: true
           apiRetryTimeoutSeconds: 180
           # registryConfigPath: /config/registry
 

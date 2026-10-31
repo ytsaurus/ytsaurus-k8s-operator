@@ -2349,7 +2349,7 @@
     namespace: ytsaurus-components
     resourceVersion: "13"
   lastTimestamp: null
-  message: Config containerd.toml needs creation
+  message: Config setup-cgroup.sh needs creation
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation
