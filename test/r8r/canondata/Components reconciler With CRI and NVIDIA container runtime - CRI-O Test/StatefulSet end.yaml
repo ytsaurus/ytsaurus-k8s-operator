@@ -95,6 +95,8 @@ spec:
         - --config-dir
         - ""
         command:
+        - /bin/bash
+        - /config/crio/setup-cgroup.sh
         - tini
         - --
         - crio

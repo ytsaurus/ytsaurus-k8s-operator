@@ -97,6 +97,8 @@ spec:
         - --config
         - /config/containerd/containerd.toml
         command:
+        - /bin/bash
+        - /config/containerd/setup-cgroup.sh
         - tini
         - --
         - containerd

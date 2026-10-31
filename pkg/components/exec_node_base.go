@@ -3,7 +3,6 @@ package components
 import (
 	"context"
 	"log"
-	"path"
 
 	"k8s.io/utils/ptr"
 
@@ -187,19 +186,9 @@ func (n *baseExecNode) addCRIServiceConfig(cri *ytconfig.CRIConfigGenerator, pod
 func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, podSpec *corev1.PodSpec) {
 	envSpec := n.spec.JobEnvironment
 
-	wrapper := envSpec.CRI.EntrypointWrapper
-	if len(wrapper) == 0 {
-		wrapper = []string{"tini", "--"}
-	}
-
-	command := make([]string, 0, 1+len(wrapper))
-	command = append(command, wrapper...)
-	command = append(command, string(cri.Service))
-
 	container := corev1.Container{
 		Name:         consts.JobsContainerName,
 		Image:        podSpec.Containers[0].Image,
-		Command:      command,
 		Env:          getDefaultEnv(),
 		VolumeMounts: createVolumeMounts(n.spec.VolumeMounts),
 		SecurityContext: &corev1.SecurityContext{
@@ -214,14 +203,7 @@ func (n *baseExecNode) addCRIServiceSidecar(cri *ytconfig.CRIConfigGenerator, po
 		})
 	}
 
-	switch cri.Service {
-	case ytv1.CRIServiceContainerd:
-		configPath := path.Join(consts.ContainerdConfigMountPoint, consts.ContainerdConfigFileName)
-		container.Args = []string{"--config", configPath}
-	case ytv1.CRIServiceCRIO:
-		configPath := path.Join(consts.CRIOConfigMountPoint, consts.CRIOConfigFileName)
-		container.Args = []string{"--config", configPath, "--config-dir", ""}
-	}
+	container.Command, container.Args = cri.GetCommand(envSpec.CRI.EntrypointWrapper)
 
 	n.addCRIServiceConfig(cri, podSpec, &container)
 
@@ -288,11 +270,21 @@ func NewJobsSidecarConfig(
 		config = nil
 	case ytv1.CRIServiceContainerd:
 		config.AddGenerator(
+			consts.SetupCgroupScriptName,
+			ConfigFormatText,
+			criConfig.GetSetupCgroupScript,
+		)
+		config.AddGenerator(
 			consts.ContainerdConfigFileName,
 			ConfigFormatToml,
 			criConfig.GetContainerdConfig,
 		)
 	case ytv1.CRIServiceCRIO:
+		config.AddGenerator(
+			consts.SetupCgroupScriptName,
+			ConfigFormatText,
+			criConfig.GetSetupCgroupScript,
+		)
 		config.AddGenerator(
 			consts.CRIOConfigFileName,
 			ConfigFormatToml,

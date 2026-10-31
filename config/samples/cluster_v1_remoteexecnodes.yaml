@@ -123,4 +123,6 @@ spec:
   jobEnvironment:
     # Add CRI containerd sidecar
     cri:
+      # criService: crio|containerd
+      # deprecatedCgroupV1: true
       apiRetryTimeoutSeconds: 180

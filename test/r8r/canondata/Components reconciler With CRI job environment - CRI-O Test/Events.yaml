@@ -654,7 +654,7 @@
     namespace: ytsaurus-components
     resourceVersion: "11"
   lastTimestamp: null
-  message: Config crio.conf needs creation
+  message: Config setup-cgroup.sh needs creation
   metadata:
     namespace: ytsaurus-components
   reason: Reconciliation

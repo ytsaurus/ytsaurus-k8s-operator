@@ -322,6 +322,18 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			ytBuilder.DebugLogs = true
 		}
 
+		switch os.Getenv("E2E_CGROUP_V1") {
+		case "":
+			// TODO(khlebnikov): Use v1.31 metric "kubelet_cgroup_version".
+			if cgroup, err := os.ReadFile("/proc/self/cgroup"); err == nil && strings.HasPrefix(string(cgroup), "0::") {
+				break
+			}
+			fallthrough
+		case "1":
+			By("Using cgroup v1")
+			ytBuilder.CgroupV1 = true
+		}
+
 		By("Creating minimal Ytsaurus spec")
 		ytBuilder.CreateMinimal()
 		ytBuilder.WithAdminUser()
@@ -637,9 +649,39 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			op.WaitStatus(ctx)
 		})
 
-		By("Waiting operation completion", func() {
-			op.Wait(ctx)
+		By("Waiting operation finish", func() {
+			op.WaitFinish(ctx)
 		})
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
+		if len(ytsaurus.Spec.ExecNodes) == 0 {
+			return
+		}
+
+		op := NewVanillaOperation(ytClient)
+		op.RawSpec = map[string]any{
+			"tasks": map[string]any{
+				"test": map[string]any{
+					"command":               "tail /dev/zero",
+					"cpu_limit":             1,
+					"memory_limit":          100 << 30, // 100GiB
+					"memory_reserve_factor": 0x1p-10,   // 100MiB
+					"job_count":             1,
+				},
+			},
+			"fail_on_job_restart":  true,
+			"max_failed_job_count": 1,
+		}
+
+		By("Provoking OOM killer")
+		Expect(op.Start(ctx)).To(Succeed())
+		op.WaitFinish(ctx)
+		Expect(op.GetState()).To(Equal(yt.StateFailed))
+
+		By("Checking node is alive")
+		op.RawSpec = nil
+		op.Run(ctx)
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -650,9 +692,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 		By("Checking map operation")
 		op := NewMapTestOperation(ytClient)
-		Expect(op.Start(ctx)).Should(Succeed())
 		By("Waiting operation completion", func() {
-			op.Wait(ctx)
+			op.Run(ctx)
 		})
 	})
 
@@ -3176,13 +3217,20 @@ func checkChunkLocations(ytClient yt.Client) {
 }
 
 type TestOperation struct {
-	Client yt.Client
-	Spec   *ytspec.Spec
+	Client  yt.Client
+	Spec    *ytspec.Spec
+	RawSpec any
+
 	Id     yt.OperationID
+	Status *yt.OperationStatus
 }
 
 func (o *TestOperation) Start(ctx context.Context) error {
-	id, err := o.Client.StartOperation(ctx, o.Spec.Type, o.Spec, nil)
+	spec := o.RawSpec
+	if spec == nil {
+		spec = o.Spec
+	}
+	id, err := o.Client.StartOperation(ctx, o.Spec.Type, spec, nil)
 	if err == nil {
 		log.Info("Operation started", "id", id)
 		o.Id = id
@@ -3190,19 +3238,59 @@ func (o *TestOperation) Start(ctx context.Context) error {
 	return err
 }
 
-func (o *TestOperation) Status(ctx context.Context) (*yt.OperationStatus, error) {
-	return o.Client.GetOperation(ctx, o.Id, nil)
+func (o *TestOperation) UpdateStatus(ctx context.Context) (status *yt.OperationStatus, err error) {
+	status, err = o.Client.GetOperation(ctx, o.Id, nil)
+	o.Status = status
+	return status, err
+}
+
+func (o *TestOperation) GetState() yt.OperationState {
+	if o.Status == nil {
+		return ""
+	}
+	return o.Status.State
+}
+
+func (o *TestOperation) IsFinished() bool {
+	return o.Status != nil && o.Status.State.IsFinished()
+}
+
+func (o *TestOperation) GetError() error {
+	// FIXME(khlebnikov): Non-nil error "OK" error must be eliminated.
+	if o.Status != nil && o.Status.Result != nil && o.Status.Result.Error.Code != yterrors.CodeOK {
+		return o.Status.Result.Error
+	}
+	return nil
 }
 
 func (o *TestOperation) WaitStatus(ctx context.Context) {
-	Eventually(ctx, o.Status, operationTimeout, operationPollInterval).ShouldNot(BeNil())
+	Eventually(ctx, o.UpdateStatus, operationTimeout, operationPollInterval).ShouldNot(BeNil())
+}
+
+func (o *TestOperation) WaitFinish(ctx context.Context) {
+	trackStatus := NewOprationStatusTracker()
+	Eventually(ctx, func(ctx context.Context) (bool, error) {
+		status, err := o.UpdateStatus(ctx)
+		if err != nil {
+			return false, StopTrying("get operation failed").Wrap(err)
+		}
+		trackStatus(status)
+		return o.IsFinished(), err
+	}, operationTimeout, operationPollInterval, specCtx).Should(BeTrueBecause("operation %s should finish", o.Id))
+}
+
+func (o *TestOperation) WaitSuccess(ctx context.Context) {
+	o.WaitFinish(ctx)
+	Expect(o.GetState()).To(Equal(yt.StateCompleted))
+	Expect(o.GetError()).To(Succeed())
 }
 
 func (o *TestOperation) Abort(ctx context.Context) error {
 	err := o.Client.AbortOperation(ctx, o.Id, nil)
 	if yterrors.ContainsErrorCode(err, yterrors.CodeNoSuchOperation) {
-		if status, err := o.Status(ctx); err == nil && status.State.IsFinished() {
-			log.Info("Operation is finished", "id", o.Id, "state", status.State)
+		Expect(o.UpdateStatus(ctx)).ToNot(BeNil())
+		if o.IsFinished() {
+			log.Info("Operation is finished", "id", o.Id, "state", o.GetState(), "error", o.GetError())
 			return nil
 		}
 	}
@@ -3210,6 +3298,12 @@ func (o *TestOperation) Abort(ctx context.Context) error {
 		log.Info("Operation is aborted", "id", o.Id)
 	}
 	return err
+}
+
+func (o *TestOperation) Run(ctx context.Context) *yt.OperationStatus {
+	Expect(o.Start(ctx)).To(Succeed())
+	o.WaitSuccess(ctx)
+	return o.Status
 }
 
 func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
@@ -3236,35 +3330,6 @@ func NewOprationStatusTracker() func(opStatus *yt.OperationStatus) bool {
 		}
 		return changed
 	}
-}
-
-func (o *TestOperation) Wait(ctx context.Context) *yt.OperationStatus {
-	var opStatus *yt.OperationStatus
-	trackStatus := NewOprationStatusTracker()
-	Eventually(ctx, func(ctx context.Context) (bool, error) {
-		var err error
-		opStatus, err = o.Status(ctx)
-		if err != nil {
-			return false, StopTrying("get operation failed").Wrap(err)
-		}
-		trackStatus(opStatus)
-		switch opStatus.State {
-		case yt.StateCompleted:
-			return true, nil
-		case yt.StateFailed, yt.StateAborted:
-			err = ptr.Deref(opStatus.Result, yt.OperationResult{}).Error
-			return false, StopTrying(fmt.Sprintf("operation state %v", opStatus.State)).Wrap(err)
-		default:
-			return false, nil
-		}
-	}, operationTimeout, operationPollInterval, specCtx).Should(BeTrueBecause("operation %s should complete", o.Id))
-	return opStatus
-}
-
-func (o *TestOperation) Run(ctx context.Context) *yt.OperationStatus {
-	err := o.Start(ctx)
-	Expect(err).NotTo(HaveOccurred())
-	return o.Wait(ctx)
 }
 
 func NewVanillaOperation(ytClient yt.Client) *TestOperation {
