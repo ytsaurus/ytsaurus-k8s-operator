@@ -771,7 +771,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustAfterEach(func(ctx context.Context) {
-		if CurrentSpecReport().Failed() {
+		if ShouldSkipCheckup() {
+			log.Info("Skipping checkup", "namespace", namespace)
 			return
 		}
 
