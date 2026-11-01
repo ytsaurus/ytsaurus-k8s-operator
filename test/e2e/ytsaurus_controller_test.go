@@ -767,6 +767,18 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
+		if ytsaurus.Spec.QueryTrackers == nil {
+			return
+		}
+
+		By("Waiting for query tracker discovery")
+		Eventually(ctx, func(ctx context.Context) error {
+			_, err := ytClient.ListQueries(ctx, &yt.ListQueriesOptions{Limit: ptr.To(int64(1))})
+			return err
+		}, reactionTimeout, pollInterval).Should(Succeed())
+	})
+
+	JustBeforeEach(func(ctx context.Context) {
 		if ytBuilder.Chyt == nil || ytsaurus.Spec.QueryTrackers == nil {
 			return
 		}
