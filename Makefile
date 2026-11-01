@@ -122,6 +122,7 @@ GINKGO_PROCS ?= 2
 
 ifneq ($(DEBUG),)
 	GINKGO_PROCS = 1
+	GINKGO_PROGRESS ?= 1m
 	DOCKER_BUILD_TARGET = debug
 endif
 
@@ -141,20 +142,20 @@ ifeq ($(DEBUG),race)
 endif
 
 ## Tests timeout.
-GINKGO_TIMEOUT ?= 1h
+GINKGO_TIMEOUT ?= 2h
 
 GINKGO_FLAGS += --vv
 GINKGO_FLAGS += --silence-skips
 GINKGO_FLAGS += --trace
 GINKGO_FLAGS += --timeout=${GINKGO_TIMEOUT}
-GINKGO_FLAGS += --poll-progress-after=2m
-GINKGO_FLAGS += --poll-progress-interval=1m
 GINKGO_FLAGS += --junit-report=report.xml
 
 ifneq ($(GITHUB_ACTION),)
 	GO_TEST_FLAGS += --trimpath
 	GINKGO_FLAGS += --github-output
 	LOGS_SNAPSHOT = logs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA}
+else
+	GINKGO_PROGRESS ?= 5m
 endif
 
 ifneq ($(FOCUS),)
@@ -176,6 +177,10 @@ endif
 ifeq ($(DRYRUN),)
 ifneq ($(GINKGO_PROCS),)
 	GINKGO_FLAGS += --procs="$(GINKGO_PROCS)"
+endif
+ifneq (${GINKGO_PROGRESS},)
+	GINKGO_FLAGS += --poll-progress-after=${GINKGO_PROGRESS}
+	GINKGO_FLAGS += --poll-progress-interval=${GINKGO_PROGRESS}
 endif
 	REMOVE_CANONIZED = rm -fr
 else
