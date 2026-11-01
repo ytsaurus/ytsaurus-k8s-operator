@@ -170,6 +170,10 @@ var _ = SynchronizedBeforeSuite(func(ctx context.Context) []byte {
 	})
 })
 
+func ShouldSkipCheckup() bool {
+	return !CurrentSpecReport().State.Is(gtypes.SpecStatePassed)
+}
+
 func ShouldPreserveArtifacts() bool {
 	suiteConfig, _ := GinkgoConfiguration()
 	if !suiteConfig.FailFast {
