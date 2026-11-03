@@ -12292,8 +12292,12 @@
                           "none"
                         ]
                       },
+                      "deprecatedCgroupV1": {
+                        "description": "Handle deprecated cgroup-v1 setup.",
+                        "type": "boolean"
+                      },
                       "entrypointWrapper": {
-                        "description": "Specifies wrapper for CRI service command, default: [\"tini\", \"--\"].",
+                        "description": "Specifies additional wrapper for CRI service command.",
                         "type": "array",
                         "items": {
                           "type": "string"
