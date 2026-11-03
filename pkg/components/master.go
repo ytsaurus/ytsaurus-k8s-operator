@@ -542,6 +542,18 @@ func (m *Master) scriptWaitingMasterCellsRegistation() ([]string, error) {
 			m.cfgen.GetMasterCellTagsAsSortedJSON(true),
 		))
 	}
+	for _, secondary := range m.secondaryMasters {
+		if secondary.mastersSpec.InstanceCount == 0 {
+			continue
+		}
+		// Upstream sync on each secondary must finish before taking read-only snapshots.
+		cellID := m.cfgen.GetCellID(secondary.mastersSpec.CellTag)
+		commands = append(commands, fmt.Sprintf(
+			`while ! /usr/bin/yt get --read-from=leader --suppress-transaction-coordinator-sync --params '{master_cell_id="%s"}' %s ; do sleep 1; done`,
+			cellID,
+			registeredCells,
+		))
+	}
 	if false {
 		// //sys/secondary_masters is filled by world initialization which happens every 5 minutes.
 		testCell := func(spec *ytv1.MastersSpec, path, tag string) {
@@ -566,6 +578,8 @@ func (m *Master) scriptMasterCellsSettlement() ([]string, error) {
 	return JoinTextGenerators(
 		PlainTextGenerator(initJobWithNativeDriverPrologue()),
 		m.scriptMasterCellDescriptors,
+		// Newer masters preserve dynamically propagated tags in snapshots, old masters clear them on restart.
+		PlainTextGenerator(`if test "$(/usr/bin/yt get --read-from leader //sys/@dynamically_propagated_masters_cell_tags)" != '[]'; then /usr/bin/yt execute reset_dynamically_propagated_master_cells '{}'; fi`),
 		PlainTextGenerator(fmt.Sprintf("/usr/bin/yt set //sys/@cluster_connection/secondary_masters '%s'", string(secondaryMasters))),
 	)()
 }
