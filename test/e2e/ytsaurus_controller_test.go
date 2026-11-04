@@ -1456,6 +1456,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			BeforeEach(func() {
 				ytBuilder.WithQueryTracker()
 				ytBuilder.WithYqlAgent()
+				ytBuilder.WithoutYqlUdf()
 			})
 
 			It("Should run with yql agent and check that yql agent channel options set up correctly", func(ctx context.Context) {
@@ -2188,6 +2189,7 @@ exec "$@"`
 				By("Adding query-tracker and yql-agent")
 				ytBuilder.WithQueryTracker()
 				ytBuilder.WithYqlAgent()
+				ytBuilder.WithoutYqlUdf()
 				// FIXME(khlebnikov): DQ is still broken.
 				// ytBuilder.WithYqlAgentDQ()
 			})
@@ -2271,6 +2273,7 @@ exec "$@"`
 					By("Adding query-tracker and yql-agent")
 					ytBuilder.WithQueryTracker()
 					ytBuilder.WithYqlAgent()
+					ytBuilder.WithoutYqlUdf()
 					// FIXME(khlebnikov): YQL DQ is still broken for HTTPS-only.
 					// ytBuilder.WithYqlAgentDQ()
 				} else {

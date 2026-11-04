@@ -485,6 +485,9 @@ func (b *YtsaurusBuilder) WithBaseComponents() {
 }
 
 func (b *YtsaurusBuilder) WithOverrides() {
+	if b.Overrides != nil {
+		return
+	}
 	b.Overrides = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      OverridesName,
@@ -666,6 +669,18 @@ func (b *YtsaurusBuilder) WithYqlAgent() {
 		},
 	}
 	b.addLogsVolume(&b.Ytsaurus.Spec.YQLAgents.InstanceSpec, "yql-agent-logs")
+}
+
+func (b *YtsaurusBuilder) WithoutYqlUdf() {
+	b.WithOverrides()
+	b.Overrides.Data["ytserver-yql-agent.yson"] = `{
+  yql_agent = {
+    gateway_config = {
+      mr_job_udfs_dir = "";
+    };
+  };
+}
+`
 }
 
 func (b *YtsaurusBuilder) WithYqlAgentDQ() {
