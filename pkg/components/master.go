@@ -526,12 +526,21 @@ func (m *Master) scriptMasterCellsCompletion() ([]string, error) {
 }
 
 func (m *Master) scriptWaitingMasterCellsRegistation() ([]string, error) {
-	commands := []string{
-		initJobWithNativeDriverPrologue(),
-		fmt.Sprintf(
-			`while test "$(/usr/bin/yt get --format json //sys/@registered_master_cell_tags | jq -c sort)" != '%s'; do sleep 1; done`,
+	commands := []string{initJobWithNativeDriverPrologue()}
+	registeredCells := "//sys/@registered_master_cell_tags"
+	if len(m.secondaryMasters) == 0 {
+		// Handle single-cell case for compatibility with older releases without "jq".
+		commands = append(commands, fmt.Sprintf(
+			`while test "$(/usr/bin/yt get --format json %s)" != '[]'; do sleep 1; done`,
+			registeredCells,
+		))
+	} else {
+		// Master cell tags are reported in order of registration.
+		commands = append(commands, fmt.Sprintf(
+			`while test "$(/usr/bin/yt get --format json %s | jq -c sort)" != '%s'; do sleep 1; done`,
+			registeredCells,
 			m.cfgen.GetMasterCellTagsAsSortedJSON(true),
-		),
+		))
 	}
 	if false {
 		// //sys/secondary_masters is filled by world initialization which happens every 5 minutes.
