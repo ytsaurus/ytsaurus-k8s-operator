@@ -18,6 +18,7 @@ require (
 )
 
 require (
+	al.essio.dev/pkg/shellescape v1.5.1 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
@@ -25,7 +26,6 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/a8m/envsubst v1.4.3 // indirect
 	github.com/alecthomas/participle/v2 v2.1.4 // indirect
-	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
@@ -48,7 +48,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20260507013755-92041b743c96 // indirect
-	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
@@ -106,7 +105,7 @@ require (
 	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20250820133309-9f93124137fa // indirect
 	sigs.k8s.io/controller-tools v0.18.0 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
-	sigs.k8s.io/kind v0.22.0 // indirect
+	sigs.k8s.io/kind v0.31.0 // indirect
 	sigs.k8s.io/kustomize/api v0.21.1 // indirect
 	sigs.k8s.io/kustomize/cmd/config v0.21.1 // indirect
 	sigs.k8s.io/kustomize/kustomize/v5 v5.8.1 // indirect
