@@ -266,7 +266,7 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 	var err error
 
 	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
-		if IsUpdatingComponent(c.ytsaurus, c) {
+		if c.IsUpdatingComponent() {
 			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
 					err = removePods(ctx, c.microservice, &c.component)

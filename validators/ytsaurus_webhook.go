@@ -935,52 +935,34 @@ func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytv1.Ytsaurus) field.Err
 }
 
 func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.ComponentUpdateSelector, path *field.Path) field.ErrorList {
-	var errs field.ErrorList
-
-	modeType := selector.GetUpdateStrategyType()
-	bulkOnlyComponentTypes := map[consts.ComponentType]struct{}{
-		consts.QueueAgentType:   {},
-		consts.QueryTrackerType: {},
-		consts.YqlAgentType:     {},
+	strategy := selector.Strategy
+	if strategy == nil {
+		return nil
 	}
 
-	// strategy currently supported only for concrete components
-	if selector.Class != consts.ComponentClassUnspecified && modeType != "" {
-		errs = append(errs, field.Invalid(path.Child("strategy"), modeType, "strategy is supported only for specific components, not for component classes"))
+	var errs field.ErrorList
+	if strategy.OnDelete != nil && strategy.RollingUpdate != nil {
+		errs = append(errs, field.Invalid(path.Child("strategy"), strategy, "has multiple update strategies"))
 		return errs
 	}
 
-	if selector.Class == consts.ComponentClassUnspecified {
-		if selector.Component.Type == "" && selector.Strategy != nil {
-			errs = append(errs, field.Invalid(path, selector.Strategy, "component.type must be set to use strategy"))
-			return errs
-		}
-		// validate bulk-only restriction
-		if _, bulkOnly := bulkOnlyComponentTypes[selector.Component.Type]; bulkOnly && modeType != "" && modeType != ytv1.ComponentUpdateModeTypeBulkUpdate {
-			errs = append(errs, field.Invalid(path.Child("strategy"), modeType, fmt.Sprintf("%s supports only BulkUpdate mode", selector.Component.Type)))
-			return errs
-		}
+	// strategy currently supported only for concrete components
+	if selector.Class != consts.ComponentClassUnspecified {
+		errs = append(errs, field.Forbidden(path.Child("class"), "update strategy is supported only for specific components, not for component classes"))
+	} else if selector.Component.Type == "" {
+		errs = append(errs, field.Required(path.Child("component").Child("type"), "component.type must be set to use update strategy"))
 	}
 
-	switch modeType {
-	case ytv1.ComponentUpdateModeTypeBulkUpdate:
-		if selector.Strategy != nil {
-			if selector.Strategy.RollingUpdate != nil {
-				errs = append(errs, field.Invalid(path.Child("rollingUpdate"), selector.Strategy.RollingUpdate, "rolling configuration is not valid for BulkUpdate"))
-			}
+	switch t := selector.Component.Type; t {
+	// validate bulk-only restriction
+	case ytv1.QueueAgentType, ytv1.QueryTrackerType, ytv1.YqlAgentType:
+		if strategy.OnDelete == nil && strategy.RollingUpdate == nil {
+			errs = append(errs, field.Invalid(path.Child("strategy"), strategy, fmt.Sprintf("%s supports only bulk update", t)))
 		}
-	case ytv1.ComponentUpdateModeTypeRollingUpdate:
-		if selector.Component.Type == "" {
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, "rolling update requires a concrete component selector"))
-		}
-
-		if selector.Component.Type == ytv1.DataNodeType && selector.Component.Name == "" && len(newYtsaurus.Spec.DataNodes) > 1 && selector.Concurrency == nil {
-			errs = append(errs, field.Invalid(path.Child("concurrency"), modeType, "rolling update for several data node groups requires concurrency limit"))
-		}
-
-	case ytv1.ComponentUpdateModeTypeOnDelete:
-		if selector.Component.Type == "" {
-			errs = append(errs, field.Invalid(path.Child("type"), modeType, "onDelete update requires a concrete component selector"))
+	// forbid data node rolling without concurrency limit
+	case ytv1.DataNodeType:
+		if selector.Component.Name == "" && len(newYtsaurus.Spec.DataNodes) > 1 && strategy.RollingUpdate != nil && selector.Concurrency == nil {
+			errs = append(errs, field.Forbidden(path.Child("concurrency"), "rolling update for several data node groups requires concurrency limit"))
 		}
 	}
 

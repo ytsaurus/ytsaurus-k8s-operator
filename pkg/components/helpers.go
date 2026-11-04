@@ -197,10 +197,6 @@ func CreateUser(ctx context.Context, ytClient yt.Client, userName, token string,
 	return nil
 }
 
-func IsUpdatingComponent(ytsaurus *apiproxy.Ytsaurus, component Component) bool {
-	return ytsaurus.IsUpdatingComponent(component.GetType(), component.GetShortName())
-}
-
 func handleUpdatingClusterState(
 	ctx context.Context,
 	ytsaurus *apiproxy.Ytsaurus,
@@ -211,7 +207,7 @@ func handleUpdatingClusterState(
 ) (*ComponentStatus, error) {
 	var err error
 
-	if IsUpdatingComponent(ytsaurus, cmp) {
+	if cmp.IsUpdatingComponent() {
 		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
 				err = removePods(ctx, server, cmpBase)
@@ -256,7 +252,7 @@ func handleBulkUpdatingClusterState(
 		})
 
 		// Run pre-checks if needed
-		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+		if ytsaurus.ShouldRunPreChecks(cmp.GetComponent()) {
 			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
 				return status, err
 			}
@@ -320,7 +316,7 @@ func handleOnDeleteUpdatingClusterState(
 	}
 
 	// Run pre-checks if needed
-	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+	if ytsaurus.ShouldRunPreChecks(cmp.GetComponent()) {
 		if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
 			return status, err
 		}
@@ -389,17 +385,15 @@ func dispatchComponentUpdate(
 	server server,
 	dry bool,
 ) (*ComponentStatus, error) {
-	if !IsUpdatingComponent(ytsaurus, cmp) {
-		return ptr.To(ComponentStatusReadyAfter("Not updating component")), nil
-	}
-
-	switch getComponentUpdateStrategy(ytsaurus, cmp.GetType(), cmp.GetShortName()) {
-	case ytv1.ComponentUpdateModeTypeRollingUpdate:
+	switch cmp.GetUpdateStrategy() {
+	case UpdateStrategyRolling:
 		return handleRollingUpdatingClusterState(ctx, ytsaurus, cmp, server, dry)
-	case ytv1.ComponentUpdateModeTypeOnDelete:
+	case UpdateStrategyOnDelete:
 		return handleOnDeleteUpdatingClusterState(ctx, ytsaurus, cmp, cmpBase, server, dry)
-	default:
+	case UpdateStrategyBulk:
 		return handleBulkUpdatingClusterState(ctx, ytsaurus, cmp, cmpBase, server, dry)
+	default:
+		return ptr.To(ComponentStatusReadyAfter("Not updating component")), nil
 	}
 }
 
@@ -453,7 +447,7 @@ func handleRollingUpdatingClusterState(
 	if wasted := roll.UnavailableOrInProgressReplicas(); wasted >= maxUnavailable {
 		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, wasted, roll.partition)
 	} else if roll.partition != 0 {
-		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+		if ytsaurus.ShouldRunPreChecks(cmp.GetComponent()) {
 			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
 				return status, err
 			}
@@ -587,17 +581,6 @@ func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType co
 		}
 	}
 	return false
-}
-
-func getComponentUpdateStrategy(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) ytv1.ComponentUpdateModeType {
-	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
-		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) &&
-			selector.Strategy != nil {
-			return selector.Strategy.Type()
-		}
-	}
-	return ""
 }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,

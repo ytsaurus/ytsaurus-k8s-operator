@@ -1,7 +1,7 @@
 metadata:
   annotations:
     ytsaurus.tech/instance-hash: <censored>
-    ytsaurus.tech/observed-generation: "1"
+    ytsaurus.tech/observed-generation: "4"
   generation: 1
   labels:
     app.kubernetes.io/component: yt-http-proxy
@@ -19,7 +19,7 @@ metadata:
     kind: Ytsaurus
     name: test-ytsaurus
     uid: ""
-  resourceVersion: "1"
+  resourceVersion: "3"
 spec:
   podManagementPolicy: Parallel
   replicas: 1

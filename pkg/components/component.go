@@ -36,6 +36,15 @@ type ComponentStatus struct {
 	Message    string
 }
 
+type UpdateStrategy string
+
+const (
+	UpdateStrategyNone     UpdateStrategy = "None"
+	UpdateStrategyBulk     UpdateStrategy = "Bulk"
+	UpdateStrategyRolling  UpdateStrategy = "Rolling"
+	UpdateStrategyOnDelete UpdateStrategy = "OnDelete"
+)
+
 func (cs ComponentStatus) IsUndefined() bool {
 	return cs.SyncStatus == SyncStatusUndefined
 }
@@ -118,6 +127,12 @@ type Component interface {
 
 	// NeedUpdate returns SyncStatusNeedUpdate when component needs instance update.
 	NeedUpdate() ComponentStatus
+
+	// IsUpdatingComponent returns true when component is under ongoing update.
+	IsUpdatingComponent() bool
+
+	// GetUpdateStrategy returns strategy defined for this component by update plan.
+	GetUpdateStrategy() UpdateStrategy
 
 	// ArePodsReady returns:
 	// - SyncStatusBlocked when component have not enough running pods, or too many pods
@@ -295,12 +310,37 @@ func (c *component) SetReadyCondition(status ComponentStatus) {
 	})
 }
 
+func (c *component) IsUpdatingComponent() bool {
+	if c.ytsaurus == nil {
+		return true
+	}
+	return c.ytsaurus.IsUpdating() && c.ytsaurus.IsUpdatingComponent(c.GetComponent())
+}
+
+func (c *component) GetUpdateStrategy() UpdateStrategy {
+	if c.ytsaurus == nil {
+		return UpdateStrategyBulk
+	}
+	updatePlan := c.ytsaurus.GetUpdatePlan()
+	if index := updatePlan.Find(c.GetComponent()); index >= 0 {
+		if strategy := updatePlan[index].Strategy; strategy != nil {
+			if strategy.OnDelete != nil {
+				return UpdateStrategyOnDelete
+			} else if strategy.RollingUpdate != nil {
+				return UpdateStrategyRolling
+			}
+		}
+		return UpdateStrategyBulk
+	}
+	return UpdateStrategyNone
+}
+
 func (c *component) IsUpdatingResources() bool {
 	if c.ytsaurus == nil {
 		return true
 	}
 	return c.ytsaurus.IsUpdating() &&
-		c.ytsaurus.IsUpdatingComponent(c.GetType(), c.GetShortName()) &&
+		c.ytsaurus.IsUpdatingComponent(c.GetComponent()) &&
 		c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
 }
 
