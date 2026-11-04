@@ -593,7 +593,7 @@ func makeQuery(ctx context.Context, ytClient yt.Client, engine yt.QueryEngine, q
 			previousState = *result.State
 		}
 		return *result.State, nil
-	}, "5m").To(BeElementOf(yt.QueryStateAborted, yt.QueryStateCompleted, yt.QueryStateFailed))
+	}, queryRequestTimeout, queryPollInterval).To(BeElementOf(yt.QueryStateAborted, yt.QueryStateCompleted, yt.QueryStateFailed))
 
 	result, err := ytClient.GetQuery(ctx, id, nil)
 	Expect(err).To(Succeed())

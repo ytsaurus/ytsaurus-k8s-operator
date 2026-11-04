@@ -66,6 +66,9 @@ const (
 	operationTimeout      = time.Second * 120
 	lightRequestTimeout   = time.Minute * 2
 	httpRequestTimeout    = time.Minute * 5
+
+	queryRequestTimeout = time.Minute * 10
+	queryPollInterval   = time.Second * 10
 )
 
 func getYtClient(httpClient *http.Client, proxyAddress string) yt.Client {
