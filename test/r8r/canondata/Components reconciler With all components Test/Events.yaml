@@ -4456,6 +4456,26 @@
     namespace: ytsaurus-components
     resourceVersion: "20"
   lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-yql-agent.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "20"
+  lastTimestamp: null
   message: Created YT object yqla (*v1.StatefulSet)
   metadata:
     namespace: ytsaurus-components
@@ -4497,6 +4517,26 @@
   lastTimestamp: null
   message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
     "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "20"
+  lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-yql-agent.yson"
   metadata:
     namespace: ytsaurus-components
   reason: Override
@@ -5546,6 +5586,26 @@
     namespace: ytsaurus-components
     resourceVersion: "30"
   lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-yql-agent.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "30"
+  lastTimestamp: null
   message: Applied configmap/yt-master-cache-config "ytserver-master-cache.yson" override
     "ytserver-all.yaml"
   metadata:
@@ -6141,6 +6201,26 @@
   lastTimestamp: null
   message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
     "ytserver-all.yson"
+  metadata:
+    namespace: ytsaurus-components
+  reason: Override
+  reportingComponent: ytsaurus
+  reportingInstance: ""
+  source:
+    component: ytsaurus
+  type: Normal
+- count: 1
+  eventTime: null
+  firstTimestamp: null
+  involvedObject:
+    apiVersion: cluster.ytsaurus.tech/v1
+    kind: Ytsaurus
+    name: test-ytsaurus
+    namespace: ytsaurus-components
+    resourceVersion: "31"
+  lastTimestamp: null
+  message: Applied configmap/yt-yql-agent-config "ytserver-yql-agent.yson" override
+    "ytserver-yql-agent.yson"
   metadata:
     namespace: ytsaurus-components
   reason: Override

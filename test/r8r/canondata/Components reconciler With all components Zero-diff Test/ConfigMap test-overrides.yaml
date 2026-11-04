@@ -7,6 +7,14 @@ data:
   place-holder: ""
   ytserver-all.yaml: 'overrides_all_yaml: true'
   ytserver-all.yson: '{overrides_all_yson=%true}'
+  ytserver-yql-agent.yson: |
+    {
+      yql_agent = {
+        gateway_config = {
+          mr_job_udfs_dir = "";
+        };
+      };
+    }
 metadata:
   generation: 1
   name: test-overrides

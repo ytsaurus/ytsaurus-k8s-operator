@@ -146,7 +146,7 @@ data:
         "yql_agent"={
             "gateway_config"={
                 "mr_job_bin"="/usr/bin/mrjob";
-                "mr_job_udfs_dir"="/usr/lib/yql";
+                "mr_job_udfs_dir"="";
                 "cluster_mapping"=[
                     {
                         name="test-ytsaurus";

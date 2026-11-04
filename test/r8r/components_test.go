@@ -796,6 +796,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			ytBuilder.Images.QueryTracker = "localhost/query-tracker:0.6.0"
 			ytBuilder.WithQueryTracker()
 			ytBuilder.WithYqlAgent()
+			ytBuilder.WithoutYqlUdf()
 			ytBuilder.WithYqlAgentDQ()
 			ytBuilder.WithHydraPersistenceUploader()
 			ytBuilder.WithTimbertruck()
