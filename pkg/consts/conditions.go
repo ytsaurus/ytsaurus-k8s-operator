@@ -18,6 +18,13 @@ const (
 	ConditionTabletCellBundlesHealthCheck = "TabletCellBundlesHealthCheck"
 )
 
+// ConditionsDependsOnGeneration contains status conditions invalidated on generation change
+var ConditionsDependsOnGeneration = []string{
+	ConditionUpdateIsPossible,
+	ConditionImageHeaterComplete,
+	ConditionTimbertruckPrepared,
+}
+
 // Both status and update conditions
 const (
 	ConditionTimbertruckPrepared     = "TimbertruckPrepared"

@@ -28,7 +28,7 @@ var testSpec = ytv1.YtsaurusSpec{
 		UseIPv6:   true,
 		UseIPv4:   false,
 	},
-	PrimaryMasters: ytv1.MastersSpec{
+	PrimaryMasters: ytv1.PrimaryMastersSpec{MastersSpec: ytv1.MastersSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			PodSpec: ytv1.PodSpec{
 				Tolerations: []corev1.Toleration{
@@ -53,7 +53,7 @@ var testSpec = ytv1.YtsaurusSpec{
 				},
 			},
 		},
-	},
+	}},
 	HTTPProxies: []ytv1.HTTPProxiesSpec{
 		{
 			InstanceSpec: ytv1.InstanceSpec{

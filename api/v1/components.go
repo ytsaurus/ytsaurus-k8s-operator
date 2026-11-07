@@ -16,6 +16,8 @@ limitations under the License.
 
 package v1
 
+import "fmt"
+
 type ComponentType string
 
 // NOTE: In alphabetical order.
@@ -61,3 +63,84 @@ const (
 	// ComponentClassStateless includes all except master, data and tablet nodes.
 	ComponentClassStateless ComponentClass = "Stateless"
 )
+
+type ComponentState string
+
+const (
+	// Status is unknown
+	ComponentStateUndefined ComponentState = ""
+	// Running, reconciliation is not required
+	ComponentStateReady ComponentState = "Ready"
+	// Reconciliation is complete, is not ready yet
+	ComponentStateStarted ComponentState = "Started"
+	// Reconciliation is impossible
+	ComponentStateBlocked ComponentState = "Blocked"
+	// Reconciliation is possible
+	ComponentStatePending ComponentState = "Pending"
+	// Running, update is required
+	ComponentStateNeedUpdate ComponentState = "NeedUpdate"
+	// Update in progress
+	ComponentStateUpdating ComponentState = "Updating"
+)
+
+type Component struct {
+	Type ComponentType `json:"type,omitempty"`
+	Name string        `json:"name,omitempty"`
+}
+
+// +kubebuilder:object:generate=false
+type ComponentSpec interface {
+	GetComponent() Component
+	GetInstanceCount() int
+}
+
+func getComponent(componentType ComponentType, name string) Component {
+	if name == "default" {
+		name = ""
+	}
+	return Component{componentType, name}
+}
+
+func (c *Component) String() string {
+	if c.Name == "" {
+		return string(c.Type)
+	}
+	return fmt.Sprintf("%s-%s", c.Type, c.Name)
+}
+
+type ComponentStatus struct {
+	State   ComponentState `json:"state,omitempty"`
+	Message string         `json:"message,omitempty"`
+}
+
+type YtsaurusComponentStatus struct {
+	State              ComponentState `json:"state,omitempty"`
+	Message            string         `json:"message,omitempty"`
+	ObservedGeneration int64          `json:"observedGeneration,omitempty"`
+}
+
+// Points to Ytsaurus resource in the same namespace.
+type YtsaurusReference struct {
+	Name string `json:"name"`
+}
+
+type YtsaurusComponentBase struct {
+	Status YtsaurusComponentStatus `json:"status,omitempty"`
+}
+
+func (b *YtsaurusComponentBase) GetStatusObservedGeneration() int64 {
+	return b.Status.ObservedGeneration
+}
+
+func (b *YtsaurusComponentBase) SetStatusObservedGeneration(generation int64) {
+	b.Status.ObservedGeneration = generation
+}
+
+func (b *YtsaurusComponentBase) GetComponentStatus() ComponentStatus {
+	return ComponentStatus{b.Status.State, b.Status.Message}
+}
+
+func (b *YtsaurusComponentBase) SetComponentStatus(status ComponentStatus) {
+	b.Status.State = status.State
+	b.Status.Message = status.Message
+}

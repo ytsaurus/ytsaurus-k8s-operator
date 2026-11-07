@@ -329,7 +329,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 					Loggers:               b.CreateLoggersSpec(),
 				},
 			},
-			PrimaryMasters: ytv1.MastersSpec{
+			PrimaryMasters: ytv1.PrimaryMastersSpec{MastersSpec: ytv1.MastersSpec{
 				MasterConnectionSpec: ytv1.MasterConnectionSpec{
 					CellTag: CellTag,
 				},
@@ -358,7 +358,7 @@ func (b *YtsaurusBuilder) CreateMinimal() {
 					},
 					Loggers: b.CreateLoggersSpec(),
 				},
-			},
+			}},
 			HTTPProxies: []ytv1.HTTPProxiesSpec{
 				b.CreateHTTPProxiesSpec(),
 			},
@@ -387,11 +387,13 @@ func (b *YtsaurusBuilder) WithAdminUser() {
 }
 
 func (b *YtsaurusBuilder) WithSecondaryMaster() *ytv1.MastersSpec {
-	b.Ytsaurus.Spec.SecondaryMasters = append(b.Ytsaurus.Spec.SecondaryMasters, *b.Ytsaurus.Spec.PrimaryMasters.DeepCopy())
+	b.Ytsaurus.Spec.SecondaryMasters = append(b.Ytsaurus.Spec.SecondaryMasters, ytv1.SecondaryMastersSpec{
+		MastersSpec: *b.Ytsaurus.Spec.PrimaryMasters.MastersSpec.DeepCopy(),
+	})
 	count := len(b.Ytsaurus.Spec.SecondaryMasters)
 	spec := &b.Ytsaurus.Spec.SecondaryMasters[count-1]
 	spec.CellTag += uint16(count) //nolint:gosec //no overflow
-	return spec
+	return &spec.MastersSpec
 }
 
 func (b *YtsaurusBuilder) WithHydraPersistenceUploader() {

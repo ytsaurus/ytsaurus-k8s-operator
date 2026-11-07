@@ -576,6 +576,33 @@ _Appears in:_
 
 
 
+
+
+#### ComponentState
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ComponentStatus](#componentstatus)
+- [YtsaurusComponentStatus](#ytsauruscomponentstatus)
+
+| Field | Description |
+| --- | --- |
+| `` | Status is unknown<br /> |
+| `Ready` | Running, reconciliation is not required<br /> |
+| `Started` | Reconciliation is complete, is not ready yet<br /> |
+| `Blocked` | Reconciliation is impossible<br /> |
+| `Pending` | Reconciliation is possible<br /> |
+| `NeedUpdate` | Running, update is required<br /> |
+| `Updating` | Update in progress<br /> |
+
+
+
+
 #### ComponentType
 
 _Underlying type:_ _string_
@@ -890,6 +917,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -897,6 +925,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -1112,6 +1141,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1119,6 +1149,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -1143,6 +1174,8 @@ _Appears in:_
 
 _Appears in:_
 - [MastersSpec](#mastersspec)
+- [PrimaryMastersSpec](#primarymastersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1170,6 +1203,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1177,6 +1211,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -1376,6 +1411,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1383,6 +1419,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -1614,6 +1651,8 @@ _Validation:_
 
 _Appears in:_
 - [MastersSpec](#mastersspec)
+- [PrimaryMastersSpec](#primarymastersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description |
 | --- | --- |
@@ -1633,7 +1672,9 @@ _Appears in:_
 
 _Appears in:_
 - [MastersSpec](#mastersspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1650,7 +1691,8 @@ _Appears in:_
 
 
 _Appears in:_
-- [YtsaurusSpec](#ytsaurusspec)
+- [PrimaryMastersSpec](#primarymastersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1727,6 +1769,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1734,6 +1777,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -2037,6 +2081,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2044,6 +2089,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [StrawberryControllerSpec](#strawberrycontrollerspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
@@ -2064,6 +2110,57 @@ _Appears in:_
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+
+
+#### PrimaryMastersSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
+| `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole)_ | Roles assigned to this master cell. Explicit enlisting is preferred, because defaults could change.<br />In general, assigned or default roles cannot be removed later without risk of data loss. |  | Pattern: `^[a-z_]+$` <br /> |
+| `hostAddressLabel` _string_ |  |  |  |
+| `maxSnapshotCountToKeep` _integer_ | Snapshot count to keep, default: 10. Define Quota for MasterSnapshots location to limit by total size. |  |  |
+| `maxChangelogCountToKeep` _integer_ | Changelog count to keep, default: 10. Define Quota for MasterChangelogs location to limit by total size. |  |  |
+| `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 
 
 #### QueryTrackerSpec
@@ -2219,6 +2316,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2226,6 +2324,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -2713,6 +2812,57 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
+#### SecondaryMastersSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
+| `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole)_ | Roles assigned to this master cell. Explicit enlisting is preferred, because defaults could change.<br />In general, assigned or default roles cannot be removed later without risk of data loss. |  | Pattern: `^[a-z_]+$` <br /> |
+| `hostAddressLabel` _string_ |  |  |  |
+| `maxSnapshotCountToKeep` _integer_ | Snapshot count to keep, default: 10. Define Quota for MasterSnapshots location to limit by total size. |  |  |
+| `maxChangelogCountToKeep` _integer_ | Changelog count to keep, default: 10. Define Quota for MasterChangelogs location to limit by total size. |  |  |
+| `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
+
+
 #### Spyt
 
 
@@ -2841,6 +2991,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2848,6 +2999,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -3042,6 +3194,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -3049,6 +3202,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -3082,9 +3236,11 @@ _Appears in:_
 - [CommonSpec](#commonspec)
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -3272,6 +3428,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -3279,6 +3436,7 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
@@ -3436,6 +3594,28 @@ Ytsaurus is the Schema for the ytsaurus API
 | `status` _[YtsaurusStatus](#ytsaurusstatus)_ |  |  |  |
 
 
+
+
+#### YtsaurusComponentStatus
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusComponentBase](#ytsauruscomponentbase)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `state` _[ComponentState](#componentstate)_ |  |  |  |
+| `message` _string_ |  |  |  |
+| `observedGeneration` _integer_ |  |  |  |
+
+
+
+
 #### YtsaurusSpec
 
 
@@ -3486,8 +3666,8 @@ _Appears in:_
 | `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
-| `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |
-| `secondaryMasters` _[MastersSpec](#mastersspec) array_ |  |  | MaxItems: 48 <br /> |
+| `primaryMasters` _[PrimaryMastersSpec](#primarymastersspec)_ |  |  |  |
+| `secondaryMasters` _[SecondaryMastersSpec](#secondarymastersspec) array_ |  |  | MaxItems: 48 <br /> |
 | `masterCaches` _[MasterCachesSpec](#mastercachesspec)_ |  |  |  |
 | `httpProxies` _[HTTPProxiesSpec](#httpproxiesspec) array_ |  |  | MinItems: 1 <br /> |
 | `rpcProxies` _[RPCProxiesSpec](#rpcproxiesspec) array_ |  |  |  |
@@ -3525,6 +3705,7 @@ _Appears in:_
 | `state` _[ClusterState](#clusterstate)_ |  | Created |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
+| `observedComponentGenerations` _object (keys:string, values:integer)_ | Reflects component object generations which were used for updating status, keyed by component name and UID. |  |  |
 | `updateStatus` _[UpdateStatus](#updatestatus)_ |  |  |  |
 
 

@@ -227,12 +227,12 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 func (r *ytsaurusValidator) validatePrimaryMasters(newYtsaurus, oldYtsaurus *ytv1.Ytsaurus) field.ErrorList {
 	var allErrors field.ErrorList
 
-	mastersSpec := &newYtsaurus.Spec.PrimaryMasters
+	mastersSpec := &newYtsaurus.Spec.PrimaryMasters.MastersSpec
 	path := field.NewPath("spec").Child("primaryMasters")
 
 	var oldMastersSpec *ytv1.MastersSpec
 	if oldYtsaurus != nil {
-		oldMastersSpec = &oldYtsaurus.Spec.PrimaryMasters
+		oldMastersSpec = &oldYtsaurus.Spec.PrimaryMasters.MastersSpec
 	}
 
 	allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
@@ -257,10 +257,10 @@ func (r *ytsaurusValidator) validateSecondaryMasters(newYtsaurus, oldYtsaurus *y
 	secondaryMastersPath := field.NewPath("spec").Child("secondaryMasters")
 	for i := range newYtsaurus.Spec.SecondaryMasters {
 		path := secondaryMastersPath.Index(i)
-		mastersSpec := &newYtsaurus.Spec.SecondaryMasters[i]
+		mastersSpec := &newYtsaurus.Spec.SecondaryMasters[i].MastersSpec
 		var oldMastersSpec *ytv1.MastersSpec
 		if oldYtsaurus != nil && len(oldYtsaurus.Spec.SecondaryMasters) > i {
-			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i]
+			oldMastersSpec = &oldYtsaurus.Spec.SecondaryMasters[i].MastersSpec
 		}
 		allErrors = append(allErrors, r.validateMasterSpec(newYtsaurus, oldYtsaurus, mastersSpec, oldMastersSpec, path)...)
 		allErrors = append(allErrors, cellTags.Insert(mastersSpec.CellTag, path.Child("cellTag"))...)
