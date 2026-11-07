@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
@@ -484,6 +485,77 @@ func (b *YtsaurusBuilder) WithBaseComponents() {
 	b.WithDataNodes()
 	b.WithTabletNodes()
 	b.WithExecNodes()
+}
+
+func (b *YtsaurusBuilder) SeparateComponentSpecs() []client.Object {
+	var objects []client.Object
+	parent := ytv1.YtsaurusReference{Name: b.Ytsaurus.Name}
+	metadata := func(name string) metav1.ObjectMeta {
+		if name != "" {
+			name = "-" + name
+		}
+		return metav1.ObjectMeta{
+			Name:      b.Ytsaurus.Name + name,
+			Namespace: b.Ytsaurus.Namespace,
+		}
+	}
+
+	for _, spec := range b.Ytsaurus.Spec.DataNodes {
+		objects = append(objects, &ytv1.YtsaurusDataNodes{
+			ObjectMeta: metadata(spec.Name),
+			Spec: ytv1.YtsaurusDataNodesSpec{
+				Ytsaurus:      parent,
+				DataNodesSpec: spec,
+			},
+		})
+	}
+	b.Ytsaurus.Spec.DataNodes = nil
+
+	for _, spec := range b.Ytsaurus.Spec.ExecNodes {
+		objects = append(objects, &ytv1.YtsaurusExecNodes{
+			ObjectMeta: metadata(spec.Name),
+			Spec: ytv1.YtsaurusExecNodesSpec{
+				Ytsaurus:      parent,
+				ExecNodesSpec: spec,
+			},
+		})
+	}
+	b.Ytsaurus.Spec.ExecNodes = nil
+
+	for _, spec := range b.Ytsaurus.Spec.TabletNodes {
+		objects = append(objects, &ytv1.YtsaurusTabletNodes{
+			ObjectMeta: metadata(spec.Name),
+			Spec: ytv1.YtsaurusTabletNodesSpec{
+				Ytsaurus:        parent,
+				TabletNodesSpec: spec,
+			},
+		})
+	}
+	b.Ytsaurus.Spec.TabletNodes = nil
+
+	for _, spec := range b.Ytsaurus.Spec.HTTPProxies {
+		objects = append(objects, &ytv1.YtsaurusHTTPProxies{
+			ObjectMeta: metadata(spec.Role),
+			Spec: ytv1.YtsaurusHTTPProxiesSpec{
+				Ytsaurus:        parent,
+				HTTPProxiesSpec: spec,
+			},
+		})
+	}
+	b.Ytsaurus.Spec.HTTPProxies = nil
+
+	for _, spec := range b.Ytsaurus.Spec.RPCProxies {
+		objects = append(objects, &ytv1.YtsaurusRPCProxies{
+			ObjectMeta: metadata(spec.Role),
+			Spec: ytv1.YtsaurusRPCProxiesSpec{
+				Ytsaurus:       parent,
+				RPCProxiesSpec: spec,
+			},
+		})
+	}
+	b.Ytsaurus.Spec.RPCProxies = nil
+
+	return objects
 }
 
 func (b *YtsaurusBuilder) WithOverrides() {

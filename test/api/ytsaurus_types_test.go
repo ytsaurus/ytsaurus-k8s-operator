@@ -20,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 )
 
 var testSpec = ytv1.YtsaurusSpec{
@@ -110,5 +111,30 @@ func TestScheme(t *testing.T) {
 		require.NoError(t, err)
 		_, ok := obj.(client.Object)
 		require.True(t, ok, "kind %v", gvks[0])
+	}
+}
+
+func TestComponentResourceSerialization(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, ytv1.AddToScheme(scheme))
+	for _, member := range ytcluster.KnownYtsaurusComponentObjects() {
+		gvks, _, err := scheme.ObjectKinds(member)
+		require.NoError(t, err)
+		t.Run(gvks[0].Kind, func(t *testing.T) {
+			data := []byte(`{"spec":{"ytsaurus":{"name":"cluster"},"instanceCount":3},"status":{"state":"Ready","observedGeneration":2}}`)
+			require.NoError(t, json.Unmarshal(data, member))
+			require.Equal(t, "cluster", member.GetYtsaurusName())
+			require.Equal(t, 3, member.GetComponentSpec().GetInstanceCount())
+			require.Equal(t, ytv1.ComponentStateReady, member.GetComponentStatus().State)
+			require.Equal(t, int64(2), member.GetStatusObservedGeneration())
+
+			serialized, err := json.Marshal(member)
+			require.NoError(t, err)
+			var fields map[string]any
+			require.NoError(t, json.Unmarshal(serialized, &fields))
+			require.NotContains(t, fields, "ytsaurus")
+			require.Equal(t, map[string]any{"name": "cluster"}, fields["spec"].(map[string]any)["ytsaurus"])
+			require.Equal(t, "Ready", fields["status"].(map[string]any)["state"])
+		})
 	}
 }

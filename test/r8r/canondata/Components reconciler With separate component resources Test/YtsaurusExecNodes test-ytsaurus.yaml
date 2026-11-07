@@ -1,0 +1,52 @@
+apiVersion: cluster.ytsaurus.tech/v1
+kind: YtsaurusExecNodes
+metadata:
+  generation: 1
+  name: test-ytsaurus
+  namespace: ytsaurus-components
+  resourceVersion: "9"
+spec:
+  instanceCount: 1
+  jobResources:
+    limits:
+      cpu: "4"
+      memory: 8Gi
+    requests:
+      cpu: "0"
+      memory: "0"
+  locations:
+  - locationType: ChunkCache
+    path: /yt/node-data/chunk-cache
+  - locationType: Slots
+    path: /yt/node-data/slots
+  loggers:
+  - minLogLevel: info
+    name: info-stderr
+    writerType: stderr
+  minReadyInstanceCount: 0
+  privileged: false
+  resources:
+    limits:
+      cpu: "1"
+      memory: 2Gi
+    requests:
+      cpu: "0"
+      memory: "0"
+  volumeClaimTemplates:
+  - metadata:
+      name: node-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+  volumeMounts:
+  - mountPath: /yt/node-data
+    name: node-data
+  ytsaurus:
+    name: test-ytsaurus
+status:
+  message: 'Pods are ready: 0 of 1, running 0, need 0'
+  observedGeneration: 1
+  state: Ready

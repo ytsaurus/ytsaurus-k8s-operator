@@ -102,7 +102,24 @@ rules:
   - remoteytsaurus/status
   - spyts/status
   - ytsaurus/status
+  - ytsaurusdatanodes/status
+  - ytsaurusexecnodes/status
+  - ytsaurushttpproxies/status
+  - ytsaurusrpcproxies/status
+  - ytsaurustabletnodes/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurusdatanodes
+  - ytsaurusexecnodes
+  - ytsaurushttpproxies
+  - ytsaurusrpcproxies
+  - ytsaurustabletnodes
+  verbs:
+  - get
+  - list
+  - watch

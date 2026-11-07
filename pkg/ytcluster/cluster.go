@@ -41,7 +41,13 @@ type ComponentObject interface {
 }
 
 func KnownYtsaurusComponentObjects() []ComponentObject {
-	return []ComponentObject{}
+	return []ComponentObject{
+		&ytv1.YtsaurusExecNodes{},
+		&ytv1.YtsaurusDataNodes{},
+		&ytv1.YtsaurusTabletNodes{},
+		&ytv1.YtsaurusHTTPProxies{},
+		&ytv1.YtsaurusRPCProxies{},
+	}
 }
 
 func ptrs[T any](in []T) []*T {
@@ -122,7 +128,13 @@ func (c *Cluster) DeleteComponentObject(object ComponentObject) error {
 }
 
 func (c *Cluster) FetchComponentObjects(ctx context.Context, reader client.Reader) error {
-	lists := []client.ObjectList{}
+	lists := []client.ObjectList{
+		&ytv1.YtsaurusExecNodesList{},
+		&ytv1.YtsaurusDataNodesList{},
+		&ytv1.YtsaurusTabletNodesList{},
+		&ytv1.YtsaurusHTTPProxiesList{},
+		&ytv1.YtsaurusRPCProxiesList{},
+	}
 	for _, list := range lists {
 		if err := reader.List(ctx, list, client.InNamespace(c.Namespace)); err != nil {
 			return err
