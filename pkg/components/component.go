@@ -17,17 +17,17 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
 )
 
-type SyncStatus string
+type SyncStatus = ytv1.ComponentState
 
 const (
-	SyncStatusUndefined  SyncStatus = ""           // Status is unknown
-	SyncStatusReady      SyncStatus = "Ready"      // Running, reconciliation is not required
-	SyncStatusStarted    SyncStatus = "Started"    // Reconciliation is complete, is not ready yet
-	SyncStatusBlocked    SyncStatus = "Blocked"    // Reconciliation is impossible
-	SyncStatusPending    SyncStatus = "Pending"    // Reconciliation is possible
-	SyncStatusNeedUpdate SyncStatus = "NeedUpdate" // Running, update is required
+	SyncStatusUndefined  = ytv1.ComponentStateUndefined  // Status is unknown
+	SyncStatusReady      = ytv1.ComponentStateReady      // Running, reconciliation is not required
+	SyncStatusStarted    = ytv1.ComponentStateStarted    // Reconciliation is complete, is not ready yet
+	SyncStatusBlocked    = ytv1.ComponentStateBlocked    // Reconciliation is impossible
+	SyncStatusPending    = ytv1.ComponentStatePending    // Reconciliation is possible
+	SyncStatusNeedUpdate = ytv1.ComponentStateNeedUpdate // Running, update is required
 	// FIXME: Remove, replace with pending.
-	SyncStatusUpdating SyncStatus = "Updating" // Update in progress
+	SyncStatusUpdating = ytv1.ComponentStateUpdating // Update in progress
 )
 
 type ComponentStatus struct {

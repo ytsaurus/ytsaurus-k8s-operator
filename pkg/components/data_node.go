@@ -33,7 +33,7 @@ func NewDataNode(
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
 	yc internalYtsaurusClient,
-	spec ytv1.DataNodesSpec,
+	spec *ytv1.DataNodesSpec,
 ) *DataNode {
 	l := cfgen.GetComponentLabeller(consts.DataNodeType, spec.Name)
 

@@ -468,7 +468,7 @@ func getYQLAgentServerCarcass(spec *ytv1.YQLAgentSpec) (YQLAgentServer, error) {
 
 func (g *Generator) fillYQLAgentDQEngine(yql *YQLAgent, dq *ytv1.YQLDQEngineSpec, agentVersion *version.Version) error {
 	// clusterName is the real YT cluster name.
-	clusterName := g.ytsaurus.Name
+	clusterName := g.Ytsaurus.Name
 	// proxyAddress is the proxy address DQ uses to reach the cluster.
 	// It carries the "https://" scheme when the cluster exposes an HTTPS proxy address.
 	proxyAddress := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
