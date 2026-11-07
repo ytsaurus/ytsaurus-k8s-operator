@@ -44334,6 +44334,14 @@
             }
           }
         },
+        "observedComponentGenerations": {
+          "description": "Reflects component object generations which were used for updating status,...",
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
         "observedGeneration": {
           "description": "Reflects resource generation which was used for updating status.",
           "type": "integer",

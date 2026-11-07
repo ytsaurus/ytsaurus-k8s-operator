@@ -43,6 +43,7 @@ import (
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/validators"
 )
 
@@ -99,7 +100,7 @@ func (r *YtsaurusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	return ctrl.NewControllerManagedBy(mgr).
+	controller := ctrl.NewControllerManagedBy(mgr).
 		WithLogConstructor(func(request *reconcile.Request) logr.Logger {
 			logger := r.LogConstructor(request)
 			if request != nil {
@@ -119,8 +120,17 @@ func (r *YtsaurusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			&corev1.ConfigMap{},
 			handler.EnqueueRequestsFromMapFunc(r.findObjectsForConfigMap),
 			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
-		).
-		Complete(r)
+		)
+
+	for _, obj := range ytcluster.KnownYtsaurusComponentObjects() {
+		controller.Watches(
+			obj,
+			handler.EnqueueRequestsFromMapFunc(r.followYtsaurusReference),
+			builder.WithPredicates(predicate.ResourceVersionChangedPredicate{}),
+		)
+	}
+
+	return controller.Complete(r)
 }
 
 func (r *YtsaurusReconciler) findObjectsForConfigMap(ctx context.Context, configMap client.Object) []reconcile.Request {
@@ -147,12 +157,27 @@ func (r *YtsaurusReconciler) findObjectsForConfigMap(ctx context.Context, config
 	return requests
 }
 
+func (r *YtsaurusReconciler) followYtsaurusReference(ctx context.Context, object client.Object) []reconcile.Request {
+	return []reconcile.Request{{
+		NamespacedName: types.NamespacedName{
+			Namespace: object.GetNamespace(),
+			Name:      object.(ytcluster.ComponentObject).GetYtsaurusName(),
+		},
+	}}
+}
+
 //nolint:cyclop //ok
 func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) (ctrl.Result, error) {
 	logger := log.FromContext(ctx, "ytsaurusState", resource.Status.State)
 	ctx = log.IntoContext(ctx, logger)
 
 	ytsaurus := apiproxy.NewYtsaurus(resource, r.Client, r.Recorder, r.Scheme)
+	err := ytsaurus.FetchClusterComponents(ctx)
+	if err != nil {
+		logger.Error(err, "Cannot fetch ytsaurus cluster components")
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	cm, err := NewComponentManager(ctx, ytsaurus, r.ClusterDomain)
 	if err != nil {
 		logger.Error(err, "Cannot build component manager")

@@ -38044,6 +38044,13 @@ spec:
                   - type
                   type: object
                 type: array
+              observedComponentGenerations:
+                additionalProperties:
+                  format: int64
+                  type: integer
+                description: Reflects component object generations which were used
+                  for updating status,...
+                type: object
               observedGeneration:
                 description: Reflects resource generation which was used for updating
                   status.
