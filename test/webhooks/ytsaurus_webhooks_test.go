@@ -302,6 +302,11 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers")))
 
 			ytsaurus = newYtsaurus()
+			ytsaurus.Spec.Schedulers = nil
+			ytsaurus.Spec.ExecNodes = nil
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers: Required value: controllerAgents doesn't make sense without schedulers")))
+
+			ytsaurus = newYtsaurus()
 			ytsaurus.Spec.ControllerAgents = nil
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.controllerAgents")))
 

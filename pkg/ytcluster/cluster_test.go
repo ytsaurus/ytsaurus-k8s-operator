@@ -4,9 +4,39 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 )
+
+func TestDeleteComponentObject(t *testing.T) {
+	object := &ytv1.YtsaurusExecNodes{
+		ObjectMeta: metav1.ObjectMeta{Name: "workers", Namespace: "test"},
+		Spec: ytv1.YtsaurusExecNodesSpec{
+			Ytsaurus:      ytv1.YtsaurusReference{Name: "cluster"},
+			ExecNodesSpec: ytv1.ExecNodesSpec{Name: "workers"},
+		},
+	}
+	cluster := NewCluster(&ytv1.Ytsaurus{ObjectMeta: metav1.ObjectMeta{Name: "cluster", Namespace: "test"}})
+	require.NoError(t, cluster.AddComponentObject(object))
+	for _, change := range []string{"name", "namespace", "parent"} {
+		t.Run(change, func(t *testing.T) {
+			other := object.DeepCopy()
+			switch change {
+			case "name":
+				other.Name = "other"
+			case "namespace":
+				other.Namespace = "other"
+			case "parent":
+				other.Spec.Ytsaurus.Name = "other"
+			}
+			require.Error(t, cluster.DeleteComponentObject(other))
+			require.Len(t, cluster.Objects, 1)
+		})
+	}
+	require.NoError(t, cluster.DeleteComponentObject(object.DeepCopy()))
+	require.Empty(t, cluster.Objects)
+}
 
 func TestGetInstanceCount(t *testing.T) {
 	instance := ytv1.InstanceSpec{InstanceCount: 3}
