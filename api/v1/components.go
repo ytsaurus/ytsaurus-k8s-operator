@@ -48,6 +48,7 @@ const (
 	TcpProxyType             ComponentType = "TcpProxy"
 	TimbertruckType          ComponentType = "Timbertruck"
 	UIType                   ComponentType = "UI"
+	UpdatePlanType           ComponentType = "UpdatePlan"
 	YqlAgentType             ComponentType = "YqlAgent"
 	YtsaurusClientType       ComponentType = "YtsaurusClient"
 )

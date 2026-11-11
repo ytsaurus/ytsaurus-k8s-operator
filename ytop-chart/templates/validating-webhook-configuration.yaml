@@ -97,7 +97,7 @@ webhooks:
     resources:
     - ytsaurus
   sideEffects: None
-{{- range $resource := list "ytsaurusdatanodes" "ytsaurusexecnodes" "ytsaurustabletnodes" "ytsaurushttpproxies" "ytsaurusrpcproxies" }}
+{{- range $resource := list "ytsaurusdatanodes" "ytsaurusexecnodes" "ytsaurustabletnodes" "ytsaurushttpproxies" "ytsaurusrpcproxies" "ytsaurusupdateplan" }}
 - admissionReviewVersions:
   - v1
   clientConfig:

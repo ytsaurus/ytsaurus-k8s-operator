@@ -1,5 +1,6 @@
 resources:
 - bases/cluster.ytsaurus.tech_ytsaurus.yaml
+- bases/cluster.ytsaurus.tech_ytsaurusupdateplan.yaml
 - bases/cluster.ytsaurus.tech_ytsaurusexecnodes.yaml
 - bases/cluster.ytsaurus.tech_ytsaurusdatanodes.yaml
 - bases/cluster.ytsaurus.tech_ytsaurustabletnodes.yaml

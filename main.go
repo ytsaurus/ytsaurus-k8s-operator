@@ -76,6 +76,7 @@ func setupWebhooks(mgr ctrl.Manager) error {
 	// Filtering by operator-instance and namespace are done in ValidatingWebhookConfiguration.
 	setups := []func() error{
 		func() error { return validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewYtsaurusUpdatePlanValidator().SetupWebhookWithManager(mgr) },
 		func() error { return validators.NewYtsaurusDataNodesValidator().SetupWebhookWithManager(mgr) },
 		func() error { return validators.NewYtsaurusExecNodesValidator().SetupWebhookWithManager(mgr) },
 		func() error { return validators.NewYtsaurusTabletNodesValidator().SetupWebhookWithManager(mgr) },

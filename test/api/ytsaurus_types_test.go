@@ -122,9 +122,14 @@ func TestComponentResourceSerialization(t *testing.T) {
 		require.NoError(t, err)
 		t.Run(gvks[0].Kind, func(t *testing.T) {
 			data := []byte(`{"spec":{"ytsaurus":{"name":"cluster"},"instanceCount":3},"status":{"state":"Ready","observedGeneration":2}}`)
+			instanceCount := 3
+			if _, ok := member.(*ytv1.YtsaurusUpdatePlan); ok {
+				data = []byte(`{"spec":{"ytsaurus":{"name":"cluster"},"oneShot":true,"updatePlan":[{"class":"Everything"}]},"status":{"state":"Ready","observedGeneration":2}}`)
+				instanceCount = 0
+			}
 			require.NoError(t, json.Unmarshal(data, member))
 			require.Equal(t, "cluster", member.GetYtsaurusName())
-			require.Equal(t, 3, member.GetComponentSpec().GetInstanceCount())
+			require.Equal(t, instanceCount, member.GetComponentSpec().GetInstanceCount())
 			require.Equal(t, ytv1.ComponentStateReady, member.GetComponentStatus().State)
 			require.Equal(t, int64(2), member.GetStatusObservedGeneration())
 
@@ -135,6 +140,14 @@ func TestComponentResourceSerialization(t *testing.T) {
 			require.NotContains(t, fields, "ytsaurus")
 			require.Equal(t, map[string]any{"name": "cluster"}, fields["spec"].(map[string]any)["ytsaurus"])
 			require.Equal(t, "Ready", fields["status"].(map[string]any)["state"])
+			if plan, ok := member.(*ytv1.YtsaurusUpdatePlan); ok {
+				require.Equal(t, ytv1.Component{Type: ytv1.UpdatePlanType}, plan.GetComponentSpec().GetComponent())
+				require.True(t, plan.Spec.OneShot)
+				require.Equal(t, ytv1.UpdatePlan{{Class: ytv1.ComponentClassEverything}}, plan.Spec.UpdatePlan)
+				var roundTrip ytv1.YtsaurusUpdatePlan
+				require.NoError(t, json.Unmarshal(serialized, &roundTrip))
+				require.Equal(t, plan.Spec, roundTrip.Spec)
+			}
 		})
 	}
 }

@@ -128,6 +128,9 @@ var _ = BeforeSuite(func() {
 	err = validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = validators.NewYtsaurusUpdatePlanValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
 	err = validators.NewYtsaurusDataNodesValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 

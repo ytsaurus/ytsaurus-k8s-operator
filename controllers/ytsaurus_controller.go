@@ -206,7 +206,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 	case ytv1.ClusterStatePreparing, ytv1.ClusterStateRunning, ytv1.ClusterStateUpdateBlocked, ytv1.ClusterStateMaintenance:
 		// All IsReadyToUpdate cluster states are handled here.
 		// Apply current update plan and choose components to update.
-		cm.applyUpdatePlan(resource.GetUpdatePlan())
+		cm.applyUpdatePlan(ytsaurus.GetUpdatePlan())
 
 		// Switching into final states like Running or UpdateBlocked _must_ be in one
 		// transaction with all status updates and updating observed generation.
@@ -268,7 +268,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			logger.Info("Ytsaurus update is not possible",
 				"condition", ytsaurus.GetStatusCondition(consts.ConditionUpdateIsPossible),
 			)
-			if ytsaurus.IsStatusConditionFalse(consts.ConditionUpdateIsPossible) && ytsaurus.SetClusterState(ytv1.ClusterStateUpdateBlocked) {
+			state := ytv1.ClusterStatePreparing
+			if ytsaurus.IsStatusConditionFalse(consts.ConditionUpdateIsPossible) {
+				state = ytv1.ClusterStateUpdateBlocked
+			}
+			if ytsaurus.SetClusterState(state) {
 				needStatusUpdate = true
 			}
 
@@ -293,6 +297,11 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			}
 		}
 
+		if err = ytsaurus.SetUpdatePlanStatus(ctx); err != nil {
+			logger.Error(err, "Cannot update plan status")
+			return ctrl.Result{Requeue: true}, err
+		}
+
 		// Have passed final check - save status update if needed.
 		if needStatusUpdate {
 			err := ytsaurus.UpdateStatus(ctx)
@@ -313,7 +322,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	case ytv1.ClusterStateUpdating:
 		cm.status.nowUpdating = ytsaurus.GetUpdatingComponents()
-		updatePlan := resource.GetUpdatePlan()
+		updatePlan := ytsaurus.GetUpdatePlan()
 		cm.status.removeTabletCellsOnUpdate = shouldRemoveTabletCellsOnUpdate(updatePlan, cm.status.nowUpdating)
 		cm.status.masterHotUpdate = shouldUseMasterHotUpdate(updatePlan, cm.status.nowUpdating)
 

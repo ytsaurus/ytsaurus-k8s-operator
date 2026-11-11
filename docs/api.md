@@ -30,6 +30,8 @@ Package v1 contains API Schema definitions for the cluster v1 API group
 - [YtsaurusRPCProxiesList](#ytsaurusrpcproxieslist)
 - [YtsaurusTabletNodes](#ytsaurustabletnodes)
 - [YtsaurusTabletNodesList](#ytsaurustabletnodeslist)
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
+- [YtsaurusUpdatePlanList](#ytsaurusupdateplanlist)
 
 
 
@@ -656,6 +658,7 @@ _Appears in:_
 | `TcpProxy` |  |
 | `Timbertruck` |  |
 | `UI` |  |
+| `UpdatePlan` |  |
 | `YqlAgent` |  |
 | `YtsaurusClient` |  |
 
@@ -671,7 +674,7 @@ _Appears in:_
 
 
 _Appears in:_
-- [YtsaurusSpec](#ytsaurusspec)
+- [UpdatePlan](#updateplan)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -3401,6 +3404,26 @@ _Appears in:_
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
 
 
+#### UpdatePlan
+
+_Underlying type:_ _[ComponentUpdateSelector](#componentupdateselector)_
+
+Defines components which are allowed to update.
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+- [YtsaurusUpdatePlanSpec](#ytsaurusupdateplanspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `class` _[ComponentClass](#componentclass)_ | Selects components by class: Nothing, Everything, Stateless (except Master, DataNode, TabletNode). |  | Enum: [ Nothing Stateless Everything] <br /> |
+| `component` _[Component](#component)_ | Selects components by type and/or instance group name. |  |  |
+| `concurrency` _integer_ | Limits count of instance groups updated concurrently. |  | Minimum: 0 <br /> |
+| `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ | Defines update strategy for selected instance groups. |  |  |
+
+
 #### UpdateState
 
 _Underlying type:_ _string_
@@ -3682,6 +3705,7 @@ _Appears in:_
 - [YtsaurusHTTPProxies](#ytsaurushttpproxies)
 - [YtsaurusRPCProxies](#ytsaurusrpcproxies)
 - [YtsaurusTabletNodes](#ytsaurustabletnodes)
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -3703,6 +3727,7 @@ _Appears in:_
 - [YtsaurusHTTPProxies](#ytsaurushttpproxies)
 - [YtsaurusRPCProxies](#ytsaurusrpcproxies)
 - [YtsaurusTabletNodes](#ytsaurustabletnodes)
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -4077,6 +4102,7 @@ _Appears in:_
 - [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
 - [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
 - [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
+- [YtsaurusUpdatePlanSpec](#ytsaurusupdateplanspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -4130,7 +4156,7 @@ _Appears in:_
 | `adminCredentials` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to secret with initial "login", "password", "token" for administrator user.<br />If secret is not specified or does not exist default admin/password is no longer set. |  |  |
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ | Setting to false disables all operator actions. Default: true. | true |  |
-| `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
+| `updatePlan` _[UpdatePlan](#updateplan)_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />Could be defined in separate YtsaurusUpdatePlan object. |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
 | `primaryMasters` _[PrimaryMastersSpec](#primarymastersspec)_ |  |  |  |
@@ -4259,5 +4285,61 @@ _Appears in:_
 | `rack` _string_ | Name of the node rack. |  |  |
 | `name` _string_ |  | default | MinLength: 1 <br /> |
 | `tabletCellSlots` _integer_ | Count of slots for tablet cells on each tablet node, default is 4. |  |  |
+
+
+#### YtsaurusUpdatePlan
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusUpdatePlanList](#ytsaurusupdateplanlist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusUpdatePlan` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+| `spec` _[YtsaurusUpdatePlanSpec](#ytsaurusupdateplanspec)_ |  |  |  |
+
+
+#### YtsaurusUpdatePlanList
+
+
+
+
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusUpdatePlanList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[YtsaurusUpdatePlan](#ytsaurusupdateplan) array_ |  |  |  |
+
+
+#### YtsaurusUpdatePlanSpec
+
+
+
+YtsaurusUpdatePlanSpec defines which components may update and their strategies.
+
+
+
+_Appears in:_
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ytsaurus` _[YtsaurusReference](#ytsaurusreference)_ | Cluster to update in the same namespace. Immutable after creation. |  |  |
+| `updatePlan` _[UpdatePlan](#updateplan)_ | Update plan defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
+| `oneShot` _boolean_ | Delete this resource after all selected updates finish successfully.<br />A plan waiting for updates or blocked from executing is retained. |  |  |
 
 

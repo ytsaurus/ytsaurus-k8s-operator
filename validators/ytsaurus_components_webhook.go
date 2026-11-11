@@ -46,7 +46,10 @@ func validateYtsaurusComponent[T ytsaurusComponent](ctx context.Context, r *cust
 	var ytsaurus ytv1.Ytsaurus
 
 	ytsaurusNamePath := field.NewPath("spec", "ytsaurus", "name")
-	namePath := field.NewPath("spec", nameField)
+	namePath := ytsaurusNamePath
+	if nameField != "" {
+		namePath = field.NewPath("spec", nameField)
+	}
 
 	if obj != r.nilObject {
 		ytsaurusKey = client.ObjectKey{Namespace: obj.GetNamespace(), Name: obj.GetYtsaurusName()}

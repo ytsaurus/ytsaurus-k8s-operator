@@ -911,42 +911,55 @@ func (r *baseValidator) validateCommonSpec(spec *ytv1.CommonSpec) field.ErrorLis
 	return allErrors
 }
 
-func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytcluster.Cluster) field.ErrorList {
+func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytcluster.Cluster, plan ytv1.UpdatePlan, planPath *field.Path) field.ErrorList {
 	var allErrors field.ErrorList
-	planPath := field.NewPath("spec").Child("updatePlan")
 	exclusiveClass := consts.ComponentClassUnspecified
 
-	if newYtsaurus.Spec.UpdatePlan != nil {
-		for i, entry := range newYtsaurus.Spec.UpdatePlan {
-			entryPath := planPath.Index(i)
-			if entry.Class != consts.ComponentClassUnspecified && (entry.Component.Type != "" || entry.Component.Name != "") {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Only one of component or class should be specified"))
-			}
-			if entry.Class == consts.ComponentClassUnspecified && entry.Component.Type == "" && entry.Component.Name == "" {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Either component or class should be specified"))
-			}
-			if entry.Component.Type != "" && !slices.Contains(consts.LocalComponentTypes, entry.Component.Type) {
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("component").Child("type"), entry.Component.Type, "Unknown component type"))
-			}
-			if exclusiveClass != consts.ComponentClassUnspecified {
-				allErrors = append(allErrors, field.Invalid(entryPath, entry, fmt.Sprintf("Update plan already contains class %s", exclusiveClass)))
-			}
-
-			switch entry.Class {
-			case consts.ComponentClassNothing, consts.ComponentClassEverything:
-				exclusiveClass = entry.Class
-				if i > 0 {
-					allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Should be first and only entry"))
-				}
-			case consts.ComponentClassStateless, consts.ComponentClassUnspecified:
-			default:
-				allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
-			}
-
-			allErrors = append(allErrors, validateUpdateModeForSelector(newYtsaurus, entry, entryPath.Child("updateMode"))...)
+	for i, entry := range plan {
+		entryPath := planPath.Index(i)
+		if entry.Class != consts.ComponentClassUnspecified && (entry.Component.Type != "" || entry.Component.Name != "") {
+			allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Only one of component or class should be specified"))
 		}
+		if entry.Class == consts.ComponentClassUnspecified && entry.Component.Type == "" && entry.Component.Name == "" {
+			allErrors = append(allErrors, field.Invalid(entryPath.Child("component"), entry.Component, "Either component or class should be specified"))
+		}
+		if entry.Component.Type != "" && !slices.Contains(consts.LocalComponentTypes, entry.Component.Type) {
+			allErrors = append(allErrors, field.Invalid(entryPath.Child("component").Child("type"), entry.Component.Type, "Unknown component type"))
+		}
+		if exclusiveClass != consts.ComponentClassUnspecified {
+			allErrors = append(allErrors, field.Invalid(entryPath, entry, fmt.Sprintf("Update plan already contains class %s", exclusiveClass)))
+		}
+
+		switch entry.Class {
+		case consts.ComponentClassNothing, consts.ComponentClassEverything:
+			exclusiveClass = entry.Class
+			if i > 0 {
+				allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Should be first and only entry"))
+			}
+		case consts.ComponentClassStateless, consts.ComponentClassUnspecified:
+		default:
+			allErrors = append(allErrors, field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
+		}
+
+		allErrors = append(allErrors, validateUpdateModeForSelector(newYtsaurus, entry, entryPath.Child("updateMode"))...)
 	}
 
+	return allErrors
+}
+
+func (r *baseValidator) validateUpdatePlans(newYtsaurus *ytcluster.Cluster) field.ErrorList {
+	var allErrors field.ErrorList
+	inlinePlan := newYtsaurus.Spec.UpdatePlan
+	if len(inlinePlan) != 0 {
+		allErrors = append(allErrors, r.validateUpdatePlan(newYtsaurus, inlinePlan, field.NewPath("spec", "updatePlan"))...)
+	}
+	if plan := newYtsaurus.UpdatePlanObject; plan != nil {
+		planPath := field.NewPath("YtsaurusUpdatePlan").Key(plan.Name).Child("spec", "updatePlan")
+		allErrors = append(allErrors, r.validateUpdatePlan(newYtsaurus, plan.Spec.UpdatePlan, planPath)...)
+		if len(inlinePlan) != 0 {
+			allErrors = append(allErrors, field.Forbidden(planPath, "Ytsaurus already has an inline update plan"))
+		}
+	}
 	return allErrors
 }
 
@@ -1032,7 +1045,7 @@ func (r *ytsaurusValidator) validateYtsaurus(ctx context.Context, newYtsaurus *y
 	allErrors = append(allErrors, r.validateUi(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateExtraTimbertruckComponents(newYtsaurus)...)
 	allErrors = append(allErrors, r.validateExistsYtsaurus(ctx, newYtsaurus)...)
-	allErrors = append(allErrors, r.validateUpdatePlan(newYtsaurus)...)
+	allErrors = append(allErrors, r.validateUpdatePlans(newYtsaurus)...)
 
 	return allErrors
 }

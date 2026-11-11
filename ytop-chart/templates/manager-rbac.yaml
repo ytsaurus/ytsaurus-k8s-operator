@@ -278,6 +278,7 @@ rules:
   - ytsaurustabletnodes/status
   - ytsaurushttpproxies/status
   - ytsaurusrpcproxies/status
+  - ytsaurusupdateplan/status
   verbs:
   - get
   - patch
@@ -305,6 +306,15 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurusupdateplan
+  verbs:
+  - delete
+  - get
+  - list
   - watch
 - apiGroups:
   - ""

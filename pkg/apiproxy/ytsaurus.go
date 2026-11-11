@@ -183,7 +183,7 @@ func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, compon
 }
 
 func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentType, componentName string) bool {
-	for _, selector := range c.Spec.UpdatePlan {
+	for _, selector := range c.GetUpdatePlan() {
 		if selector.Component.Type == componentType &&
 			(selector.Component.Name == "" || selector.Component.Name == componentName) {
 			if selector.Strategy != nil {
@@ -300,7 +300,7 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 
 func (c *Ytsaurus) GetImageHeater(target string) *ytv1.ComponentUpdateSelector {
 	planned := false
-	for _, selector := range c.Spec.UpdatePlan {
+	for _, selector := range c.GetUpdatePlan() {
 		if selector.Component.Type == ytv1.ImageHeaterType {
 			planned = true
 			if name := selector.Component.Name; name == "" || target == "" || name == target {
@@ -344,4 +344,23 @@ func (c *Ytsaurus) SyncObservedGeneration() bool {
 		updated = true
 	}
 	return updated
+}
+
+func (c *Ytsaurus) SetUpdatePlanStatus(ctx context.Context) error {
+	var status ytv1.ComponentStatus
+	switch c.GetClusterState() {
+	case ytv1.ClusterStateUpdating:
+		status = ytv1.ComponentStatus{State: ytv1.ComponentStateUpdating, Message: "Cluster updating"}
+	case ytv1.ClusterStateUpdateBlocked:
+		status = ytv1.ComponentStatus{State: ytv1.ComponentStateBlocked, Message: "Cluster update blocked"}
+	case ytv1.ClusterStateRunning:
+		// Finish update plan if cluster is running even if update was not required.
+		if plan := c.UpdatePlanObject; plan != nil && plan.Spec.OneShot {
+			return c.Client().Delete(ctx, plan, client.Preconditions{UID: &plan.UID, ResourceVersion: &plan.ResourceVersion})
+		}
+		status = ytv1.ComponentStatus{State: ytv1.ComponentStateReady, Message: "Cluster update finished"}
+	default:
+		return nil
+	}
+	return c.UpdateClusterComponentStatus(ctx, ytv1.Component{Type: consts.UpdatePlanType}, status)
 }

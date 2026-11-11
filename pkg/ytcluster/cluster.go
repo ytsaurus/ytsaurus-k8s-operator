@@ -18,6 +18,8 @@ import (
 type Cluster struct {
 	*ytv1.Ytsaurus
 
+	UpdatePlanObject *ytv1.YtsaurusUpdatePlan
+
 	Objects map[ytv1.Component]ComponentObject
 
 	Components map[ytv1.Component]ytv1.ComponentSpec
@@ -42,6 +44,7 @@ type ComponentObject interface {
 
 func KnownYtsaurusComponentObjects() []ComponentObject {
 	return []ComponentObject{
+		&ytv1.YtsaurusUpdatePlan{},
 		&ytv1.YtsaurusExecNodes{},
 		&ytv1.YtsaurusDataNodes{},
 		&ytv1.YtsaurusTabletNodes{},
@@ -129,6 +132,7 @@ func (c *Cluster) DeleteComponentObject(object ComponentObject) error {
 
 func (c *Cluster) FetchComponentObjects(ctx context.Context, reader client.Reader) error {
 	lists := []client.ObjectList{
+		&ytv1.YtsaurusUpdatePlanList{},
 		&ytv1.YtsaurusExecNodesList{},
 		&ytv1.YtsaurusDataNodesList{},
 		&ytv1.YtsaurusTabletNodesList{},
@@ -205,6 +209,15 @@ func (c *Cluster) LinkComponents() error {
 				return fmt.Errorf("unsupported spec: %v", component)
 			}
 			c.RPCProxies = append(c.RPCProxies, s)
+		case ytv1.UpdatePlanType:
+			plan, ok := object.(*ytv1.YtsaurusUpdatePlan)
+			if !ok {
+				return fmt.Errorf("unsupported update plan: %v", component)
+			}
+			if c.UpdatePlanObject != nil {
+				return fmt.Errorf("duplicate update plan")
+			}
+			c.UpdatePlanObject = plan
 		default:
 			return fmt.Errorf("unsupported component: %v", component)
 		}
@@ -237,4 +250,18 @@ func (c *Cluster) GetInstanceCount(component ytv1.Component) int {
 		return spec.GetInstanceCount()
 	}
 	return 0
+}
+
+func (c *Cluster) GetUpdatePlan() ytv1.UpdatePlan {
+	// Update plan is defined in spec inline.
+	if len(c.Spec.UpdatePlan) != 0 {
+		return c.Spec.UpdatePlan
+	}
+	// Update plan is defined in separate object.
+	if c.UpdatePlanObject != nil && len(c.UpdatePlanObject.Spec.UpdatePlan) != 0 {
+		return c.UpdatePlanObject.Spec.UpdatePlan
+	}
+	return []ytv1.ComponentUpdateSelector{{
+		Class: ytv1.ComponentClassNothing,
+	}}
 }

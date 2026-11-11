@@ -27,6 +27,7 @@ const (
 	TcpProxyType             = ytv1.TcpProxyType
 	KafkaProxyType           = ytv1.KafkaProxyType
 	UIType                   = ytv1.UIType
+	UpdatePlanType           = ytv1.UpdatePlanType
 	YqlAgentType             = ytv1.YqlAgentType
 	YtsaurusClientType       = ytv1.YtsaurusClientType
 	ChytType                 = ytv1.ChytType

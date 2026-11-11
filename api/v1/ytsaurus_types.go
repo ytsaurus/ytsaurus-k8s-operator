@@ -1227,8 +1227,8 @@ type YtsaurusSpec struct {
 
 	// Defines components which are allowed to update.
 	// Can contain either single "class" item or several "component" items.
-	// When empty: update nothing
-	UpdatePlan []ComponentUpdateSelector `json:"updatePlan,omitempty"`
+	// Could be defined in separate YtsaurusUpdatePlan object.
+	UpdatePlan UpdatePlan `json:"updatePlan,omitempty"`
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
@@ -1388,6 +1388,9 @@ type ComponentUpdateSelector struct {
 	Strategy *ComponentUpdateStrategy `json:"strategy,omitempty"`
 }
 
+// Defines components which are allowed to update.
+type UpdatePlan []ComponentUpdateSelector
+
 func (m *ComponentUpdateStrategy) Type() ComponentUpdateModeType {
 	switch {
 	case m.RollingUpdate != nil:
@@ -1480,16 +1483,6 @@ func (r *Ytsaurus) GetStatusConditions() []metav1.Condition {
 
 func (r *Ytsaurus) SetStatusConditions(conditions []metav1.Condition) {
 	r.Status.Conditions = conditions
-}
-
-func (r *Ytsaurus) GetUpdatePlan() []ComponentUpdateSelector {
-	// Update plan is defined in spec.
-	if len(r.Spec.UpdatePlan) != 0 {
-		return r.Spec.UpdatePlan
-	}
-	return []ComponentUpdateSelector{{
-		Class: ComponentClassNothing,
-	}}
 }
 
 func (r *Ytsaurus) GetComponentSpecs() []ComponentSpec {

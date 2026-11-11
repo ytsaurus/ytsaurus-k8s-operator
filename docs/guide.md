@@ -83,6 +83,40 @@ before reaching `Maintenance` or returning to `Running`.
 The transitions follow the [cluster reconciler](../controllers/ytsaurus_controller.go)
 and the [update flow](../controllers/update_flow_steps.go).
 
+## Update Plans
+
+Define allowed updates inline in `Ytsaurus.spec.updatePlan`, or create a separate
+`YtsaurusUpdatePlan` targeting the cluster in the same namespace:
+
+```yaml
+apiVersion: cluster.ytsaurus.tech/v1
+kind: YtsaurusUpdatePlan
+metadata:
+  name: update-everything
+spec:
+  ytsaurus:
+    name: ytsaurus
+  oneShot: true
+  updatePlan:
+    - class: Everything
+```
+
+`spec.updatePlan` uses the same selectors, concurrency limits, and strategies as
+the inline plan. Only one separate plan is allowed per cluster, and it cannot
+coexist with a nonempty inline plan. Clear the inline plan before creating a
+separate plan. Creating, editing, or deleting the plan automatically reconciles
+its cluster. An empty plan permits no updates. After deletion, updates remain
+blocked until another inline or separate plan is defined.
+
+Set `oneShot: true` to delete the plan when the cluster reaches `Running`,
+including when no updates are needed. The plan remains while updates are pending
+or blocked, including groups deferred by concurrency limits. By default, plans
+remain available for future updates. Execution progress is reported in
+`status.state` and `status.observedGeneration`.
+
+When the operator uses instance scope, give the plan the same
+`ytsaurus.tech/operator-instance` label as its clusters.
+
 ## Cluster Creation
 
 See [admin guide / install](https://ytsaurus.tech/docs/en/admin-guide/install-ytsaurus),
