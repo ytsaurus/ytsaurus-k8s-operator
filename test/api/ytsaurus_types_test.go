@@ -20,6 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 )
 
 var testSpec = ytv1.YtsaurusSpec{
@@ -28,7 +29,7 @@ var testSpec = ytv1.YtsaurusSpec{
 		UseIPv6:   true,
 		UseIPv4:   false,
 	},
-	PrimaryMasters: ytv1.MastersSpec{
+	PrimaryMasters: ytv1.PrimaryMastersSpec{MastersSpec: ytv1.MastersSpec{
 		InstanceSpec: ytv1.InstanceSpec{
 			PodSpec: ytv1.PodSpec{
 				Tolerations: []corev1.Toleration{
@@ -53,7 +54,7 @@ var testSpec = ytv1.YtsaurusSpec{
 				},
 			},
 		},
-	},
+	}},
 	HTTPProxies: []ytv1.HTTPProxiesSpec{
 		{
 			InstanceSpec: ytv1.InstanceSpec{
@@ -110,5 +111,43 @@ func TestScheme(t *testing.T) {
 		require.NoError(t, err)
 		_, ok := obj.(client.Object)
 		require.True(t, ok, "kind %v", gvks[0])
+	}
+}
+
+func TestComponentResourceSerialization(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, ytv1.AddToScheme(scheme))
+	for _, member := range ytcluster.KnownYtsaurusComponentObjects() {
+		gvks, _, err := scheme.ObjectKinds(member)
+		require.NoError(t, err)
+		t.Run(gvks[0].Kind, func(t *testing.T) {
+			data := []byte(`{"spec":{"ytsaurus":{"name":"cluster"},"instanceCount":3},"status":{"state":"Ready","observedGeneration":2}}`)
+			instanceCount := 3
+			if _, ok := member.(*ytv1.YtsaurusUpdatePlan); ok {
+				data = []byte(`{"spec":{"ytsaurus":{"name":"cluster"},"oneShot":true,"updatePlan":[{"class":"Everything"}]},"status":{"state":"Ready","observedGeneration":2}}`)
+				instanceCount = 0
+			}
+			require.NoError(t, json.Unmarshal(data, member))
+			require.Equal(t, "cluster", member.GetYtsaurusName())
+			require.Equal(t, instanceCount, member.GetComponentSpec().GetInstanceCount())
+			require.Equal(t, ytv1.ComponentStateReady, member.GetComponentStatus().State)
+			require.Equal(t, int64(2), member.GetStatusObservedGeneration())
+
+			serialized, err := json.Marshal(member)
+			require.NoError(t, err)
+			var fields map[string]any
+			require.NoError(t, json.Unmarshal(serialized, &fields))
+			require.NotContains(t, fields, "ytsaurus")
+			require.Equal(t, map[string]any{"name": "cluster"}, fields["spec"].(map[string]any)["ytsaurus"])
+			require.Equal(t, "Ready", fields["status"].(map[string]any)["state"])
+			if plan, ok := member.(*ytv1.YtsaurusUpdatePlan); ok {
+				require.Equal(t, ytv1.Component{Type: ytv1.UpdatePlanType}, plan.GetComponentSpec().GetComponent())
+				require.True(t, plan.Spec.OneShot)
+				require.Equal(t, ytv1.UpdatePlan{{Class: ytv1.ComponentClassEverything}}, plan.Spec.UpdatePlan)
+				var roundTrip ytv1.YtsaurusUpdatePlan
+				require.NoError(t, json.Unmarshal(serialized, &roundTrip))
+				require.Equal(t, plan.Spec, roundTrip.Spec)
+			}
+		})
 	}
 }

@@ -73,8 +73,15 @@ func init() {
 }
 
 func setupWebhooks(mgr ctrl.Manager) error {
+	// Filtering by operator-instance and namespace are done in ValidatingWebhookConfiguration.
 	setups := []func() error{
 		func() error { return validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewYtsaurusUpdatePlanValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewYtsaurusDataNodesValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewYtsaurusExecNodesValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewYtsaurusTabletNodesValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewYtsaurusHTTPProxiesValidator().SetupWebhookWithManager(mgr) },
+		func() error { return validators.NewYtsaurusRPCProxiesValidator().SetupWebhookWithManager(mgr) },
 		func() error { return validators.NewSpytValidator().SetupWebhookWithManager(mgr) },
 		func() error { return validators.NewChytValidator().SetupWebhookWithManager(mgr) },
 		func() error { return validators.NewRemoteExecNodesValidator().SetupWebhookWithManager(mgr) },

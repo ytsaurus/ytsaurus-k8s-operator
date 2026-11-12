@@ -1,0 +1,703 @@
+--- base/Ytsaurus.yson
++++ test/Ytsaurus.yson
+@@ -1,10 +1,10 @@
+ apiVersion: cluster.ytsaurus.tech/v1
+ kind: Ytsaurus
+ metadata:
+-  generation: 2
++  generation: 3
+   name: test-ytsaurus
+   namespace: ytsaurus-components
+-  resourceVersion: "36"
++  resourceVersion: "41"
+ spec:
+   adminCredentials:
+     name: test-ytsaurus-admin
+@@ -71,65 +71,6 @@
+     - mountPath: /yt/controller-agent-logs
+       name: controller-agent-logs
+   coreImage: ghcr.io/ytsaurus/ytsaurus:stable-25.2.2
+-  dataNodes:
+-  - instanceCount: 3
+-    locations:
+-    - locationType: ChunkStore
+-      path: /yt/node-data/chunk-store
+-    - locationType: Logs
+-      path: /yt/data-node-logs
+-    - locationType: InitJobLogs
+-      path: /yt/data-node-logs
+-    loggers:
+-    - minLogLevel: info
+-      name: info-stderr
+-      writerType: stderr
+-    - categoriesFilter:
+-        type: exclude
+-        values:
+-        - Bus
+-        - Concurrency
+-      compression: zstd
+-      format: plain_text
+-      minLogLevel: debug
+-      name: debug
+-      rotationPolicy:
+-        maxSegmentSize: 100Mi
+-        maxTotalSizeToKeep: 1Gi
+-      useDateTimeSuffix: true
+-      writerType: file
+-    minReadyInstanceCount: 0
+-    resources:
+-      limits:
+-        cpu: "1"
+-        memory: 2Gi
+-      requests:
+-        cpu: "0"
+-        memory: "0"
+-    volumeClaimTemplates:
+-    - metadata:
+-        name: node-data
+-      spec:
+-        accessModes:
+-        - ReadWriteOnce
+-        resources:
+-          limits:
+-            storage: 20Gi
+-          requests:
+-            storage: 10Gi
+-    - metadata:
+-        name: data-node-logs
+-      spec:
+-        accessModes:
+-        - ReadWriteOnce
+-        resources:
+-          requests:
+-            storage: 1Gi
+-    volumeMounts:
+-    - mountPath: /yt/node-data
+-      name: node-data
+-    - mountPath: /yt/data-node-logs
+-      name: data-node-logs
+   discovery:
+     instanceCount: 1
+     locations:
+@@ -180,144 +121,9 @@
+     - name: global-dns-option
+   dnsPolicy: ClusterFirst
+   ephemeralCluster: true
+-  execNodes:
+-  - instanceCount: 1
+-    jobEnvironment:
+-      cri:
+-        apiRetryTimeoutSeconds: 120
+-        criService: crio
+-        entrypointWrapper:
+-        - wrapper
+-        imagePullSecret:
+-          name: image-pull-secret
+-      nri:
+-        pluginDir: /usr/libexec/nri/plugins
+-        requestTimeout: 15s
+-    jobHttpsCertificateSecret:
+-      name: ytsaurus-job-https-cert
+-    jobNetwork:
+-      networkCapacity: 1000
+-      portCount: 1000
+-      startPort: 29000
+-    jobResources:
+-      limits:
+-        cpu: "4"
+-        memory: 8Gi
+-      requests:
+-        cpu: "0"
+-        memory: "0"
+-    locations:
+-    - locationType: ChunkCache
+-      path: /yt/node-data/chunk-cache
+-    - locationType: Slots
+-      path: /yt/node-data/slots
+-    - locationType: Logs
+-      path: /yt/exec-node-logs
+-    - locationType: InitJobLogs
+-      path: /yt/exec-node-logs
+-    - locationType: ImageCache
+-      path: /yt/node-data/image-cache
+-    loggers:
+-    - minLogLevel: info
+-      name: info-stderr
+-      writerType: stderr
+-    - categoriesFilter:
+-        type: exclude
+-        values:
+-        - Bus
+-        - Concurrency
+-      compression: zstd
+-      format: plain_text
+-      minLogLevel: debug
+-      name: debug
+-      rotationPolicy:
+-        maxSegmentSize: 100Mi
+-        maxTotalSizeToKeep: 1Gi
+-      useDateTimeSuffix: true
+-      writerType: file
+-    minReadyInstanceCount: 0
+-    privileged: false
+-    resources:
+-      limits:
+-        cpu: "1"
+-        memory: 2Gi
+-      requests:
+-        cpu: "0"
+-        memory: "0"
+-    volumeClaimTemplates:
+-    - metadata:
+-        name: node-data
+-      spec:
+-        accessModes:
+-        - ReadWriteOnce
+-        resources:
+-          requests:
+-            storage: 5Gi
+-    - metadata:
+-        name: exec-node-logs
+-      spec:
+-        accessModes:
+-        - ReadWriteOnce
+-        resources:
+-          requests:
+-            storage: 1Gi
+-    volumeMounts:
+-    - mountPath: /yt/node-data
+-      name: node-data
+-    - mountPath: /yt/exec-node-logs
+-      name: exec-node-logs
+   extraPodAnnotations:
+     extra-pod-annotation: "true"
+   hostNetwork: true
+-  httpProxies:
+-  - instanceCount: 1
+-    locations:
+-    - locationType: Logs
+-      path: /yt/http-proxy-logs
+-    - locationType: InitJobLogs
+-      path: /yt/http-proxy-logs
+-    loggers:
+-    - minLogLevel: info
+-      name: info-stderr
+-      writerType: stderr
+-    - categoriesFilter:
+-        type: exclude
+-        values:
+-        - Bus
+-        - Concurrency
+-      compression: zstd
+-      format: plain_text
+-      minLogLevel: debug
+-      name: debug
+-      rotationPolicy:
+-        maxSegmentSize: 100Mi
+-        maxTotalSizeToKeep: 1Gi
+-      useDateTimeSuffix: true
+-      writerType: file
+-    minReadyInstanceCount: 0
+-    resources:
+-      limits:
+-        cpu: "1"
+-        memory: 2Gi
+-      requests:
+-        cpu: "0"
+-        memory: "0"
+-    serviceType: NodePort
+-    transport:
+-      httpsSecret:
+-        name: https-server-cert
+-    volumeClaimTemplates:
+-    - metadata:
+-        name: http-proxy-logs
+-      spec:
+-        accessModes:
+-        - ReadWriteOnce
+-        resources:
+-          requests:
+-            storage: 1Gi
+-    volumeMounts:
+-    - mountPath: /yt/http-proxy-logs
+-      name: http-proxy-logs
+   imagePullSecrets:
+   - name: global-image-pull-secrets
+   jobImage: mirror.gcr.io/library/python:3.12-slim
+@@ -572,53 +378,6 @@
+     volumeMounts:
+     - mountPath: /yt/queue-agent-logs
+       name: queue-agent-logs
+-  rpcProxies:
+-  - instanceCount: 1
+-    locations:
+-    - locationType: Logs
+-      path: /yt/rpc-proxy-logs
+-    - locationType: InitJobLogs
+-      path: /yt/rpc-proxy-logs
+-    loggers:
+-    - minLogLevel: info
+-      name: info-stderr
+-      writerType: stderr
+-    - categoriesFilter:
+-        type: exclude
+-        values:
+-        - Bus
+-        - Concurrency
+-      compression: zstd
+-      format: plain_text
+-      minLogLevel: debug
+-      name: debug
+-      rotationPolicy:
+-        maxSegmentSize: 100Mi
+-        maxTotalSizeToKeep: 1Gi
+-      useDateTimeSuffix: true
+-      writerType: file
+-    minReadyInstanceCount: 0
+-    resources:
+-      limits:
+-        cpu: "1"
+-        memory: 2Gi
+-      requests:
+-        cpu: "0"
+-        memory: "0"
+-    serviceType: NodePort
+-    transport: {}
+-    volumeClaimTemplates:
+-    - metadata:
+-        name: rpc-proxy-logs
+-      spec:
+-        accessModes:
+-        - ReadWriteOnce
+-        resources:
+-          requests:
+-            storage: 1Gi
+-    volumeMounts:
+-    - mountPath: /yt/rpc-proxy-logs
+-      name: rpc-proxy-logs
+   runtimeClassName: global-runtime-class
+   schedulers:
+     instanceCount: 1
+@@ -733,52 +492,6 @@
+   strawberry:
+     image: ghcr.io/ytsaurus/strawberry:0.0.18
+     resources: {}
+-  tabletNodes:
+-  - instanceCount: 3
+-    locations:
+-    - locationType: Logs
+-      path: /yt/tablet-node-logs
+-    - locationType: InitJobLogs
+-      path: /yt/tablet-node-logs
+-    loggers:
+-    - minLogLevel: info
+-      name: info-stderr
+-      writerType: stderr
+-    - categoriesFilter:
+-        type: exclude
+-        values:
+-        - Bus
+-        - Concurrency
+-      compression: zstd
+-      format: plain_text
+-      minLogLevel: debug
+-      name: debug
+-      rotationPolicy:
+-        maxSegmentSize: 100Mi
+-        maxTotalSizeToKeep: 1Gi
+-      useDateTimeSuffix: true
+-      writerType: file
+-    minReadyInstanceCount: 0
+-    resources:
+-      limits:
+-        cpu: "1"
+-        memory: 2Gi
+-      requests:
+-        cpu: "0"
+-        memory: "0"
+-    tabletCellSlots: 5
+-    volumeClaimTemplates:
+-    - metadata:
+-        name: tablet-node-logs
+-      spec:
+-        accessModes:
+-        - ReadWriteOnce
+-        resources:
+-          requests:
+-            storage: 1Gi
+-    volumeMounts:
+-    - mountPath: /yt/tablet-node-logs
+-      name: tablet-node-logs
+   terminationGracePeriodSeconds: 10
+   tolerations:
+   - key: global-toleration
+@@ -855,199 +568,205 @@
+   conditions:
+   - lastTransitionTime: null
+     message: 0.0.0-devel
+-    observedGeneration: 2
++    observedGeneration: 3
+     reason: Observed
+     status: "True"
+     type: OperatorVersion
++  - lastTransitionTime: null
++    message: Image heating is complete
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: ImageHeaterReady
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: Master-2Ready
++  - lastTransitionTime: null
++    message: Master cell roles initialized
++    observedGeneration: 1
++    reason: CellsInitialization
++    status: "True"
++    type: MasterCellsInitialized
++  - lastTransitionTime: null
++    message: Job yt-master-init-job-default completed in -1ns
++    observedGeneration: 1
++    reason: ClusterInitialization
++    status: "True"
++    type: defaultMasterInitJobCompleted
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: MasterReady
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: DiscoveryReady
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 3, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: DataNodeReady
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: ExecNodeReady
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: TabletNodeReady
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: ControllerAgentReady
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: MasterCacheReady
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: HttpProxyReady
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 1, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: RpcProxyReady
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: QueryTrackerReady
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: QueueAgentReady
++  - lastTransitionTime: null
++    message: Job yt-ui-init-job-default completed in -1ns
++    observedGeneration: 1
++    reason: InitJob
++    status: "True"
++    type: defaultUIInitJobCompleted
++  - lastTransitionTime: null
++    message: Job yt-scheduler-init-job-user completed in -1ns
++    observedGeneration: 1
++    reason: InitJob
++    status: "True"
++    type: userSchedulerInitJobCompleted
++  - lastTransitionTime: null
++    message: 'Pods are ready: 0 of 0, running 0, need 0'
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: UIReady
++  - lastTransitionTime: null
++    message: Job yt-client-init-job-user completed in -1ns
++    observedGeneration: 1
++    reason: InitJob
++    status: "True"
++    type: userYtsaurusClientInitJobCompleted
++  - lastTransitionTime: null
++    message: Job yt-yql-agent-init-job-yql-agent-environment completed in -1ns
++    observedGeneration: 1
++    reason: YQLAgentInit
++    status: "True"
++    type: yql-agent-environmentYqlAgentInitJobCompleted
++  - lastTransitionTime: null
++    message: Job yt-scheduler-init-job-op-archive completed in -1ns
++    observedGeneration: 1
++    reason: InitOperationsArchive
++    status: "True"
++    type: op-archiveSchedulerInitJobCompleted
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: SchedulerReady
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: YqlAgentReady
++  - lastTransitionTime: null
++    message: Job yt-strawberry-controller-init-job-user completed in -1ns
++    observedGeneration: 1
++    reason: InitJob
++    status: "True"
++    type: userStrawberryControllerInitJobCompleted
++  - lastTransitionTime: null
++    message: Job yt-strawberry-controller-init-job-cluster completed in -1ns
++    observedGeneration: 1
++    reason: InitJob
++    status: "True"
++    type: clusterStrawberryControllerInitJobCompleted
++  - lastTransitionTime: null
++    message: Ready
++    observedGeneration: 3
++    reason: Ready
++    status: "True"
++    type: StrawberryControllerReady
+   - lastTransitionTime: null
+     message: Ready 5 of 5; daemon set ih-ca is ready at 1 nodes; daemon set ih-ms
+       is ready at 1 nodes; daemon set ih-qt is ready at 1 nodes; daemon set ih-strawberry
+       is ready at 1 nodes; daemon set ih-ui is ready at 1 nodes
+-    observedGeneration: 2
++    observedGeneration: 3
+     reason: Sync
+     status: "True"
+     type: ImageHeaterComplete
+   - lastTransitionTime: null
+-    message: Image heating is complete
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: ImageHeaterReady
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: Master-2Ready
+-  - lastTransitionTime: null
+-    message: Master cell roles initialized
+-    observedGeneration: 1
+-    reason: CellsInitialization
+-    status: "True"
+-    type: MasterCellsInitialized
+-  - lastTransitionTime: null
+-    message: Job yt-master-init-job-default completed in -1ns
+-    observedGeneration: 1
+-    reason: ClusterInitialization
+-    status: "True"
+-    type: defaultMasterInitJobCompleted
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: MasterReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: DiscoveryReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 3, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: DataNodeReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: ExecNodeReady
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: TabletNodeReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: ControllerAgentReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: MasterCacheReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: HttpProxyReady
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 1, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: RpcProxyReady
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: QueryTrackerReady
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: QueueAgentReady
+-  - lastTransitionTime: null
+-    message: Job yt-ui-init-job-default completed in -1ns
+-    observedGeneration: 1
+-    reason: InitJob
+-    status: "True"
+-    type: defaultUIInitJobCompleted
+-  - lastTransitionTime: null
+-    message: Job yt-scheduler-init-job-user completed in -1ns
+-    observedGeneration: 1
+-    reason: InitJob
+-    status: "True"
+-    type: userSchedulerInitJobCompleted
+-  - lastTransitionTime: null
+-    message: 'Pods are ready: 0 of 0, running 0, need 0'
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: UIReady
+-  - lastTransitionTime: null
+-    message: Job yt-client-init-job-user completed in -1ns
+-    observedGeneration: 1
+-    reason: InitJob
+-    status: "True"
+-    type: userYtsaurusClientInitJobCompleted
+-  - lastTransitionTime: null
+-    message: Job yt-yql-agent-init-job-yql-agent-environment completed in -1ns
+-    observedGeneration: 1
+-    reason: YQLAgentInit
+-    status: "True"
+-    type: yql-agent-environmentYqlAgentInitJobCompleted
+-  - lastTransitionTime: null
+     message: Cypress operations skipped
+-    observedGeneration: 2
++    observedGeneration: 3
+     reason: HealthChecks
+     status: "True"
+     type: UpdateIsPossible
+   - lastTransitionTime: null
+-    message: Job yt-scheduler-init-job-op-archive completed in -1ns
+-    observedGeneration: 1
+-    reason: InitOperationsArchive
+-    status: "True"
+-    type: op-archiveSchedulerInitJobCompleted
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: SchedulerReady
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: YqlAgentReady
+-  - lastTransitionTime: null
+-    message: Job yt-strawberry-controller-init-job-user completed in -1ns
+-    observedGeneration: 1
+-    reason: InitJob
+-    status: "True"
+-    type: userStrawberryControllerInitJobCompleted
+-  - lastTransitionTime: null
+-    message: Job yt-strawberry-controller-init-job-cluster completed in -1ns
+-    observedGeneration: 1
+-    reason: InitJob
+-    status: "True"
+-    type: clusterStrawberryControllerInitJobCompleted
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
+-    reason: Ready
+-    status: "True"
+-    type: StrawberryControllerReady
+-  - lastTransitionTime: null
+-    message: Ready
+-    observedGeneration: 2
++    message: Ready
++    observedGeneration: 3
+     reason: Ready
+     status: "True"
+     type: YtsaurusClientReady
+   - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 2
++    observedGeneration: 3
+     reason: Ready
+     status: "True"
+     type: TimbertruckReady
+   - lastTransitionTime: null
+     message: Cluster state is Running
+-    observedGeneration: 2
++    observedGeneration: 3
+     reason: Running
+     status: "True"
+     type: ReadyToWork
+-  observedGeneration: 2
++  observedComponentGenerations:
++    DataNode@: 1
++    ExecNode@: 1
++    HttpProxy@: 1
++    RpcProxy@: 1
++    TabletNode@: 1
++  observedGeneration: 3
+   state: Running
+   updateStatus: {}
+ 

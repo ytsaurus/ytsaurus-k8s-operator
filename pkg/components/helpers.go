@@ -580,7 +580,7 @@ func SetWithIgnoreExisting(path string, value string) string {
 }
 
 func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) bool {
-	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
+	for _, selector := range ytsaurus.GetUpdatePlan() {
 		if selector.Component.Type == componentType &&
 			(selector.Component.Name == "" || selector.Component.Name == componentName) {
 			return selector.Strategy != nil
@@ -590,7 +590,7 @@ func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType co
 }
 
 func getComponentUpdateStrategy(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) ytv1.ComponentUpdateModeType {
-	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
+	for _, selector := range ytsaurus.GetUpdatePlan() {
 		if selector.Component.Type == componentType &&
 			(selector.Component.Name == "" || selector.Component.Name == componentName) &&
 			selector.Strategy != nil {

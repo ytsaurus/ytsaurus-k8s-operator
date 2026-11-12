@@ -52,6 +52,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/canonize"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 )
 
 var log = logf.Log
@@ -156,6 +157,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	var ytBuilder *testutil.YtsaurusBuilder
 	var ytsaurus *ytv1.Ytsaurus
 	var controllerObjects []apiproxy.ControllerObject
+	var componentObjects []client.Object
 	var k8sScheme *runtime.Scheme
 	var k8sEvents []*corev1.Event
 	var k8sClient client.WithWatch
@@ -326,6 +328,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		DeferCleanup(LogObjectEvents(specCtx, k8sClient, namespace))
 
 		controllerObjects = nil
+		componentObjects = nil
 
 		By("Creating minimal Ytsaurus spec", func() {
 			ytBuilder = &testutil.YtsaurusBuilder{
@@ -368,6 +371,9 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 			if ytBuilder.YtsaurusAdminSecret != nil {
 				Expect(k8sClient.Create(ctx, ytBuilder.YtsaurusAdminSecret)).To(Succeed())
+			}
+			for _, obj := range componentObjects {
+				Expect(k8sClient.Create(ctx, obj)).To(Succeed())
 			}
 			Expect(k8sClient.Create(ctx, ytsaurus)).To(Succeed())
 			controllerObjects = append(controllerObjects, ytsaurus)
@@ -684,6 +690,18 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			}
 		})
 
+		for _, obj := range componentObjects {
+			kind := objectKind(obj)
+			By(fmt.Sprintf("Checking %s %s", kind, obj.GetName()))
+			Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(obj), obj)).To(Succeed())
+			component := obj.(ytcluster.ComponentObject)
+			Expect(component.GetComponentStatus().State).To(Equal(ytv1.ComponentStateReady))
+			Expect(component.GetComponentStatus().Message).ToNot(BeEmpty())
+			Expect(component.GetStatusObservedGeneration()).To(Equal(component.GetGeneration()))
+			objectList = append(objectList, meta.AsPartialObjectMetadata(obj).ObjectMeta)
+			assertStruct(kind+" "+obj.GetName(), obj)
+		}
+
 		By("Checking object list", func() {
 			slices.SortStableFunc(objectList, func(a, b metav1.ObjectMeta) int {
 				return cmp.Compare(a.Name, b.Name)
@@ -726,6 +744,19 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
 			})
 			It("Test", func(ctx context.Context) {})
+		})
+	})
+
+	Context("With separate component resources", func() {
+		BeforeEach(func() {
+			ytBuilder.WithBaseComponents()
+			ytBuilder.WithRPCProxies()
+			componentObjects = append(componentObjects, ytBuilder.SeparateComponentSpecs()...)
+			Expect(componentObjects).To(HaveLen(5))
+		})
+		It("Test", func() {})
+		AfterEach(func() {
+			Expect(statefulSets).To(And(HaveKey("end"), HaveKey("dnd"), HaveKey("tnd"), HaveKey("hp"), HaveKey("rp")))
 		})
 	})
 
@@ -896,6 +927,18 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			BeforeAll(func(ctx context.Context) {
 				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
 				Expect(ytsaurus.Generation).To(Equal(int64(2)))
+			})
+			It("Test", func(ctx context.Context) {})
+		})
+		Context("Separate", func() {
+			BeforeAll(func(ctx context.Context) {
+				separateObjects := ytBuilder.SeparateComponentSpecs()
+				for _, obj := range separateObjects {
+					Expect(k8sClient.Create(ctx, obj)).To(Succeed())
+				}
+				componentObjects = append(componentObjects, separateObjects...)
+				Expect(k8sClient.Update(ctx, ytsaurus)).To(Succeed())
+				Expect(ytsaurus.Generation).To(Equal(int64(3)))
 			})
 			It("Test", func(ctx context.Context) {})
 		})

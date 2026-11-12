@@ -128,6 +128,24 @@ var _ = BeforeSuite(func() {
 	err = validators.NewYtsaurusValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = validators.NewYtsaurusUpdatePlanValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewYtsaurusDataNodesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewYtsaurusExecNodesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewYtsaurusTabletNodesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewYtsaurusHTTPProxiesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = validators.NewYtsaurusRPCProxiesValidator().SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
 	err = validators.NewSpytValidator().SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 

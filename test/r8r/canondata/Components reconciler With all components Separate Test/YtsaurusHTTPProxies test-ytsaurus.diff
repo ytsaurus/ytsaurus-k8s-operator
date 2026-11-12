@@ -1,0 +1,66 @@
+--- base/YtsaurusHTTPProxies test-ytsaurus.yson
++++ test/YtsaurusHTTPProxies test-ytsaurus.yson
+@@ -1 +1,63 @@
++apiVersion: cluster.ytsaurus.tech/v1
++kind: YtsaurusHTTPProxies
++metadata:
++  generation: 1
++  name: test-ytsaurus
++  namespace: ytsaurus-components
++  resourceVersion: "2"
++spec:
++  instanceCount: 1
++  locations:
++  - locationType: Logs
++    path: /yt/http-proxy-logs
++  - locationType: InitJobLogs
++    path: /yt/http-proxy-logs
++  loggers:
++  - minLogLevel: info
++    name: info-stderr
++    writerType: stderr
++  - categoriesFilter:
++      type: exclude
++      values:
++      - Bus
++      - Concurrency
++    compression: zstd
++    format: plain_text
++    minLogLevel: debug
++    name: debug
++    rotationPolicy:
++      maxSegmentSize: 100Mi
++      maxTotalSizeToKeep: 1Gi
++    useDateTimeSuffix: true
++    writerType: file
++  minReadyInstanceCount: 0
++  resources:
++    limits:
++      cpu: "1"
++      memory: 2Gi
++    requests:
++      cpu: "0"
++      memory: "0"
++  serviceType: NodePort
++  transport:
++    httpsSecret:
++      name: https-server-cert
++  volumeClaimTemplates:
++  - metadata:
++      name: http-proxy-logs
++    spec:
++      accessModes:
++      - ReadWriteOnce
++      resources:
++        requests:
++          storage: 1Gi
++  volumeMounts:
++  - mountPath: /yt/http-proxy-logs
++    name: http-proxy-logs
++  ytsaurus:
++    name: test-ytsaurus
++status:
++  message: 'Pods are ready: 0 of 1, running 0, need 0'
++  observedGeneration: 1
++  state: Ready
+ 

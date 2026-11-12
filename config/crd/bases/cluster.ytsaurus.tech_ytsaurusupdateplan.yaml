@@ -1,0 +1,128 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  labels:
+    app.kubernetes.io/part-of: ytsaurus-k8s-operator
+  name: ytsaurusupdateplan.cluster.ytsaurus.tech
+spec:
+  group: cluster.ytsaurus.tech
+  names:
+    categories:
+    - ytsaurus-all
+    - yt-all
+    kind: YtsaurusUpdatePlan
+    listKind: YtsaurusUpdatePlanList
+    plural: ytsaurusupdateplan
+    shortNames:
+    - ytup
+    singular: ytsaurusupdateplan
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: Ytsaurus cluster
+      jsonPath: .spec.ytsaurus.name
+      name: Ytsaurus
+      type: string
+    - description: Update plan state
+      jsonPath: .status.state
+      name: State
+      type: string
+    - description: Status message
+      jsonPath: .status.message
+      name: Message
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: APIVersion defines the versioned schema of this representation
+              of an object.
+            type: string
+          kind:
+            description: Kind is a string value representing the REST resource this
+              object represents.
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: YtsaurusUpdatePlanSpec defines which components may update
+              and their strategies.
+            properties:
+              oneShot:
+                description: Delete this resource after all selected updates finish
+                  successfully.
+                type: boolean
+              updatePlan:
+                description: Update plan defines components which are allowed to update.
+                items:
+                  properties:
+                    class:
+                      description: 'Selects components by class: Nothing, Everything,
+                        Stateless (except Master,...'
+                      enum:
+                      - ""
+                      - Nothing
+                      - Stateless
+                      - Everything
+                      type: string
+                    component:
+                      description: Selects components by type and/or instance group
+                        name.
+                      properties:
+                        name:
+                          type: string
+                        type:
+                          type: string
+                      type: object
+                    concurrency:
+                      description: Limits count of instance groups updated concurrently.
+                      format: int32
+                      minimum: 0
+                      type: integer
+                    strategy:
+                      description: Defines update strategy for selected instance groups.
+                      properties:
+                        onDelete:
+                          type: object
+                        rollingUpdate:
+                          description: ComponentRollingUpdateMode configures the rolling
+                            update strategy.
+                          type: object
+                        runPreChecks:
+                          type: boolean
+                      type: object
+                  type: object
+                type: array
+              ytsaurus:
+                description: Cluster to update in the same namespace. Immutable after
+                  creation.
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - ytsaurus
+            type: object
+          status:
+            properties:
+              message:
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              state:
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

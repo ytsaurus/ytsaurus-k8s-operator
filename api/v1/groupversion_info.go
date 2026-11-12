@@ -42,6 +42,12 @@ var (
 func KnownObjectTypes() []runtime.Object {
 	return []runtime.Object{
 		&Ytsaurus{},
+		&YtsaurusUpdatePlan{},
+		&YtsaurusExecNodes{},
+		&YtsaurusDataNodes{},
+		&YtsaurusTabletNodes{},
+		&YtsaurusHTTPProxies{},
+		&YtsaurusRPCProxies{},
 		&Chyt{},
 		&Spyt{},
 		&RemoteYtsaurus{},
@@ -55,6 +61,12 @@ func KnownObjectTypes() []runtime.Object {
 func KnownListTypes() []runtime.Object {
 	return []runtime.Object{
 		&YtsaurusList{},
+		&YtsaurusUpdatePlanList{},
+		&YtsaurusExecNodesList{},
+		&YtsaurusDataNodesList{},
+		&YtsaurusTabletNodesList{},
+		&YtsaurusHTTPProxiesList{},
+		&YtsaurusRPCProxiesList{},
 		&ChytList{},
 		&SpytList{},
 		&RemoteYtsaurusList{},

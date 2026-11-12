@@ -273,10 +273,28 @@ rules:
   - cluster.ytsaurus.tech
   resources:
   - ytsaurus/status
+  - ytsaurusexecnodes/status
+  - ytsaurusdatanodes/status
+  - ytsaurustabletnodes/status
+  - ytsaurushttpproxies/status
+  - ytsaurusrpcproxies/status
+  - ytsaurusupdateplan/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurusexecnodes
+  - ytsaurusdatanodes
+  - ytsaurustabletnodes
+  - ytsaurushttpproxies
+  - ytsaurusrpcproxies
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -288,6 +306,15 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - cluster.ytsaurus.tech
+  resources:
+  - ytsaurusupdateplan
+  verbs:
+  - delete
+  - get
+  - list
   - watch
 - apiGroups:
   - ""
