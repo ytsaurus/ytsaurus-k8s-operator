@@ -37,6 +37,7 @@ import (
 type customValidator[T client.Object] struct {
 	Log       logr.Logger
 	Client    client.Client
+	APIReader client.Reader
 	Object    T
 	nilObject T
 	ObjectGVK schema.GroupVersionKind
@@ -45,6 +46,7 @@ type customValidator[T client.Object] struct {
 
 func (r *customValidator[T]) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	r.Client = mgr.GetClient()
+	r.APIReader = mgr.GetAPIReader()
 
 	object := r.Object
 	r.Object = r.nilObject

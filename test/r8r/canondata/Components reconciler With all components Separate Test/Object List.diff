@@ -1,0 +1,29 @@
+--- base/Object List.yson
++++ test/Object List.yson
+@@ -787,6 +787,26 @@
+   namespace: ytsaurus-components
+   resourceVersion: "1"
+ - generation: 1
++  name: test-ytsaurus
++  namespace: ytsaurus-components
++  resourceVersion: "2"
++- generation: 1
++  name: test-ytsaurus
++  namespace: ytsaurus-components
++  resourceVersion: "2"
++- generation: 1
++  name: test-ytsaurus
++  namespace: ytsaurus-components
++  resourceVersion: "2"
++- generation: 1
++  name: test-ytsaurus
++  namespace: ytsaurus-components
++  resourceVersion: "2"
++- generation: 1
++  name: test-ytsaurus
++  namespace: ytsaurus-components
++  resourceVersion: "2"
++- generation: 1
+   name: test-ytsaurus-admin
+   namespace: ytsaurus-components
+   resourceVersion: "1"

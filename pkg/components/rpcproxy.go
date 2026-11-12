@@ -31,7 +31,7 @@ func NewRPCProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.RPCProxiesSpec,
+	spec *ytv1.RPCProxiesSpec,
 ) *RpcProxy {
 	l := cfgen.GetComponentLabeller(consts.RpcProxyType, spec.Role)
 

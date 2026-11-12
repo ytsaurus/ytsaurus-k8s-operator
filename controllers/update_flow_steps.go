@@ -248,7 +248,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 	ytv1.UpdateStateWaitingForMasterCellsCompletion:    flowUpdateStateCondition(ytv1.UpdateStateWaitingForMasterCellsCompletion),
 	ytv1.UpdateStateWaitingForCypressPatch:             flowCheckStatusCondition(consts.ConditionCypressPatchApplied),
 	ytv1.UpdateStateWaitingForTimbertruckPrepared: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if !components.TimbertruckDeliveryEnabled(&ytsaurus.GetResource().Spec) || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
+		if !components.TimbertruckDeliveryEnabled(ytsaurus.Cluster) || ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTimbertruckPrepared) {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied

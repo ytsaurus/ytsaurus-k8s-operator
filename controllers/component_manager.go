@@ -50,19 +50,16 @@ type ComponentManagerStatus struct {
 	masterHotUpdate           bool // Master update uses OnDelete — skip safety steps (safe mode, snapshots, exit read-only)
 }
 
-//nolint:cyclop //shush
 func NewComponentManager(
 	ctx context.Context,
 	ytsaurus *apiProxy.Ytsaurus,
 	clusterDomain string,
 ) (*ComponentManager, error) {
-	resource := ytsaurus.GetResource()
-
 	if clusterDomain == "" {
 		return nil, fmt.Errorf("cluster domain is not defined")
 	}
 
-	cfgen := ytconfig.NewGenerator(resource, clusterDomain)
+	cfgen := ytconfig.NewGenerator(ytsaurus.Cluster, clusterDomain)
 	nodeCfgGen := &cfgen.NodeGenerator
 
 	var allComponents []components.Component
@@ -80,18 +77,18 @@ func NewComponentManager(
 	}
 
 	var secondaryMasters []*components.Master
-	for i := range resource.Spec.SecondaryMasters {
-		sm := components.NewMaster(cfgen, ytsaurus, &resource.Spec.SecondaryMasters[i], nil)
+	for i := range ytsaurus.Spec.SecondaryMasters {
+		sm := components.NewMaster(cfgen, ytsaurus, &ytsaurus.Spec.SecondaryMasters[i].MastersSpec, nil)
 		secondaryMasters = append(secondaryMasters, sm)
 		allComponents = append(allComponents, sm)
 	}
 
 	// NOTE: Primary master readiness depends on readiness of secondary masters.
-	m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.PrimaryMasters, secondaryMasters)
+	m := components.NewMaster(cfgen, ytsaurus, &ytsaurus.Spec.PrimaryMasters.MastersSpec, secondaryMasters)
 	allComponents = append(allComponents, m)
 
 	var hps []components.Component
-	for _, hpSpec := range resource.Spec.HTTPProxies {
+	for _, hpSpec := range ytsaurus.HTTPProxies {
 		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
 	}
 	allComponents = append(allComponents, hps...)
@@ -103,110 +100,111 @@ func NewComponentManager(
 	allComponents = append(allComponents, d)
 
 	var dnds []components.Component
-	if len(resource.Spec.DataNodes) > 0 {
-		for _, dndSpec := range resource.Spec.DataNodes {
-			dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, yc, dndSpec))
-		}
+	for _, dndSpec := range ytsaurus.DataNodes {
+		dnds = append(dnds, components.NewDataNode(nodeCfgGen, ytsaurus, m, yc, dndSpec))
 	}
 	allComponents = append(allComponents, dnds...)
 
-	if resource.Spec.UI != nil {
+	if ytsaurus.Spec.UI != nil {
 		ui := components.NewUI(cfgen, ytsaurus, m)
 		allComponents = append(allComponents, ui)
 	}
 
-	if len(resource.Spec.RPCProxies) > 0 {
-		var rps []components.Component
-		for _, rpSpec := range resource.Spec.RPCProxies {
-			rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
-		}
-		allComponents = append(allComponents, rps...)
+	var rps []components.Component
+	for _, rpSpec := range ytsaurus.RPCProxies {
+		rps = append(rps, components.NewRPCProxy(cfgen, ytsaurus, m, rpSpec))
 	}
+	allComponents = append(allComponents, rps...)
 
-	if len(resource.Spec.TCPProxies) > 0 {
-		var tps []components.Component
-		for _, tpSpec := range resource.Spec.TCPProxies {
-			tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
-		}
-		allComponents = append(allComponents, tps...)
+	var tps []components.Component
+	for _, tpSpec := range ytsaurus.Spec.TCPProxies {
+		tps = append(tps, components.NewTCPProxy(cfgen, ytsaurus, m, tpSpec))
 	}
+	allComponents = append(allComponents, tps...)
 
-	if len(resource.Spec.KafkaProxies) > 0 {
-		var kps []components.Component
-		for _, kpSpec := range resource.Spec.KafkaProxies {
-			kps = append(kps, components.NewKafkaProxy(cfgen, ytsaurus, m, kpSpec))
-		}
-		allComponents = append(allComponents, kps...)
+	var kps []components.Component
+	for _, kpSpec := range ytsaurus.Spec.KafkaProxies {
+		kps = append(kps, components.NewKafkaProxy(cfgen, ytsaurus, m, kpSpec))
 	}
+	allComponents = append(allComponents, kps...)
 
-	for _, endSpec := range resource.Spec.ExecNodes {
+	for _, endSpec := range ytsaurus.ExecNodes {
 		allComponents = append(allComponents, components.NewExecNode(nodeCfgGen, ytsaurus, m, endSpec, yc))
 	}
 
 	var tnds []components.Component
-	if len(resource.Spec.TabletNodes) > 0 {
-		for idx, tndSpec := range resource.Spec.TabletNodes {
-			tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, m, tndSpec, idx == 0))
-		}
+	for idx, tndSpec := range ytsaurus.TabletNodes {
+		tnds = append(tnds, components.NewTabletNode(nodeCfgGen, ytsaurus, yc, m, tndSpec, idx == 0))
 	}
 	allComponents = append(allComponents, tnds...)
 
 	var sch components.Component
-	if resource.Spec.Schedulers != nil {
+	if ytsaurus.Spec.Schedulers != nil {
 		sch = components.NewScheduler(cfgen, ytsaurus, m, yc, tnds)
 		allComponents = append(allComponents, sch)
 	}
 
-	if resource.Spec.ControllerAgents != nil {
+	if ytsaurus.Spec.ControllerAgents != nil {
 		ca := components.NewControllerAgent(cfgen, ytsaurus, m, yc)
 		allComponents = append(allComponents, ca)
 	}
 
 	var q components.Component
-	if resource.Spec.QueryTrackers != nil && resource.Spec.Schedulers != nil && len(resource.Spec.TabletNodes) > 0 {
+	if ytsaurus.Spec.QueryTrackers != nil && ytsaurus.Spec.Schedulers != nil && len(ytsaurus.TabletNodes) > 0 {
 		q = components.NewQueryTracker(cfgen, ytsaurus, yc, tnds)
 		allComponents = append(allComponents, q)
 	}
 
-	if resource.Spec.QueueAgents != nil && len(resource.Spec.TabletNodes) > 0 {
+	if ytsaurus.Spec.QueueAgents != nil && len(ytsaurus.TabletNodes) > 0 {
 		qa := components.NewQueueAgent(cfgen, ytsaurus, yc, m, tnds)
 		allComponents = append(allComponents, qa)
 	}
 
 	var yqla components.Component
-	if resource.Spec.YQLAgents != nil {
+	if ytsaurus.Spec.YQLAgents != nil {
 		yqla = components.NewYQLAgent(cfgen, ytsaurus, yc, m)
 		allComponents = append(allComponents, yqla)
 	}
 
-	if resource.Spec.StrawberryController != nil && resource.Spec.Schedulers != nil {
+	if ytsaurus.Spec.StrawberryController != nil && ytsaurus.Spec.Schedulers != nil {
 		strawberry := components.NewStrawberryController(cfgen, ytsaurus, m, sch, dnds)
 		allComponents = append(allComponents, strawberry)
 	}
 
-	if resource.Spec.MasterCaches != nil {
+	if ytsaurus.Spec.MasterCaches != nil {
 		mc := components.NewMasterCache(cfgen, ytsaurus, yc, m)
 		allComponents = append(allComponents, mc)
 	}
 
-	if resource.Spec.CypressProxies != nil {
+	if ytsaurus.Spec.CypressProxies != nil {
 		cyp := components.NewCypressProxy(cfgen, ytsaurus)
 		allComponents = append(allComponents, cyp)
 	}
 
-	if resource.Spec.BundleController != nil {
+	if ytsaurus.Spec.BundleController != nil {
 		bc := components.NewBundleController(cfgen, ytsaurus)
 		allComponents = append(allComponents, bc)
 	}
 
-	if resource.Spec.TabletBalancer != nil {
+	if ytsaurus.Spec.TabletBalancer != nil {
 		tb := components.NewTabletBalancer(cfgen, ytsaurus)
 		allComponents = append(allComponents, tb)
 	}
 
-	if components.TimbertruckDeliveryEnabled(&resource.Spec) {
+	if components.TimbertruckDeliveryEnabled(ytsaurus.Cluster) {
 		tt := components.NewTimbertruck(cfgen, ytsaurus, tnds, yc)
 		allComponents = append(allComponents, tt)
+	}
+
+	allComponents = append(allComponents, components.NewGarbageCollector(cfgen, ytsaurus, getAllComponents))
+
+	index := map[ytv1.Component]components.Component{}
+	for _, component := range allComponents {
+		c := component.GetComponent()
+		if _, found := index[c]; found {
+			return nil, fmt.Errorf("duplicate component: %v", c)
+		}
+		index[c] = component
 	}
 
 	return &ComponentManager{
@@ -254,6 +252,13 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
 			}
+		}
+
+		if err := cm.ytsaurus.UpdateClusterComponentStatus(ctx, component.GetComponent(), ytv1.ComponentStatus{
+			State:   status.SyncStatus,
+			Message: status.Message,
+		}); err != nil {
+			return err
 		}
 
 		component.SetStatus(status)

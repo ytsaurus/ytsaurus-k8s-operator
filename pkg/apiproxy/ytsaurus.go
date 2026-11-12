@@ -18,12 +18,12 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 )
 
 type Ytsaurus struct {
 	APIProxy
-
-	ytsaurus *ytv1.Ytsaurus
+	*ytcluster.Cluster
 }
 
 func NewYtsaurus(
@@ -34,12 +34,12 @@ func NewYtsaurus(
 ) *Ytsaurus {
 	return &Ytsaurus{
 		APIProxy: NewAPIProxy(ytsaurus, client, recorder, scheme),
-		ytsaurus: ytsaurus,
+		Cluster:  ytcluster.NewCluster(ytsaurus),
 	}
 }
 
 func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
-	return c.ytsaurus
+	return c.Ytsaurus
 }
 
 func (c *Ytsaurus) GetCommonSpec() *ytv1.CommonSpec {
@@ -59,14 +59,14 @@ func (c *Ytsaurus) GetClusterMaintenance() ytv1.ClusterMaintenance {
 }
 
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
-	return c.ytsaurus.Status.State
+	return c.Status.State
 }
 
 func (c *Ytsaurus) SetClusterState(clusterState ytv1.ClusterState) bool {
-	if c.ytsaurus.Status.State == clusterState {
+	if c.Status.State == clusterState {
 		return false
 	}
-	c.ytsaurus.Status.State = clusterState
+	c.Status.State = clusterState
 	readyToWork := metav1.ConditionFalse
 	if c.IsReadyToWork() {
 		readyToWork = metav1.ConditionTrue
@@ -119,15 +119,15 @@ func (c *Ytsaurus) IsUpdating() bool {
 }
 
 func (c *Ytsaurus) GetUpdateState() ytv1.UpdateState {
-	return c.ytsaurus.Status.UpdateStatus.State
+	return c.Status.UpdateStatus.State
 }
 
 func (c *Ytsaurus) SetUpdateState(updateState ytv1.UpdateState) {
-	c.ytsaurus.Status.UpdateStatus.State = updateState
+	c.Status.UpdateStatus.State = updateState
 }
 
 func (c *Ytsaurus) GetUpdatingComponents() []ytv1.Component {
-	return c.ytsaurus.Status.UpdateStatus.UpdatingComponents
+	return c.Status.UpdateStatus.UpdatingComponents
 }
 
 func (c *Ytsaurus) IsUpdatingComponent(componentType consts.ComponentType, componentName string) bool {
@@ -140,27 +140,27 @@ func (c *Ytsaurus) IsUpdatingComponent(componentType consts.ComponentType, compo
 }
 
 func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
-	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+	return meta.IsStatusConditionTrue(c.Status.UpdateStatus.Conditions, condition)
 }
 
 func (c *Ytsaurus) IsUpdateStatusConditionFalse(condition string) bool {
-	return meta.IsStatusConditionFalse(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+	return meta.IsStatusConditionFalse(c.Status.UpdateStatus.Conditions, condition)
 }
 
 func (c *Ytsaurus) GetUpdateStatusCondition(condition string) *metav1.Condition {
-	return meta.FindStatusCondition(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
+	return meta.FindStatusCondition(c.Status.UpdateStatus.Conditions, condition)
 }
 
 func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav1.Condition) {
 	logger := log.FromContext(ctx)
 	logger.Info("Setting update status condition", "condition", condition)
-	meta.SetStatusCondition(&c.ytsaurus.Status.UpdateStatus.Conditions, condition)
-	sortConditions(c.ytsaurus.Status.UpdateStatus.Conditions)
+	meta.SetStatusCondition(&c.Status.UpdateStatus.Conditions, condition)
+	sortConditions(c.Status.UpdateStatus.Conditions)
 }
 
 func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = canUpdate
-	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = BuildComponentsSummary(canUpdate)
+	c.Status.UpdateStatus.UpdatingComponents = canUpdate
+	c.Status.UpdateStatus.UpdatingComponentsSummary = BuildComponentsSummary(canUpdate)
 }
 
 // ShouldRunPreChecks is status-based and can flip to false after successful execution.
@@ -172,7 +172,7 @@ func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, compon
 
 	// have we already completed pre-checks for this component?
 	cond := meta.FindStatusCondition(
-		c.ytsaurus.Status.UpdateStatus.Conditions,
+		c.Status.UpdateStatus.Conditions,
 		fmt.Sprintf("%sReady", componentName),
 	)
 	if cond != nil && cond.Status == metav1.ConditionTrue {
@@ -183,7 +183,7 @@ func (c *Ytsaurus) ShouldRunPreChecks(componentType consts.ComponentType, compon
 }
 
 func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentType, componentName string) bool {
-	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+	for _, selector := range c.GetUpdatePlan() {
 		if selector.Component.Type == componentType &&
 			(selector.Component.Name == "" || selector.Component.Name == componentName) {
 			if selector.Strategy != nil {
@@ -196,18 +196,18 @@ func (c *Ytsaurus) shouldEnablePreChecksFromSpec(componentType consts.ComponentT
 
 func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 	summary := BuildComponentsSummary(components)
-	if c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary == summary {
+	if c.Status.UpdateStatus.BlockedComponentsSummary == summary {
 		return false
 	}
-	c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary = summary
+	c.Status.UpdateStatus.BlockedComponentsSummary = summary
 	return true
 }
 
 func (c *Ytsaurus) ClearUpdateStatus() {
-	c.ytsaurus.Status.UpdateStatus = ytv1.UpdateStatus{
+	c.Status.UpdateStatus = ytv1.UpdateStatus{
 		State:                    ytv1.UpdateStateUndefined,
-		BlockedComponentsSummary: c.ytsaurus.Status.UpdateStatus.BlockedComponentsSummary,
-		MasterCellsMaintenance:   c.ytsaurus.Status.UpdateStatus.MasterCellsMaintenance,
+		BlockedComponentsSummary: c.Status.UpdateStatus.BlockedComponentsSummary,
+		MasterCellsMaintenance:   c.Status.UpdateStatus.MasterCellsMaintenance,
 	}
 }
 
@@ -300,7 +300,7 @@ func (c *Ytsaurus) UpdateOnDeleteComponentsSummary(ctx context.Context, waitingO
 
 func (c *Ytsaurus) GetImageHeater(target string) *ytv1.ComponentUpdateSelector {
 	planned := false
-	for _, selector := range c.ytsaurus.Spec.UpdatePlan {
+	for _, selector := range c.GetUpdatePlan() {
 		if selector.Component.Type == ytv1.ImageHeaterType {
 			planned = true
 			if name := selector.Component.Name; name == "" || target == "" || name == target {
@@ -312,4 +312,55 @@ func (c *Ytsaurus) GetImageHeater(target string) *ytv1.ComponentUpdateSelector {
 		return ptr.To(ytv1.ComponentUpdateSelector{})
 	}
 	return nil
+}
+
+func (c *Ytsaurus) FetchClusterComponents(ctx context.Context) error {
+	if err := c.FetchComponentObjects(ctx, c.Client()); err != nil {
+		return err
+	}
+	return c.LinkComponents()
+}
+
+func (c *Ytsaurus) UpdateClusterComponentStatus(ctx context.Context, component ytv1.Component, status ytv1.ComponentStatus) error {
+	object := c.Objects[component]
+	if object != nil && (object.GetStatusObservedGeneration() != object.GetGeneration() || object.GetComponentStatus() != status) {
+		object.SetStatusObservedGeneration(object.GetGeneration())
+		object.SetComponentStatus(status)
+		if err := c.Client().Status().Update(ctx, object); err != nil {
+			return fmt.Errorf("failed to update component %s status: %w", component.String(), err)
+		}
+	}
+	return nil
+}
+
+func (c *Ytsaurus) SyncObservedGeneration() bool {
+	updated := c.APIProxy.SyncObservedGeneration()
+	if !c.AreComponentGenerationsObserved() {
+		// Invalidate conditions which depends on generation
+		for _, condition := range consts.ConditionsDependsOnGeneration {
+			c.RemoveStatusCondition(condition)
+		}
+		c.UpdateObservedComponentGenerations()
+		updated = true
+	}
+	return updated
+}
+
+func (c *Ytsaurus) SetUpdatePlanStatus(ctx context.Context) error {
+	var status ytv1.ComponentStatus
+	switch c.GetClusterState() {
+	case ytv1.ClusterStateUpdating:
+		status = ytv1.ComponentStatus{State: ytv1.ComponentStateUpdating, Message: "Cluster updating"}
+	case ytv1.ClusterStateUpdateBlocked:
+		status = ytv1.ComponentStatus{State: ytv1.ComponentStateBlocked, Message: "Cluster update blocked"}
+	case ytv1.ClusterStateRunning:
+		// Finish update plan if cluster is running even if update was not required.
+		if plan := c.UpdatePlanObject; plan != nil && plan.Spec.OneShot {
+			return c.Client().Delete(ctx, plan, client.Preconditions{UID: &plan.UID, ResourceVersion: &plan.ResourceVersion})
+		}
+		status = ytv1.ComponentStatus{State: ytv1.ComponentStateReady, Message: "Cluster update finished"}
+	default:
+		return nil
+	}
+	return c.UpdateClusterComponentStatus(ctx, ytv1.Component{Type: consts.UpdatePlanType}, status)
 }

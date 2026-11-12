@@ -30,7 +30,7 @@ type TabletNode struct {
 	ytsaurusClient internalYtsaurusClient
 
 	initBundlesCondition string
-	spec                 ytv1.TabletNodesSpec
+	spec                 *ytv1.TabletNodesSpec
 	doInitialization     bool
 
 	master Component
@@ -41,7 +41,7 @@ func NewTabletNode(
 	ytsaurus *apiproxy.Ytsaurus,
 	ytsaurusClient internalYtsaurusClient,
 	master Component,
-	spec ytv1.TabletNodesSpec,
+	spec *ytv1.TabletNodesSpec,
 	doInitiailization bool,
 ) *TabletNode {
 	l := cfgen.GetComponentLabeller(consts.TabletNodeType, spec.Name)

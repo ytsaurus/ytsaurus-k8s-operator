@@ -57,6 +57,9 @@ data:
   yt-discovery-cypress-patch.yson: |-
     {
     }
+  yt-garbage-collector-cypress-patch.yson: |-
+    {
+    }
   yt-http-proxy-cypress-patch.yson: |-
     {
     }

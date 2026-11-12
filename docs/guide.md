@@ -2,6 +2,40 @@
 
 This is brief guide for operator, for details look [YTsaurus Admin Guide](https://ytsaurus.tech/docs/en/admin-guide/).
 
+## Resource Cleanup
+
+The `GarbageCollector` cluster component detects StatefulSets, Deployments,
+Services, ConfigMaps, and Secrets owned by the Ytsaurus resource whose
+`yt_component` label no longer identifies an active component. This includes node
+groups and proxy roles removed from the specification or from separate component
+resources. Resources belonging to an active component are retained regardless of
+their names, including resources carrying that component's init-job label.
+Orphans are reported by kind and name in the `GarbageCollectorReady` status
+condition.
+
+Collection follows the update plan. To allow it explicitly, select the component
+in an inline plan or a separate `YtsaurusUpdatePlan`:
+
+```yaml
+spec:
+  updatePlan:
+    - component:
+        type: GarbageCollector
+```
+
+Without a matching selector, the collector reports `NeedUpdate` and the orphan
+resources remain. When selected, it deletes at most one resource per
+reconciliation during `WaitingForPodsRemoval`, using background deletion. It
+waits for that resource to disappear before deleting the next one. Workloads are
+deleted before Services, ConfigMaps, and Secrets. The update advances after all
+orphan resources have disappeared; their dependents are
+cleaned up asynchronously by Kubernetes according to the retention policies.
+New orphans discovered before that step advances reopen collection, including
+when an earlier pass already reported completion.
+Resources outside the cluster namespace, controlled by other owners, or without
+a nonempty `yt_component` label are preserved. Other resource kinds, including
+PersistentVolumeClaims, are left to their existing lifecycle and retention rules.
+
 ## Cluster States
 
 The operator reports the cluster lifecycle in [`status.state`](api.md#clusterstate).
@@ -83,10 +117,92 @@ before reaching `Maintenance` or returning to `Running`.
 The transitions follow the [cluster reconciler](../controllers/ytsaurus_controller.go)
 and the [update flow](../controllers/update_flow_steps.go).
 
+## Update Plans
+
+Define allowed updates inline in `Ytsaurus.spec.updatePlan`, or create a separate
+`YtsaurusUpdatePlan` targeting the cluster in the same namespace:
+
+```yaml
+apiVersion: cluster.ytsaurus.tech/v1
+kind: YtsaurusUpdatePlan
+metadata:
+  name: update-everything
+spec:
+  ytsaurus:
+    name: ytsaurus
+  oneShot: true
+  updatePlan:
+    - class: Everything
+```
+
+`spec.updatePlan` uses the same selectors, concurrency limits, and strategies as
+the inline plan. Only one separate plan is allowed per cluster, and it cannot
+coexist with a nonempty inline plan. Clear the inline plan before creating a
+separate plan. Creating, editing, or deleting the plan automatically reconciles
+its cluster. An empty plan permits no updates. After deletion, updates remain
+blocked until another inline or separate plan is defined.
+
+Set `oneShot: true` to delete the plan when the cluster reaches `Running`,
+including when no updates are needed. The plan remains while updates are pending
+or blocked, including groups deferred by concurrency limits. By default, plans
+remain available for future updates. Execution progress is reported in
+`status.state` and `status.observedGeneration`.
+
+When the operator uses instance scope, give the plan the same
+`ytsaurus.tech/operator-instance` label as its clusters.
+
 ## Cluster Creation
 
 See [admin guide / install](https://ytsaurus.tech/docs/en/admin-guide/install-ytsaurus),
 [config samples](../config/samples), and [operator API reference](api.md).
+
+## Splitting Cluster Spec into Several Objects
+
+Node groups and proxy roles can be configured as separate custom resources:
+
+| List in `Ytsaurus.spec` | Separate resource kind | Component identity |
+| --- | --- | --- |
+| `dataNodes` | [`YtsaurusDataNodes`](api.md#ytsaurusdatanodes) | `spec.name` |
+| `execNodes` | [`YtsaurusExecNodes`](api.md#ytsaurusexecnodes) | `spec.name` |
+| `tabletNodes` | [`YtsaurusTabletNodes`](api.md#ytsaurustabletnodes) | `spec.name` |
+| `httpProxies` | [`YtsaurusHTTPProxies`](api.md#ytsaurushttpproxies) | `spec.role` |
+| `rpcProxies` | [`YtsaurusRPCProxies`](api.md#ytsaurusrpcproxies) | `spec.role` |
+
+Create each object in the same namespace as the main `Ytsaurus` object, and set
+`spec.ytsaurus.name` to the main object's `metadata.name`. Copy the fields of one
+list entry directly into the new object's `spec`. For example, a tablet node group for
+`Ytsaurus/minisaurus` can be defined as:
+
+```yaml
+apiVersion: cluster.ytsaurus.tech/v1
+kind: YtsaurusTabletNodes
+metadata:
+  name: minisaurus-tablets
+spec:
+  ytsaurus:
+    name: minisaurus
+  name: default
+  instanceCount: 3
+```
+
+Keep the remaining cluster configuration in `Ytsaurus`. Inline groups and separate
+objects can be mixed, but each component type and name (or proxy role) must be
+unique across the combined spec. In this example, omit the `default` group from
+`Ytsaurus.spec.tabletNodes`.
+
+`metadata.name` identifies the Kubernetes object; `spec.name` or `spec.role`
+identifies the component and defaults to `default`. The component identity and
+`spec.ytsaurus.name` cannot be changed after creation.
+
+For a new cluster, apply the separate component objects before the main `Ytsaurus`
+object so validation sees the complete spec. A `default` HTTP proxy must exist
+in either an inline entry or a separate object.
+
+Separate components inherit cluster settings, including `coreImage` and pod
+defaults, and follow the main object's `spec.updatePlan` and
+`spec.clusterMaintenance`. Check each component's `status.state` and
+`status.message` for progress, and the main object's `status.state` for the
+overall cluster state.
 
 ## Cluster Updating
 

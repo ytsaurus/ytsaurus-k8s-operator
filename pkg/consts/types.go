@@ -14,6 +14,7 @@ const (
 	DataNodeType             = ytv1.DataNodeType
 	DiscoveryType            = ytv1.DiscoveryType
 	ExecNodeType             = ytv1.ExecNodeType
+	GarbageCollectorType     = ytv1.GarbageCollectorType
 	HttpProxyType            = ytv1.HttpProxyType
 	MasterCacheType          = ytv1.MasterCacheType
 	MasterType               = ytv1.MasterType
@@ -27,6 +28,7 @@ const (
 	TcpProxyType             = ytv1.TcpProxyType
 	KafkaProxyType           = ytv1.KafkaProxyType
 	UIType                   = ytv1.UIType
+	UpdatePlanType           = ytv1.UpdatePlanType
 	YqlAgentType             = ytv1.YqlAgentType
 	YtsaurusClientType       = ytv1.YtsaurusClientType
 	ChytType                 = ytv1.ChytType
@@ -54,6 +56,7 @@ var (
 		DataNodeType,
 		DiscoveryType,
 		ExecNodeType,
+		GarbageCollectorType,
 		HttpProxyType,
 		MasterCacheType,
 		MasterType,

@@ -1,6 +1,6 @@
 --- base/ConfigMap yt-cypress-patch.yson
 +++ test/ConfigMap yt-cypress-patch.yson
-@@ -86,8 +86,10 @@
+@@ -89,8 +89,10 @@
      }
  metadata:
    annotations:
@@ -13,7 +13,7 @@
    generation: 1
    labels:
      app.kubernetes.io/component: yt-client
-@@ -105,5 +107,5 @@
+@@ -108,5 +110,5 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""

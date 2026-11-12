@@ -46,6 +46,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ypatch"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
@@ -215,7 +216,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 	var ytRPCProxyAddress string
 	var ytRPCClient yt.Client
 	var ytRPCTLSClient yt.Client
-	var remoteComponentNames map[consts.ComponentType][]string
+	var remoteComponents []ytv1.ComponentSpec
 
 	// NOTE: execution order for each test spec:
 	// - BeforeEach               (init, configuration)
@@ -351,8 +352,8 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		By("Tracking Ytsaurus updates")
 		DeferCleanup(TrackObjectUpdates(specCtx, ytsaurus, &ytv1.YtsaurusList{}, NewYtsaurusStatusTracker()))
 
-		generator = ytconfig.NewGenerator(ytsaurus, "cluster.local")
-		remoteComponentNames = make(map[consts.ComponentType][]string)
+		generator = ytconfig.NewGenerator(ytcluster.NewCluster(ytsaurus), "cluster.local")
+		remoteComponents = nil
 
 		certBuilder = &testutil.CertBuilder{
 			Namespace:   namespace,
@@ -703,14 +704,24 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 	JustBeforeEach(func(ctx context.Context) {
 		By("Checking cluster components")
+		var configured []ytv1.Component
+		expected := map[consts.ComponentType]int{}
+		for _, spec := range ytsaurus.GetComponentSpecs() {
+			component := spec.GetComponent()
+			configured = append(configured, component)
+			if consts.ComponentCypressPath(component.Type) != "" {
+				expected[component.Type] += spec.GetInstanceCount()
+			}
+		}
+		for _, remote := range remoteComponents {
+			component := remote.GetComponent()
+			configured = append(configured, component)
+			if consts.ComponentCypressPath(component.Type) != "" {
+				expected[component.Type] += remote.GetInstanceCount()
+			}
+		}
 		clusterComponents, err := ListClusterComponents(ctx, ytClient)
 		Expect(err).To(Succeed())
-
-		componentGroups := func(componentType consts.ComponentType) []string {
-			names, err := generator.GetComponentNames(componentType)
-			Expect(err).To(Succeed())
-			return append(names, remoteComponentNames[componentType]...)
-		}
 
 		instances := map[consts.ComponentType]int{}
 		for _, component := range clusterComponents {
@@ -729,22 +740,18 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				"start_time", busService.StartTime,
 				"build_time", busService.BuildTime,
 			)
-			Expect(componentGroups(component.Type)).ToNot(BeEmpty(), "component %q", component.Type)
+			Expect(configured).To(ContainElement(HaveField("Type", component.Type)))
 			instances[component.Type] += 1
 		}
 
-		for _, componentType := range consts.LocalComponentTypes {
-			if consts.ComponentCypressPath(componentType) == "" {
+		for _, component := range configured {
+			if consts.ComponentCypressPath(component.Type) == "" {
 				continue
 			}
-			groups := componentGroups(componentType)
-			log.Info("Cluster component", "type", componentType, "groups", len(groups), "instances", instances[componentType])
-			if len(groups) == 0 {
-				Expect(instances[componentType]).To(BeZero(), "component %q", componentType)
-			} else {
-				Expect(instances[componentType]).To(BeNumerically(">=", len(groups)), "component %q", componentType)
-			}
+			Expect(clusterComponents).To(ContainElement(HaveField("Type", component.Type)))
 		}
+
+		Expect(instances).To(Equal(expected), "cluster components")
 	})
 
 	JustBeforeEach(func(ctx context.Context) {
@@ -1801,9 +1808,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				// Ensure that no local exec nodes exist, only remote ones (which will be created later).
 				ytsaurus.Spec.ExecNodes = nil
 
-				remoteNodes = ytBuilder.CreateRemoteExecNodes()
-				remoteComponentNames[consts.ExecNodeType] = []string{remoteNodes.GetName()}
-				objects = append(objects, remoteNodes)
+				remoteExecNodes := ytBuilder.CreateRemoteExecNodes()
+				remoteComponents = append(remoteComponents, &remoteExecNodes.Spec)
+				objects = append(objects, remoteExecNodes)
+				remoteNodes = remoteExecNodes
 			})
 
 			It("Should create ytsaurus with remote exec nodes and execute a job", func(ctx context.Context) {
@@ -1842,9 +1850,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 		Context("With remote data nodes", Label("data"), func() {
 			BeforeEach(func() {
 				By("Adding remote data nodes")
-				remoteNodes = ytBuilder.CreateRemoteDataNodes()
-				remoteComponentNames[consts.DataNodeType] = []string{remoteNodes.GetName()}
-				objects = append(objects, remoteNodes)
+				remoteDataNodes := ytBuilder.CreateRemoteDataNodes()
+				remoteComponents = append(remoteComponents, &remoteDataNodes.Spec)
+				objects = append(objects, remoteDataNodes)
+				remoteNodes = remoteDataNodes
 			})
 
 			It("Should create ytsaurus with remote data nodes and write to a table", func(ctx context.Context) {
@@ -1869,9 +1878,10 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				ytBuilder.WithDataNodes()
 
 				By("Adding remote tablet nodes")
-				remoteNodes = ytBuilder.CreateRemoteTabletNodes()
-				remoteComponentNames[consts.TabletNodeType] = []string{remoteNodes.GetName()}
-				objects = append(objects, remoteNodes)
+				remoteTabletNodes := ytBuilder.CreateRemoteTabletNodes()
+				remoteComponents = append(remoteComponents, &remoteTabletNodes.Spec)
+				objects = append(objects, remoteTabletNodes)
+				remoteNodes = remoteTabletNodes
 			})
 
 			It("Should create ytsaurus with remote tablet nodes and write to a table", func(ctx context.Context) {

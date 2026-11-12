@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "required": [
+    "spec"
+  ],
+  "properties": {
+    "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object.",
+      "type": "string"
+    },
+    "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents.",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "description": "YtsaurusUpdatePlanSpec defines which components may update and their strategies.",
+      "type": "object",
+      "required": [
+        "ytsaurus"
+      ],
+      "properties": {
+        "oneShot": {
+          "description": "Delete this resource after all selected updates finish successfully.",
+          "type": "boolean"
+        },
+        "updatePlan": {
+          "description": "Update plan defines components which are allowed to update.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "class": {
+                "description": "Selects components by class: Nothing, Everything, Stateless (except Master,...",
+                "type": "string",
+                "enum": [
+                  "",
+                  "Nothing",
+                  "Stateless",
+                  "Everything"
+                ]
+              },
+              "component": {
+                "description": "Selects components by type and/or instance group name.",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                }
+              },
+              "concurrency": {
+                "description": "Limits count of instance groups updated concurrently.",
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "strategy": {
+                "description": "Defines update strategy for selected instance groups.",
+                "type": "object",
+                "properties": {
+                  "onDelete": {
+                    "type": "object"
+                  },
+                  "rollingUpdate": {
+                    "description": "ComponentRollingUpdateMode configures the rolling update strategy.",
+                    "type": "object"
+                  },
+                  "runPreChecks": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ytsaurus": {
+          "description": "Cluster to update in the same namespace. Immutable after creation.",
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "observedGeneration": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "state": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

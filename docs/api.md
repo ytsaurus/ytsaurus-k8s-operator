@@ -20,6 +20,18 @@ Package v1 contains API Schema definitions for the cluster v1 API group
 - [RemoteYtsaurus](#remoteytsaurus)
 - [Spyt](#spyt)
 - [Ytsaurus](#ytsaurus)
+- [YtsaurusDataNodes](#ytsaurusdatanodes)
+- [YtsaurusDataNodesList](#ytsaurusdatanodeslist)
+- [YtsaurusExecNodes](#ytsaurusexecnodes)
+- [YtsaurusExecNodesList](#ytsaurusexecnodeslist)
+- [YtsaurusHTTPProxies](#ytsaurushttpproxies)
+- [YtsaurusHTTPProxiesList](#ytsaurushttpproxieslist)
+- [YtsaurusRPCProxies](#ytsaurusrpcproxies)
+- [YtsaurusRPCProxiesList](#ytsaurusrpcproxieslist)
+- [YtsaurusTabletNodes](#ytsaurustabletnodes)
+- [YtsaurusTabletNodesList](#ytsaurustabletnodeslist)
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
+- [YtsaurusUpdatePlanList](#ytsaurusupdateplanlist)
 
 
 
@@ -167,6 +179,7 @@ _Appears in:_
 
 _Appears in:_
 - [HTTPProxiesSpec](#httpproxiesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -398,6 +411,9 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [TabletNodesSpec](#tabletnodesspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -576,6 +592,33 @@ _Appears in:_
 
 
 
+
+
+#### ComponentState
+
+_Underlying type:_ _string_
+
+
+
+
+
+_Appears in:_
+- [ComponentStatus](#componentstatus)
+- [YtsaurusComponentStatus](#ytsauruscomponentstatus)
+
+| Field | Description |
+| --- | --- |
+| `` | Status is unknown<br /> |
+| `Ready` | Running, reconciliation is not required<br /> |
+| `Started` | Reconciliation is complete, is not ready yet<br /> |
+| `Blocked` | Reconciliation is impossible<br /> |
+| `Pending` | Reconciliation is possible<br /> |
+| `NeedUpdate` | Running, update is required<br /> |
+| `Updating` | Update in progress<br /> |
+
+
+
+
 #### ComponentType
 
 _Underlying type:_ _string_
@@ -597,6 +640,7 @@ _Appears in:_
 | `DataNode` |  |
 | `Discovery` |  |
 | `ExecNode` |  |
+| `GarbageCollector` |  |
 | `HttpProxy` |  |
 | `ImageHeater` |  |
 | `KafkaProxy` |  |
@@ -615,6 +659,7 @@ _Appears in:_
 | `TcpProxy` |  |
 | `Timbertruck` |  |
 | `UI` |  |
+| `UpdatePlan` |  |
 | `YqlAgent` |  |
 | `YtsaurusClient` |  |
 
@@ -630,7 +675,7 @@ _Appears in:_
 
 
 _Appears in:_
-- [YtsaurusSpec](#ytsaurusspec)
+- [UpdatePlan](#updateplan)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -753,6 +798,7 @@ _Appears in:_
 
 _Appears in:_
 - [RemoteDataNodesSpec](#remotedatanodesspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -890,6 +936,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -897,10 +944,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -918,6 +971,7 @@ _Appears in:_
 
 _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -1017,6 +1071,7 @@ _Appears in:_
 _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1032,6 +1087,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -1083,6 +1139,7 @@ _Appears in:_
 
 _Appears in:_
 - [HTTPProxiesSpec](#httpproxiesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1112,6 +1169,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1119,10 +1177,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1143,6 +1207,8 @@ _Appears in:_
 
 _Appears in:_
 - [MastersSpec](#mastersspec)
+- [PrimaryMastersSpec](#primarymastersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1170,6 +1236,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1177,10 +1244,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1224,6 +1297,7 @@ _Appears in:_
 _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1247,6 +1321,7 @@ _Appears in:_
 _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1266,6 +1341,7 @@ _Appears in:_
 _Appears in:_
 - [ExecNodesSpec](#execnodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1376,6 +1452,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1383,10 +1460,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1614,6 +1697,8 @@ _Validation:_
 
 _Appears in:_
 - [MastersSpec](#mastersspec)
+- [PrimaryMastersSpec](#primarymastersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description |
 | --- | --- |
@@ -1633,7 +1718,9 @@ _Appears in:_
 
 _Appears in:_
 - [MastersSpec](#mastersspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [RemoteYtsaurusSpec](#remoteytsaurusspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1650,7 +1737,8 @@ _Appears in:_
 
 
 _Appears in:_
-- [YtsaurusSpec](#ytsaurusspec)
+- [PrimaryMastersSpec](#primarymastersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -1727,6 +1815,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -1734,10 +1823,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -2037,6 +2132,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2044,12 +2140,43 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [StrawberryControllerSpec](#strawberrycontrollerspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [UISpec](#uispec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusSpec](#ytsaurusspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+
+
+#### PrimaryMastersSpec
+
+
+
+
+
+
+
+_Appears in:_
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -2064,6 +2191,32 @@ _Appears in:_
 | `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
 | `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
+| `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole)_ | Roles assigned to this master cell. Explicit enlisting is preferred, because defaults could change.<br />In general, assigned or default roles cannot be removed later without risk of data loss. |  | Pattern: `^[a-z_]+$` <br /> |
+| `hostAddressLabel` _string_ |  |  |  |
+| `maxSnapshotCountToKeep` _integer_ | Snapshot count to keep, default: 10. Define Quota for MasterSnapshots location to limit by total size. |  |  |
+| `maxChangelogCountToKeep` _integer_ | Changelog count to keep, default: 10. Define Quota for MasterChangelogs location to limit by total size. |  |  |
+| `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 
 
 #### QueryTrackerSpec
@@ -2159,6 +2312,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -2219,6 +2373,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2226,11 +2381,17 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
 - [YtsaurusSpec](#ytsaurusspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -2713,6 +2874,57 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
+#### SecondaryMastersSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `cellTag` _integer_ | Cell tag is an immutable identifier for particular cell of YTsaurus cluster.<br />Must be unique among all connected clusters to prevent object ids from colliding. |  | Maximum: 61440 <br />Minimum: 1 <br />Required: \{\} <br /> |
+| `hostAddresses` _string array_ |  |  |  |
+| `roles` _[MasterCellRole](#mastercellrole)_ | Roles assigned to this master cell. Explicit enlisting is preferred, because defaults could change.<br />In general, assigned or default roles cannot be removed later without risk of data loss. |  | Pattern: `^[a-z_]+$` <br /> |
+| `hostAddressLabel` _string_ |  |  |  |
+| `maxSnapshotCountToKeep` _integer_ | Snapshot count to keep, default: 10. Define Quota for MasterSnapshots location to limit by total size. |  |  |
+| `maxChangelogCountToKeep` _integer_ | Changelog count to keep, default: 10. Define Quota for MasterChangelogs location to limit by total size. |  |  |
+| `hydraPersistenceUploader` _[HydraPersistenceUploaderSpec](#hydrapersistenceuploaderspec)_ |  |  |  |
+| `timbertruck` _[TimbertruckSpec](#timbertruckspec)_ |  |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
+
+
 #### Spyt
 
 
@@ -2841,6 +3053,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -2848,10 +3061,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -2984,6 +3203,7 @@ _Appears in:_
 _Appears in:_
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [YtsaurusSpec](#ytsaurusspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -3042,6 +3262,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -3049,10 +3270,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -3082,9 +3309,11 @@ _Appears in:_
 - [CommonSpec](#commonspec)
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [RemoteDataNodesSpec](#remotedatanodesspec)
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [YtsaurusSpec](#ytsaurusspec)
 
 | Field | Description | Default | Validation |
@@ -3174,6 +3403,26 @@ _Appears in:_
 | `group` _string_ |  |  |  |
 | `urls` _[UIClusterURLs](#uiclusterurls)_ |  |  |  |
 | `directDownload` _boolean_ | When this is set to false, UI will use backend for downloading instead of proxy.<br />If this is set to true or omitted, UI use proxies, which is a default behaviour. |  |  |
+
+
+#### UpdatePlan
+
+_Underlying type:_ _[ComponentUpdateSelector](#componentupdateselector)_
+
+Defines components which are allowed to update.
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+- [YtsaurusUpdatePlanSpec](#ytsaurusupdateplanspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `class` _[ComponentClass](#componentclass)_ | Selects components by class: Nothing, Everything, Stateless (except Master, DataNode, TabletNode). |  | Enum: [ Nothing Stateless Everything] <br /> |
+| `component` _[Component](#component)_ | Selects components by type and/or instance group name. |  |  |
+| `concurrency` _integer_ | Limits count of instance groups updated concurrently. |  | Minimum: 0 <br /> |
+| `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ | Defines update strategy for selected instance groups. |  |  |
 
 
 #### UpdateState
@@ -3272,6 +3521,7 @@ _Appears in:_
 - [MastersSpec](#mastersspec)
 - [OffshoreDataGatewaySpec](#offshoredatagatewayspec)
 - [OffshoreDataGatewaysSpec](#offshoredatagatewaysspec)
+- [PrimaryMastersSpec](#primarymastersspec)
 - [QueryTrackerSpec](#querytrackerspec)
 - [QueueAgentSpec](#queueagentspec)
 - [RPCProxiesSpec](#rpcproxiesspec)
@@ -3279,10 +3529,16 @@ _Appears in:_
 - [RemoteExecNodesSpec](#remoteexecnodesspec)
 - [RemoteTabletNodesSpec](#remotetabletnodesspec)
 - [SchedulersSpec](#schedulersspec)
+- [SecondaryMastersSpec](#secondarymastersspec)
 - [TCPProxiesSpec](#tcpproxiesspec)
 - [TabletBalancerSpec](#tabletbalancerspec)
 - [TabletNodesSpec](#tabletnodesspec)
 - [YQLAgentSpec](#yqlagentspec)
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -3436,6 +3692,424 @@ Ytsaurus is the Schema for the ytsaurus API
 | `status` _[YtsaurusStatus](#ytsaurusstatus)_ |  |  |  |
 
 
+#### YtsaurusComponentBase
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusDataNodes](#ytsaurusdatanodes)
+- [YtsaurusExecNodes](#ytsaurusexecnodes)
+- [YtsaurusHTTPProxies](#ytsaurushttpproxies)
+- [YtsaurusRPCProxies](#ytsaurusrpcproxies)
+- [YtsaurusTabletNodes](#ytsaurustabletnodes)
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+
+
+#### YtsaurusComponentStatus
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusComponentBase](#ytsauruscomponentbase)
+- [YtsaurusDataNodes](#ytsaurusdatanodes)
+- [YtsaurusExecNodes](#ytsaurusexecnodes)
+- [YtsaurusHTTPProxies](#ytsaurushttpproxies)
+- [YtsaurusRPCProxies](#ytsaurusrpcproxies)
+- [YtsaurusTabletNodes](#ytsaurustabletnodes)
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `state` _[ComponentState](#componentstate)_ |  |  |  |
+| `message` _string_ |  |  |  |
+| `observedGeneration` _integer_ |  |  |  |
+
+
+#### YtsaurusDataNodes
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusDataNodesList](#ytsaurusdatanodeslist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusDataNodes` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+| `spec` _[YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)_ |  |  |  |
+
+
+#### YtsaurusDataNodesList
+
+
+
+
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusDataNodesList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[YtsaurusDataNodes](#ytsaurusdatanodes) array_ |  |  |  |
+
+
+#### YtsaurusDataNodesSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusDataNodes](#ytsaurusdatanodes)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ytsaurus` _[YtsaurusReference](#ytsaurusreference)_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `tags` _string array_ | List of the node tags. |  |  |
+| `rack` _string_ | Name of the node rack. |  |  |
+| `name` _string_ |  | default | MinLength: 1 <br /> |
+
+
+#### YtsaurusExecNodes
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusExecNodesList](#ytsaurusexecnodeslist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusExecNodes` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+| `spec` _[YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)_ |  |  |  |
+
+
+#### YtsaurusExecNodesList
+
+
+
+
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusExecNodesList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[YtsaurusExecNodes](#ytsaurusexecnodes) array_ |  |  |  |
+
+
+#### YtsaurusExecNodesSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusExecNodes](#ytsaurusexecnodes)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ytsaurus` _[YtsaurusReference](#ytsaurusreference)_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `tags` _string array_ | List of the node tags. |  |  |
+| `rack` _string_ | Name of the node rack. |  |  |
+| `name` _string_ |  | default | MinLength: 1 <br /> |
+| `initContainers` _string array_ | List of init containers as yaml of core/v1 Container. |  |  |
+| `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
+| `privileged` _boolean_ |  | true |  |
+| `gpuManager` _[GPUManagerSpec](#gpumanagerspec)_ |  |  |  |
+| `jobProxyLoggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `jobProxyLogManager` _[JobProxyLogManagerSpec](#jobproxylogmanagerspec)_ |  |  |  |
+| `jobResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for running jobs. Capacity is defined by requests, or limits for zero requests. Default: same limits as exec node with zero requests. |  |  |
+| `jobNetwork` _[JobNetworkSpec](#jobnetworkspec)_ | Job network options. |  |  |
+| `jobEnvironment` _[JobEnvironmentSpec](#jobenvironmentspec)_ |  |  |  |
+| `jobHttpsCertificateSecret` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Job HTTPS certificate. Reference to kubernetes.io/tls secret.<br />Exposed in job environment as YT_JOB_HTTPS_CERTIFICATE_FILE YT_JOB_HTTPS_PRIVATE_KEY_FILE. |  |  |
+
+
+#### YtsaurusHTTPProxies
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusHTTPProxiesList](#ytsaurushttpproxieslist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusHTTPProxies` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+| `spec` _[YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)_ |  |  |  |
+
+
+#### YtsaurusHTTPProxiesList
+
+
+
+
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusHTTPProxiesList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[YtsaurusHTTPProxies](#ytsaurushttpproxies) array_ |  |  |  |
+
+
+#### YtsaurusHTTPProxiesSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusHTTPProxies](#ytsaurushttpproxies)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ytsaurus` _[YtsaurusReference](#ytsaurusreference)_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  | NodePort |  |
+| `httpPort` _integer_ |  | 80 |  |
+| `httpsPort` _integer_ |  | 443 |  |
+| `httpNodePort` _integer_ |  |  |  |
+| `httpsNodePort` _integer_ |  |  |  |
+| `chytProxy` _[CHYTProxySpec](#chytproxyspec)_ |  |  |  |
+| `role` _string_ |  | default | MinLength: 1 <br /> |
+| `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
+
+
+#### YtsaurusRPCProxies
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusRPCProxiesList](#ytsaurusrpcproxieslist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusRPCProxies` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+| `spec` _[YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)_ |  |  |  |
+
+
+#### YtsaurusRPCProxiesList
+
+
+
+
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusRPCProxiesList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[YtsaurusRPCProxies](#ytsaurusrpcproxies) array_ |  |  |  |
+
+
+#### YtsaurusRPCProxiesSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusRPCProxies](#ytsaurusrpcproxies)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ytsaurus` _[YtsaurusReference](#ytsaurusreference)_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `serviceType` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#servicetype-v1-core)_ |  |  |  |
+| `nodePort` _integer_ |  |  |  |
+| `role` _string_ |  | default | MinLength: 1 <br /> |
+| `transport` _[RPCTransportSpec](#rpctransportspec)_ |  |  |  |
+
+
+#### YtsaurusReference
+
+
+
+Points to Ytsaurus resource in the same namespace.
+
+
+
+_Appears in:_
+- [YtsaurusDataNodesSpec](#ytsaurusdatanodesspec)
+- [YtsaurusExecNodesSpec](#ytsaurusexecnodesspec)
+- [YtsaurusHTTPProxiesSpec](#ytsaurushttpproxiesspec)
+- [YtsaurusRPCProxiesSpec](#ytsaurusrpcproxiesspec)
+- [YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)
+- [YtsaurusUpdatePlanSpec](#ytsaurusupdateplanspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ |  |  |  |
+
+
 #### YtsaurusSpec
 
 
@@ -3483,11 +4157,11 @@ _Appears in:_
 | `adminCredentials` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ | Reference to secret with initial "login", "password", "token" for administrator user.<br />If secret is not specified or does not exist default admin/password is no longer set. |  |  |
 | `oauthService` _[OauthServiceSpec](#oauthservicespec)_ |  |  |  |
 | `isManaged` _boolean_ | Setting to false disables all operator actions. Default: true. | true |  |
-| `updatePlan` _[ComponentUpdateSelector](#componentupdateselector) array_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
+| `updatePlan` _[UpdatePlan](#updateplan)_ | Defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />Could be defined in separate YtsaurusUpdatePlan object. |  |  |
 | `bootstrap` _[BootstrapSpec](#bootstrapspec)_ |  |  |  |
 | `discovery` _[DiscoverySpec](#discoveryspec)_ |  |  |  |
-| `primaryMasters` _[MastersSpec](#mastersspec)_ |  |  |  |
-| `secondaryMasters` _[MastersSpec](#mastersspec) array_ |  |  | MaxItems: 48 <br /> |
+| `primaryMasters` _[PrimaryMastersSpec](#primarymastersspec)_ |  |  |  |
+| `secondaryMasters` _[SecondaryMastersSpec](#secondarymastersspec) array_ |  |  | MaxItems: 48 <br /> |
 | `masterCaches` _[MasterCachesSpec](#mastercachesspec)_ |  |  |  |
 | `httpProxies` _[HTTPProxiesSpec](#httpproxiesspec) array_ |  |  | MinItems: 1 <br /> |
 | `rpcProxies` _[RPCProxiesSpec](#rpcproxiesspec) array_ |  |  |  |
@@ -3525,6 +4199,148 @@ _Appears in:_
 | `state` _[ClusterState](#clusterstate)_ |  | Created |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `observedGeneration` _integer_ | Reflects resource generation which was used for updating status. |  |  |
+| `observedComponentGenerations` _object (keys:string, values:integer)_ | Reflects component object generations which were used for updating status, keyed by component name and UID. |  |  |
 | `updateStatus` _[UpdateStatus](#updatestatus)_ |  |  |  |
+
+
+#### YtsaurusTabletNodes
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusTabletNodesList](#ytsaurustabletnodeslist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusTabletNodes` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+| `spec` _[YtsaurusTabletNodesSpec](#ytsaurustabletnodesspec)_ |  |  |  |
+
+
+#### YtsaurusTabletNodesList
+
+
+
+
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusTabletNodesList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[YtsaurusTabletNodes](#ytsaurustabletnodes) array_ |  |  |  |
+
+
+#### YtsaurusTabletNodesSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusTabletNodes](#ytsaurustabletnodes)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ytsaurus` _[YtsaurusReference](#ytsaurusreference)_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ | Labels for instance pods. |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ | Annotations for instance pods. |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ | Node selector for instance and init job pods. |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ | Tolerations for instance and init job pods. |  |  |
+| `runtimeClassName` _string_ | Runtime class for instance pods. |  |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. Defaults to 30 seconds. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace. |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ | DNSPolicy defines how DNS will be configured. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings. |  |  |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](#volume) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ | Resources dedicated for component. Capacity is defined by requests, or limits for zero requests. |  |  |
+| `instanceCount` _integer_ | Desired count of replicas. Default: 0. | 0 | Minimum: 0 <br /> |
+| `minReadyInstanceCount` _integer_ | Required count of replicas. Defaulted and bounded by instanceCount. |  | Minimum: 0 <br /> |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `metricExporter` _[MetricExporter](#metricexporter)_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `tags` _string array_ | List of the node tags. |  |  |
+| `rack` _string_ | Name of the node rack. |  |  |
+| `name` _string_ |  | default | MinLength: 1 <br /> |
+| `tabletCellSlots` _integer_ | Count of slots for tablet cells on each tablet node, default is 4. |  |  |
+
+
+#### YtsaurusUpdatePlan
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusUpdatePlanList](#ytsaurusupdateplanlist)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusUpdatePlan` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `status` _[YtsaurusComponentStatus](#ytsauruscomponentstatus)_ |  |  |  |
+| `spec` _[YtsaurusUpdatePlanSpec](#ytsaurusupdateplanspec)_ |  |  |  |
+
+
+#### YtsaurusUpdatePlanList
+
+
+
+
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `cluster.ytsaurus.tech/v1` | | |
+| `kind` _string_ | `YtsaurusUpdatePlanList` | | |
+| `metadata` _[ListMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#listmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `items` _[YtsaurusUpdatePlan](#ytsaurusupdateplan) array_ |  |  |  |
+
+
+#### YtsaurusUpdatePlanSpec
+
+
+
+YtsaurusUpdatePlanSpec defines which components may update and their strategies.
+
+
+
+_Appears in:_
+- [YtsaurusUpdatePlan](#ytsaurusupdateplan)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ytsaurus` _[YtsaurusReference](#ytsaurusreference)_ | Cluster to update in the same namespace. Immutable after creation. |  |  |
+| `updatePlan` _[UpdatePlan](#updateplan)_ | Update plan defines components which are allowed to update.<br />Can contain either single "class" item or several "component" items.<br />When empty: update nothing |  |  |
+| `oneShot` _boolean_ | Delete this resource after all selected updates finish successfully.<br />A plan waiting for updates or blocked from executing is retained. |  |  |
 
 

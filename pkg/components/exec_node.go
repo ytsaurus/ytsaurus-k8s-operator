@@ -28,7 +28,7 @@ func NewExecNode(
 	cfgen *ytconfig.NodeGenerator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master Component,
-	spec ytv1.ExecNodesSpec,
+	spec *ytv1.ExecNodesSpec,
 	yc internalYtsaurusClient,
 ) *ExecNode {
 	l := cfgen.GetComponentLabeller(consts.ExecNodeType, spec.Name)
@@ -52,7 +52,7 @@ func NewExecNode(
 		}),
 	)
 
-	criConfig := ytconfig.NewCRIConfigGenerator(&spec)
+	criConfig := ytconfig.NewCRIConfigGenerator(spec)
 	sidecarConfig := NewJobsSidecarConfig(
 		l,
 		ytsaurus,
@@ -75,7 +75,7 @@ func NewExecNode(
 
 			cfgen:          cfgen,
 			criConfig:      criConfig,
-			spec:           &spec,
+			spec:           spec,
 			sidecarConfig:  sidecarConfig,
 			ytsaurusClient: yc,
 

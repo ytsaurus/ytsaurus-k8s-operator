@@ -120,7 +120,7 @@ func configureMasterServerCypressManager(maxReplicationFactor int32, c *CypressM
 	}
 }
 
-func GetMasterCellDescriptors(primary *ytv1.MastersSpec, secondary []ytv1.MastersSpec) map[string]MasterCellDescriptor {
+func GetMasterCellDescriptors(primary *ytv1.MastersSpec, secondary []ytv1.SecondaryMastersSpec) map[string]MasterCellDescriptor {
 	descriptors := make(map[string]MasterCellDescriptor, 1+len(secondary))
 	// NOTE: Not filling default roles for primary master cell. Use default from master itself.
 	if primary.Roles != nil {
