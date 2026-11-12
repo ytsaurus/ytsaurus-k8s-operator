@@ -7,12 +7,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
 )
 
 var _ = Describe("FindVolumeMountForPath", func() {
 	DescribeTable("returns the last volume mount covering the path",
 		func(volumeMounts []corev1.VolumeMount, path string, wantName string) {
-			got := FindVolumeMountForPath(volumeMounts, path)
+			got := apihelpers.FindVolumeMountForPath(volumeMounts, path)
 			if wantName == "" {
 				Expect(got).To(BeNil())
 			} else {

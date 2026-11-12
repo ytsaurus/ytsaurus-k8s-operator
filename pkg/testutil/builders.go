@@ -35,11 +35,11 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 					InstanceCount: 3,
 					Locations: []ytv1.LocationSpec{
 						{
-							LocationType: "MasterChangelogs",
+							LocationType: ytv1.LocationTypeMasterChangelogs,
 							Path:         "/yt/master-data/master-changelogs",
 						},
 						{
-							LocationType: "MasterSnapshots",
+							LocationType: ytv1.LocationTypeMasterSnapshots,
 							Path:         "/yt/master-data/master-snapshots",
 						},
 					},
@@ -60,7 +60,7 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 						InstanceCount: 5,
 						Locations: []ytv1.LocationSpec{
 							{
-								LocationType: "ChunkStore",
+								LocationType: ytv1.LocationTypeChunkStore,
 								Path:         "/yt/node-data/chunk-store",
 							},
 						},

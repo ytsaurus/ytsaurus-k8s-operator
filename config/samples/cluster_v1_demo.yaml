@@ -99,18 +99,21 @@ spec:
           writerType: file
           useTimestampSuffix: true
           rotationPolicy: &rotationPolicy
-            maxTotalSizeToKeep: 10000000
+            maxTotalSizeToKeep: 100Mi
+            maxSegmentSize: 10Mi
             rotationPeriodMilliseconds: 900000
+            maxSegmentCountToKeep: 100
           categoriesFilter:
             type: exclude
             values: [ "Bus", "Concurrency" ]
         - name: info
           minLogLevel: info
           writerType: file
+          useDateTimeSuffix: true
           rotationPolicy: *rotationPolicy
         # this file is append-only and not rotated
-        # - name: error
-        #   minLogLevel: error
+        # - name: stderr
+        #   minLogLevel: warning
         #   writerType: stderr
 
   tabletNodes:

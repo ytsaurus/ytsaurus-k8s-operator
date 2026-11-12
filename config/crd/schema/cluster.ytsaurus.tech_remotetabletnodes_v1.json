@@ -1076,7 +1076,7 @@
                 "x-kubernetes-int-or-string": true
               },
               "maxTrashMilliseconds": {
-                "description": "Max TTL of trash in milliseconds.",
+                "description": "Max TTL of trash in milliseconds for ChunkStore.",
                 "type": "integer",
                 "format": "int64",
                 "minimum": 60000
@@ -1205,7 +1205,7 @@
                 }
               },
               "useDateTimeSuffix": {
-                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation (recommended).",
                 "type": "boolean"
               },
               "useTimestampSuffix": {
@@ -1559,7 +1559,7 @@
                 }
               },
               "useDateTimeSuffix": {
-                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation.",
+                "description": "Append filename suffix \".YYYYMMDD-hhmmss\" after rotation (recommended).",
                 "type": "boolean"
               },
               "useTimestampSuffix": {
