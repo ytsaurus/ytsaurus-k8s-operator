@@ -97,3 +97,36 @@ webhooks:
     resources:
     - ytsaurus
   sideEffects: None
+{{- range $resource := list "ytsaurusdatanodes" "ytsaurusexecnodes" "ytsaurustabletnodes" "ytsaurushttpproxies" "ytsaurusrpcproxies" }}
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: '{{ include "ytop-chart.fullname" $ }}-webhook-service'
+      namespace: '{{ $.Release.Namespace }}'
+      path: /validate-cluster-ytsaurus-tech-v1-{{ $resource }}
+  failurePolicy: Fail
+  name: v{{ $resource }}.kb.io
+  {{- if $.Values.controllerManager.manager.instanceScope }}
+  objectSelector:
+    matchLabels:
+      ytsaurus.tech/operator-instance: '{{ $.Release.Name }}'
+  {{- end }}
+  {{- if $.Values.controllerManager.manager.namespacedScope }}
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: '{{ $.Release.Namespace }}'
+  {{- end }}
+  rules:
+  - apiGroups:
+    - cluster.ytsaurus.tech
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - {{ $resource }}
+  sideEffects: None
+{{- end }}

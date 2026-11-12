@@ -30,7 +30,7 @@ func NewHTTPProxy(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	masterReconciler Component,
-	spec ytv1.HTTPProxiesSpec,
+	spec *ytv1.HTTPProxiesSpec,
 ) *HttpProxy {
 	l := cfgen.GetComponentLabeller(consts.HttpProxyType, spec.Role)
 	containerPorts := []corev1.ContainerPort{

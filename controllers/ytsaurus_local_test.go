@@ -14,6 +14,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 
@@ -72,6 +73,65 @@ var _ = Describe("Ytsaurus Controller", func() {
 	}
 
 	Describe("Ytsaurus operations", func() {
+		Context("With separate component resources", func() {
+			BeforeEach(func() {
+				namespace = "ytsaurus-components"
+			})
+
+			It("should reconcile attached nodes and proxies when they are created", func(ctx context.Context) {
+				ytsaurusResource := testutil.BuildMinimalYtsaurus(namespace, ytsaurusName)
+				ytsaurusResource.Spec.EphemeralCluster = true
+				ytsaurusResource.Spec.PrimaryMasters.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.Discovery.MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(int32(0))
+				ytsaurusResource.Spec.DataNodes[0].MinReadyInstanceCount = ptr.To(int32(0))
+				testutil.DeployObject(h, &ytsaurusResource)
+				waitClusterState(h, ytv1.ClusterStateRunning, ytsaurusResource.Generation)
+
+				meta := metav1.ObjectMeta{Name: "attached", Namespace: namespace}
+				parent := ytv1.YtsaurusReference{Name: ytsaurusName}
+				instance := ytv1.InstanceSpec{InstanceCount: 1, MinReadyInstanceCount: ptr.To(int32(0))}
+				dataSpec := *ytsaurusResource.Spec.DataNodes[0].DeepCopy()
+				dataSpec.Name = "attached"
+
+				resources := []struct {
+					object      client.Object
+					statefulSet string
+				}{
+					{&ytv1.YtsaurusDataNodes{
+						ObjectMeta: meta,
+						Spec:       ytv1.YtsaurusDataNodesSpec{Ytsaurus: parent, DataNodesSpec: dataSpec},
+					}, "dnd-attached"},
+					{&ytv1.YtsaurusTabletNodes{
+						ObjectMeta: meta,
+						Spec: ytv1.YtsaurusTabletNodesSpec{
+							Ytsaurus:        parent,
+							TabletNodesSpec: ytv1.TabletNodesSpec{InstanceSpec: instance, Name: "attached"},
+						},
+					}, "tnd-attached"},
+					{&ytv1.YtsaurusHTTPProxies{
+						ObjectMeta: meta,
+						Spec: ytv1.YtsaurusHTTPProxiesSpec{
+							Ytsaurus:        parent,
+							HTTPProxiesSpec: ytv1.HTTPProxiesSpec{InstanceSpec: instance, Role: "attached", HttpPort: ptr.To(int32(8080))},
+						},
+					}, "hp-attached"},
+					{&ytv1.YtsaurusRPCProxies{
+						ObjectMeta: meta,
+						Spec: ytv1.YtsaurusRPCProxiesSpec{
+							Ytsaurus:       parent,
+							RPCProxiesSpec: ytv1.RPCProxiesSpec{InstanceSpec: instance, Role: "attached"},
+						},
+					}, "rp-attached"},
+				}
+
+				for _, resource := range resources {
+					Expect(h.GetK8sClient().Create(ctx, resource.object)).To(Succeed())
+					testutil.FetchEventually(h, resource.statefulSet, &appsv1.StatefulSet{})
+				}
+			})
+		})
+
 		Context("When creating Ytsaurus from scratch", func() {
 			BeforeEach(func() {
 				namespace = "ytsaurus-from-scratch"

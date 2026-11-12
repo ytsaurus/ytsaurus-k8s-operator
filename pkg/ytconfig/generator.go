@@ -21,6 +21,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 )
 
 type masterCellInfo struct {
@@ -57,23 +58,23 @@ type NodeGenerator struct {
 type Generator struct {
 	NodeGenerator
 
-	ytsaurus *ytv1.Ytsaurus
+	*ytcluster.Cluster
 }
 
-func NewGenerator(ytsaurus *ytv1.Ytsaurus, clusterDomain string) *Generator {
+func NewGenerator(cluster *ytcluster.Cluster, clusterDomain string) *Generator {
 	return &Generator{
-		NodeGenerator: *NewLocalNodeGenerator(ytsaurus, ytsaurus.Name, clusterDomain),
-		ytsaurus:      ytsaurus,
+		NodeGenerator: *NewLocalNodeGenerator(cluster, cluster.Name, clusterDomain),
+		Cluster:       cluster,
 	}
 }
 
 func NewLocalNodeGenerator(
-	ytsaurus *ytv1.Ytsaurus,
+	ytsaurus *ytcluster.Cluster,
 	resourceName string,
 	clusterDomain string,
 ) *NodeGenerator {
 	var dataNodesInstanceCount int32
-	for _, dataNodes := range ytsaurus.Spec.DataNodes {
+	for _, dataNodes := range ytsaurus.DataNodes {
 		dataNodesInstanceCount += dataNodes.InstanceCount
 	}
 
@@ -140,8 +141,8 @@ func NewLocalNodeGenerator(
 		dataNodesInstanceCount:        dataNodesInstanceCount,
 		bundleControllerInstanceCount: ptr.To(bundleControllerInstanceCount),
 	}
-	generator.timbertruckDeliveryProxy = generator.GetHTTPProxiesAddress(
-		&ytsaurus.Spec,
+	generator.timbertruckDeliveryProxy = generator.getHTTPProxiesAddress(
+		ytsaurus.HTTPProxies,
 		consts.DefaultHTTPProxyRole,
 	)
 	return generator
@@ -292,7 +293,7 @@ func (g *Generator) GetHTTPProxiesServiceName(role string) string {
 	return g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceName()
 }
 
-func getHTTPProxyPort(ytsaurus *ytv1.YtsaurusSpec, role, portName string) int32 {
+func getHTTPProxyPort(proxies []*ytv1.HTTPProxiesSpec, role, portName string) int32 {
 	var port int32
 	switch portName {
 	case consts.HTTPPortName:
@@ -306,7 +307,7 @@ func getHTTPProxyPort(ytsaurus *ytv1.YtsaurusSpec, role, portName string) int32 
 	default:
 		panic(portName)
 	}
-	for _, p := range ytsaurus.HTTPProxies {
+	for _, p := range proxies {
 		if p.Role == role {
 			switch portName {
 			case consts.HTTPPortName:
@@ -324,7 +325,7 @@ func getHTTPProxyPort(ytsaurus *ytv1.YtsaurusSpec, role, portName string) int32 
 	return port
 }
 
-func (g *NodeGenerator) getHTTPProxyAddress(ytsaurus *ytv1.YtsaurusSpec, role, hostname string) string {
+func (g *NodeGenerator) getHTTPProxyAddress(proxies []*ytv1.HTTPProxiesSpec, role, hostname string) string {
 	var address strings.Builder
 
 	portName := consts.HTTPPortName
@@ -339,7 +340,7 @@ func (g *NodeGenerator) getHTTPProxyAddress(ytsaurus *ytv1.YtsaurusSpec, role, h
 
 	address.WriteString(hostname)
 
-	if port := getHTTPProxyPort(ytsaurus, role, portName); port != defaultPort {
+	if port := getHTTPProxyPort(proxies, role, portName); port != defaultPort {
 		fmt.Fprintf(&address, ":%v", port)
 	}
 
@@ -348,16 +349,24 @@ func (g *NodeGenerator) getHTTPProxyAddress(ytsaurus *ytv1.YtsaurusSpec, role, h
 
 func (g *Generator) GetHTTPProxiesServiceAddress(role string) string {
 	hostname := g.GetComponentLabeller(consts.HttpProxyType, role).GetHeadlessServiceAddress()
-	return g.getHTTPProxyAddress(&g.ytsaurus.Spec, role, hostname)
+	return g.getHTTPProxyAddress(g.HTTPProxies, role, hostname)
 }
 
 func (g *NodeGenerator) GetHTTPProxiesAddress(ytsaurus *ytv1.YtsaurusSpec, role string) string {
+	proxies := make([]*ytv1.HTTPProxiesSpec, len(ytsaurus.HTTPProxies))
+	for i := range ytsaurus.HTTPProxies {
+		proxies[i] = &ytsaurus.HTTPProxies[i]
+	}
+	return g.getHTTPProxiesAddress(proxies, role)
+}
+
+func (g *NodeGenerator) getHTTPProxiesAddress(proxies []*ytv1.HTTPProxiesSpec, role string) string {
 	hostname := g.GetComponentLabeller(consts.HttpProxyType, role).GetBalancerServiceAddress()
-	return g.getHTTPProxyAddress(ytsaurus, role, hostname)
+	return g.getHTTPProxyAddress(proxies, role, hostname)
 }
 
 func (g *Generator) GetHTTPProxiesAddress(role string) string {
-	return g.NodeGenerator.GetHTTPProxiesAddress(&g.ytsaurus.Spec, role)
+	return g.getHTTPProxiesAddress(g.HTTPProxies, role)
 }
 
 func (g *Generator) GetRPCProxiesServiceName(role string) string {
@@ -377,15 +386,15 @@ func (g *NodeGenerator) GetStrawberryControllerServiceAddress() string {
 }
 
 func (g *Generator) GetYQLAgentAddresses() []string {
-	return g.getComponentAddresses(consts.YqlAgentType, g.ytsaurus.Spec.YQLAgents.InstanceCount, consts.YQLAgentRPCPort)
+	return g.getComponentAddresses(consts.YqlAgentType, g.Ytsaurus.Spec.YQLAgents.InstanceCount, consts.YQLAgentRPCPort)
 }
 
 func (g *Generator) GetQueryTrackerAddresses() []string {
-	return g.getComponentAddresses(consts.QueryTrackerType, g.ytsaurus.Spec.QueryTrackers.InstanceCount, consts.QueryTrackerRPCPort)
+	return g.getComponentAddresses(consts.QueryTrackerType, g.Ytsaurus.Spec.QueryTrackers.InstanceCount, consts.QueryTrackerRPCPort)
 }
 
 func (g *Generator) GetQueueAgentAddresses() []string {
-	return g.getComponentAddresses(consts.QueueAgentType, g.ytsaurus.Spec.QueueAgents.InstanceCount, consts.QueueAgentRPCPort)
+	return g.getComponentAddresses(consts.QueueAgentType, g.Ytsaurus.Spec.QueueAgents.InstanceCount, consts.QueueAgentRPCPort)
 }
 
 func (g *NodeGenerator) fillIOEngine(ioEngine **IOEngine) {
@@ -660,7 +669,7 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	g.fillAddressResolver(&resolver)
 
 	var conFamConfig StrawberryControllerFamiliesConfig
-	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.ytsaurus.Spec.StrawberryController)
+	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.Ytsaurus.Spec.StrawberryController)
 
 	var busServer *BusServer
 	if g.commonSpec.NativeTransport != nil {
@@ -677,14 +686,14 @@ func (g *Generator) GetStrawberryControllerConfig() ([]byte, error) {
 	proxy := g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	c.LocationProxies = []string{proxy}
 	c.HTTPLocationAliases = map[string][]string{
-		proxy: {g.ytsaurus.Name},
+		proxy: {g.Ytsaurus.Name},
 	}
 	return marshallYsonConfig(c)
 }
 
 func (g *Generator) GetStrawberryInitClusterConfig() ([]byte, error) {
 	var conFamConfig StrawberryControllerFamiliesConfig
-	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.ytsaurus.Spec.StrawberryController)
+	g.fillStrawberryControllerFamiliesConfig(&conFamConfig, g.Ytsaurus.Spec.StrawberryController)
 	c := getStrawberryInitCluster(conFamConfig)
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
 	return marshallYsonConfig(c)
@@ -721,7 +730,7 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	}
 
 	// COMPAT(l0kix2): remove that after we drop support for specifying host network without master host addresses.
-	if ptr.Deref(spec.HostNetwork, ptr.Deref(g.ytsaurus.Spec.HostNetwork, false)) && len(spec.HostAddresses) == 0 {
+	if ptr.Deref(spec.HostNetwork, ptr.Deref(g.Ytsaurus.Spec.HostNetwork, false)) && len(spec.HostAddresses) == 0 {
 		// Each master deduces its index within cell by looking up his FQDN in the
 		// list of all master peers. Master peers are specified using their pod addresses,
 		// therefore we must also switch masters from identifying themselves by FQDN addresses
@@ -778,7 +787,7 @@ func (g *Generator) getSchedulerConfigImpl(spec *ytv1.SchedulersSpec) (Scheduler
 		return SchedulerServer{}, err
 	}
 
-	if len(g.ytsaurus.Spec.TabletNodes) == 0 {
+	if len(g.TabletNodes) == 0 {
 		c.Scheduler.OperationsCleaner.EnableOperationArchivation = ptr.To(false)
 	}
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.SchedulerType)
@@ -842,7 +851,7 @@ func (g *Generator) getRPCProxyConfigImpl(spec *ytv1.RPCProxiesSpec) (RPCProxySe
 		}
 	}
 
-	oauthService := g.ytsaurus.Spec.OauthService
+	oauthService := g.Ytsaurus.Spec.OauthService
 	if oauthService != nil {
 		c.OauthService = ptr.To(getOauthService(*oauthService))
 		c.CypressUserManager = CypressUserManager{}
@@ -879,8 +888,8 @@ func getOauthService(oauthServiceSpec ytv1.OauthServiceSpec) OauthService {
 	}
 }
 
-func (g *Generator) GetRPCProxyConfig(spec ytv1.RPCProxiesSpec) ([]byte, error) {
-	c, err := g.getRPCProxyConfigImpl(&spec)
+func (g *Generator) GetRPCProxyConfig(spec *ytv1.RPCProxiesSpec) ([]byte, error) {
+	c, err := g.getRPCProxyConfigImpl(spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -900,7 +909,7 @@ func (g *Generator) getTCPProxyConfigImpl(spec *ytv1.TCPProxiesSpec) (TCPProxySe
 }
 
 func (g *Generator) GetTCPProxyConfig(spec ytv1.TCPProxiesSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.TCPProxies == nil {
+	if g.Ytsaurus.Spec.TCPProxies == nil {
 		return []byte{}, nil
 	}
 
@@ -924,7 +933,7 @@ func (g *Generator) getKafkaProxyConfigImpl(spec *ytv1.KafkaProxiesSpec) (KafkaP
 }
 
 func (g *Generator) GetKafkaProxyConfig(spec ytv1.KafkaProxiesSpec) ([]byte, error) {
-	if g.ytsaurus.Spec.KafkaProxies == nil {
+	if g.Ytsaurus.Spec.KafkaProxies == nil {
 		return []byte{}, nil
 	}
 
@@ -984,8 +993,8 @@ func (g *NodeGenerator) getDataNodeConfigImpl(spec *ytv1.DataNodesSpec) (DataNod
 	return c, nil
 }
 
-func (g *NodeGenerator) GetDataNodeConfig(spec ytv1.DataNodesSpec) ([]byte, error) {
-	c, err := g.getDataNodeConfigImpl(&spec)
+func (g *NodeGenerator) GetDataNodeConfig(spec *ytv1.DataNodesSpec) ([]byte, error) {
+	c, err := g.getDataNodeConfigImpl(spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -1006,8 +1015,8 @@ func (g *NodeGenerator) getExecNodeConfigImpl(spec *ytv1.ExecNodesSpec) (ExecNod
 	return c, nil
 }
 
-func (g *NodeGenerator) GetExecNodeConfig(spec ytv1.ExecNodesSpec) ([]byte, error) {
-	c, err := g.getExecNodeConfigImpl(&spec)
+func (g *NodeGenerator) GetExecNodeConfig(spec *ytv1.ExecNodesSpec) ([]byte, error) {
+	c, err := g.getExecNodeConfigImpl(spec)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -1110,8 +1119,8 @@ func (g *NodeGenerator) getTabletNodeConfigImpl(spec *ytv1.TabletNodesSpec) (Tab
 	return c, nil
 }
 
-func (g *NodeGenerator) GetTabletNodeConfig(spec ytv1.TabletNodesSpec) ([]byte, error) {
-	c, err := g.getTabletNodeConfigImpl(&spec)
+func (g *NodeGenerator) GetTabletNodeConfig(spec *ytv1.TabletNodesSpec) ([]byte, error) {
+	c, err := g.getTabletNodeConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -1150,7 +1159,7 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 	g.fillDriverConfig(&c.Driver)
 	c.Driver.APIVersion = 0
 
-	oauthService := g.ytsaurus.Spec.OauthService
+	oauthService := g.Ytsaurus.Spec.OauthService
 	if oauthService != nil {
 		c.Auth.OauthService = ptr.To(getOauthService(*oauthService))
 		var createUserIfNotExist *bool
@@ -1175,8 +1184,8 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 	return c, nil
 }
 
-func (g *Generator) GetHTTPProxyConfig(spec ytv1.HTTPProxiesSpec) ([]byte, error) {
-	c, err := g.getHTTPProxyConfigImpl(&spec)
+func (g *Generator) GetHTTPProxyConfig(spec *ytv1.HTTPProxiesSpec) ([]byte, error) {
+	c, err := g.getHTTPProxyConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -1245,7 +1254,7 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServ
 
 	agentVersion := version.ParseImageVersion(ptr.Deref(spec.Image, ""))
 
-	clusterName := g.ytsaurus.Name
+	clusterName := g.Ytsaurus.Name
 	clusterAddress := g.GetHTTPProxiesServiceAddress(consts.DefaultHTTPProxyRole)
 
 	c.YQLAgent.GatewayConfig.ClusterMapping = []YTClusterMapping{
@@ -1260,7 +1269,7 @@ func (g *Generator) getYQLAgentConfigImpl(spec *ytv1.YQLAgentSpec) (YQLAgentServ
 	c.YQLAgent.AdditionalClusters = map[string]string{
 		clusterName: clusterAddress,
 	}
-	c.YQLAgent.DefaultCluster = g.ytsaurus.Name
+	c.YQLAgent.DefaultCluster = g.Ytsaurus.Name
 
 	if dq := spec.DQEngine; dq != nil {
 		c.YQLAgent.EnableDQ = ptr.To(true)
@@ -1293,7 +1302,7 @@ func (g *Generator) getBundleControllerConfigImpl(spec *ytv1.BundleControllerSpe
 
 	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec, consts.BundleControllerType)
 	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
-	c.BundleController.Cluster = g.ytsaurus.Name
+	c.BundleController.Cluster = g.Ytsaurus.Name
 
 	return c, nil
 }
@@ -1327,31 +1336,31 @@ func (g *Generator) GetTabletBalancerConfig(spec *ytv1.TabletBalancerSpec) ([]by
 }
 
 func (g *Generator) GetUIClustersConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.UI == nil {
+	if g.Ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
 	}
 
 	c := getUIClusterCarcass()
-	c.ID = g.ytsaurus.Name
-	c.Name = g.ytsaurus.Name
+	c.ID = g.Ytsaurus.Name
+	c.Name = g.Ytsaurus.Name
 	c.Proxy = g.GetHTTPProxiesAddress(consts.DefaultHTTPProxyRole)
-	c.Secure = g.ytsaurus.Spec.UI.Secure
-	c.ExternalProxy = g.ytsaurus.Spec.UI.ExternalProxy
-	c.PrimaryMaster.CellTag = g.ytsaurus.Spec.PrimaryMasters.CellTag
+	c.Secure = g.Ytsaurus.Spec.UI.Secure
+	c.ExternalProxy = g.Ytsaurus.Spec.UI.ExternalProxy
+	c.PrimaryMaster.CellTag = g.Ytsaurus.Spec.PrimaryMasters.CellTag
 
-	c.Theme = g.ytsaurus.Spec.UI.Theme
-	c.Environment = g.ytsaurus.Spec.UI.Environment
-	if g.ytsaurus.Spec.UI.Group != nil {
-		c.Group = *g.ytsaurus.Spec.UI.Group
+	c.Theme = g.Ytsaurus.Spec.UI.Theme
+	c.Environment = g.Ytsaurus.Spec.UI.Environment
+	if g.Ytsaurus.Spec.UI.Group != nil {
+		c.Group = *g.Ytsaurus.Spec.UI.Group
 	}
-	if g.ytsaurus.Spec.UI.Description != nil {
-		c.Description = *g.ytsaurus.Spec.UI.Description
+	if g.Ytsaurus.Spec.UI.Description != nil {
+		c.Description = *g.Ytsaurus.Spec.UI.Description
 	}
-	if g.ytsaurus.Spec.UI.URLs != nil {
+	if g.Ytsaurus.Spec.UI.URLs != nil {
 		c.URLs = &UIClusterURLs{
-			Icon:    g.ytsaurus.Spec.UI.URLs.Icon,
-			Icon2x:  g.ytsaurus.Spec.UI.URLs.Icon2x,
-			IconBig: g.ytsaurus.Spec.UI.URLs.IconBig,
+			Icon:    g.Ytsaurus.Spec.UI.URLs.Icon,
+			Icon2x:  g.Ytsaurus.Spec.UI.URLs.Icon2x,
+			IconBig: g.Ytsaurus.Spec.UI.URLs.IconBig,
 		}
 	}
 
@@ -1361,7 +1370,7 @@ func (g *Generator) GetUIClustersConfig() ([]byte, error) {
 }
 
 func (g *Generator) GetUICustomSettings() *UICustomSettings {
-	directDownload := g.ytsaurus.Spec.UI.DirectDownload
+	directDownload := g.Ytsaurus.Spec.UI.DirectDownload
 	if directDownload == nil {
 		return nil
 	}
@@ -1371,12 +1380,12 @@ func (g *Generator) GetUICustomSettings() *UICustomSettings {
 }
 
 func (g *Generator) GetUICustomConfig() ([]byte, error) {
-	if g.ytsaurus.Spec.UI == nil {
+	if g.Ytsaurus.Spec.UI == nil {
 		return []byte{}, nil
 	}
 
 	c := UICustom{
-		OdinBaseUrl: g.ytsaurus.Spec.UI.OdinBaseUrl,
+		OdinBaseUrl: g.Ytsaurus.Spec.UI.OdinBaseUrl,
 		Settings:    g.GetUICustomSettings(),
 	}
 
@@ -1450,101 +1459,23 @@ func (g *Generator) GetCypressProxiesConfig(spec *ytv1.CypressProxiesSpec) ([]by
 	return marshallYsonConfig(c)
 }
 
-//nolint:cyclop //shush
-func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string, error) {
-	var names []string
-	switch component {
-	case consts.ClusterConnectionType:
-		names = append(names, "")
-	case consts.NativeClientConfigType:
-		names = append(names, "")
-	case consts.ControllerAgentType:
-		if g.ytsaurus.Spec.ControllerAgents != nil {
-			names = append(names, "")
-		}
-	case consts.CypressProxyType:
-		if g.ytsaurus.Spec.CypressProxies != nil {
-			names = append(names, "")
-		}
-	case consts.DataNodeType:
-		for _, spec := range g.ytsaurus.Spec.DataNodes {
-			names = append(names, spec.Name)
-		}
-	case consts.DiscoveryType:
-		names = append(names, "")
-	case consts.ExecNodeType:
-		for _, spec := range g.ytsaurus.Spec.ExecNodes {
-			names = append(names, spec.Name)
-		}
-	case consts.HttpProxyType:
-		for _, spec := range g.ytsaurus.Spec.HTTPProxies {
-			names = append(names, spec.Role)
-		}
-	case consts.MasterCacheType:
-		if g.ytsaurus.Spec.MasterCaches != nil {
-			names = append(names, "")
-		}
-	case consts.MasterType:
-		names = append(names, "")
-		for _, spec := range g.ytsaurus.Spec.SecondaryMasters {
-			names = append(names, g.baseLabeller.GetCellName(spec.CellTag))
-		}
-	case consts.QueryTrackerType:
-		if g.ytsaurus.Spec.QueryTrackers != nil {
-			names = append(names, "")
-		}
-	case consts.QueueAgentType:
-		if g.ytsaurus.Spec.QueueAgents != nil {
-			names = append(names, "")
-		}
-	case consts.RpcProxyType:
-		for _, spec := range g.ytsaurus.Spec.RPCProxies {
-			names = append(names, spec.Role)
-		}
-	case consts.SchedulerType:
-		if g.ytsaurus.Spec.Schedulers != nil {
-			names = append(names, "")
-		}
-	case consts.StrawberryControllerType:
-		if g.ytsaurus.Spec.StrawberryController != nil {
-			names = append(names, "")
-		}
-	case consts.TabletNodeType:
-		for _, spec := range g.ytsaurus.Spec.TabletNodes {
-			names = append(names, spec.Name)
-		}
-	case consts.TcpProxyType:
-		for _, spec := range g.ytsaurus.Spec.TCPProxies {
-			names = append(names, spec.Role)
-		}
-	case consts.KafkaProxyType:
-		for _, spec := range g.ytsaurus.Spec.KafkaProxies {
-			names = append(names, spec.Role)
-		}
-	case consts.YqlAgentType:
-		if g.ytsaurus.Spec.YQLAgents != nil {
-			names = append(names, "")
-		}
-	case consts.BundleControllerType:
-		if g.ytsaurus.Spec.BundleController != nil {
-			names = append(names, "")
-		}
-	case consts.TabletBalancerType:
-		if g.ytsaurus.Spec.TabletBalancer != nil {
-			names = append(names, "")
-		}
-	case consts.ImageHeaterType:
-		names = append(names, "")
-	default:
-		return nil, fmt.Errorf("unknown component %v", component)
+func (g *Generator) GetComponents() []ytv1.Component {
+	var components []ytv1.Component
+	for _, spec := range g.GetComponentSpecs() {
+		components = append(components, spec.GetComponent())
 	}
-
-	return names, nil
+	components = append(components,
+		ytv1.Component{Type: ytv1.ClusterConnectionType, Name: ""},
+		ytv1.Component{Type: ytv1.NativeClientConfigType, Name: ""},
+		ytv1.Component{Type: ytv1.ImageHeaterType, Name: ""},
+	)
+	return components
 }
 
 //nolint:cyclop //shush
-func (g *Generator) GetComponentConfig(component consts.ComponentType, name string) ([]byte, error) {
-	switch component {
+func (g *Generator) GetComponentConfig(component ytv1.Component) ([]byte, error) {
+	name := component.Name
+	switch component.Type {
 	case consts.ClusterConnectionType:
 		if name == "" {
 			return g.GetClusterConnectionConfig()
@@ -1555,105 +1486,109 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 		}
 	case consts.ControllerAgentType:
 		if name == "" {
-			return g.GetControllerAgentConfig(g.ytsaurus.Spec.ControllerAgents)
+			return g.GetControllerAgentConfig(g.Spec.ControllerAgents)
 		}
 	case consts.CypressProxyType:
 		if name == "" {
-			return g.GetCypressProxiesConfig(g.ytsaurus.Spec.CypressProxies)
+			return g.GetCypressProxiesConfig(g.Spec.CypressProxies)
 		}
 	case consts.DataNodeType:
-		for _, spec := range g.ytsaurus.Spec.DataNodes {
-			if spec.Name == name {
+		for _, spec := range g.DataNodes {
+			if spec.GetComponent() == component {
 				return g.GetDataNodeConfig(spec)
 			}
 		}
 	case consts.DiscoveryType:
 		if name == "" {
-			return g.GetDiscoveryConfig(&g.ytsaurus.Spec.Discovery)
+			return g.GetDiscoveryConfig(&g.Spec.Discovery)
 		}
 	case consts.ExecNodeType:
-		for _, spec := range g.ytsaurus.Spec.ExecNodes {
-			if spec.Name == name {
+		for _, spec := range g.ExecNodes {
+			if spec.GetComponent() == component {
 				return g.GetExecNodeConfig(spec)
 			}
 		}
 	case consts.HttpProxyType:
-		for _, spec := range g.ytsaurus.Spec.HTTPProxies {
-			if spec.Role == name {
+		for _, spec := range g.HTTPProxies {
+			if spec.GetComponent() == component {
 				return g.GetHTTPProxyConfig(spec)
 			}
 		}
 	case consts.MasterCacheType:
 		if name == "" {
-			return g.GetMasterCachesConfig(g.ytsaurus.Spec.MasterCaches)
+			return g.GetMasterCachesConfig(g.Spec.MasterCaches)
 		}
 	case consts.MasterType:
 		if name == "" {
-			return g.GetMasterConfig(&g.ytsaurus.Spec.PrimaryMasters)
+			return g.GetMasterConfig(&g.Spec.PrimaryMasters.MastersSpec)
 		}
-		for i := range g.ytsaurus.Spec.SecondaryMasters {
-			spec := &g.ytsaurus.Spec.SecondaryMasters[i]
-			if name == g.baseLabeller.GetCellName(spec.CellTag) {
-				return g.GetMasterConfig(spec)
+		for i := range g.Spec.SecondaryMasters {
+			spec := &g.Spec.SecondaryMasters[i]
+			if spec.GetComponent() == component {
+				return g.GetMasterConfig(&spec.MastersSpec)
 			}
 		}
 	case consts.QueryTrackerType:
 		if name == "" {
-			return g.GetQueryTrackerConfig(g.ytsaurus.Spec.QueryTrackers)
+			return g.GetQueryTrackerConfig(g.Spec.QueryTrackers)
 		}
 	case consts.QueueAgentType:
 		if name == "" {
-			return g.GetQueueAgentConfig(g.ytsaurus.Spec.QueueAgents)
+			return g.GetQueueAgentConfig(g.Spec.QueueAgents)
 		}
 	case consts.RpcProxyType:
-		for _, spec := range g.ytsaurus.Spec.RPCProxies {
-			if spec.Role == name {
+		for _, spec := range g.RPCProxies {
+			if spec.GetComponent() == component {
 				return g.GetRPCProxyConfig(spec)
 			}
 		}
 	case consts.SchedulerType:
 		if name == "" {
-			return g.GetSchedulerConfig(g.ytsaurus.Spec.Schedulers)
+			return g.GetSchedulerConfig(g.Spec.Schedulers)
 		}
 	case consts.StrawberryControllerType:
 		if name == "" {
 			return g.GetStrawberryControllerConfig()
 		}
 	case consts.TabletNodeType:
-		for _, spec := range g.ytsaurus.Spec.TabletNodes {
-			if spec.Name == name {
+		for _, spec := range g.TabletNodes {
+			if spec.GetComponent() == component {
 				return g.GetTabletNodeConfig(spec)
 			}
 		}
 	case consts.TcpProxyType:
-		for _, spec := range g.ytsaurus.Spec.TCPProxies {
-			if spec.Role == name {
+		for _, spec := range g.Spec.TCPProxies {
+			if spec.GetComponent() == component {
 				return g.GetTCPProxyConfig(spec)
 			}
 		}
 	case consts.KafkaProxyType:
-		for _, spec := range g.ytsaurus.Spec.KafkaProxies {
-			if spec.Role == name {
+		for _, spec := range g.Spec.KafkaProxies {
+			if spec.GetComponent() == component {
 				return g.GetKafkaProxyConfig(spec)
 			}
 		}
 	case consts.YqlAgentType:
 		if name == "" {
-			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents)
+			return g.GetYQLAgentConfig(g.Spec.YQLAgents)
 		}
 	case consts.BundleControllerType:
 		if name == "" {
-			return g.GetBundleControllerConfig(g.ytsaurus.Spec.BundleController)
+			return g.GetBundleControllerConfig(g.Spec.BundleController)
 		}
 	case consts.TabletBalancerType:
 		if name == "" {
-			return g.GetTabletBalancerConfig(g.ytsaurus.Spec.TabletBalancer)
+			return g.GetTabletBalancerConfig(g.Spec.TabletBalancer)
 		}
 	case consts.ImageHeaterType:
 		if name == "" {
 			return nil, nil
 		}
+	case consts.UIType:
+		if name == "" {
+			return g.GetUIClustersConfig()
+		}
 	}
 
-	return nil, fmt.Errorf("unknown component %v name %v", component, name)
+	return nil, fmt.Errorf("unknown component %v name %v", component.Type, component.Name)
 }

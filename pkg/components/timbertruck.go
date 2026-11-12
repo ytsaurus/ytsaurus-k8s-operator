@@ -10,6 +10,7 @@ import (
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/resources"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 	"go.ytsaurus.tech/yt/go/ypath"
 	"go.ytsaurus.tech/yt/go/yt"
@@ -348,7 +349,8 @@ type timbertruckLoggerSource struct {
 // with its component-level timbertruck override (nil for non-masters) and its instance spec
 // (structured loggers + logs location). This is the single source of truth for which components
 // participate in timbertruck delivery.
-func timbertruckLoggerSources(spec *ytv1.YtsaurusSpec) []timbertruckLoggerSource {
+func timbertruckLoggerSources(cluster *ytcluster.Cluster) []timbertruckLoggerSource {
+	spec := &cluster.Spec
 	var sources []timbertruckLoggerSource
 	addMaster := func(componentTT *ytv1.TimbertruckSpec, instanceSpec *ytv1.InstanceSpec, cellTag uint16) {
 		sources = append(sources, timbertruckLoggerSource{componentTT, instanceSpec, func(cfgen *ytconfig.Generator) *labeller.Labeller {
@@ -373,11 +375,11 @@ func timbertruckLoggerSources(spec *ytv1.YtsaurusSpec) []timbertruckLoggerSource
 		add(consts.MasterCacheType, "", &spec.MasterCaches.InstanceSpec)
 	}
 	add(consts.DiscoveryType, "", &spec.Discovery.InstanceSpec)
-	for i := range spec.HTTPProxies {
-		add(consts.HttpProxyType, spec.HTTPProxies[i].Role, &spec.HTTPProxies[i].InstanceSpec)
+	for i := range cluster.HTTPProxies {
+		add(consts.HttpProxyType, cluster.HTTPProxies[i].Role, &cluster.HTTPProxies[i].InstanceSpec)
 	}
-	for i := range spec.RPCProxies {
-		add(consts.RpcProxyType, spec.RPCProxies[i].Role, &spec.RPCProxies[i].InstanceSpec)
+	for i := range cluster.RPCProxies {
+		add(consts.RpcProxyType, cluster.RPCProxies[i].Role, &cluster.RPCProxies[i].InstanceSpec)
 	}
 	for i := range spec.TCPProxies {
 		add(consts.TcpProxyType, spec.TCPProxies[i].Role, &spec.TCPProxies[i].InstanceSpec)
@@ -385,14 +387,14 @@ func timbertruckLoggerSources(spec *ytv1.YtsaurusSpec) []timbertruckLoggerSource
 	for i := range spec.KafkaProxies {
 		add(consts.KafkaProxyType, spec.KafkaProxies[i].Role, &spec.KafkaProxies[i].InstanceSpec)
 	}
-	for i := range spec.DataNodes {
-		add(consts.DataNodeType, spec.DataNodes[i].Name, &spec.DataNodes[i].InstanceSpec)
+	for i := range cluster.DataNodes {
+		add(consts.DataNodeType, cluster.DataNodes[i].Name, &cluster.DataNodes[i].InstanceSpec)
 	}
-	for i := range spec.ExecNodes {
-		add(consts.ExecNodeType, spec.ExecNodes[i].Name, &spec.ExecNodes[i].InstanceSpec)
+	for i := range cluster.ExecNodes {
+		add(consts.ExecNodeType, cluster.ExecNodes[i].Name, &cluster.ExecNodes[i].InstanceSpec)
 	}
-	for i := range spec.TabletNodes {
-		add(consts.TabletNodeType, spec.TabletNodes[i].Name, &spec.TabletNodes[i].InstanceSpec)
+	for i := range cluster.TabletNodes {
+		add(consts.TabletNodeType, cluster.TabletNodes[i].Name, &cluster.TabletNodes[i].InstanceSpec)
 	}
 	if spec.Schedulers != nil {
 		add(consts.SchedulerType, "", &spec.Schedulers.InstanceSpec)
@@ -426,9 +428,9 @@ func timbertruckLoggerSources(spec *ytv1.YtsaurusSpec) []timbertruckLoggerSource
 // delivery enabled. It mirrors the per-component resolution used by serverImpl, so the virtual
 // Timbertruck component (user/queue/export setup) and its update-flow step are created exactly when
 // at least one component will run a timbertruck sidecar.
-func TimbertruckDeliveryEnabled(spec *ytv1.YtsaurusSpec) bool {
-	for _, source := range timbertruckLoggerSources(spec) {
-		if resolveTimbertruckDelivery(source.componentTT, spec.Timbertruck, source.instanceSpec) != nil {
+func TimbertruckDeliveryEnabled(cluster *ytcluster.Cluster) bool {
+	for _, source := range timbertruckLoggerSources(cluster) {
+		if resolveTimbertruckDelivery(source.componentTT, cluster.Spec.Timbertruck, source.instanceSpec) != nil {
 			return true
 		}
 	}
@@ -439,12 +441,11 @@ func TimbertruckDeliveryEnabled(spec *ytv1.YtsaurusSpec) bool {
 // virtual Timbertruck component can prepare the YT-side user, queues, producers and exports.
 // The component name and delivery path must match what serverImpl writes into each sidecar config.
 func (tt *Timbertruck) GetDeliveryLoggers() []ComponentLoggers {
-	spec := &tt.ytsaurus.GetResource().Spec
-	commonTT := spec.Timbertruck
+	cluster := tt.ytsaurus.Cluster
 	var result []ComponentLoggers
 
-	for _, source := range timbertruckLoggerSources(spec) {
-		delivery := resolveTimbertruckDelivery(source.componentTT, commonTT, source.instanceSpec)
+	for _, source := range timbertruckLoggerSources(cluster) {
+		delivery := resolveTimbertruckDelivery(source.componentTT, cluster.Spec.Timbertruck, source.instanceSpec)
 		if delivery == nil {
 			continue
 		}

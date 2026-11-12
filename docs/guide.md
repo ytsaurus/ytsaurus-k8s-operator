@@ -88,6 +88,54 @@ and the [update flow](../controllers/update_flow_steps.go).
 See [admin guide / install](https://ytsaurus.tech/docs/en/admin-guide/install-ytsaurus),
 [config samples](../config/samples), and [operator API reference](api.md).
 
+## Splitting Cluster Spec into Several Objects
+
+Node groups and proxy roles can be configured as separate custom resources:
+
+| List in `Ytsaurus.spec` | Separate resource kind | Component identity |
+| --- | --- | --- |
+| `dataNodes` | [`YtsaurusDataNodes`](api.md#ytsaurusdatanodes) | `spec.name` |
+| `execNodes` | [`YtsaurusExecNodes`](api.md#ytsaurusexecnodes) | `spec.name` |
+| `tabletNodes` | [`YtsaurusTabletNodes`](api.md#ytsaurustabletnodes) | `spec.name` |
+| `httpProxies` | [`YtsaurusHTTPProxies`](api.md#ytsaurushttpproxies) | `spec.role` |
+| `rpcProxies` | [`YtsaurusRPCProxies`](api.md#ytsaurusrpcproxies) | `spec.role` |
+
+Create each object in the same namespace as the main `Ytsaurus` object, and set
+`spec.ytsaurus.name` to the main object's `metadata.name`. Copy the fields of one
+list entry directly into the new object's `spec`. For example, a tablet node group for
+`Ytsaurus/minisaurus` can be defined as:
+
+```yaml
+apiVersion: cluster.ytsaurus.tech/v1
+kind: YtsaurusTabletNodes
+metadata:
+  name: minisaurus-tablets
+spec:
+  ytsaurus:
+    name: minisaurus
+  name: default
+  instanceCount: 3
+```
+
+Keep the remaining cluster configuration in `Ytsaurus`. Inline groups and separate
+objects can be mixed, but each component type and name (or proxy role) must be
+unique across the combined spec. In this example, omit the `default` group from
+`Ytsaurus.spec.tabletNodes`.
+
+`metadata.name` identifies the Kubernetes object; `spec.name` or `spec.role`
+identifies the component and defaults to `default`. The component identity and
+`spec.ytsaurus.name` cannot be changed after creation.
+
+For a new cluster, apply the separate component objects before the main `Ytsaurus`
+object so validation sees the complete spec. A `default` HTTP proxy must exist
+in either an inline entry or a separate object.
+
+Separate components inherit cluster settings, including `coreImage` and pod
+defaults, and follow the main object's `spec.updatePlan` and
+`spec.clusterMaintenance`. Check each component's `status.state` and
+`status.message` for progress, and the main object's `status.state` for the
+overall cluster state.
+
 ## Cluster Updating
 
 See [admin guide / update ](https://ytsaurus.tech/docs/en/admin-guide/update/).

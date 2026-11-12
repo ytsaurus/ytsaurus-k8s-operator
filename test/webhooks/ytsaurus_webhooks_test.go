@@ -256,7 +256,7 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 
 		It("Should not accept a duplicate cell tag", func() {
 			ytsaurus.Spec.PrimaryMasters.CellTag = 123
-			ytsaurus.Spec.SecondaryMasters = []ytv1.MastersSpec{{MasterConnectionSpec: ytv1.MasterConnectionSpec{CellTag: 123}}}
+			ytsaurus.Spec.SecondaryMasters = []ytv1.SecondaryMastersSpec{{MastersSpec: ytv1.MastersSpec{MasterConnectionSpec: ytv1.MasterConnectionSpec{CellTag: 123}}}}
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(And(
 				ContainSubstring("spec.secondaryMasters[0].cellTag"),
 				ContainSubstring("spec.primaryMasters.cellTag"),
@@ -300,6 +300,11 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 		It("Check combination of schedulers, controllerAgents and execNodes", func() {
 			ytsaurus.Spec.Schedulers = nil
 			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers")))
+
+			ytsaurus = newYtsaurus()
+			ytsaurus.Spec.Schedulers = nil
+			ytsaurus.Spec.ExecNodes = nil
+			Expect(k8sClient.Create(ctx, ytsaurus)).Should(MatchError(ContainSubstring("spec.schedulers: Required value: controllerAgents doesn't make sense without schedulers")))
 
 			ytsaurus = newYtsaurus()
 			ytsaurus.Spec.ControllerAgents = nil

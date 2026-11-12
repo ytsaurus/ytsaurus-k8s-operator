@@ -37,7 +37,7 @@ func NewRemoteDataNodes(
 		"/usr/bin/ytserver-node",
 		[]ConfigGenerator{
 			ServerConfigGenerator(l, func() ([]byte, error) {
-				return cfgen.GetDataNodeConfig(spec)
+				return cfgen.GetDataNodeConfig(&spec)
 			}),
 		},
 		nil, // no timbertruck delivery for remote nodes

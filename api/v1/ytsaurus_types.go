@@ -506,6 +506,10 @@ type InstanceSpec struct {
 	NativeTransport *RPCTransportSpec `json:"nativeTransport,omitempty"`
 }
 
+func (n *InstanceSpec) GetInstanceCount() int {
+	return int(n.InstanceCount)
+}
+
 type HydraPersistenceUploaderSpec struct {
 	Image *string `json:"image,omitempty"`
 }
@@ -539,6 +543,22 @@ type MastersSpec struct {
 
 	// List of sidecar containers as yaml of core/v1 Container.
 	Sidecars []string `json:"sidecars,omitempty"`
+}
+
+type PrimaryMastersSpec struct {
+	MastersSpec `json:",inline"`
+}
+
+func (n *PrimaryMastersSpec) GetComponent() Component {
+	return Component{MasterType, ""}
+}
+
+type SecondaryMastersSpec struct {
+	MastersSpec `json:",inline"`
+}
+
+func (n *SecondaryMastersSpec) GetComponent() Component {
+	return Component{MasterType, fmt.Sprintf("%d", n.CellTag)}
 }
 
 type HTTPTransportSpec struct {
@@ -576,6 +596,10 @@ type HTTPProxiesSpec struct {
 	Transport HTTPTransportSpec `json:"transport,omitempty"`
 }
 
+func (n *HTTPProxiesSpec) GetComponent() Component {
+	return getComponent(HttpProxyType, n.Role)
+}
+
 type RPCTransportSpec struct {
 	// Server certificate. Reference to kubernetes.io/tls secret.
 	//+optional
@@ -605,6 +629,10 @@ type RPCProxiesSpec struct {
 	Transport RPCTransportSpec `json:"transport,omitempty"`
 }
 
+func (n *RPCProxiesSpec) GetComponent() Component {
+	return getComponent(RpcProxyType, n.Role)
+}
+
 type TCPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
@@ -618,12 +646,20 @@ type TCPProxiesSpec struct {
 	Role string `json:"role,omitempty"`
 }
 
+func (n *TCPProxiesSpec) GetComponent() Component {
+	return getComponent(TcpProxyType, n.Role)
+}
+
 type KafkaProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	ServiceType  *corev1.ServiceType `json:"serviceType,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
+}
+
+func (n *KafkaProxiesSpec) GetComponent() Component {
+	return getComponent(KafkaProxyType, n.Role)
 }
 
 // ClusterNodesSpec is a common part of spec for nodes of all flavors.
@@ -641,6 +677,10 @@ type DataNodesSpec struct {
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Name string `json:"name,omitempty"`
+}
+
+func (n *DataNodesSpec) GetComponent() Component {
+	return getComponent(DataNodeType, n.Name)
 }
 
 type CRIServiceType string
@@ -809,6 +849,10 @@ type ExecNodesSpec struct {
 	JobHTTPSCertificateSecret *corev1.LocalObjectReference `json:"jobHttpsCertificateSecret,omitempty"`
 }
 
+func (n *ExecNodesSpec) GetComponent() Component {
+	return getComponent(ExecNodeType, n.Name)
+}
+
 type TabletNodesSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
@@ -821,9 +865,17 @@ type TabletNodesSpec struct {
 	TabletCellSlots *int `json:"tabletCellSlots,omitempty"`
 }
 
+func (n *TabletNodesSpec) GetComponent() Component {
+	return getComponent(TabletNodeType, n.Name)
+}
+
 type OffshoreDataGatewaySpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
+}
+
+func (n *OffshoreDataGatewaySpec) GetComponent() Component {
+	return Component{OffshoreDataGatewayType, ""}
 }
 
 type SchedulersSpec struct {
@@ -831,14 +883,26 @@ type SchedulersSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
+func (n *SchedulersSpec) GetComponent() Component {
+	return Component{SchedulerType, ""}
+}
+
 type ControllerAgentsSpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
 }
 
+func (n *ControllerAgentsSpec) GetComponent() Component {
+	return Component{ControllerAgentType, ""}
+}
+
 type DiscoverySpec struct {
 	// label filter (for daemonset)
 	InstanceSpec `json:",inline"`
+}
+
+func (n *DiscoverySpec) GetComponent() Component {
+	return Component{DiscoveryType, ""}
 }
 
 type UIClusterURLs struct {
@@ -888,8 +952,20 @@ type UISpec struct {
 	DirectDownload *bool `json:"directDownload,omitempty"`
 }
 
+func (n *UISpec) GetInstanceCount() int {
+	return int(n.InstanceCount)
+}
+
+func (n *UISpec) GetComponent() Component {
+	return Component{UIType, ""}
+}
+
 type QueryTrackerSpec struct {
 	InstanceSpec `json:",inline"`
+}
+
+func (n *QueryTrackerSpec) GetComponent() Component {
+	return Component{QueryTrackerType, ""}
 }
 
 type StrawberryControllerSpec struct {
@@ -908,11 +984,23 @@ type StrawberryControllerSpec struct {
 	LogToStderr bool `json:"logToStderr,omitempty"`
 }
 
+func (n *StrawberryControllerSpec) GetInstanceCount() int {
+	return 1
+}
+
+func (n *StrawberryControllerSpec) GetComponent() Component {
+	return Component{StrawberryControllerType, ""}
+}
+
 type YQLAgentSpec struct {
 	InstanceSpec `json:",inline"`
 	// YQL DQ engine executes simple requests using shared pool of vanilla jobs.
 	// Tuning for unwired parameters could be done in config overrides and entrypoint wrapper.
 	DQEngine *YQLDQEngineSpec `json:"dqEngine,omitempty"`
+}
+
+func (n *YQLAgentSpec) GetComponent() Component {
+	return Component{YqlAgentType, ""}
 }
 
 type YQLDQEngineSpec struct {
@@ -951,6 +1039,10 @@ type QueueAgentSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
+func (n *QueueAgentSpec) GetComponent() Component {
+	return Component{QueueAgentType, ""}
+}
+
 type DeprecatedSpytSpec struct {
 	SparkVersion string `json:"sparkVersion,omitempty"`
 	SpytVersion  string `json:"spytVersion,omitempty"`
@@ -967,17 +1059,33 @@ type MasterCachesSpec struct {
 	HostAddressesMasterCaches []string `json:"hostAddressesMasterCaches,omitempty"`
 }
 
+func (n *MasterCachesSpec) GetComponent() Component {
+	return Component{MasterCacheType, ""}
+}
+
 type CypressProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	Disable      *bool `json:"disable,omitempty"`
+}
+
+func (n *CypressProxiesSpec) GetComponent() Component {
+	return Component{CypressProxyType, ""}
 }
 
 type BundleControllerSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
+func (n *BundleControllerSpec) GetComponent() Component {
+	return Component{BundleControllerType, ""}
+}
+
 type TabletBalancerSpec struct {
 	InstanceSpec `json:",inline"`
+}
+
+func (n *TabletBalancerSpec) GetComponent() Component {
+	return Component{TabletBalancerType, ""}
 }
 
 type ClusterFeatures struct {
@@ -1124,10 +1232,10 @@ type YtsaurusSpec struct {
 
 	Bootstrap *BootstrapSpec `json:"bootstrap,omitempty"`
 
-	Discovery      DiscoverySpec `json:"discovery,omitempty"`
-	PrimaryMasters MastersSpec   `json:"primaryMasters,omitempty"`
+	Discovery      DiscoverySpec      `json:"discovery,omitempty"`
+	PrimaryMasters PrimaryMastersSpec `json:"primaryMasters,omitempty"`
 	//+kubebuilder:validation:MaxItems:=48
-	SecondaryMasters []MastersSpec `json:"secondaryMasters,omitempty"`
+	SecondaryMasters []SecondaryMastersSpec `json:"secondaryMasters,omitempty"`
 	//+optional
 	MasterCaches *MasterCachesSpec `json:"masterCaches,omitempty"`
 	//+kubebuilder:validation:MinItems:=1
@@ -1316,26 +1424,16 @@ type UpdateStatus struct {
 	BundleController *BundleControllerInfo `json:"bundleController,omitempty"`
 }
 
-type Component struct {
-	Type ComponentType `json:"type,omitempty"`
-	Name string        `json:"name,omitempty"`
-}
-
-func (c *Component) String() string {
-	if c.Name == "" {
-		return string(c.Type)
-	}
-	return fmt.Sprintf("%s-%s", c.Type, c.Name)
-}
-
 // YtsaurusStatus defines the observed state of Ytsaurus
 type YtsaurusStatus struct {
 	//+kubebuilder:default:=Created
 	State      ClusterState       `json:"state,omitempty"`
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// Reflects resource generation which was used for updating status.
-	ObservedGeneration int64        `json:"observedGeneration,omitempty"`
-	UpdateStatus       UpdateStatus `json:"updateStatus,omitempty"`
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+	// Reflects component object generations which were used for updating status, keyed by component name and UID.
+	ObservedComponentGenerations map[string]int64 `json:"observedComponentGenerations,omitempty"`
+	UpdateStatus                 UpdateStatus     `json:"updateStatus,omitempty"`
 }
 
 //+kubebuilder:rbac:groups=cluster.ytsaurus.tech,resources=ytsaurus,verbs=get;list;watch;create;update;patch;delete
@@ -1392,6 +1490,71 @@ func (r *Ytsaurus) GetUpdatePlan() []ComponentUpdateSelector {
 	return []ComponentUpdateSelector{{
 		Class: ComponentClassNothing,
 	}}
+}
+
+func (r *Ytsaurus) GetComponentSpecs() []ComponentSpec {
+	components := []ComponentSpec{
+		&r.Spec.Discovery,
+		&r.Spec.PrimaryMasters,
+	}
+	for i := range r.Spec.SecondaryMasters {
+		components = append(components, &r.Spec.SecondaryMasters[i])
+	}
+	if r.Spec.MasterCaches != nil {
+		components = append(components, r.Spec.MasterCaches)
+	}
+	for i := range r.Spec.HTTPProxies {
+		components = append(components, &r.Spec.HTTPProxies[i])
+	}
+	for i := range r.Spec.RPCProxies {
+		components = append(components, &r.Spec.RPCProxies[i])
+	}
+	for i := range r.Spec.TCPProxies {
+		components = append(components, &r.Spec.TCPProxies[i])
+	}
+	for i := range r.Spec.KafkaProxies {
+		components = append(components, &r.Spec.KafkaProxies[i])
+	}
+	for i := range r.Spec.DataNodes {
+		components = append(components, &r.Spec.DataNodes[i])
+	}
+	for i := range r.Spec.ExecNodes {
+		components = append(components, &r.Spec.ExecNodes[i])
+	}
+	if r.Spec.Schedulers != nil {
+		components = append(components, r.Spec.Schedulers)
+	}
+	if r.Spec.ControllerAgents != nil {
+		components = append(components, r.Spec.ControllerAgents)
+	}
+	for i := range r.Spec.TabletNodes {
+		components = append(components, &r.Spec.TabletNodes[i])
+	}
+	if r.Spec.StrawberryController != nil {
+		components = append(components, r.Spec.StrawberryController)
+	}
+	if r.Spec.QueryTrackers != nil {
+		components = append(components, r.Spec.QueryTrackers)
+	}
+	if r.Spec.YQLAgents != nil {
+		components = append(components, r.Spec.YQLAgents)
+	}
+	if r.Spec.QueueAgents != nil {
+		components = append(components, r.Spec.QueueAgents)
+	}
+	if r.Spec.CypressProxies != nil {
+		components = append(components, r.Spec.CypressProxies)
+	}
+	if r.Spec.BundleController != nil {
+		components = append(components, r.Spec.BundleController)
+	}
+	if r.Spec.TabletBalancer != nil {
+		components = append(components, r.Spec.TabletBalancer)
+	}
+	if r.Spec.UI != nil {
+		components = append(components, r.Spec.UI)
+	}
+	return components
 }
 
 //+kubebuilder:object:root=true

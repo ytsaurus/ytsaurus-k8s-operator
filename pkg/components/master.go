@@ -258,7 +258,7 @@ func (m *Master) getExtraMedia() []Medium {
 		mediaMap[*defaultPrimaryMedium] = Medium{Name: *defaultPrimaryMedium}
 	}
 
-	for _, d := range m.ytsaurus.GetResource().Spec.DataNodes {
+	for _, d := range m.ytsaurus.DataNodes {
 		for _, l := range d.Locations {
 			if l.Medium != "" && l.Medium != consts.DefaultMedium {
 				mediaMap[l.Medium] = Medium{Name: l.Medium}
@@ -266,7 +266,7 @@ func (m *Master) getExtraMedia() []Medium {
 		}
 	}
 
-	for _, d := range m.ytsaurus.GetResource().Spec.ExecNodes {
+	for _, d := range m.ytsaurus.ExecNodes {
 		for _, l := range d.Locations {
 			if l.Medium != "" && l.Medium != consts.DefaultMedium {
 				mediaMap[l.Medium] = Medium{Name: l.Medium}
