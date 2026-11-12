@@ -331,8 +331,15 @@
    terminationGracePeriodSeconds: 10
    tolerations:
    - key: global-toleration
-@@ -855,199 +568,205 @@
+@@ -855,205 +568,211 @@
    conditions:
+   - lastTransitionTime: null
+     message: Ready
+-    observedGeneration: 2
++    observedGeneration: 3
+     reason: Ready
+     status: "True"
+     type: GarbageCollectorReady
    - lastTransitionTime: null
      message: 0.0.0-devel
 -    observedGeneration: 2

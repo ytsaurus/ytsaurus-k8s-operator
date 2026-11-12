@@ -58,6 +58,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-data-node"
 	case ExecNodeType:
 		return "yt-exec-node"
+	case GarbageCollectorType:
+		return "yt-garbage-collector"
 	case TabletNodeType:
 		return "yt-tablet-node"
 	case OffshoreDataGatewayType:

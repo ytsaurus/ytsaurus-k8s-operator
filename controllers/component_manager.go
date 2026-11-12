@@ -196,6 +196,8 @@ func NewComponentManager(
 		allComponents = append(allComponents, tt)
 	}
 
+	allComponents = append(allComponents, components.NewGarbageCollector(cfgen, ytsaurus, getAllComponents))
+
 	index := map[ytv1.Component]components.Component{}
 	for _, component := range allComponents {
 		c := component.GetComponent()

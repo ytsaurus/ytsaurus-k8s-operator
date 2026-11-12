@@ -968,9 +968,10 @@ func validateUpdateModeForSelector(newYtsaurus *ytcluster.Cluster, selector ytv1
 
 	modeType := selector.GetUpdateStrategyType()
 	bulkOnlyComponentTypes := map[consts.ComponentType]struct{}{
-		consts.QueueAgentType:   {},
-		consts.QueryTrackerType: {},
-		consts.YqlAgentType:     {},
+		consts.GarbageCollectorType: {},
+		consts.QueueAgentType:       {},
+		consts.QueryTrackerType:     {},
+		consts.YqlAgentType:         {},
 	}
 
 	// strategy currently supported only for concrete components

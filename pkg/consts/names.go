@@ -158,6 +158,9 @@ func GetMicroservicePrefix(component ComponentType) string {
 }
 
 func GetShortName(component ComponentType) string {
+	if component == GarbageCollectorType {
+		return "gc"
+	}
 	stsPrefix := GetStatefulSetPrefix(component)
 	if stsPrefix != "" {
 		return stsPrefix

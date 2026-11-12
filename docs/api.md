@@ -640,6 +640,7 @@ _Appears in:_
 | `DataNode` |  |
 | `Discovery` |  |
 | `ExecNode` |  |
+| `GarbageCollector` |  |
 | `HttpProxy` |  |
 | `ImageHeater` |  |
 | `KafkaProxy` |  |

@@ -2,6 +2,40 @@
 
 This is brief guide for operator, for details look [YTsaurus Admin Guide](https://ytsaurus.tech/docs/en/admin-guide/).
 
+## Resource Cleanup
+
+The `GarbageCollector` cluster component detects StatefulSets, Deployments,
+Services, ConfigMaps, and Secrets owned by the Ytsaurus resource whose
+`yt_component` label no longer identifies an active component. This includes node
+groups and proxy roles removed from the specification or from separate component
+resources. Resources belonging to an active component are retained regardless of
+their names, including resources carrying that component's init-job label.
+Orphans are reported by kind and name in the `GarbageCollectorReady` status
+condition.
+
+Collection follows the update plan. To allow it explicitly, select the component
+in an inline plan or a separate `YtsaurusUpdatePlan`:
+
+```yaml
+spec:
+  updatePlan:
+    - component:
+        type: GarbageCollector
+```
+
+Without a matching selector, the collector reports `NeedUpdate` and the orphan
+resources remain. When selected, it deletes at most one resource per
+reconciliation during `WaitingForPodsRemoval`, using background deletion. It
+waits for that resource to disappear before deleting the next one. Workloads are
+deleted before Services, ConfigMaps, and Secrets. The update advances after all
+orphan resources have disappeared; their dependents are
+cleaned up asynchronously by Kubernetes according to the retention policies.
+New orphans discovered before that step advances reopen collection, including
+when an earlier pass already reported completion.
+Resources outside the cluster namespace, controlled by other owners, or without
+a nonempty `yt_component` label are preserved. Other resource kinds, including
+PersistentVolumeClaims, are left to their existing lifecycle and retention rules.
+
 ## Cluster States
 
 The operator reports the cluster lifecycle in [`status.state`](api.md#clusterstate).

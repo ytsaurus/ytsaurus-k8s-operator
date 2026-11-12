@@ -29,6 +29,21 @@ func TestUpdatePlanValidation(t *testing.T) {
 	}{
 		{"valid before cluster exists", func(*ytv1.YtsaurusUpdatePlan) {}, ""},
 		{"empty plan", func(p *ytv1.YtsaurusUpdatePlan) { p.Spec.UpdatePlan = nil }, ""},
+		{"garbage collector", func(p *ytv1.YtsaurusUpdatePlan) {
+			p.Spec.UpdatePlan = ytv1.UpdatePlan{{Component: ytv1.Component{Type: ytv1.GarbageCollectorType}}}
+		}, ""},
+		{"garbage collector rolling update", func(p *ytv1.YtsaurusUpdatePlan) {
+			p.Spec.UpdatePlan = ytv1.UpdatePlan{{
+				Component: ytv1.Component{Type: ytv1.GarbageCollectorType},
+				Strategy:  &ytv1.ComponentUpdateStrategy{RollingUpdate: &ytv1.ComponentRollingUpdateMode{}},
+			}}
+		}, "GarbageCollector supports only BulkUpdate mode"},
+		{"garbage collector on-delete update", func(p *ytv1.YtsaurusUpdatePlan) {
+			p.Spec.UpdatePlan = ytv1.UpdatePlan{{
+				Component: ytv1.Component{Type: ytv1.GarbageCollectorType},
+				Strategy:  &ytv1.ComponentUpdateStrategy{OnDelete: &ytv1.ComponentOnDeleteUpdateMode{}},
+			}}
+		}, "GarbageCollector supports only BulkUpdate mode"},
 		{"missing parent", func(p *ytv1.YtsaurusUpdatePlan) { p.Spec.Ytsaurus.Name = "" }, "spec.ytsaurus.name"},
 		{"invalid parent", func(p *ytv1.YtsaurusUpdatePlan) { p.Spec.Ytsaurus.Name = "invalid/name" }, "spec.ytsaurus.name"},
 		{"empty selector", func(p *ytv1.YtsaurusUpdatePlan) { p.Spec.UpdatePlan = ytv1.UpdatePlan{{}} }, "Either component or class"},

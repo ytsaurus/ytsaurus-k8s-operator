@@ -30,6 +30,7 @@ const (
 	DataNodeType             ComponentType = "DataNode"
 	DiscoveryType            ComponentType = "Discovery"
 	ExecNodeType             ComponentType = "ExecNode"
+	GarbageCollectorType     ComponentType = "GarbageCollector"
 	HttpProxyType            ComponentType = "HttpProxy"
 	ImageHeaterType          ComponentType = "ImageHeater"
 	KafkaProxyType           ComponentType = "KafkaProxy"

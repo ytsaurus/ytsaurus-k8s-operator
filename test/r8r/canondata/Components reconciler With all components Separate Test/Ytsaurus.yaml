@@ -567,6 +567,12 @@ spec:
 status:
   conditions:
   - lastTransitionTime: null
+    message: Ready
+    observedGeneration: 3
+    reason: Ready
+    status: "True"
+    type: GarbageCollectorReady
+  - lastTransitionTime: null
     message: 0.0.0-devel
     observedGeneration: 3
     reason: Observed

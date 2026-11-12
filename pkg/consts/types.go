@@ -14,6 +14,7 @@ const (
 	DataNodeType             = ytv1.DataNodeType
 	DiscoveryType            = ytv1.DiscoveryType
 	ExecNodeType             = ytv1.ExecNodeType
+	GarbageCollectorType     = ytv1.GarbageCollectorType
 	HttpProxyType            = ytv1.HttpProxyType
 	MasterCacheType          = ytv1.MasterCacheType
 	MasterType               = ytv1.MasterType
@@ -55,6 +56,7 @@ var (
 		DataNodeType,
 		DiscoveryType,
 		ExecNodeType,
+		GarbageCollectorType,
 		HttpProxyType,
 		MasterCacheType,
 		MasterType,
