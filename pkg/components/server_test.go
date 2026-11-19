@@ -4,10 +4,135 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 )
+
+func TestServerInitContainerCPUResources(t *testing.T) {
+	tests := []struct {
+		name           string
+		requests       corev1.ResourceList
+		cpuLimit       string
+		wantCPURequest string
+		wantCPULimit   string
+	}{
+		{
+			name:         "limits only",
+			cpuLimit:     "2",
+			wantCPULimit: "1999m",
+		},
+		{
+			name:         "empty requests",
+			requests:     corev1.ResourceList{},
+			cpuLimit:     "2",
+			wantCPULimit: "1999m",
+		},
+		{
+			name:         "only memory requested",
+			requests:     corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
+			cpuLimit:     "2",
+			wantCPULimit: "1999m",
+		},
+		{
+			name:           "equal integer CPU request and limit",
+			requests:       corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("2")},
+			cpuLimit:       "2",
+			wantCPURequest: "1999m",
+			wantCPULimit:   "1999m",
+		},
+		{
+			name:           "explicit zero CPU request",
+			requests:       corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("0")},
+			cpuLimit:       "2",
+			wantCPURequest: "0",
+			wantCPULimit:   "2",
+		},
+		{
+			name:           "unequal CPU request and limit",
+			requests:       corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1")},
+			cpuLimit:       "2",
+			wantCPURequest: "1",
+			wantCPULimit:   "2",
+		},
+		{
+			name:           "fractional CPU request and limit",
+			requests:       corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1500m")},
+			cpuLimit:       "1500m",
+			wantCPURequest: "1500m",
+			wantCPULimit:   "1500m",
+		},
+		{
+			name:         "fractional CPU limit only",
+			cpuLimit:     "1500m",
+			wantCPULimit: "1500m",
+		},
+		{
+			name:         "zero CPU limit",
+			cpuLimit:     "0",
+			wantCPULimit: "0",
+		},
+		{
+			name:           "CPU request without limit",
+			requests:       corev1.ResourceList{corev1.ResourceCPU: resource.MustParse("1")},
+			wantCPURequest: "1",
+		},
+		{
+			name: "no CPU resources",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := &ytv1.InstanceSpec{
+				InstanceCount: 1,
+				Resources: corev1.ResourceRequirements{
+					Requests: tt.requests.DeepCopy(),
+					Limits:   corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("2Gi")},
+				},
+			}
+			if tt.cpuLimit != "" {
+				spec.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(tt.cpuLimit)
+			}
+			originalResources := spec.Resources.DeepCopy()
+			wantResources := spec.Resources.DeepCopy()
+			if tt.wantCPURequest != "" {
+				wantResources.Requests[corev1.ResourceCPU] = resource.MustParse(tt.wantCPURequest)
+			}
+			if tt.wantCPULimit != "" {
+				wantResources.Limits[corev1.ResourceCPU] = resource.MustParse(tt.wantCPULimit)
+			}
+
+			l := &labeller.Labeller{
+				Namespace:     "test",
+				ClusterName:   "test",
+				ResourceName:  "test",
+				ComponentType: ytv1.DataNodeType,
+			}
+			s := newServerConfigured(
+				l, nil, &ytv1.CommonSpec{CoreImage: "test:latest"}, &ytv1.PodSpec{}, spec,
+				"ytserver", []ConfigGenerator{{FileName: "config.yson"}},
+				nil, nil, nil, newServerOptions(spec, 10000),
+			)
+			podSpec := s.rebuildStatefulSet().Spec.Template.Spec
+
+			require.Len(t, podSpec.InitContainers, 2)
+			for _, container := range podSpec.InitContainers {
+				require.True(t, equality.Semantic.DeepEqual(*wantResources, container.Resources),
+					"%s resources = %v, want %v", container.Name, container.Resources, *wantResources)
+			}
+			require.Equal(t, *originalResources, podSpec.Containers[0].Resources)
+			require.Equal(t, *originalResources, spec.Resources)
+		})
+	}
+}
 
 const (
 	testUpdateRevision = "rev-new"
