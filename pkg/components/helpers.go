@@ -670,12 +670,6 @@ func ptrDefault[T any](ptr, def *T) *T {
 	return def
 }
 
-func setContainerResources(containers []corev1.Container, resources corev1.ResourceRequirements) {
-	for i := range containers {
-		containers[i].Resources = *resources.DeepCopy()
-	}
-}
-
 func getTolerationsWithDefault(componentTolerations, defaultTolerations []corev1.Toleration) []corev1.Toleration {
 	if len(componentTolerations) != 0 {
 		return componentTolerations

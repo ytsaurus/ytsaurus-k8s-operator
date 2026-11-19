@@ -792,6 +792,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 				StartPort:       ptr.To(29000),
 				PortCount:       ptr.To(1000),
 			}
+			ytsaurus.Spec.ExecNodes[0].Resources.Requests = ytsaurus.Spec.ExecNodes[0].Resources.Limits.DeepCopy()
+			ytsaurus.Spec.ExecNodes[0].JobResources.Requests = ytsaurus.Spec.ExecNodes[0].JobResources.Limits.DeepCopy()
 			ytBuilder.WithStrawberryController()
 			ytBuilder.WithQueueAgent()
 			ytBuilder.Images.QueryTracker = "localhost/query-tracker:0.6.0"
@@ -842,6 +844,23 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 		})
 		It("Test", func(ctx context.Context) {})
 		AfterEach(func() {
+			By("Checking exec node Guaranteed QoS and fractional init container CPUs", func() {
+				Expect(statefulSets).To(HaveKey("end"))
+				podSpec := &statefulSets["end"].Spec.Template.Spec
+				for _, container := range slices.Concat(podSpec.Containers, podSpec.InitContainers) {
+					for _, name := range []corev1.ResourceName{corev1.ResourceCPU, corev1.ResourceMemory} {
+						request := container.Resources.Requests[name]
+						limit := container.Resources.Limits[name]
+						Expect(request.Sign()).To(Equal(1), "%s %s request must be positive for Guaranteed QoS", container.Name, name)
+						Expect(request.Equal(limit)).To(BeTrue(), "%s %s request must equal its limit for Guaranteed QoS", container.Name, name)
+					}
+				}
+				Expect(podSpec.InitContainers).ToNot(BeEmpty())
+				for _, container := range podSpec.InitContainers {
+					Expect(container.Resources.Requests.Cpu().MilliValue()%1000).ToNot(BeZero(), "%s CPU request must be fractional", container.Name)
+					Expect(container.Resources.Limits.Cpu().MilliValue()%1000).ToNot(BeZero(), "%s CPU limit must be fractional", container.Name)
+				}
+			})
 			for _, sts := range statefulSets {
 				log.Info("sts", "name", sts.Name)
 				podSpec := &sts.Spec.Template.Spec

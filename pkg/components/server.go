@@ -7,6 +7,7 @@ import (
 	"path"
 	"slices"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
@@ -602,6 +603,23 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 	command = append(command, s.instanceSpec.EntrypointWrapper...)
 	command = append(command, s.binaryPath, "--config", path.Join(consts.ConfigMountPoint, filename))
 
+	// Init containers share resource requests and limits to preserve guaranteed QoS class.
+	initResources := s.instanceSpec.Resources.DeepCopy()
+	{
+		req, hasReq := initResources.Requests[corev1.ResourceCPU]
+		lim := initResources.Limits[corev1.ResourceCPU]
+
+		// Subtract 0.001 core from round and equal CPU request/limit.
+		// Workaround for: https://github.com/kubernetes/kubernetes/issues/112228
+		if (!hasReq || req.Equal(lim)) && !lim.IsZero() && lim.MilliValue()%1000 == 0 {
+			lim.Sub(*resource.NewMilliQuantity(1, resource.DecimalSI))
+			if hasReq {
+				initResources.Requests[corev1.ResourceCPU] = lim
+			}
+			initResources.Limits[corev1.ResourceCPU] = lim
+		}
+	}
+
 	podSpec := &statefulSet.Spec.Template.Spec
 	*podSpec = corev1.PodSpec{
 		RuntimeClassName:   ptrDefault(s.instanceSpec.RuntimeClassName, s.commonPodSpec.RuntimeClassName),
@@ -642,6 +660,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Command:      []string{"bash", "-xc", locationCreationCommand},
 				Env:          getDefaultEnv(),
 				VolumeMounts: volumeMounts,
+				Resources:    *initResources.DeepCopy(),
 			},
 			{
 				Image:        s.image,
@@ -649,6 +668,7 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 				Command:      []string{"bash", "-xc", configPostprocessingCommand},
 				Env:          getDefaultEnv(),
 				VolumeMounts: postprocessVolumeMounts,
+				Resources:    *initResources.DeepCopy(),
 			},
 		},
 		Volumes:      volumes,
@@ -657,7 +677,6 @@ func (s *serverImpl) rebuildStatefulSet() *appsv1.StatefulSet {
 		Tolerations:  getTolerationsWithDefault(s.instanceSpec.Tolerations, s.commonPodSpec.Tolerations),
 		DNSConfig:    ptrDefault(s.instanceSpec.DNSConfig, s.commonPodSpec.DNSConfig),
 	}
-	setContainerResources(podSpec.InitContainers, podSpec.Containers[0].Resources)
 
 	if ptr.Deref(s.instanceSpec.HostNetwork, ptr.Deref(s.commonPodSpec.HostNetwork, false)) {
 		podSpec.HostNetwork = true
