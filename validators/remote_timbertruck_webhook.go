@@ -59,6 +59,7 @@ func NewRemoteDataNodesValidator() *remoteDataNodesValidator {
 
 type remoteExecNodesValidator struct {
 	customValidator[*ytv1.RemoteExecNodes]
+	baseValidator
 }
 
 func NewRemoteExecNodesValidator() *remoteExecNodesValidator {
@@ -68,7 +69,9 @@ func NewRemoteExecNodesValidator() *remoteExecNodesValidator {
 		if obj == nil {
 			return Results{}
 		}
-		return validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec)
+		results := validateRemoteTimbertruck(&obj.Spec.CommonSpec, &obj.Spec.InstanceSpec)
+		results.Append(r.validateExecNodeResources(&obj.Spec.ExecNodesSpec, field.NewPath("spec")))
+		return results
 	}
 	return r
 }

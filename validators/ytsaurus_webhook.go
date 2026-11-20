@@ -23,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/validation"
 	v1validation "k8s.io/apimachinery/pkg/apis/meta/v1/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/utils/ptr"
 
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apihelpers"
@@ -218,8 +216,11 @@ func (r *ytsaurusValidator) validateMasterSpec(newYtsaurus, oldYtsaurus *ytv1.Yt
 	}
 
 	results.Append(r.validateHydraPersistenceUploaderSpec(mastersSpec.HydraPersistenceUploader, mastersSpec.Locations, path))
+	if mastersSpec.HydraPersistenceUploader != nil && hasGuaranteedResources(mastersSpec.Resources) {
+		results.Warning(field.Forbidden(path.Child("hydraPersistenceUploader"), "uploader sidecar has no resource limits and cannot preserve Guaranteed pod QoS"))
+	}
 
-	results.Append(r.validateSidecars(mastersSpec.Sidecars, path.Child("sidecars")))
+	results.Append(r.validateContainers(mastersSpec.Sidecars, mastersSpec.Resources, false, path.Child("sidecars")))
 
 	return results
 }
@@ -706,24 +707,6 @@ func (r *ytsaurusValidator) validateTabletBalancer(newYtsaurus *ytv1.Ytsaurus) R
 	return results
 }
 
-func (r *baseValidator) validateSidecars(sidecars []string, path *field.Path) Results {
-	var results Results
-
-	names := make(map[string]bool)
-	for i, sidecarSpec := range sidecars {
-		sidecar := corev1.Container{}
-		if err := yaml.UnmarshalStrict([]byte(sidecarSpec), &sidecar); err != nil {
-			results.Error(field.Invalid(path.Index(i), sidecarSpec, err.Error()))
-		}
-		if _, exists := names[sidecar.Name]; exists {
-			results.Error(field.Duplicate(path.Index(i).Child("name"), sidecar.Name))
-		}
-		names[sidecar.Name] = true
-	}
-
-	return results
-}
-
 func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) Results {
 	var results Results
 
@@ -749,12 +732,7 @@ func (r *ytsaurusValidator) validateExecNodes(newYtsaurus *ytv1.Ytsaurus) Result
 		// TODO: Think about job proxy logs quota estimation.
 		results.Append(validateLoggers(en.JobProxyLoggers, path.Child("jobProxyLoggers")))
 
-		if en.InitContainers != nil {
-			results.Append(r.validateSidecars(en.InitContainers, path.Child("initContainers")))
-		}
-		if en.Sidecars != nil {
-			results.Append(r.validateSidecars(en.Sidecars, path.Child("sidecars")))
-		}
+		results.Append(r.validateExecNodeResources(&en, path))
 	}
 
 	if len(newYtsaurus.Spec.ExecNodes) > 0 {
@@ -948,6 +926,7 @@ func (r *baseValidator) validateInstanceSpecWithTimbertruck(instanceSpec ytv1.In
 	results.Append(r.validatePodSpec(&instanceSpec.PodSpec, path))
 
 	results.Append(r.validateTimbertruckSpec(componentTimbertruck, commonSpec.Timbertruck, instanceSpec.StructuredLoggers, instanceSpec.Locations, path))
+	results.Append(validateTimbertruckQoS(instanceSpec, componentTimbertruck, path))
 
 	results.Append(validateLoggers(instanceSpec.Loggers, path.Child("loggers")))
 

@@ -852,7 +852,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 						request := container.Resources.Requests[name]
 						limit := container.Resources.Limits[name]
 						Expect(request.Sign()).To(Equal(1), "%s %s request must be positive for Guaranteed QoS", container.Name, name)
-						Expect(request.Equal(limit)).To(BeTrue(), "%s %s request must equal its limit for Guaranteed QoS", container.Name, name)
+						Expect(request.Equal(limit)).To(BeTrueBecause("%s %s request must equal its limit for Guaranteed QoS", container.Name, name))
 					}
 				}
 				Expect(podSpec.InitContainers).ToNot(BeEmpty())
