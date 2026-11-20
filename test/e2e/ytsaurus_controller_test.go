@@ -1096,6 +1096,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(pods.Deleted).To(BeEmpty(), "deleted")
 				Expect(pods.Updated).To(ConsistOf("end-0"), "updated")
 
+				By("Recording tablet cell IDs before the bulk update")
+				var cellsBefore []string
+				Expect(ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &cellsBefore, nil)).To(Succeed())
+				Expect(cellsBefore).NotTo(BeEmpty())
+
 				By("Run cluster update with component:Type:TabletNodeType")
 				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{{
 					Component: ytv1.Component{
@@ -1117,6 +1122,11 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 				Expect(ytsaurus.Status.UpdateStatus.BlockedComponentsSummary).ToNot(BeEmpty())
 
 				checkClusterHealth(ctx, ytClient)
+
+				By("Checking that the bulk update preserved the tablet cells")
+				var cellsAfter []string
+				Expect(ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &cellsAfter, nil)).To(Succeed())
+				Expect(cellsAfter).To(ConsistOf(cellsBefore))
 
 				podsAfterTndUpdate := getComponentPods(ctx, namespace)
 				pods = getChangedPods(podsAfterEndUpdate, podsAfterTndUpdate)

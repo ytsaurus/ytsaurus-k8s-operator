@@ -139,8 +139,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 		switch yc.ytsaurus.GetUpdateState() {
 		case ytv1.UpdateStatePossibilityCheck:
 		case ytv1.UpdateStateWaitingForSafeModeEnabled, ytv1.UpdateStateWaitingForSafeModeDisabled:
-		case ytv1.UpdateStateWaitingForTabletCellsSaving, ytv1.UpdateStateWaitingForTabletCellsRecovery:
-		case ytv1.UpdateStateWaitingForTabletCellsRemovingStart, ytv1.UpdateStateWaitingForTabletCellsRemoved:
 		case ytv1.UpdateStateWaitingForImaginaryChunksAbsence:
 		case ytv1.UpdateStateWaitingForCypressPatch:
 		default:
@@ -148,10 +146,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 		}
 		return ComponentStatusUpdating("Ytsaurus client actions"), nil
 	}
-
-	var err error
-
-	updateStatus := &yc.ytsaurus.GetResource().Status.UpdateStatus
 
 	switch yc.ytsaurus.GetUpdateState() {
 	case ytv1.UpdateStatePossibilityCheck:
@@ -172,69 +166,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 				Message: "Safe mode was enabled",
 			})
 
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
-	case ytv1.UpdateStateWaitingForTabletCellsSaving:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
-			bundleControllerDisabled, err := yc.IsBundleControllerDisabled(ctx)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			tabletCellBundles, err := yc.GetTabletCells(ctx)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			updateStatus.BundleController = &ytv1.BundleControllerInfo{
-				Disabled: bundleControllerDisabled,
-			}
-			updateStatus.TabletCellBundles = tabletCellBundles
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsSaved,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells were saved",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
-	case ytv1.UpdateStateWaitingForTabletCellsRemovingStart:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemovingStarted) {
-			err := yc.SetBundleControllerDisabled(ctx, ptr.To(true))
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			err = yc.RemoveTabletCells(ctx)
-			if err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsRemovingStarted,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells removing was started",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
-	case ytv1.UpdateStateWaitingForTabletCellsRemoved:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRemoved) {
-			if count, err := yc.AreTabletCellsRemoved(ctx); err != nil {
-				return SimpleStatus(SyncStatusUpdating), err
-			} else if count != 0 {
-				return ComponentStatusUpdating("Waiting for decommission of %v tablet cells", count), nil
-			}
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsRemoved,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells were removed",
-			})
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 
@@ -280,31 +211,6 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 			return SimpleStatus(SyncStatusUpdating), nil
 		}
 
-	case ytv1.UpdateStateWaitingForTabletCellsRecovery:
-		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsRecovered) {
-			if yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionTabletCellsSaved) {
-				err = yc.RecoverTableCells(ctx, yc.ytsaurus.GetResource().Status.UpdateStatus.TabletCellBundles)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-			}
-
-			if updateStatus.BundleController != nil {
-				err := yc.SetBundleControllerDisabled(ctx, updateStatus.BundleController.Disabled)
-				if err != nil {
-					return SimpleStatus(SyncStatusUpdating), err
-				}
-			}
-
-			yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
-				Type:    consts.ConditionTabletCellsRecovered,
-				Status:  metav1.ConditionTrue,
-				Reason:  "Update",
-				Message: "Tablet cells recovered",
-			})
-			return SimpleStatus(SyncStatusUpdating), nil
-		}
-
 	case ytv1.UpdateStateWaitingForSafeModeDisabled:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionSafeModeDisabled) {
 			err := yc.DisableSafeMode(ctx)
@@ -336,7 +242,7 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 		}
 	}
 
-	return SimpleStatus(SyncStatusUpdating), err
+	return SimpleStatus(SyncStatusUpdating), nil
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
@@ -751,106 +657,6 @@ func (yc *YtsaurusClient) SyncCypressPatch(ctx context.Context) error {
 			Message:            fmt.Sprintf("Error: %v", err),
 		})
 	}
-	return nil
-}
-
-// Tablet cells actions.
-
-func (yc *YtsaurusClient) GetTabletCells(ctx context.Context) ([]ytv1.TabletCellBundleInfo, error) {
-	var tabletCellBundles []ytv1.TabletCellBundleInfo
-	err := yc.ytClient.ListNode(
-		ctx,
-		ypath.Path("//sys/tablet_cell_bundles"),
-		&tabletCellBundles,
-		&yt.ListNodeOptions{Attributes: []string{"tablet_cell_count"}},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-	return tabletCellBundles, nil
-}
-func (yc *YtsaurusClient) RemoveTabletCells(ctx context.Context) error {
-	logger := log.FromContext(ctx)
-	var tabletCells []string
-	if err := yc.ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &tabletCells, nil); err != nil {
-		return err
-	}
-	if len(tabletCells) == 0 {
-		return nil
-	}
-	logger.Info("disabling tablet cell decommission")
-	if err := yc.ytClient.SetNode(ctx, ypath.Path(consts.EnableTabletCellDecommissionPath), false, nil); err != nil {
-		return err
-	}
-	logger.Info("removing tablet cells", "count", len(tabletCells))
-	var err error
-	for _, tabletCell := range tabletCells {
-		err = yc.ytClient.RemoveNode(ctx, ypath.Path(consts.TabletCellsPath).Child(tabletCell), nil)
-		if err != nil {
-			break
-		}
-	}
-	logger.Info("enabling tablet cell decommission")
-	if err := yc.ytClient.SetNode(ctx, ypath.Path(consts.EnableTabletCellDecommissionPath), true, nil); err != nil {
-		logger.Error(err, "cannot enable tablet cell decommission")
-	}
-	return err
-}
-func (yc *YtsaurusClient) AreTabletCellsRemoved(ctx context.Context) (int, error) {
-	var tabletCells []string
-	err := yc.ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &tabletCells, nil)
-	return len(tabletCells), err
-}
-func (yc *YtsaurusClient) RecoverTableCells(ctx context.Context, bundles []ytv1.TabletCellBundleInfo) error {
-	for _, bundle := range bundles {
-		err := CreateTabletCells(ctx, yc.ytClient, bundle.Name, bundle.TabletCellCount)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Bundle controller actions.
-
-func (yc *YtsaurusClient) IsBundleControllerDisabled(ctx context.Context) (*bool, error) {
-	logger := log.FromContext(ctx)
-
-	disableBundleControllerPath := ypath.Path("//sys/@disable_bundle_controller")
-
-	var disabled bool
-	err := yc.ytClient.GetNode(ctx, disableBundleControllerPath, &disabled, nil)
-	if err != nil {
-		if yterrors.ContainsResolveError(err) {
-			logger.Info(fmt.Sprintf("%s doesn't exist", disableBundleControllerPath))
-			return nil, nil
-		}
-		return nil, fmt.Errorf("failed to get %s: %w", disableBundleControllerPath, err)
-	}
-
-	return &disabled, nil
-}
-
-func (yc *YtsaurusClient) SetBundleControllerDisabled(ctx context.Context, disabled *bool) error {
-	logger := log.FromContext(ctx)
-
-	disableBundleControllerPath := ypath.Path("//sys/@disable_bundle_controller")
-
-	if disabled != nil {
-		err := yc.ytClient.SetNode(ctx, disableBundleControllerPath, *disabled, nil)
-		if err != nil {
-			return fmt.Errorf("failed to set %s: %w", disableBundleControllerPath, err)
-		}
-		logger.Info(fmt.Sprintf("set %s to %t", disableBundleControllerPath, *disabled))
-	} else {
-		err := yc.ytClient.RemoveNode(ctx, disableBundleControllerPath, &yt.RemoveNodeOptions{Force: true})
-		if err != nil {
-			return fmt.Errorf("failed to remove %s: %w", disableBundleControllerPath, err)
-		}
-		logger.Info(fmt.Sprintf("removed %s", disableBundleControllerPath))
-	}
-
 	return nil
 }
 

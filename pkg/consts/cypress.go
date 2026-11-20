@@ -20,8 +20,7 @@ const (
 
 	MasterCellDescriptorsPath = "//sys/@config/multicell_manager/cell_descriptors"
 
-	TabletCellsPath                  = "//sys/tablet_cells"
-	EnableTabletCellDecommissionPath = "//sys/@config/tablet_manager/tablet_cell_decommissioner/enable_tablet_cell_decommission"
+	TabletCellsPath = "//sys/tablet_cells"
 )
 
 func ComponentCypressPath(component ComponentType) string {

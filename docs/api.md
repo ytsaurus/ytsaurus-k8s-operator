@@ -82,22 +82,6 @@ _Appears in:_
 | `nodeTagFilter` _string_ |  |  |  |
 
 
-#### BundleControllerInfo
-
-
-
-
-
-
-
-_Appears in:_
-- [UpdateStatus](#updatestatus)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `disabled` _boolean_ |  |  |  |
-
-
 #### BundleControllerSpec
 
 
@@ -2956,23 +2940,6 @@ _Appears in:_
 | `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
 
 
-#### TabletCellBundleInfo
-
-
-
-
-
-
-
-_Appears in:_
-- [UpdateStatus](#updatestatus)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `name` _string_ |  |  |  |
-| `tabletCellCount` _integer_ |  |  |  |
-
-
 #### TabletNodesSpec
 
 
@@ -3195,9 +3162,6 @@ _Appears in:_
 | `PossibilityCheck` |  |
 | `ImpossibleToStart` |  |
 | `WaitingForSafeModeEnabled` |  |
-| `WaitingForTabletCellsSaving` |  |
-| `WaitingForTabletCellsRemovingStart` |  |
-| `WaitingForTabletCellsRemoved` |  |
 | `WaitingForImaginaryChunksAbsence` |  |
 | `WaitingForSnapshots` |  |
 | `WaitingForPodsRemoval` |  |
@@ -3213,7 +3177,6 @@ _Appears in:_
 | `WaitingForMasterCellsSettlement` |  |
 | `WaitingForMasterCellsCompletion` |  |
 | `WaitingForCypressPatch` |  |
-| `WaitingForTabletCellsRecovery` |  |
 | `WaitingForOpArchiveUpdate` |  |
 | `WaitingForSidecarsInitializingPrepare` |  |
 | `WaitingForSidecarsInitialize` |  |
@@ -3245,8 +3208,6 @@ _Appears in:_
 | `blockedComponentsSummary` _string_ | Summary for kubectl column. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ | Update progress. |  |  |
 | `masterCellsMaintenance` _[MasterCellMaintenanceInfo](#mastercellmaintenanceinfo) array_ | State of master cells maintenance. |  |  |
-| `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ | Snapshot of tablet cell bundles. |  |  |
-| `bundleController` _[BundleControllerInfo](#bundlecontrollerinfo)_ | Snapshot of bundle controller. |  |  |
 
 
 #### Volume
