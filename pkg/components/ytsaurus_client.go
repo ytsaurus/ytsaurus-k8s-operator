@@ -133,7 +133,6 @@ func (yc *YtsaurusClient) ShouldSkipCypressOperations() bool {
 	return resource.Spec.EphemeralCluster && ptr.Deref(resource.Spec.PrimaryMasters.MinReadyInstanceCount, 1) == 0
 }
 
-//nolint:cyclop //shush
 func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (ComponentStatus, error) {
 	if dry {
 		switch yc.ytsaurus.GetUpdateState() {
