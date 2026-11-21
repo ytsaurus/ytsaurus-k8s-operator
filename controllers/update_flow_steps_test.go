@@ -13,21 +13,19 @@ import (
 
 var _ = Describe("BuildFlowTree", func() {
 	type testCase struct {
-		name                      string
-		updatingComponents        []ytv1.Component
-		expectedStates            []ytv1.UpdateState
-		unhappyPath               bool
-		removeTabletCellsOnUpdate bool
-		masterHotUpdate           bool
+		name               string
+		updatingComponents []ytv1.Component
+		expectedStates     []ytv1.UpdateState
+		unhappyPath        bool
+		masterHotUpdate    bool
 	}
 
 	DescribeTable("should build correct flow tree",
 		func(tc testCase) {
 			componentManager := ComponentManager{
 				status: ComponentManagerStatus{
-					nowUpdating:               tc.updatingComponents,
-					removeTabletCellsOnUpdate: tc.removeTabletCellsOnUpdate,
-					masterHotUpdate:           tc.masterHotUpdate,
+					nowUpdating:     tc.updatingComponents,
+					masterHotUpdate: tc.masterHotUpdate,
 				},
 			}
 			tree := buildFlowTree(&componentManager)
@@ -79,28 +77,8 @@ var _ = Describe("BuildFlowTree", func() {
 				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
 		}),
-		Entry("tablet update", testCase{
-			name: "tablet update",
-			updatingComponents: []ytv1.Component{
-				{Type: consts.TabletNodeType},
-			},
-			removeTabletCellsOnUpdate: true,
-			expectedStates: []ytv1.UpdateState{
-				ytv1.UpdateStateNone,
-				ytv1.UpdateStatePossibilityCheck,
-				ytv1.UpdateStateWaitingForTabletCellsSaving,
-				ytv1.UpdateStateWaitingForTabletCellsRemovingStart,
-				ytv1.UpdateStateWaitingForTabletCellsRemoved,
-				ytv1.UpdateStateWaitingForPodsRemoval,
-				ytv1.UpdateStateWaitingForPodsCreation,
-				ytv1.UpdateStateWaitingForCypressPatch,
-				ytv1.UpdateStateWaitingForTabletCellsRecovery,
-				ytv1.UpdateStateWaitingForTimbertruckPrepared,
-			},
-		}),
-		Entry("tablet update with onDelete strategy", testCase{
-			updatingComponents:        []ytv1.Component{{Type: consts.TabletNodeType}},
-			removeTabletCellsOnUpdate: false,
+		Entry("tablet node update", testCase{
+			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
@@ -204,15 +182,11 @@ var _ = Describe("BuildFlowTree", func() {
 				{Type: consts.MasterType},
 				{Type: consts.TabletNodeType},
 			},
-			removeTabletCellsOnUpdate: true,
-			masterHotUpdate:           false,
+			masterHotUpdate: false,
 			expectedStates: []ytv1.UpdateState{
 				ytv1.UpdateStateNone,
 				ytv1.UpdateStatePossibilityCheck,
 				ytv1.UpdateStateWaitingForSafeModeEnabled,
-				ytv1.UpdateStateWaitingForTabletCellsSaving,
-				ytv1.UpdateStateWaitingForTabletCellsRemovingStart,
-				ytv1.UpdateStateWaitingForTabletCellsRemoved,
 				ytv1.UpdateStateWaitingForImaginaryChunksAbsence,
 				ytv1.UpdateStateWaitingForSnapshots,
 				ytv1.UpdateStateWaitingForPodsRemoval,
@@ -221,7 +195,6 @@ var _ = Describe("BuildFlowTree", func() {
 				ytv1.UpdateStateWaitingForPodsCreation,
 				ytv1.UpdateStateWaitingForSidecarsInitialize,
 				ytv1.UpdateStateWaitingForCypressPatch,
-				ytv1.UpdateStateWaitingForTabletCellsRecovery,
 				ytv1.UpdateStateWaitingForSafeModeDisabled,
 				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
@@ -238,40 +211,6 @@ var _ = Describe("BuildFlowTree", func() {
 				ytv1.UpdateStateWaitingForCypressPatch,
 				ytv1.UpdateStateWaitingForTimbertruckPrepared,
 			},
-		}),
-	)
-})
-
-var _ = Describe("ShouldRemoveTabletCellsOnUpdate", func() {
-	type testCase struct {
-		updatePlan         []ytv1.ComponentUpdateSelector
-		updatingComponents []ytv1.Component
-		expected           bool
-	}
-
-	DescribeTable("should derive tablet cell removal mode from tablet node update strategy",
-		func(tc testCase) {
-			Expect(shouldRemoveTabletCellsOnUpdate(tc.updatePlan, tc.updatingComponents)).To(Equal(tc.expected))
-		},
-		Entry("defaults to removing tablet cells", testCase{
-			expected: false,
-		}),
-		Entry("keeps removing tablet cells for bulk tablet updates", testCase{
-			updatePlan: []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{Type: consts.TabletNodeType},
-			}},
-			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
-			expected:           true,
-		}),
-		Entry("skips removing tablet cells for onDelete tablet updates", testCase{
-			updatePlan: []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{Type: consts.TabletNodeType},
-				Strategy: &ytv1.ComponentUpdateStrategy{
-					OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
-				},
-			}},
-			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
-			expected:           false,
 		}),
 	)
 })

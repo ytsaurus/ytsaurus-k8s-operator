@@ -43,11 +43,9 @@ type ComponentManagerStatus struct {
 	clusterMaintenance bool
 	mastersMaintenance bool
 	shutdownStorage    bool
-	shutdownTablets    bool
 	shutdownCompute    bool
 
-	removeTabletCellsOnUpdate bool // Skip tablet cell save/remove/recover when tablet nodes use OnDelete strategy
-	masterHotUpdate           bool // Master update uses OnDelete — skip safety steps (safe mode, snapshots, exit read-only)
+	masterHotUpdate bool // Master update uses OnDelete — skip safety steps (safe mode, snapshots, exit read-only)
 }
 
 //nolint:cyclop //shush
@@ -235,7 +233,6 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 		mastersMaintenance: shutdown == ytv1.ClusterShutdownExceptMasters,
 		shutdownCompute:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything || shutdown == ytv1.ClusterShutdownCompute,
 		shutdownStorage:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything,
-		shutdownTablets:    shutdown == ytv1.ClusterShutdownExceptMasters || shutdown == ytv1.ClusterShutdownEverything || shutdown == ytv1.ClusterShutdownTablets,
 	}
 
 	for _, component := range cm.allComponents {
@@ -488,10 +485,6 @@ func shouldRunPreUpdateStepsFor(
 		}
 	}
 	return false
-}
-
-func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
-	return shouldRunPreUpdateStepsFor(consts.TabletNodeType, updatePlan, updatingComponents)
 }
 
 func shouldUseMasterHotUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {

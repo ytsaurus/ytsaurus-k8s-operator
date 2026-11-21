@@ -44350,15 +44350,6 @@
               "description": "Summary for kubectl column.",
               "type": "string"
             },
-            "bundleController": {
-              "description": "Snapshot of bundle controller.",
-              "type": "object",
-              "properties": {
-                "disabled": {
-                  "type": "boolean"
-                }
-              }
-            },
             "conditions": {
               "description": "Update progress.",
               "type": "array",
@@ -44435,25 +44426,6 @@
             },
             "state": {
               "type": "string"
-            },
-            "tabletCellBundles": {
-              "description": "Snapshot of tablet cell bundles.",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": [
-                  "name",
-                  "tabletCellCount"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "tabletCellCount": {
-                    "type": "integer"
-                  }
-                }
-              }
             },
             "updatingComponents": {
               "description": "Subset of cluster components currently updating.",

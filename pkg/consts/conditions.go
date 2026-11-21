@@ -53,11 +53,7 @@ const (
 // Update conditions
 const (
 	ConditionSafeModeEnabled                 = "SafeModeEnabled"
-	ConditionTabletCellsSaved                = "TabletCellsSaved"
-	ConditionTabletCellsRemovingStarted      = "TabletCellsRemovingStarted"
-	ConditionTabletCellsRemoved              = "TabletCellsRemoved"
 	ConditionSnaphotsSaved                   = "SnaphotsSaved"
-	ConditionTabletCellsRecovered            = "TabletCellsRecovered"
 	ConditionSidecarsPreparedForInitializing = "SidecarsPreparedForInitializing" // TODO: Remove, it holds alignment.
 	ConditionQTStateUpdated                  = "QTStateUpdated"
 	ConditionQTStatePreparedForUpdating      = "QTStatePreparedForUpdating"

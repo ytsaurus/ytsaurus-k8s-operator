@@ -216,12 +216,8 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateWaitingForSafeModeEnabled:             flowCheckStatusCondition(consts.ConditionSafeModeEnabled),
-	ytv1.UpdateStateWaitingForTabletCellsSaving:           flowCheckStatusCondition(consts.ConditionTabletCellsSaved),
-	ytv1.UpdateStateWaitingForTabletCellsRemovingStart:    flowCheckStatusCondition(consts.ConditionTabletCellsRemovingStarted),
-	ytv1.UpdateStateWaitingForTabletCellsRemoved:          flowCheckStatusCondition(consts.ConditionTabletCellsRemoved),
 	ytv1.UpdateStateWaitingForImaginaryChunksAbsence:      flowCheckStatusCondition(consts.ConditionDataNodesWithImaginaryChunksAbsent),
 	ytv1.UpdateStateWaitingForSnapshots:                   flowCheckStatusCondition(consts.ConditionSnaphotsSaved),
-	ytv1.UpdateStateWaitingForTabletCellsRecovery:         flowCheckStatusCondition(consts.ConditionTabletCellsRecovered),
 	ytv1.UpdateStateWaitingForOpArchiveUpdate:             flowUpdateStateCondition(ytv1.UpdateStateWaitingForOpArchiveUpdate),
 	ytv1.UpdateStateWaitingForSidecarsInitializingPrepare: nil, // TODO: Remove, it holds alignment.
 	ytv1.UpdateStateWaitingForSidecarsInitialize:          flowUpdateStateCondition(ytv1.UpdateStateWaitingForSidecarsInitialize),
@@ -281,7 +277,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	updQueryTracker := hasComponent(updatingComponents, consts.QueryTrackerType)
 	updYqlAgent := hasComponent(updatingComponents, consts.YqlAgentType)
 	updQueueAgent := hasComponent(updatingComponents, consts.QueueAgentType)
-	removeTabletCells := componentManager.status.removeTabletCellsOnUpdate
 	masterHotUpdate := componentManager.status.masterHotUpdate
 
 	// TODO: if validation conditions can be not mentioned here or needed
@@ -299,11 +294,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 	).chainIf(
 		updMaster && !masterHotUpdate,
 		st(ytv1.UpdateStateWaitingForSafeModeEnabled),
-	).chainIf(
-		updTablet && !componentManager.status.shutdownTablets && removeTabletCells,
-		st(ytv1.UpdateStateWaitingForTabletCellsSaving),
-		st(ytv1.UpdateStateWaitingForTabletCellsRemovingStart),
-		st(ytv1.UpdateStateWaitingForTabletCellsRemoved),
 	).chainIf(
 		updDataNodes || updMaster,
 		st(ytv1.UpdateStateWaitingForImaginaryChunksAbsence),
@@ -325,9 +315,6 @@ func buildFlowTree(componentManager *ComponentManager) *flowTree {
 		st(ytv1.UpdateStateWaitingForSidecarsInitialize),
 	).chain(
 		st(ytv1.UpdateStateWaitingForCypressPatch),
-	).chainIf(
-		updTablet && !componentManager.status.shutdownTablets && removeTabletCells,
-		st(ytv1.UpdateStateWaitingForTabletCellsRecovery),
 	).chainIf(
 		updScheduler && !componentManager.status.clusterMaintenance,
 		st(ytv1.UpdateStateWaitingForOpArchiveUpdate),

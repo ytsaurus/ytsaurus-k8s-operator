@@ -38052,12 +38052,6 @@ spec:
                   blockedComponentsSummary:
                     description: Summary for kubectl column.
                     type: string
-                  bundleController:
-                    description: Snapshot of bundle controller.
-                    properties:
-                      disabled:
-                        type: boolean
-                    type: object
                   conditions:
                     description: Update progress.
                     items:
@@ -38122,19 +38116,6 @@ spec:
                     type: array
                   state:
                     type: string
-                  tabletCellBundles:
-                    description: Snapshot of tablet cell bundles.
-                    items:
-                      properties:
-                        name:
-                          type: string
-                        tabletCellCount:
-                          type: integer
-                      required:
-                      - name
-                      - tabletCellCount
-                      type: object
-                    type: array
                   updatingComponents:
                     description: Subset of cluster components currently updating.
                     items:

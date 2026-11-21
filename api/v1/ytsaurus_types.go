@@ -1205,9 +1205,6 @@ const (
 	UpdateStatePossibilityCheck                      UpdateState = "PossibilityCheck"
 	UpdateStateImpossibleToStart                     UpdateState = "ImpossibleToStart"
 	UpdateStateWaitingForSafeModeEnabled             UpdateState = "WaitingForSafeModeEnabled"
-	UpdateStateWaitingForTabletCellsSaving           UpdateState = "WaitingForTabletCellsSaving"
-	UpdateStateWaitingForTabletCellsRemovingStart    UpdateState = "WaitingForTabletCellsRemovingStart"
-	UpdateStateWaitingForTabletCellsRemoved          UpdateState = "WaitingForTabletCellsRemoved"
 	UpdateStateWaitingForImaginaryChunksAbsence      UpdateState = "WaitingForImaginaryChunksAbsence"
 	UpdateStateWaitingForSnapshots                   UpdateState = "WaitingForSnapshots"
 	UpdateStateWaitingForPodsRemoval                 UpdateState = "WaitingForPodsRemoval"
@@ -1223,7 +1220,6 @@ const (
 	UpdateStateWaitingForMasterCellsSettlement       UpdateState = "WaitingForMasterCellsSettlement"
 	UpdateStateWaitingForMasterCellsCompletion       UpdateState = "WaitingForMasterCellsCompletion"
 	UpdateStateWaitingForCypressPatch                UpdateState = "WaitingForCypressPatch"
-	UpdateStateWaitingForTabletCellsRecovery         UpdateState = "WaitingForTabletCellsRecovery"
 	UpdateStateWaitingForOpArchiveUpdate             UpdateState = "WaitingForOpArchiveUpdate"
 	UpdateStateWaitingForSidecarsInitializingPrepare UpdateState = "WaitingForSidecarsInitializingPrepare" // TODO: Remove, it holds alignment.
 	UpdateStateWaitingForSidecarsInitialize          UpdateState = "WaitingForSidecarsInitialize"
@@ -1235,15 +1231,6 @@ const (
 	UpdateStateWaitingForSafeModeDisabled            UpdateState = "WaitingForSafeModeDisabled"
 	UpdateStateWaitingForTimbertruckPrepared         UpdateState = "WaitingForTimbertruckPrepared"
 )
-
-type TabletCellBundleInfo struct {
-	Name            string `yson:",value" json:"name"`
-	TabletCellCount int    `yson:"tablet_cell_count,attr" json:"tabletCellCount"`
-}
-
-type BundleControllerInfo struct {
-	Disabled *bool `json:"disabled,omitempty"`
-}
 
 type ComponentUpdateModeType string
 
@@ -1312,10 +1299,6 @@ type UpdateStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 	// State of master cells maintenance.
 	MasterCellsMaintenance []MasterCellMaintenanceInfo `json:"masterCellsMaintenance,omitempty"`
-	// Snapshot of tablet cell bundles.
-	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
-	// Snapshot of bundle controller.
-	BundleController *BundleControllerInfo `json:"bundleController,omitempty"`
 }
 
 type Component struct {
