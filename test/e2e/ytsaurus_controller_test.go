@@ -865,6 +865,29 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 			podsBeforeUpdate = getComponentPods(ctx, namespace)
 		})
 
+		upgradeCoreImage := func(ctx context.Context, oldEpoch, newEpoch string) {
+			oldImage, newImage := testutil.Images[oldEpoch], testutil.Images[newEpoch]
+			checkCellIDs := oldImage.YtsaurusVersion.String() == "25.2.2" && newImage.YtsaurusVersion.String() == "25.3.1"
+			var cellsBefore []string
+			if checkCellIDs {
+				By("Recording tablet cell IDs before the upgrade")
+				cellsBefore = getTabletCellIDs(ctx, ytClient)
+				Expect(cellsBefore).NotTo(BeEmpty())
+			}
+
+			log.Info("Update core image", "before", ytsaurus.Spec.CoreImage, "after", newImage.Core)
+			ytsaurus.Spec.CoreImage = newImage.Core
+			UpdateObject(ctx, ytsaurus)
+			EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
+
+			By("Waiting cluster update completes")
+			EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+			if checkCellIDs {
+				By("Checking that the upgraded cluster preserved the tablet cells")
+				Expect(getTabletCellIDs(ctx, ytClient)).To(ConsistOf(cellsBefore))
+			}
+		}
+
 		DescribeTableSubtree("Updating Ytsaurus image", Label("basic"),
 			func(oldEpoch, newEpoch string) {
 				newVersion := testutil.Images[newEpoch].YtsaurusVersion.String()
@@ -902,14 +925,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 
 					checkPodLabels(ctx, namespace)
 
-					log.Info("Update core image", "before", ytsaurus.Spec.CoreImage, "after", newImage)
-					ytsaurus.Spec.CoreImage = newImage
-					UpdateObject(ctx, ytsaurus)
-
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-
-					By("Waiting cluster update completes")
-					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					upgradeCoreImage(ctx, oldEpoch, newEpoch)
 					checkClusterHealth(ctx, ytClient)
 					checkChunkLocations(ytClient)
 
@@ -970,14 +986,7 @@ var _ = Describe("Basic e2e test for Ytsaurus controller", Label("e2e"), func() 
 					By("Checking chunk server for secondary master cells")
 					checkMasterCellChunkServer(ctx, ytClient, ytsaurus.Spec.SecondaryMasters[0].CellTag)
 
-					log.Info("Update core image", "before", ytsaurus.Spec.CoreImage, "after", newImage.Core)
-					ytsaurus.Spec.CoreImage = newImage.Core
-					UpdateObject(ctx, ytsaurus)
-
-					EventuallyYtsaurus(ctx, ytsaurus, reactionTimeout).Should(HaveObservedGeneration())
-
-					By("Waiting cluster update completes")
-					EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+					upgradeCoreImage(ctx, oldEpoch, newEpoch)
 					checkClusterHealth(ctx, ytClient)
 					checkChunkLocations(ytClient)
 
@@ -3122,6 +3131,20 @@ var _ = Describe("Spec version lock test", Label("version_lock"), Ordered, func(
 		Expect(k8sClient.Delete(ctx, &namespaceObject)).Should(Succeed())
 	})
 })
+
+func getTabletCellIDs(ctx context.Context, ytClient yt.Client) []string {
+	GinkgoHelper()
+	var cells struct {
+		IDs        []string `yson:",value"`
+		Incomplete bool     `yson:"incomplete,attr"`
+	}
+	err := ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &cells, &yt.ListNodeOptions{
+		MasterReadOptions: &yt.MasterReadOptions{ReadFrom: yt.ReadFromLeader},
+	})
+	Expect(err).To(Succeed())
+	Expect(cells.Incomplete).To(BeFalseBecause("the tablet cell listing must contain all IDs"))
+	return cells.IDs
+}
 
 func checkClusterHealth(ctx context.Context, ytClient yt.Client) {
 	By("Checking that cluster is alive")

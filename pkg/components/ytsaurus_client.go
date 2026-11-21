@@ -228,6 +228,10 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 
 	case ytv1.UpdateStateWaitingForCypressPatch:
 		if !yc.ytsaurus.IsUpdateStatusConditionTrue(consts.ConditionCypressPatchApplied) {
+			ready, err := yc.tabletCellMapReadyAfterMasterRestart(ctx)
+			if err != nil || !ready {
+				return SimpleStatus(SyncStatusUpdating), err
+			}
 			if err := yc.SyncCypressPatch(ctx); err != nil {
 				return SimpleStatus(SyncStatusUpdating), err
 			}
@@ -242,6 +246,35 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 	}
 
 	return SimpleStatus(SyncStatusUpdating), nil
+}
+
+func (yc *YtsaurusClient) tabletCellMapReadyAfterMasterRestart(ctx context.Context) (bool, error) {
+	exitReadOnly := yc.ytsaurus.GetUpdateStateCompleteCondition(ytv1.UpdateStateWaitingForMasterExitReadOnly)
+	if !yc.ytsaurus.IsUpdateStatusConditionTrue(exitReadOnly) || yc.ShouldSkipCypressOperations() {
+		return true, nil
+	}
+
+	// On upgrade to 25.3 the master removes the legacy map during snapshot load.
+	// The world initializer publishes the replacement after the master becomes writable.
+	var cells []string
+	err := yc.ytClient.ListNode(ctx, ypath.Path(consts.TabletCellsPath), &cells, &yt.ListNodeOptions{
+		MaxSize:           ptr.To(int64(1)),
+		MasterReadOptions: &yt.MasterReadOptions{ReadFrom: yt.ReadFromLeader},
+	})
+	if err == nil {
+		return true, nil
+	}
+	if !yterrors.ContainsResolveError(err) {
+		return false, fmt.Errorf("listing %s after master restart: %w", consts.TabletCellsPath, err)
+	}
+
+	yc.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    consts.ConditionCypressPatchApplied,
+		Status:  metav1.ConditionFalse,
+		Reason:  "WaitingForTabletCellMap",
+		Message: "Waiting for " + consts.TabletCellsPath + " after master restart",
+	})
+	return false, nil
 }
 
 func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
