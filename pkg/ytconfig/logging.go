@@ -17,7 +17,7 @@ func defaultStderrLoggerSpec() ytv1.TextLoggerSpec {
 	return ytv1.TextLoggerSpec{
 		BaseLoggerSpec: ytv1.BaseLoggerSpec{
 			Name:               "stderr",
-			MinLogLevel:        ytv1.LogLevelError,
+			MinLogLevel:        ytv1.LogLevelWarning,
 			Compression:        ytv1.LogCompressionNone,
 			UseTimestampSuffix: false,
 			Format:             ytv1.LogFormatPlainText,
