@@ -845,6 +845,9 @@ spec:
                   assignMasterCellsRoles:
                     description: Trigger master cells roles assignment.
                     type: boolean
+                  removeTabletCellsOnUpdate:
+                    description: Remove tablet cells before updating tablet nodes.
+                    type: boolean
                   shutdown:
                     description: Shutdown defines which components are scaled down
                       to zero replicas during...
@@ -854,8 +857,6 @@ spec:
                     - ExceptMasters
                     - Tablets
                     type: string
-                required:
-                - shutdown
                 type: object
               configOverrides:
                 description: Configmap with patches for overriding options in generated

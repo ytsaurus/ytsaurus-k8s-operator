@@ -1174,10 +1174,12 @@ type ClusterMaintenance struct {
 	// Shutdown defines which components are scaled down to zero replicas during cluster maintenance.
 	// Component configs are not changed: cluster functions are degraded accordingly.
 	//+kubebuilder:validation:Enum={"Compute","Everything","ExceptMasters","Tablets"}
-	Shutdown ClusterShutdown `json:"shutdown"`
+	Shutdown ClusterShutdown `json:"shutdown,omitempty"`
 	// Trigger master cells roles assignment.
 	// +optional
 	AssignMasterCellsRoles bool `json:"assignMasterCellsRoles,omitempty"`
+	// Remove tablet cells before updating tablet nodes.
+	RemoveTabletCellsOnUpdate bool `json:"removeTabletCellsOnUpdate,omitempty"`
 	// TODO: Add flags to stay in read-only, safe-mode, etc.
 }
 

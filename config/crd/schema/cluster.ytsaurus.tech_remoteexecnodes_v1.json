@@ -909,12 +909,13 @@
         "clusterMaintenance": {
           "description": "Controls cluster maintenance.",
           "type": "object",
-          "required": [
-            "shutdown"
-          ],
           "properties": {
             "assignMasterCellsRoles": {
               "description": "Trigger master cells roles assignment.",
+              "type": "boolean"
+            },
+            "removeTabletCellsOnUpdate": {
+              "description": "Remove tablet cells before updating tablet nodes.",
               "type": "boolean"
             },
             "shutdown": {
