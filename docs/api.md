@@ -381,6 +381,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `shutdown` _[ClusterShutdown](#clustershutdown)_ | Shutdown defines which components are scaled down to zero replicas during cluster maintenance.<br />Component configs are not changed: cluster functions are degraded accordingly. |  | Enum: [Compute Everything ExceptMasters Tablets] <br /> |
 | `assignMasterCellsRoles` _boolean_ | Trigger master cells roles assignment. |  |  |
+| `removeTabletCellsOnUpdate` _boolean_ | Remove tablet cells before updating tablet nodes. |  |  |
 
 
 #### ClusterNodesSpec
