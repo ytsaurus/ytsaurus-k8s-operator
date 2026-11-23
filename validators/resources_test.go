@@ -233,7 +233,7 @@ func TestValidateMasterSidecarQoS(t *testing.T) {
 				if guaranteed {
 					master.Resources = guaranteedTestResources("2")
 				}
-				testCase.configure(master)
+				testCase.configure(&master.MastersSpec)
 				results := NewYtsaurusValidator().validatePrimaryMasters(builder.Ytsaurus, nil)
 				require.Empty(t, results.Errors)
 				if guaranteed && testCase.wantWarning != "" {

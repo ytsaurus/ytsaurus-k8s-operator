@@ -27,6 +27,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	mock_yt "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/mock"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytcluster"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 
 	. "github.com/ytsaurus/ytsaurus-k8s-operator/pkg/components"
@@ -81,7 +82,7 @@ var _ = Describe("Tablet node test", func() {
 						InstanceCount: 1,
 					},
 				},
-				PrimaryMasters: ytv1.MastersSpec{
+				PrimaryMasters: ytv1.PrimaryMastersSpec{MastersSpec: ytv1.MastersSpec{
 					MasterConnectionSpec: ytv1.MasterConnectionSpec{
 						CellTag: 1,
 					},
@@ -114,7 +115,7 @@ var _ = Describe("Tablet node test", func() {
 							},
 						},
 					},
-				},
+				}},
 				HTTPProxies: []ytv1.HTTPProxiesSpec{
 					{
 						ServiceType: "NodePort",
@@ -183,14 +184,14 @@ var _ = Describe("Tablet node test", func() {
 		})
 
 		It("Tablet node Sync; ytclient not ready", func(ctx context.Context) {
-			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
+			cfgen := ytconfig.NewLocalNodeGenerator(ytcluster.NewCluster(ytsaurusSpec), ytsaurusSpec.Name, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, k8sClient, record.NewFakeRecorder(100), testScheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
 			ytsaurusClient.SetStatus(SimpleStatus(SyncStatusPending))
 
-			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, nil, ytsaurusSpec.Spec.TabletNodes[0], true)
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, nil, &ytsaurusSpec.Spec.TabletNodes[0], true)
 			provisionTabletNode(ctx, tabletNode)
 
 			status, err := tabletNode.Sync(ctx, true)
@@ -206,11 +207,11 @@ var _ = Describe("Tablet node test", func() {
 
 		It("Tablet node Sync; pods are not ready", func(ctx context.Context) {
 			ytsaurusSpec.Spec.TabletNodes[0].InstanceCount = 1
-			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
+			cfgen := ytconfig.NewLocalNodeGenerator(ytcluster.NewCluster(ytsaurusSpec), ytsaurusSpec.Name, "cluster_domain")
 			ytsaurus := apiproxy.NewYtsaurus(ytsaurusSpec, k8sClient, record.NewFakeRecorder(100), testScheme)
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
-			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, nil, ytsaurusSpec.Spec.TabletNodes[0], true)
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, nil, &ytsaurusSpec.Spec.TabletNodes[0], true)
 			provisionTabletNode(ctx, tabletNode)
 
 			status, err := tabletNode.Sync(ctx, true)
@@ -240,8 +241,8 @@ var _ = Describe("Tablet node test", func() {
 			getNetError := net.UnknownNetworkError("get: some net error")
 			createCellNetError := net.UnknownNetworkError("create cell: some net error")
 
-			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
-			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, nil, ytsaurusSpec.Spec.TabletNodes[0], true)
+			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytcluster.NewCluster(ytsaurusSpec), ytsaurusSpec.Name, "cluster_domain")
+			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, nil, &ytsaurusSpec.Spec.TabletNodes[0], true)
 			provisionTabletNode(ctx, tabletNode)
 
 			By("Failed to check if there is //sys/tablet_cell_bundles/sys.")
@@ -546,8 +547,8 @@ var _ = Describe("Tablet node test", func() {
 							}})).Return(yt.NodeID(guid.New()), nil)
 			}
 
-			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
-			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, nil, ytsaurusSpec.Spec.TabletNodes[0], true)
+			nodeCfgen := ytconfig.NewLocalNodeGenerator(ytcluster.NewCluster(ytsaurusSpec), ytsaurusSpec.Name, "cluster_domain")
+			tabletNode := NewTabletNode(nodeCfgen, ytsaurus, ytsaurusClient, nil, &ytsaurusSpec.Spec.TabletNodes[0], true)
 			provisionTabletNode(ctx, tabletNode)
 
 			status, err := tabletNode.Sync(ctx, false)
@@ -564,8 +565,8 @@ var _ = Describe("Tablet node test", func() {
 
 			ytsaurusClient := NewFakeYtsaurusClient(mockYtClient)
 
-			cfgen := ytconfig.NewLocalNodeGenerator(ytsaurusSpec, ytsaurusSpec.Name, "cluster_domain")
-			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, nil, ytsaurusSpec.Spec.TabletNodes[0], false)
+			cfgen := ytconfig.NewLocalNodeGenerator(ytcluster.NewCluster(ytsaurusSpec), ytsaurusSpec.Name, "cluster_domain")
+			tabletNode := NewTabletNode(cfgen, ytsaurus, ytsaurusClient, nil, &ytsaurusSpec.Spec.TabletNodes[0], false)
 			provisionTabletNode(ctx, tabletNode)
 
 			status, err := tabletNode.Sync(ctx, true)

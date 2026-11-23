@@ -30,7 +30,7 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 					InstanceCount: 3,
 				},
 			},
-			PrimaryMasters: ytv1.MastersSpec{
+			PrimaryMasters: ytv1.PrimaryMastersSpec{MastersSpec: ytv1.MastersSpec{
 				InstanceSpec: ytv1.InstanceSpec{
 					InstanceCount: 3,
 					Locations: []ytv1.LocationSpec{
@@ -47,7 +47,7 @@ func BuildMinimalYtsaurus(namespace, name string) ytv1.Ytsaurus {
 				MasterConnectionSpec: ytv1.MasterConnectionSpec{
 					CellTag: 1,
 				},
-			},
+			}},
 			HTTPProxies: []ytv1.HTTPProxiesSpec{
 				{
 					InstanceSpec: ytv1.InstanceSpec{InstanceCount: 3},
