@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"go.ytsaurus.tech/yt/go/yson"
+
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
@@ -61,15 +63,18 @@ func NewSpyt(cfgen *ytconfig.NodeGenerator, spyt *apiproxy.Spyt, ytsaurus *ytv1.
 			l,
 			spyt),
 	}
-	s.initUser.AddInitJobScript(s.createInitUserScript)
+	s.initUser.AddScript(consts.InitJobScriptName, s.createInitUserScript)
 	s.initEnvironment.AddInitJobScript(s.createInitScript)
 	return s
 }
 
-func (s *Spyt) createInitUserScript() string {
+func (s *Spyt) createInitUserScript() ([]string, error) {
 	token, _ := s.secret.GetValue(consts.TokenSecretKey)
 	commands := createUserCommand("spyt_releaser", "", token, true)
-	qtConfigCommand := s.buildQueryTrackerDynamicConfigCommand()
+	qtConfigCommand, err := s.buildQueryTrackerDynamicConfigCommand()
+	if err != nil {
+		return nil, err
+	}
 	if qtConfigCommand != "" {
 		commands = append(commands, qtConfigCommand)
 	}
@@ -78,25 +83,40 @@ func (s *Spyt) createInitUserScript() string {
 	}
 	script = append(script, commands...)
 
-	return strings.Join(script, "\n")
+	return script, nil
 }
 
-func (s *Spyt) buildQueryTrackerDynamicConfigCommand() string {
+func (s *Spyt) buildQueryTrackerDynamicConfigCommand() (string, error) {
 	sparkVersions := s.spyt.GetResource().Spec.SparkVersions
 	if len(sparkVersions) == 0 {
-		return ""
+		return "", nil
 	}
 	spytVersion := version.ExtractImageTag(s.spyt.GetResource().Spec.Image)
 	if spytVersion == "" {
-		return ""
+		return "", nil
 	}
 
-	return fmt.Sprintf(
-		"/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing\n"+
-			"/usr/bin/yt set -r //sys/query_tracker/config/query_tracker/spyt_connect_engine '{spark_version=\"%s\";spyt_version=\"%s\";}'",
-		sparkVersions[0],
-		spytVersion,
-	)
+	config := map[string]any{
+		"proxy_config": map[string]any{
+			"clusters": []string{s.labeller.GetClusterName()},
+			"default_settings": map[string]any{
+				"num_executors":   3,
+				"executor_cores":  2,
+				"executor_memory": "8G",
+			},
+		},
+		"spark_version": sparkVersions[0],
+		"spyt_version":  spytVersion,
+	}
+	configYson, err := yson.MarshalFormat(config, yson.FormatPretty)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal SPYT query tracker config: %w", err)
+	}
+
+	return strings.Join([]string{
+		"/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing",
+		fmt.Sprintf("/usr/bin/yt set -r //sys/query_tracker/config/query_tracker/spyt_engine '%s'", configYson),
+	}, "\n"), nil
 }
 
 func (s *Spyt) createInitScript() string {
