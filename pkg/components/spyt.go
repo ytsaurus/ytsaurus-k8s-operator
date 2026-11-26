@@ -113,10 +113,8 @@ func (s *Spyt) buildQueryTrackerDynamicConfigCommand() (string, error) {
 		return "", fmt.Errorf("failed to marshal SPYT query tracker config: %w", err)
 	}
 
-	return strings.Join([]string{
-		"/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing",
-		fmt.Sprintf("/usr/bin/yt set -r //sys/query_tracker/config/query_tracker/spyt_engine '%s'", configYson),
-	}, "\n"), nil
+	return "/usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing\n" +
+		fmt.Sprintf("/usr/bin/yt set -r //sys/query_tracker/config/query_tracker/spyt_engine '%s'", configYson), nil
 }
 
 func (s *Spyt) createInitScript() string {
