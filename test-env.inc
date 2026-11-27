@@ -37,12 +37,12 @@ export YTSAURUS_IMAGE_24_2_99 ?= ${YTSAURUS_IMAGE}-nightly:dev-24.2-2025-09-05-5
 
 ## ytsaurus latest+1 version
 # 26.1.0 not released
-YTSAURUS_VERSION_NIGHTLY ?=
+YTSAURUS_VERSION_NIGHTLY ?= 26.1.99
 export YTSAURUS_VERSION_NIGHTLY
 
 ## ytsaurus latest version
 # 25.4.2 is broken
-YTSAURUS_VERSION_LATEST ?=
+YTSAURUS_VERSION_LATEST ?= 25.4.99
 export YTSAURUS_VERSION_LATEST
 
 ## ytsaurus latest-1 version

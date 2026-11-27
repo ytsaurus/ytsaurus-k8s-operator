@@ -478,6 +478,14 @@ func (g *NodeGenerator) fillClusterConnection(c *ClusterConnection, s *ytv1.RPCT
 	}
 }
 
+func (g *NodeGenerator) fillUnregisteredMasterCells(c *ClusterConnection) {
+	masterCells := make([]MasterCell, len(g.unregisteredMasters))
+	for i := range g.unregisteredMasters {
+		g.fillMasterCell(&masterCells[i], &g.unregisteredMasters[i])
+	}
+	c.SecondaryMasters = append(c.SecondaryMasters, masterCells...)
+}
+
 func (g *NodeGenerator) fillDriverConfig(c *Driver) {
 	c.APIVersion = 4
 
@@ -766,6 +774,7 @@ func (g *NodeGenerator) GetNativeClientConfig() ([]byte, error) {
 
 	keyring := getMountKeyring(g.commonSpec, nil)
 	g.fillClusterConnection(&c.Driver.ClusterConnection, nil, keyring)
+	g.fillUnregisteredMasterCells(&c.Driver.ClusterConnection)
 	g.fillAddressResolver(&c.AddressResolver)
 	g.fillDriverConfig(&c.Driver.Driver)
 
