@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/name: yt-master
     app.kubernetes.io/part-of: yt-test-ytsaurus
     yt_component: test-ytsaurus-yt-master-4
+    ytsaurus.tech/cell-id: 65726e65-ad6b7562-40259-79747361
+    ytsaurus.tech/cell-tag: "4"
     ytsaurus.tech/cluster-name: test-ytsaurus
   name: ms-4
   namespace: ytsaurus-components
