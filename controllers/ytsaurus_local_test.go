@@ -37,6 +37,7 @@ var _ = Describe("Ytsaurus Controller", func() {
 				BaseReconciler: controllers.BaseReconciler{
 					ClusterDomain: "cluster.local",
 					Client:        mgr.GetClient(),
+					APIReader:     mgr.GetAPIReader(),
 					Scheme:        mgr.GetScheme(),
 					Recorder:      mgr.GetEventRecorderFor("ytsaurus-controller"),
 				},

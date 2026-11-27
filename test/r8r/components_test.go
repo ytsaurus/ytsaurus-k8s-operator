@@ -297,12 +297,12 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 					return c.Update(ctx, obj, opts...)
 				},
 				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
-					obj.SetGeneration(getGeneration(obj) + 1)
 					log.Info("Patch object",
 						"gvk", obj.GetObjectKind().GroupVersionKind(),
 						"name", obj.GetName(),
 						"generation", obj.GetGeneration(),
 					)
+					obj.SetGeneration(getGeneration(obj) + 1)
 					return client.Patch(ctx, obj, patch, opts...)
 				},
 				Delete: func(ctx context.Context, client client.WithWatch, obj client.Object, opts ...client.DeleteOption) error {
@@ -421,6 +421,7 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 			baseReconciler := controllers.BaseReconciler{
 				ClusterDomain: "cluster.local",
 				Client:        k8sClient,
+				APIReader:     k8sClient,
 				Scheme:        k8sScheme,
 				Recorder:      eventBroadcaster.NewRecorder(k8sScheme, corev1.EventSource{Component: "ytsaurus"}),
 			}
