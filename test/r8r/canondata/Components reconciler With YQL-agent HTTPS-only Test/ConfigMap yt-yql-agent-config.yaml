@@ -104,7 +104,7 @@ data:
             "dq_manager_config"={
                 "interconnect_port"=9035;
                 "grpc_port"=9036;
-                "use_ipv4"=%false;
+                "use_ipv4"=%true;
                 "yt_backends"=[
                     {
                         "cluster_name"="test-ytsaurus";
@@ -122,7 +122,7 @@ data:
                         "token_file"="/var/run/secrets/yql-agent-exec-secret/token";
                         user="yql_agent_exec";
                         "cpu_limit"=1;
-                        "worker_capacity"=128;
+                        "worker_capacity"=10;
                         "memory_limit"=2147483648;
                         "cache_size"=4294967296;
                         "use_tmp_fs"=%false;
