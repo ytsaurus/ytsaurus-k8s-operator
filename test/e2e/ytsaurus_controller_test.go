@@ -2555,6 +2555,82 @@ exec "$@"`
 			podsBeforeUpdate = getComponentPods(ctx, namespace)
 		})
 
+		Context("rolling HTTP proxies and bulk YQL agents", Label("rollingupdate", "bulk"), func() {
+			BeforeEach(func() {
+				ytBuilder.WithQueryTracker()
+				ytBuilder.WithYqlAgent()
+				ytBuilder.WithoutYqlUdf()
+				objects = append(objects, ytBuilder.Overrides)
+				ytsaurus.Spec.HTTPProxies[0].InstanceCount = 2
+				ytsaurus.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(int32(1))
+			})
+
+			It("recreates bulk YQL agents while the default HTTP proxy rollout is held open", func(ctx context.Context) {
+				By("Changing both components' static logging configurations in one update")
+				hp := &ytsaurus.Spec.HTTPProxies[0]
+				hp.Loggers[0].MinLogLevel = ytv1.LogLevelWarning
+				// New proxy pods cannot start until this ConfigMap exists. The old replica
+				// continues serving the YT client while YQL completes its bulk update.
+				const gate = "hold-proxy-rollout"
+				hp.Volumes = append(hp.Volumes, ytv1.Volume{
+					Name: gate, VolumeSource: ytv1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: gate}},
+					},
+				})
+				hp.VolumeMounts = append(hp.VolumeMounts, corev1.VolumeMount{Name: gate, MountPath: "/tmp/hold-proxy-rollout"})
+				ytsaurus.Spec.YQLAgents.Loggers[0].MinLogLevel = ytv1.LogLevelWarning
+				ytsaurus.Spec.UpdatePlan = []ytv1.ComponentUpdateSelector{
+					{
+						Component: ytv1.Component{Type: consts.HttpProxyType},
+						Strategy: &ytv1.ComponentUpdateStrategy{
+							RollingUpdate: &ytv1.ComponentRollingUpdateMode{},
+							RunPreChecks:  ptr.To(true),
+						},
+					},
+					{
+						Component: ytv1.Component{Type: consts.YqlAgentType},
+						Strategy:  &ytv1.ComponentUpdateStrategy{RunPreChecks: ptr.To(true)},
+					},
+				}
+				UpdateObject(ctx, ytsaurus)
+
+				By("Waiting for YQL to pass its precheck and remove its old pods")
+				yqlAgent := generator.GetComponentLabeller(consts.YqlAgentType, "")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(And(
+					HaveClusterUpdatingComponents(consts.HttpProxyType, consts.YqlAgentType),
+					HaveUpdateStatusConditionTrue(yqlAgent.GetReadyCondition()),
+					HaveUpdateStatusConditionTrue(yqlAgent.GetPodsRemovedCondition()),
+				))
+
+				By("Checking that the new YQL pod is serving before the proxy rollout is released")
+				yql := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "yqla"}}
+				Eventually(ctx, func(g Gomega) {
+					g.Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(yql), yql)).To(Succeed())
+					g.Expect(yql.Spec.Replicas).To(HaveValue(Equal(int32(1))))
+					g.Expect(yql.Status.ObservedGeneration).To(Equal(yql.Generation))
+					g.Expect(yql.Status.AvailableReplicas).To(Equal(int32(1)))
+					g.Expect(yql.Status.UpdatedReplicas).To(Equal(int32(1)))
+					var pod corev1.Pod
+					g.Expect(k8sClient.Get(ctx, client.ObjectKey{Namespace: namespace, Name: "yqla-0"}, &pod)).To(Succeed())
+					g.Expect(pod.UID).NotTo(Equal(podsBeforeUpdate["yqla-0"].UID))
+				}, upgradeTimeout, pollInterval).Should(Succeed())
+				proxy := &appsv1.StatefulSet{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "hp"}}
+				EventuallyObject(ctx, proxy, reactionTimeout).Should(And(
+					HaveField("Status.UpdatedReplicas", int32(1)),
+					HaveField("Status.AvailableReplicas", int32(1)),
+				))
+				CurrentlyObject(ctx, ytsaurus).Should(HaveClusterStateUpdating())
+
+				By("Allowing the new proxy pods to start")
+				Expect(k8sClient.Create(ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: gate}})).To(Succeed())
+
+				By("Waiting for both components to finish updating")
+				EventuallyYtsaurus(ctx, ytsaurus, upgradeTimeout).Should(HaveClusterStateRunning())
+				pods := getChangedPods(podsBeforeUpdate, getComponentPods(ctx, namespace))
+				Expect(pods.Updated).To(ConsistOf("hp-0", "hp-1", "yqla-0"))
+			})
+		})
+
 		DescribeTableSubtree("bulk strategy", Label("bulk"),
 			func(componentType consts.ComponentType, stsName string) {
 				BeforeEach(func() {

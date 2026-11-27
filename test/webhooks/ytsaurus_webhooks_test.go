@@ -539,6 +539,10 @@ var _ = Describe("Test for Ytsaurus webhooks", func() {
 			Entry("both class and component", []ytv1.ComponentUpdateSelector{
 				{Class: consts.ComponentClassStateless, Component: ytv1.Component{Type: consts.MasterType}},
 			}, "Only one of component or class should be specified"),
+			Entry("master and HTTP proxy", []ytv1.ComponentUpdateSelector{
+				{Component: ytv1.Component{Type: consts.MasterType}},
+				{Component: ytv1.Component{Type: consts.HttpProxyType}},
+			}, "a master cell requires its own update plan with exactly one selector"),
 			Entry("unknown type", []ytv1.ComponentUpdateSelector{
 				{Component: ytv1.Component{Type: "Unknown"}},
 			}, "Unknown component type"),

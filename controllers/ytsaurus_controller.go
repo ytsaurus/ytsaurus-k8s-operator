@@ -254,6 +254,7 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 			)
 			// We do not update BlockedComponentsSummary here, it should be updated first thing in Running state.
 			ytsaurus.SetUpdatingComponents(cm.status.canUpdate)
+			cm.startGroupProgress()
 			ytsaurus.SetUpdateState(ytv1.UpdateStateNone)
 			ytsaurus.SetClusterState(ytv1.ClusterStateUpdating)
 			cm.initUpdateConditions(ctx)
@@ -288,9 +289,12 @@ func (r *YtsaurusReconciler) Sync(ctx context.Context, resource *ytv1.Ytsaurus) 
 
 	case ytv1.ClusterStateUpdating:
 		cm.status.nowUpdating = ytsaurus.GetUpdatingComponents()
-		updatePlan := resource.GetUpdatePlan()
-		cm.status.removeTabletCellsOnUpdate = ytsaurus.GetClusterMaintenance().RemoveTabletCellsOnUpdate && shouldRemoveTabletCellsOnUpdate(updatePlan, cm.status.nowUpdating)
-		cm.status.masterHotUpdate = shouldUseMasterHotUpdate(updatePlan, cm.status.nowUpdating)
+		if cm.advanceGroupProgress() || cm.targetChanged {
+			return ctrl.Result{Requeue: true}, ytsaurus.UpdateStatus(ctx)
+		}
+		groups := resource.Status.UpdateStatus.GroupProgress
+		cm.status.removeTabletCellsOnUpdate = ytsaurus.GetClusterMaintenance().RemoveTabletCellsOnUpdate && hasNonOnDeleteGroup(groups, consts.TabletNodeType)
+		cm.status.masterHotUpdate = !hasNonOnDeleteGroup(groups, consts.MasterType)
 
 		logger.Info("Ytsaurus updating",
 			"updateState", ytsaurus.GetUpdateState(),

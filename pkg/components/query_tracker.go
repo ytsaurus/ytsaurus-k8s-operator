@@ -102,7 +102,7 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 			if status, err := qt.updateQTState(ctx, dry); status != nil {
 				return *status, err
 			}
-			if qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			if qt.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 				qt.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQTStateUpdate {
 				return ComponentStatusReady(), err
 			}
@@ -139,11 +139,6 @@ func (qt *QueryTracker) Sync(ctx context.Context, dry bool) (ComponentStatus, er
 		return status, err
 	}
 
-	// FIXME: Refactor this mess. During update flow sync must do only actions for current update phase.
-	if qt.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && qt.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
-		return ComponentStatusReady(), nil
-	}
-
 	return ComponentStatusReady(), nil
 }
 
@@ -160,7 +155,7 @@ func (qt *QueryTracker) setup(ctx context.Context, dry bool) (ComponentStatus, e
 	}
 
 	for _, tnd := range qt.tabletNodes {
-		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
+		if tndStatus := servingDependencyStatus(qt.ytsaurus, tnd); !tndStatus.IsRunning() {
 			return tndStatus.Blocker(), nil
 		}
 	}

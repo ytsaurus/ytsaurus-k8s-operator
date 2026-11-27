@@ -9,7 +9,7 @@
    name: test-ytsaurus
    namespace: ytsaurus-components
 -  resourceVersion: "30"
-+  resourceVersion: "44"
++  resourceVersion: "47"
  spec:
    clusterFeatures: {}
 +  configOverrides:

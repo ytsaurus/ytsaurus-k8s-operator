@@ -1276,6 +1276,8 @@ type ComponentUpdateSelector struct {
 	//+kubebuilder:validation:Enum={"","Nothing","Stateless","Everything"}
 	Class ComponentClass `json:"class,omitempty"`
 	// Selects components by type and/or instance group name.
+	// Outside ExceptMasters maintenance, an explicit Master selector must be the only entry.
+	// Omit its name to select the primary cell or use a secondary cell's decimal cell tag.
 	Component Component `json:"component,omitempty"`
 	// Limits count of instance groups updated concurrently.
 	//+kubebuilder:validation:Minimum=0
@@ -1302,10 +1304,35 @@ func (selector *ComponentUpdateSelector) GetUpdateStrategyType() ComponentUpdate
 	return selector.Strategy.Type()
 }
 
+// ComponentUpdatePhase tracks one instance group's workload within a cluster update.
+// +kubebuilder:validation:Enum=Pending;Removing;Creating;Replacing;WorkloadStarted
+type ComponentUpdatePhase string
+
+const (
+	ComponentUpdatePhasePending         ComponentUpdatePhase = "Pending"
+	ComponentUpdatePhaseRemoving        ComponentUpdatePhase = "Removing"
+	ComponentUpdatePhaseCreating        ComponentUpdatePhase = "Creating"
+	ComponentUpdatePhaseReplacing       ComponentUpdatePhase = "Replacing"
+	ComponentUpdatePhaseWorkloadStarted ComponentUpdatePhase = "WorkloadStarted"
+)
+
+type ComponentUpdateProgress struct {
+	Component `json:",inline"`
+	// Strategy selected when this group entered the update. Omitted for legacy bulk updates.
+	Strategy *ComponentUpdateStrategy `json:"strategy,omitempty"`
+	// Revision of the workload targeted by this group update.
+	TargetRevision string               `json:"targetRevision,omitempty"`
+	Phase          ComponentUpdatePhase `json:"phase"`
+	// Current reason the group is waiting for its next step.
+	Reason string `json:"reason,omitempty"`
+}
+
 type UpdateStatus struct {
 	State UpdateState `json:"state,omitempty"`
 	// Subset of cluster components currently updating.
 	UpdatingComponents []Component `json:"updatingComponents,omitempty"`
+	// Workload progress for each admitted component type and instance group name.
+	GroupProgress []ComponentUpdateProgress `json:"groupProgress,omitempty"`
 	// Summary for kubectl column.
 	UpdatingComponentsSummary string `json:"updatingComponentsSummary,omitempty"`
 	// Summary for kubectl column.

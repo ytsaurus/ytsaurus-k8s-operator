@@ -36,6 +36,8 @@ type server interface {
 
 	setUpdateStrategy(strategy appsv1.StatefulSetUpdateStrategyType, partition, maxUnavailable int32)
 	getRollingUpdateStatus(ctx context.Context) (*stsRollingStatus, error)
+	hasAvailableReplicas(minimum int32) bool
+	scaledToZero() bool
 
 	needUpdate() ComponentStatus
 	needSync(updating bool) bool
@@ -319,6 +321,16 @@ func (s *serverImpl) Exists() bool {
 	return resources.Exists(s.statefulSet, s.configs, s.timbertruckConfigs, s.headlessService, s.monitoringService)
 }
 
+func (s *serverImpl) desiredWorkloadRevision() (string, error) {
+	configs, err := s.configs.desiredData(false)
+	if err != nil {
+		return "", err
+	}
+	return resources.Hash(s.image, s.sidecarImages, s.instanceCount, s.instanceSpec, s.commonPodSpec,
+		s.commonSpec.ImagePullSecrets, s.commonSpec.CARootBundle, s.commonSpec.CABundle,
+		s.commonSpec.NativeTransport, s.componentContainerPorts, configs)
+}
+
 func (s *serverImpl) getPodAnnotation(name string) string {
 	return s.statefulSet.OldObject().Spec.Template.Annotations[name]
 }
@@ -368,6 +380,9 @@ func (s *serverImpl) Sync(ctx context.Context) error {
 	if err := s.setInstanceHash(); err != nil {
 		return err
 	}
+	if target := activeWorkloadTarget(s.proxy, s.labeller); target != "" {
+		metav1.SetMetaDataAnnotation(&s.builtStatefulSet.ObjectMeta, consts.GroupUpdateTargetAnnotationName, target)
+	}
 
 	return resources.Sync(ctx,
 		s.statefulSet,
@@ -411,6 +426,9 @@ func (s *serverImpl) needUpdate() ComponentStatus {
 	if !s.Exists() {
 		return ComponentStatusPending("init")
 	}
+	if target := activeWorkloadTarget(s.proxy, s.labeller); needsWorkloadTargetSync(target, s.statefulSet.OldObject().Annotations) {
+		return ComponentStatusNeedUpdate("workload target changed")
+	}
 	if !s.podsImageCorrespondsToSpec() {
 		return ComponentStatusNeedUpdate("image update")
 	}
@@ -438,6 +456,17 @@ func (s *serverImpl) getImageHeaterTarget() *ImageHeaterTarget {
 
 func (s *serverImpl) getInstanceCount() int32 {
 	return s.instanceCount
+}
+
+func (s *serverImpl) scaledToZero() bool {
+	sts := s.statefulSet.OldObject()
+	return s.statefulSet.Exists() && sts.Spec.Replicas != nil && *sts.Spec.Replicas == 0
+}
+
+func (s *serverImpl) hasAvailableReplicas(minimum int32) bool {
+	sts := s.statefulSet.OldObject()
+	return s.statefulSet.Exists() && sts.DeletionTimestamp == nil && s.statefulSet.GetReplicas() > 0 &&
+		sts.Status.ObservedGeneration == sts.Generation && sts.Status.AvailableReplicas >= minimum
 }
 
 func (s *serverImpl) setInstanceCount(instanceCount int32) {

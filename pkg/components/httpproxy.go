@@ -128,6 +128,27 @@ func (hp *HttpProxy) Fetch(ctx context.Context) error {
 	)
 }
 
+// clientDependencyStatus checks whether the operator can use the proxy. During an
+// in-place update, one available replica can serve other components' prechecks.
+func (hp *HttpProxy) clientDependencyStatus() ComponentStatus {
+	state := hp.ytsaurus.GetUpdateState()
+	if hp.ytsaurus.IsUpdating() && IsUpdatingComponent(hp.ytsaurus, hp) &&
+		(state == ytv1.UpdateStateWaitingForPodsRemoval || state == ytv1.UpdateStateWaitingForPodsCreation) {
+		group := hp.ytsaurus.GetGroupProgress(hp.GetComponent())
+		restoring := group != nil && hp.getWorkloadUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
+		if restoring || WorkloadReplacementMode(hp, groupUpdateStrategy(hp.ytsaurus, hp.GetComponent())) {
+			if !hp.balancingService.Exists() || hp.balancingService.OldObject().DeletionTimestamp != nil || !hp.server.hasAvailableReplicas(1) {
+				return ComponentStatusBlocked("Waiting for an available HTTP proxy at %s", hp.balancingService.Name())
+			}
+			return ComponentStatusReady()
+		}
+	}
+	if status := hp.GetStatus(); !status.IsRunning() {
+		return status.Blocker()
+	}
+	return ComponentStatusReady()
+}
+
 func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
@@ -141,7 +162,7 @@ func (hp *HttpProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error
 		if status, err := dispatchComponentUpdate(ctx, hp.ytsaurus, hp, &hp.component, hp.server, dry); status != nil {
 			return *status, err
 		}
-		if hp.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if hp.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			return ComponentStatusReady(), nil
 		}
 	}

@@ -65,7 +65,7 @@ func (ca *ControllerAgent) Sync(ctx context.Context, dry bool) (ComponentStatus,
 		if status, err := dispatchComponentUpdate(ctx, ca.ytsaurus, ca, &ca.component, ca.server, dry); status != nil {
 			return *status, err
 		}
-		if ca.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if ca.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			return ComponentStatusReady(), nil
 		}
 	}

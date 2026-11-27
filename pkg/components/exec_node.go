@@ -2,8 +2,11 @@ package components
 
 import (
 	"context"
+	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -100,9 +103,16 @@ func (n *ExecNode) Sync(ctx context.Context, dry bool) (ComponentStatus, error) 
 		if status, err := dispatchComponentUpdate(ctx, n.ytsaurus, n, &n.component, n.server, dry); status != nil {
 			return *status, err
 		}
-		// Rolling update completed, re-enable scheduler jobs on all remaining pods of this STS.
-		if !dry {
-			n.enableSchedulerJobs(ctx)
+		if n.getWorkloadUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			// Keep retrying cleanup while the batch waits for other groups.
+			// PodsUpdated already allows the batch to advance and restore a bulk-updated proxy.
+			if status := n.finishSchedulerJobsCleanup(ctx, dry); status != nil {
+				return *status, nil
+			}
+		} else if !dry {
+			if err := n.enableSchedulerJobs(ctx); err != nil {
+				log.FromContext(ctx).V(1).Info("Scheduler jobs could not be re-enabled", "component", n.GetFullName(), "error", err)
+			}
 		}
 	}
 
@@ -166,22 +176,42 @@ func (n *ExecNode) drainExecNodeForRollingUpdate(ctx context.Context) ComponentS
 	return ComponentStatusReady()
 }
 
-// enableSchedulerJobs called after rolling update completion to clean up the last drained pod.
-func (n *ExecNode) enableSchedulerJobs(ctx context.Context) {
-	if n.ytsaurusClient == nil {
-		return
+// PodsUpdated lets the update proceed once the pods are replaced. Re-enabling
+// scheduler jobs can still fail, so SchedulerJobsEnabled tracks that write
+// separately and lets the operator retry it while other groups are updating.
+func (n *ExecNode) finishSchedulerJobsCleanup(ctx context.Context, dry bool) *ComponentStatus {
+	condition := n.GetLabeller().GetCondition(consts.ConditionSchedulerJobsEnabled)
+	if n.ytsaurus.IsUpdateStatusConditionTrue(condition) {
+		return nil
+	}
+	if dry {
+		status := ComponentStatusPending("Re-enabling scheduler jobs")
+		return &status
+	}
+	if err := n.enableSchedulerJobs(ctx); err != nil {
+		status := ComponentStatusPending("Re-enabling scheduler jobs: %v", err)
+		return &status
+	}
+	n.ytsaurus.SetUpdateStatusCondition(ctx, metav1.Condition{
+		Type:    condition,
+		Status:  metav1.ConditionTrue,
+		Reason:  consts.ConditionSchedulerJobsEnabled,
+		Message: "Scheduler jobs re-enabled",
+	})
+	return nil
+}
+
+func (n *ExecNode) enableSchedulerJobs(ctx context.Context) error {
+	if n.ytsaurusClient == nil || n.ytsaurusClient.GetYtClient() == nil {
+		return fmt.Errorf("YT client is not available")
 	}
 	ytClient := n.ytsaurusClient.GetYtClient()
-	if ytClient == nil {
-		return
-	}
-
-	totalCount := int(n.server.getInstanceCount())
-	for i := range totalCount {
+	for i := range int(n.server.getInstanceCount()) {
 		if err := n.setExecNodeDisableSchedulerJobs(ctx, ytClient, i, false); err != nil {
-			return
+			return fmt.Errorf("enabling scheduler jobs for ordinal %d: %w", i, err)
 		}
 	}
+	return nil
 }
 
 func (n *ExecNode) execNodeInstancePath(ordinal int) ypath.Path {

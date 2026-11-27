@@ -295,13 +295,60 @@ func (c *component) SetReadyCondition(status ComponentStatus) {
 	})
 }
 
+func (c *component) getWorkloadUpdateState() ytv1.UpdateState {
+	return c.ytsaurus.GetComponentUpdateState(c.GetComponent())
+}
+
 func (c *component) IsUpdatingResources() bool {
 	if c.ytsaurus == nil {
 		return true
 	}
 	return c.ytsaurus.IsUpdating() &&
 		c.ytsaurus.IsUpdatingComponent(c.GetType(), c.GetShortName()) &&
-		c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
+		c.getWorkloadUpdateState() == ytv1.UpdateStateWaitingForPodsCreation
+}
+
+// A serving dependency may be mid-replacement while enough of its replicas
+// are available for other groups to start. Keep its normal gate in other phases.
+func servingDependencyStatus(ytsaurus *apiproxy.Ytsaurus, dependency Component) ComponentStatus {
+	status := dependency.GetStatus()
+	phase := ytsaurus.GetUpdateState()
+	if phase != ytv1.UpdateStateWaitingForPodsRemoval && phase != ytv1.UpdateStateWaitingForPodsCreation {
+		return status
+	}
+	progress := ytsaurus.GetGroupProgress(dependency.GetComponent())
+	if progress == nil || progress.Phase != ytv1.ComponentUpdatePhaseReplacing {
+		return status
+	}
+	if workload, ok := dependency.(interface{ hasServingReplicas() bool }); ok {
+		if workload.hasServingReplicas() {
+			return ComponentStatusReady()
+		}
+		status = ComponentStatusBlocked("Waiting for available replicas")
+		status.Component = dependency.GetFullName()
+	}
+	return status
+}
+
+func (c *serverComponent) hasServingReplicas() bool {
+	return c.server.hasAvailableReplicas(max(1, c.server.getMinReadyInstanceCount(0)))
+}
+
+// DesiredWorkloadRevision fingerprints the inputs used to update this group's
+// workload, independently of changes to another group or to its selector.
+func DesiredWorkloadRevision(c Component) (string, error) {
+	if workload, ok := c.(interface{ desiredWorkloadRevision() (string, error) }); ok {
+		return workload.desiredWorkloadRevision()
+	}
+	return "", nil
+}
+
+func (c *serverComponent) desiredWorkloadRevision() (string, error) {
+	return c.server.desiredWorkloadRevision()
+}
+
+func (c *microserviceComponent) desiredWorkloadRevision() (string, error) {
+	return c.microservice.desiredWorkloadRevision()
 }
 
 func (c *virtualComponent) ArePodsReady(ctx context.Context) (ComponentStatus, error) {
@@ -329,7 +376,7 @@ func (c *serverComponent) GetImageHeaterTarget() *ImageHeaterTarget {
 }
 
 func (c *microserviceComponent) NeedSync() bool {
-	return c.microservice.needSync()
+	return c.microservice.needSync(c.IsUpdatingResources())
 }
 
 func (c *microserviceComponent) NeedUpdate() ComponentStatus {

@@ -92,6 +92,22 @@ See [admin guide / install](https://ytsaurus.tech/docs/en/admin-guide/install-yt
 
 See [admin guide / update ](https://ytsaurus.tech/docs/en/admin-guide/update/).
 
+### Updating one master cell
+
+Outside `ExceptMasters` maintenance, an explicit `Master` selector must be the only
+entry in `spec.updatePlan`. Omit `name` for the primary cell. For a secondary cell,
+set `name` to its decimal `cellTag` as a quoted string. Both cells support bulk
+and `OnDelete` updates.
+
+| Target and strategy | `spec.updatePlan` |
+| --- | --- |
+| Primary cell, bulk | `[{component: {type: Master}}]` |
+| Secondary cell 12, OnDelete | `[{component: {type: Master, name: "12"}, strategy: {onDelete: {}}}]` |
+
+A `class: Everything` plan can update masters and other components in the same batch.
+In `ExceptMasters` maintenance, an unnamed `Master` selector matches all master
+cells so the operator can coordinate their snapshots and restarts.
+
 ## Cluster Maintenance
 
 Set [`spec.clusterMaintenance.shutdown`](api.md#clustershutdown) to temporarily shutdown

@@ -260,7 +260,7 @@ var flowConditions = map[ytv1.UpdateState]flowCondition{
 		return stepResultMarkUnsatisfied
 	},
 	ytv1.UpdateStateWaitingForPodsCreation: func(ctx context.Context, ytsaurus *apiProxy.Ytsaurus, componentManager *ComponentManager) stepResultMark {
-		if componentManager.status.allStarted {
+		if componentManager.workloadsStarted() {
 			return stepResultMarkHappy
 		}
 		return stepResultMarkUnsatisfied

@@ -106,7 +106,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 				return *status, err
 			}
 
-			if qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
+			if qa.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation &&
 				qa.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForQAStateUpdate {
 				return ComponentStatusReady(), err
 			}
@@ -124,7 +124,7 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return ComponentStatusBlockedBy("tablet nodes"), fmt.Errorf("cannot initialize queue agent without tablet nodes")
 	}
 	for _, tnd := range qa.tabletNodes {
-		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
+		if tndStatus := servingDependencyStatus(qa.ytsaurus, tnd); !tndStatus.IsRunning() {
 			return tndStatus.Blocker(), nil
 		}
 	}
@@ -152,8 +152,9 @@ func (qa *QueueAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		return status, err
 	}
 
-	// FIXME: Refactor this mess. During update flow sync must do only actions for current update phase.
-	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && qa.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
+	// Pod creation ends when the queue agent pods are ready.
+	// The queue-state job runs later, during WaitingForQAStateUpdate.
+	if qa.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && qa.getWorkloadUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
 		return ComponentStatusReady(), nil
 	}
 
@@ -354,7 +355,7 @@ func (qa *QueueAgent) setConditionQAStateUpdated(ctx context.Context) {
 
 func (qa *QueueAgent) initQAState(ctx context.Context, dry bool) (ComponentStatus, error) {
 	for _, tnd := range qa.tabletNodes {
-		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
+		if tndStatus := servingDependencyStatus(qa.ytsaurus, tnd); !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with queue agent state init.
 			return tndStatus.Blocker(), nil
 		}

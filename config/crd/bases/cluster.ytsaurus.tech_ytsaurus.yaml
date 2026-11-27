@@ -38108,6 +38108,50 @@ spec:
                       - type
                       type: object
                     type: array
+                  groupProgress:
+                    description: Workload progress for each admitted component type
+                      and instance group name.
+                    items:
+                      properties:
+                        name:
+                          type: string
+                        phase:
+                          description: ComponentUpdatePhase tracks one instance group's
+                            workload within a cluster...
+                          enum:
+                          - Pending
+                          - Removing
+                          - Creating
+                          - Replacing
+                          - WorkloadStarted
+                          type: string
+                        reason:
+                          description: Current reason the group is waiting for its
+                            next step.
+                          type: string
+                        strategy:
+                          description: Strategy selected when this group entered the
+                            update.
+                          properties:
+                            onDelete:
+                              type: object
+                            rollingUpdate:
+                              description: ComponentRollingUpdateMode configures the
+                                rolling update strategy.
+                              type: object
+                            runPreChecks:
+                              type: boolean
+                          type: object
+                        targetRevision:
+                          description: Revision of the workload targeted by this group
+                            update.
+                          type: string
+                        type:
+                          type: string
+                      required:
+                      - phase
+                      type: object
+                    type: array
                   masterCellsMaintenance:
                     description: State of master cells maintenance.
                     items:
