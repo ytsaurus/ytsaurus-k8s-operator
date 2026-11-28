@@ -6,6 +6,10 @@ metadata:
   namespace: ytsaurus-components
   resourceVersion: "9"
 spec:
+  image: ghcr.io/ytsaurus/spyt:2.11.2
+  sparkVersions:
+  - 3.5.9
+  - 4.2.1
   ytsaurus:
     name: test-ytsaurus
 status:

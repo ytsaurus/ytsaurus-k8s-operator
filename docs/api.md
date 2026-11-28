@@ -2768,7 +2768,7 @@ _Appears in:_
 | `imagePullSecrets` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core) array_ |  |  |  |
 | `ytsaurus` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#localobjectreference-v1-core)_ |  |  |  |
 | `image` _string_ |  |  |  |
-| `sparkVersions` _string array_ | If multiple versions are provided, only the first one is used for query tracker dynamic config. |  |  |
+| `sparkVersions` _string array_ | The most recent version is used for query tracker dynamic config.<br />Query Tracker supports only Spark 3.5.x and 4.x. |  |  |
 | `sparkDistribOffline` _boolean_ | Use only local artifacts for spark distribution setup. |  |  |
 
 

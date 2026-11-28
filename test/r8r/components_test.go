@@ -1032,6 +1032,8 @@ var _ = Describe("Components reconciler", Label("reconciler"), func() {
 	Context("With SPYT", Label("spyt"), func() {
 		BeforeEach(func(ctx context.Context) {
 			spyt := ytBuilder.CreateSpyt()
+			spyt.Spec.Image = "ghcr.io/ytsaurus/spyt:2.11.2"
+			spyt.Spec.SparkVersions = []string{"3.5.9", "4.2.1"}
 			Expect(k8sClient.Create(ctx, spyt)).To(Succeed())
 			controllerObjects = append(controllerObjects, spyt)
 		})

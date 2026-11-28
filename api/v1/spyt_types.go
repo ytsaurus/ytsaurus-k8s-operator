@@ -36,7 +36,8 @@ type SpytSpec struct {
 
 	Ytsaurus *corev1.LocalObjectReference `json:"ytsaurus,omitempty"`
 	Image    string                       `json:"image,omitempty"`
-	// If multiple versions are provided, only the first one is used for query tracker dynamic config.
+	// The most recent version is used for query tracker dynamic config.
+	// Query Tracker supports only Spark 3.5.x and 4.x.
 	SparkVersions []string `json:"sparkVersions,omitempty"`
 	// Use only local artifacts for spark distribution setup.
 	SparkDistribOffline bool `json:"sparkDistribOffline,omitempty"`

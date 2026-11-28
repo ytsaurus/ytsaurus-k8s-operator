@@ -19,7 +19,10 @@ package validators
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/util/validation/field"
+
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/version"
 )
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -37,5 +40,12 @@ func NewSpytValidator() *spytValidator {
 }
 
 func (r *spytValidator) evaluateSpytValidation(ctx context.Context, newSpyt, oldSpyt *ytv1.Spyt) Results {
-	return Results{}
+	var results Results
+	if newSpyt == nil || len(newSpyt.Spec.SparkVersions) == 0 || version.ExtractImageTag(newSpyt.Spec.Image) == "" {
+		return results
+	}
+	if _, err := version.LatestSpytQueryTrackerSparkVersion(newSpyt.Spec.SparkVersions); err != nil {
+		results.Error(field.Invalid(field.NewPath("spec", "sparkVersions"), newSpyt.Spec.SparkVersions, err.Error()))
+	}
+	return results
 }
