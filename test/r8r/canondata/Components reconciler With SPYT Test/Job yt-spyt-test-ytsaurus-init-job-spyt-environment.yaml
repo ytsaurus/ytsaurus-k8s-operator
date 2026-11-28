@@ -59,9 +59,12 @@ spec:
           value: http-proxies-lb.ytsaurus-components.svc.cluster.local
         - name: EXTRA_PUBLISH_CLUSTER_OPTIONS
           value: --ignore-existing
+        - name: SPARK_DISTRIB_VERSIONS
+          value: 3.5.9 4.2.1
         envFrom:
         - secretRef:
             name: yt-spyt-test-ytsaurus-secret
+        image: ghcr.io/ytsaurus/spyt:2.11.2
         name: ytsaurus-init
         resources: {}
         terminationMessagePolicy: FallbackToLogsOnError

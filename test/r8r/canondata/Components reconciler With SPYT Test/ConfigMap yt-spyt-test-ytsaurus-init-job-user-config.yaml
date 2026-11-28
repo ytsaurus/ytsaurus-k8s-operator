@@ -53,6 +53,22 @@ data:
     while [ "$(/usr/bin/yt check-permission --format json spyt_releaser administer /)" != '{"action":"allow"}' ] ; do sleep 1 ; done
     /usr/bin/yt create map_node '//sys/cypress_tokens/35bda0cd9ebc4630ec1d9113f5e6a354e8c07ff534c49ff8254a71d0453d21b3' --ignore-existing
     /usr/bin/yt set '//sys/cypress_tokens/35bda0cd9ebc4630ec1d9113f5e6a354e8c07ff534c49ff8254a71d0453d21b3/@user' 'spyt_releaser'
+    /usr/bin/yt create document //sys/query_tracker/config --attributes '{value={}}' --recursive --ignore-existing
+    /usr/bin/yt set -r //sys/query_tracker/config/query_tracker/spyt_engine '{
+        "default_cluster"="test-ytsaurus";
+        "proxy_config"={
+            clusters=[
+                "test-ytsaurus";
+            ];
+            "default_settings"={
+                "executor_cores"=2;
+                "executor_memory"="8G";
+                "num_executors"=3;
+            };
+        };
+        "spark_version"="4.2.1";
+        "spyt_version"="2.11.2";
+    }'
 metadata:
   annotations:
     ytsaurus.tech/config-hash: <censored>

@@ -95,8 +95,13 @@ func (s *Spyt) buildQueryTrackerDynamicConfigCommand() (string, error) {
 	if spytVersion == "" {
 		return "", nil
 	}
+	sparkVersion, err := version.LatestSpytQueryTrackerSparkVersion(sparkVersions)
+	if err != nil {
+		return "", err
+	}
 
 	config := map[string]any{
+		"default_cluster": s.labeller.GetClusterName(),
 		"proxy_config": map[string]any{
 			"clusters": []string{s.labeller.GetClusterName()},
 			"default_settings": map[string]any{
@@ -105,7 +110,7 @@ func (s *Spyt) buildQueryTrackerDynamicConfigCommand() (string, error) {
 				"executor_memory": "8G",
 			},
 		},
-		"spark_version": sparkVersions[0],
+		"spark_version": sparkVersion,
 		"spyt_version":  spytVersion,
 	}
 	configYson, err := yson.MarshalFormat(config, yson.FormatPretty)

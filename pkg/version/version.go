@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"runtime/debug"
 
@@ -99,4 +100,29 @@ func ParseImageVersion(image string) *Version {
 		return nil
 	}
 	return ver
+}
+
+// LatestSpytQueryTrackerSparkVersion selects and validates the latest Spark version.
+func LatestSpytQueryTrackerSparkVersion(sparkVersions []string) (string, error) {
+	var latest *Version
+	for _, sparkVersion := range sparkVersions {
+		if sparkVersion == "" {
+			continue
+		}
+		parsed, err := ParseVersion(sparkVersion)
+		if err != nil {
+			return "", fmt.Errorf("invalid Spark version %q: %w", sparkVersion, err)
+		}
+		if latest == nil || parsed.GreaterThan(latest) {
+			latest = parsed
+		}
+	}
+	if latest == nil {
+		return "", nil
+	}
+	sparkVersion := latest.Original()
+	if strings.HasPrefix(sparkVersion, "3.5") || strings.HasPrefix(sparkVersion, "4.") {
+		return sparkVersion, nil
+	}
+	return "", fmt.Errorf("incompatible Spark version %q: SPYT query tracker supports only Spark 3.5.x and 4.x", sparkVersion)
 }

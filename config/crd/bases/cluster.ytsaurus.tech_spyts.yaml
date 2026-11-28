@@ -60,8 +60,8 @@ spec:
                 description: Use only local artifacts for spark distribution setup.
                 type: boolean
               sparkVersions:
-                description: If multiple versions are provided, only the first one
-                  is used for query tracker...
+                description: The most recent version is used for query tracker dynamic
+                  config.
                 items:
                   type: string
                 type: array
