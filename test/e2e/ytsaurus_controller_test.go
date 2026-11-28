@@ -2559,8 +2559,6 @@ exec "$@"`
 			BeforeEach(func() {
 				ytBuilder.WithQueryTracker()
 				ytBuilder.WithYqlAgent()
-				ytBuilder.WithoutYqlUdf()
-				objects = append(objects, ytBuilder.Overrides)
 				ytsaurus.Spec.HTTPProxies[0].InstanceCount = 2
 				ytsaurus.Spec.HTTPProxies[0].MinReadyInstanceCount = ptr.To(int32(1))
 			})
