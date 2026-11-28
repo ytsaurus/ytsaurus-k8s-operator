@@ -7,7 +7,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/testutil"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/ytconfig"
 )
 
 var _ = Describe("addHydraPersistenceUploaderToPodSpec", func() {
@@ -160,6 +163,43 @@ var _ = Describe("addHydraPersistenceUploaderToPodSpec", func() {
 
 		for _, c := range podSpec.Containers {
 			Expect(c.Name).NotTo(Equal(consts.HydraPersistenceUploaderContainerName))
+		}
+	})
+})
+
+var _ = Describe("Secondary master workload updates", func() {
+	It("runs the shared jobs on the primary while replacing only the selected secondary", func(ctx SpecContext) {
+		resource := testutil.BuildMinimalYtsaurus("test", "test")
+		secondarySpec := resource.Spec.PrimaryMasters.DeepCopy()
+		secondarySpec.CellTag++
+		resource.Spec.SecondaryMasters = []ytv1.MastersSpec{*secondarySpec}
+		resource.Status.State = ytv1.ClusterStateUpdating
+		owner := apiproxy.NewYtsaurus(&resource, nil, nil, nil)
+		generator := ytconfig.NewGenerator(&resource, "cluster.local")
+		secondary := NewMaster(generator, owner, &resource.Spec.SecondaryMasters[0], nil)
+		primary := NewMaster(generator, owner, &resource.Spec.PrimaryMasters, []*Master{secondary})
+		owner.SetUpdatingComponents([]ytv1.Component{secondary.GetComponent()})
+
+		for _, state := range []ytv1.UpdateState{
+			ytv1.UpdateStateWaitingForSnapshots,
+			ytv1.UpdateStateWaitingForMasterExitReadOnly,
+			ytv1.UpdateStateWaitingForSidecarsInitialize,
+		} {
+			owner.SetUpdateState(state)
+			status, err := primary.Sync(ctx, true)
+			Expect(err).To(Succeed())
+			Expect(status.SyncStatus).To(Equal(SyncStatusPending))
+			Expect(status.Message).To(ContainSubstring(primary.initJob.Name()))
+		}
+		for _, state := range []ytv1.UpdateState{
+			ytv1.UpdateStateWaitingForPodsRemoval,
+			ytv1.UpdateStateWaitingForMasterReady,
+		} {
+			owner.SetUpdateState(state)
+			status, err := primary.Sync(ctx, true)
+			Expect(err).To(Succeed())
+			Expect(status.SyncStatus).To(Equal(SyncStatusReady))
+			Expect(status.Message).To(ContainSubstring("Not updating component"))
 		}
 	})
 })

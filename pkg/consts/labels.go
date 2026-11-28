@@ -28,6 +28,9 @@ const (
 	// Instance hash is computed from template of pod spec.
 	InstanceHashAnnotationName = "ytsaurus.tech/instance-hash"
 
+	// Group update target last submitted to the workload.
+	GroupUpdateTargetAnnotationName = "ytsaurus.tech/group-update-target"
+
 	// Observed generation of owner resource at the time of last update.
 	ObservedGenerationAnnotationName = "ytsaurus.tech/observed-generation"
 

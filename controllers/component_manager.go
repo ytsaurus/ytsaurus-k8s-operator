@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -23,6 +24,11 @@ type ComponentManager struct {
 	status        ComponentManagerStatus
 
 	getHeaterStatus func(ytv1.Component) components.ComponentStatus
+	// An unreadable group cannot act on partial observations. Other groups can
+	// still recover their workloads during the same reconcile.
+	groupErrors   map[ytv1.Component]error
+	deferred      map[ytv1.Component]bool
+	targetChanged bool
 }
 
 type ComponentManagerStatus struct {
@@ -35,10 +41,11 @@ type ComponentManagerStatus struct {
 	blocked []ytv1.Component // Components in state Blocked
 	started []ytv1.Component // Components in state Started
 
-	needUpdate   []ytv1.Component // Components in state NeedUpdate
-	canUpdate    []ytv1.Component // Components with update allowed
-	cannotUpdate []ytv1.Component // Components with update blocked
-	nowUpdating  []ytv1.Component // Components updating right now
+	needUpdate   []ytv1.Component               // Components in state NeedUpdate
+	canUpdate    []ytv1.Component               // Components with update allowed
+	cannotUpdate []ytv1.Component               // Components with update blocked
+	admitted     []ytv1.ComponentUpdateProgress // Exact selector policy chosen for each admitted group
+	nowUpdating  []ytv1.Component               // Components updating right now
 
 	clusterMaintenance bool
 	mastersMaintenance bool
@@ -90,13 +97,19 @@ func NewComponentManager(
 	m := components.NewMaster(cfgen, ytsaurus, &resource.Spec.PrimaryMasters, secondaryMasters)
 	allComponents = append(allComponents, m)
 
-	var hps []components.Component
+	var defaultHTTPProxy *components.HttpProxy
 	for _, hpSpec := range resource.Spec.HTTPProxies {
-		hps = append(hps, components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec))
+		hp := components.NewHTTPProxy(cfgen, ytsaurus, m, hpSpec)
+		allComponents = append(allComponents, hp)
+		if hp.GetShortName() == "" {
+			defaultHTTPProxy = hp
+		}
 	}
-	allComponents = append(allComponents, hps...)
+	if defaultHTTPProxy == nil {
+		return nil, fmt.Errorf("HTTP proxy with role %q is required", consts.DefaultHTTPProxyRole)
+	}
 
-	yc := components.NewYtsaurusClient(cfgen, ytsaurus, m, hps[0], getAllComponents)
+	yc := components.NewYtsaurusClient(cfgen, ytsaurus, m, defaultHTTPProxy, getAllComponents)
 	allComponents = append(allComponents, yc)
 
 	d := components.NewDiscovery(cfgen, ytsaurus, yc, m)
@@ -239,21 +252,25 @@ func (cm *ComponentManager) FetchStatus(ctx context.Context) error {
 	}
 
 	for _, component := range cm.allComponents {
-		err := component.Fetch(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to fetch component %s: %w", component.GetFullName(), err)
-		}
-
-		// TODO: Reorder logic into less weird sequence.
 		var status components.ComponentStatus
-		if cm.ytsaurus.IsReadyToUpdate() {
-			status = component.NeedUpdate()
+		err := component.Fetch(ctx)
+		if err == nil {
+			err = cm.refreshGroupTarget(component)
 		}
-		if !status.IsNeedUpdate() {
-			status, err = component.Sync(ctx, true)
-			if err != nil {
-				return fmt.Errorf("failed to get component %s status: %w", component.GetFullName(), err)
+		if err == nil {
+			if cm.ytsaurus.IsReadyToUpdate() {
+				status = component.NeedUpdate()
 			}
+			if !status.IsNeedUpdate() {
+				status, err = cm.observeComponent(ctx, component)
+			}
+		}
+		if err != nil {
+			err = fmt.Errorf("observing %s: %w", component.GetFullName(), err)
+			if !cm.recordGroupError(component, err) {
+				return err
+			}
+			status = components.ComponentStatusBlocked("%v", err)
 		}
 
 		component.SetStatus(status)
@@ -340,35 +357,42 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 
 	hasPending := false
 	hasStarted := false
-	var syncStatus components.ComponentStatus
 	var syncErr error
 	for _, c := range cm.allComponents {
-		status, err := c.Sync(ctx, true)
+		if err := cm.groupErrors[c.GetComponent()]; err != nil {
+			syncErr = errors.Join(syncErr, err)
+			continue
+		}
+		status, err := cm.observeComponent(ctx, c)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, fmt.Errorf("failed to get status for %s: %w", c.GetFullName(), err)
+			err = fmt.Errorf("failed to get status for %s: %w", c.GetFullName(), err)
+			if cm.recordGroupError(c, err) {
+				syncErr = errors.Join(syncErr, err)
+				continue
+			}
+			return ctrl.Result{Requeue: true}, err
 		}
 		c.SetStatus(status)
 
-		switch status.SyncStatus {
-		case components.SyncStatusPending, components.SyncStatusUpdating:
+		if status.SyncStatus == components.SyncStatusPending || status.SyncStatus == components.SyncStatusUpdating {
 			hasPending = true
 			logger.Info("Sync component",
 				"component", c.GetFullName(),
 				"status", status.SyncStatus,
 				"message", status.Message,
 			)
-			syncStatus, syncErr = c.Sync(ctx, false)
-		case components.SyncStatusStarted:
+			actionStatus, actionErr := c.Sync(ctx, false)
+			if actionErr != nil {
+				logger.Error(actionErr, "Cannot sync component", "component", c.GetFullName(),
+					"status", actionStatus.SyncStatus, "message", actionStatus.Message)
+				syncErr = errors.Join(syncErr, actionErr)
+				if cm.recordGroupError(c, actionErr) {
+					continue
+				}
+				break
+			}
+		} else if status.SyncStatus == components.SyncStatusStarted {
 			hasStarted = true
-		}
-
-		if syncErr != nil {
-			logger.Error(syncErr, "Cannot sync component",
-				"component", c.GetFullName(),
-				"status", syncStatus.SyncStatus,
-				"message", syncStatus.Message,
-			)
-			break
 		}
 
 		if cm.ytsaurus.IsInitializing() && c.GetType() == consts.ImageHeaterType {
@@ -396,6 +420,38 @@ func (cm *ComponentManager) Sync(ctx context.Context) (ctrl.Result, error) {
 	default:
 		return ctrl.Result{RequeueAfter: consts.DefaultClusterStatusPollPeriod}, nil
 	}
+}
+
+func (cm *ComponentManager) observeComponent(ctx context.Context, c components.Component) (components.ComponentStatus, error) {
+	if cm.deferred[c.GetComponent()] {
+		if c.GetType() == consts.MasterType && cm.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForMasterReady {
+			return c.ArePodsReady(ctx)
+		}
+		return components.ComponentStatusNeedUpdate("New workload target pending the next update"), nil
+	}
+	switch cm.ytsaurus.GetUpdateState() {
+	case ytv1.UpdateStateWaitingForMasterReady, ytv1.UpdateStateWaitingForMasterExitReadOnly:
+		// In an Everything update, normal replica repair must wait until masters are writable.
+		if c.GetType() != consts.MasterType && cm.ytsaurus.GetGroupProgress(c.GetComponent()) != nil {
+			return components.ComponentStatusBlocked("Waiting for master recovery"), nil
+		}
+	}
+	return c.Sync(ctx, true)
+}
+
+func (cm *ComponentManager) recordGroupError(c components.Component, err error) bool {
+	state := cm.ytsaurus.GetUpdateState()
+	p := cm.ytsaurus.GetGroupProgress(c.GetComponent())
+	if p == nil || (state != ytv1.UpdateStateWaitingForPodsRemoval && state != ytv1.UpdateStateWaitingForPodsCreation) {
+		return false
+	}
+	if cm.groupErrors == nil {
+		cm.groupErrors = make(map[ytv1.Component]error)
+	}
+	cm.groupErrors[c.GetComponent()] = err
+	p.Reason = err.Error()
+	c.SetStatus(components.ComponentStatusBlocked("%v", err))
+	return true
 }
 
 func (cm *ComponentManager) allUpdatingImagesAreHeated() bool {
@@ -430,11 +486,17 @@ func (cm *ComponentManager) areComponentPodsRemoved(component components.Compone
 
 func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSelector) {
 	cm.status.canUpdate = nil
+	cm.status.admitted = nil
 	cm.status.cannotUpdate = nil
 	count := make([]int32, len(updatePlan))
 	for _, component := range cm.status.needUpdate {
 		index := -1
 		for i, selector := range updatePlan {
+			// An explicit master plan selects one cell. A stored mixed plan may predate webhook validation.
+			if selector.Component.Type == consts.MasterType && !cm.status.mastersMaintenance &&
+				(len(updatePlan) != 1 || selector.Component != component) {
+				continue
+			}
 			if !canUpdateComponent(selector, component) {
 				continue
 			}
@@ -447,6 +509,11 @@ func (cm *ComponentManager) applyUpdatePlan(updatePlan []ytv1.ComponentUpdateSel
 		if index >= 0 {
 			count[index] += 1
 			cm.status.canUpdate = append(cm.status.canUpdate, component)
+			cm.status.admitted = append(cm.status.admitted, ytv1.ComponentUpdateProgress{
+				Component: component,
+				Strategy:  updatePlan[index].Strategy.DeepCopy(),
+				Phase:     ytv1.ComponentUpdatePhasePending,
+			})
 		} else {
 			cm.status.cannotUpdate = append(cm.status.cannotUpdate, component)
 		}
@@ -465,37 +532,6 @@ func (cm *ComponentManager) initUpdateConditions(ctx context.Context) {
 			cm.ytsaurus.SetUpdateStatusCondition(ctx, *condition)
 		}
 	}
-}
-
-// shouldRunPreUpdateStepsFor returns false when all updating components of the given type use OnDelete strategy
-func shouldRunPreUpdateStepsFor(
-	componentType consts.ComponentType,
-	updatePlan []ytv1.ComponentUpdateSelector,
-	updatingComponents []ytv1.Component,
-) bool {
-	for _, component := range updatingComponents {
-		if component.Type != componentType {
-			continue
-		}
-		for _, selector := range updatePlan {
-			if !canUpdateComponent(selector, component) {
-				continue
-			}
-			if selector.Strategy == nil || selector.Strategy.Type() != ytv1.ComponentUpdateModeTypeOnDelete {
-				return true // this component is NOT onDelete → must run pre-update steps
-			}
-			break
-		}
-	}
-	return false
-}
-
-func shouldRemoveTabletCellsOnUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
-	return shouldRunPreUpdateStepsFor(consts.TabletNodeType, updatePlan, updatingComponents)
-}
-
-func shouldUseMasterHotUpdate(updatePlan []ytv1.ComponentUpdateSelector, updatingComponents []ytv1.Component) bool {
-	return !shouldRunPreUpdateStepsFor(consts.MasterType, updatePlan, updatingComponents)
 }
 
 func canUpdateComponent(selector ytv1.ComponentUpdateSelector, component ytv1.Component) bool {

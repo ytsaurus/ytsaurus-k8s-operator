@@ -21,6 +21,7 @@ type podsManager interface {
 	setInstanceCount(instanceCount int32)
 	getMinReadyInstanceCount(margin int32) int32
 	getPodAnnotation(name string) string
+	desiredWorkloadRevision() (string, error)
 	listPods(ctx context.Context) ([]corev1.Pod, error)
 
 	removePods(ctx context.Context) error

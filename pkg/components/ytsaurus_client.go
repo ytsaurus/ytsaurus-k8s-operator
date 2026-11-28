@@ -44,7 +44,7 @@ type YtsaurusClient struct {
 
 	cfgen     *ytconfig.Generator
 	master    *Master
-	httpProxy Component
+	httpProxy *HttpProxy
 
 	getAllComponents func() []Component
 	configOverrides  *resources.ConfigMap
@@ -60,7 +60,7 @@ func NewYtsaurusClient(
 	cfgen *ytconfig.Generator,
 	ytsaurus *apiproxy.Ytsaurus,
 	master *Master,
-	httpProxy Component,
+	httpProxy *HttpProxy,
 	getAllComponents func() []Component,
 ) *YtsaurusClient {
 	l := cfgen.GetComponentLabeller(consts.YtsaurusClientType, "")
@@ -342,8 +342,8 @@ func (yc *YtsaurusClient) handleUpdatingState(ctx context.Context, dry bool) (Co
 func (yc *YtsaurusClient) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 	logger := log.FromContext(ctx)
-	if hpStatus := yc.httpProxy.GetStatus(); !hpStatus.IsRunning() {
-		return hpStatus.Blocker(), nil
+	if status := yc.httpProxy.clientDependencyStatus(); !status.IsReady() {
+		return status, nil
 	}
 
 	switch yc.ytsaurus.GetClusterMaintenance().Shutdown {

@@ -45,6 +45,7 @@ const (
 	ConditionPodsUpdated            = "PodsUpdated"
 	ConditionPodsRemoved            = "PodsRemoved"
 	ConditionPodsRemovingStarted    = "PodsRemovingStarted"
+	ConditionSchedulerJobsEnabled   = "SchedulerJobsEnabled"
 
 	// Suffix for update state itself
 	ConditionUpdateStateComplete = "Complete"

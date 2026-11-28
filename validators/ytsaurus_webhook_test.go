@@ -166,3 +166,47 @@ func TestValidateInstanceLoggers(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateDedicatedMasterUpdatePlan(t *testing.T) {
+	primary := ytv1.ComponentUpdateSelector{Component: ytv1.Component{Type: ytv1.MasterType}}
+	secondary := ytv1.ComponentUpdateSelector{
+		Component: ytv1.Component{Type: ytv1.MasterType, Name: "12"},
+		Strategy:  &ytv1.ComponentUpdateStrategy{OnDelete: &ytv1.ComponentOnDeleteUpdateMode{}},
+	}
+	proxy := ytv1.ComponentUpdateSelector{Component: ytv1.Component{Type: ytv1.HttpProxyType}}
+	yql := ytv1.ComponentUpdateSelector{Component: ytv1.Component{Type: ytv1.YqlAgentType}}
+	for _, tc := range []struct {
+		name        string
+		plan        []ytv1.ComponentUpdateSelector
+		wantError   string
+		maintenance bool
+	}{
+		{"Everything", []ytv1.ComponentUpdateSelector{{Class: ytv1.ComponentClassEverything}}, "", false},
+		{"coordinated master-cell maintenance", []ytv1.ComponentUpdateSelector{primary, secondary}, "", true},
+		{"primary cell", []ytv1.ComponentUpdateSelector{primary}, "", false},
+		{"secondary cell", []ytv1.ComponentUpdateSelector{secondary}, "", false},
+		{"unknown secondary", []ytv1.ComponentUpdateSelector{{Component: ytv1.Component{Type: ytv1.MasterType, Name: "13"}}}, "configured secondary master cell tag", false},
+		{"two cells", []ytv1.ComponentUpdateSelector{primary, secondary}, "exactly one selector", false},
+		{"primary with proxy", []ytv1.ComponentUpdateSelector{primary, proxy}, "exactly one selector", false},
+		{"proxy with secondary", []ytv1.ComponentUpdateSelector{proxy, secondary}, "exactly one selector", false},
+		{"non-master components", []ytv1.ComponentUpdateSelector{proxy, yql}, "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cluster := &ytv1.Ytsaurus{Spec: ytv1.YtsaurusSpec{
+				PrimaryMasters:   ytv1.MastersSpec{MasterConnectionSpec: ytv1.MasterConnectionSpec{CellTag: 10}},
+				SecondaryMasters: []ytv1.MastersSpec{{MasterConnectionSpec: ytv1.MasterConnectionSpec{CellTag: 12}}},
+				UpdatePlan:       tc.plan,
+			}}
+			if tc.maintenance {
+				cluster.Spec.ClusterMaintenance = &ytv1.ClusterMaintenance{Shutdown: ytv1.ClusterShutdownExceptMasters}
+			}
+			validator := baseValidator{}
+			err := validator.validateUpdatePlan(cluster).Errors.ToAggregate()
+			if tc.wantError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.wantError)
+			}
+		})
+	}
+}

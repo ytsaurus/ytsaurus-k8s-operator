@@ -116,7 +116,7 @@ func (s *Scheduler) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		if !IsUpdatingComponent(s.ytsaurus, s) {
 			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
-		switch updateState := s.ytsaurus.GetUpdateState(); updateState {
+		switch updateState := s.getWorkloadUpdateState(); updateState {
 		case ytv1.UpdateStateWaitingForPodsRemoval, ytv1.UpdateStateWaitingForPodsCreation:
 			if status, err := dispatchComponentUpdate(ctx, s.ytsaurus, s, &s.component, s.server, dry); status != nil {
 				return *status, err
@@ -174,7 +174,7 @@ func (s *Scheduler) initOpArchive(ctx context.Context, dry bool) (ComponentStatu
 	}
 
 	for _, tnd := range s.tabletNodes {
-		if tndStatus := tnd.GetStatus(); !tndStatus.IsRunning() {
+		if tndStatus := servingDependencyStatus(s.ytsaurus, tnd); !tndStatus.IsRunning() {
 			// Wait for tablet nodes to proceed with operations archive init.
 			return tndStatus.Blocker(), nil
 		}

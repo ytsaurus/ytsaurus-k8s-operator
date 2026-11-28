@@ -186,7 +186,7 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 		if !IsUpdatingComponent(yqla.ytsaurus, yqla) {
 			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
-		switch updateState := yqla.ytsaurus.GetUpdateState(); updateState {
+		switch updateState := yqla.getWorkloadUpdateState(); updateState {
 		case ytv1.UpdateStateWaitingForPodsRemoval, ytv1.UpdateStateWaitingForPodsCreation:
 			// Handle bulk update with pre-checks
 			if status, err := handleBulkUpdatingClusterState(ctx, yqla.ytsaurus, yqla, &yqla.component, yqla.server, dry); status != nil {
@@ -265,11 +265,6 @@ func (yqla *YqlAgent) Sync(ctx context.Context, dry bool) (ComponentStatus, erro
 
 	if status, err := yqla.ArePodsReady(ctx); !status.IsReady() || err != nil {
 		return status, err
-	}
-
-	// FIXME: Refactor this mess. During update flow sync must do only actions for current update phase.
-	if yqla.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating && yqla.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsCreation {
-		return ComponentStatusReady(), nil
 	}
 
 	return ComponentStatusReady(), nil

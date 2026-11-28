@@ -1,15 +1,16 @@
 --- base/StatefulSet ds.yson
 +++ test/StatefulSet ds.yson
-@@ -1,7 +1,7 @@
+@@ -1,7 +1,8 @@
  metadata:
    annotations:
++    ytsaurus.tech/group-update-target: a90bcf8c973358e1a818dccefb03a64afd91e90886970d88dd4d8b319daf0d93
      ytsaurus.tech/instance-hash: <censored>
 -    ytsaurus.tech/observed-generation: "1"
 +    ytsaurus.tech/observed-generation: "4"
    generation: 1
    labels:
      app.kubernetes.io/component: yt-discovery
-@@ -19,7 +19,7 @@
+@@ -19,7 +20,7 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""

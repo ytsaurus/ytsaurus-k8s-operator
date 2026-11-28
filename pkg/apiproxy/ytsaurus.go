@@ -139,6 +139,44 @@ func (c *Ytsaurus) IsUpdatingComponent(componentType consts.ComponentType, compo
 	return false
 }
 
+func (c *Ytsaurus) GetGroupProgress(component ytv1.Component) *ytv1.ComponentUpdateProgress {
+	groups := c.ytsaurus.Status.UpdateStatus.GroupProgress
+	for i := range groups {
+		if groups[i].Component == component {
+			return &groups[i]
+		}
+	}
+	return nil
+}
+
+// GetComponentUpdateState selects the workload action for this group. Cluster-wide
+// preparation, master recovery and post-update steps retain their original order.
+func (c *Ytsaurus) GetComponentUpdateState(component ytv1.Component) ytv1.UpdateState {
+	state := c.GetUpdateState()
+	if state != ytv1.UpdateStateWaitingForPodsRemoval && state != ytv1.UpdateStateWaitingForPodsCreation {
+		return state
+	}
+	progress := c.GetGroupProgress(component)
+	if progress == nil || c.GetClusterMaintenance().Shutdown == ytv1.ClusterShutdownExceptMasters {
+		return state
+	}
+	// A batch containing a master (including Everything) follows the shared
+	// removal, master recovery and creation steps for every selected workload.
+	for _, selected := range c.GetUpdatingComponents() {
+		if selected.Type == consts.MasterType {
+			return state
+		}
+	}
+	switch progress.Phase {
+	case ytv1.ComponentUpdatePhasePending, ytv1.ComponentUpdatePhaseRemoving, ytv1.ComponentUpdatePhaseReplacing:
+		return ytv1.UpdateStateWaitingForPodsRemoval
+	case ytv1.ComponentUpdatePhaseCreating, ytv1.ComponentUpdatePhaseWorkloadStarted:
+		return ytv1.UpdateStateWaitingForPodsCreation
+	default:
+		return state
+	}
+}
+
 func (c *Ytsaurus) IsUpdateStatusConditionTrue(condition string) bool {
 	return meta.IsStatusConditionTrue(c.ytsaurus.Status.UpdateStatus.Conditions, condition)
 }
@@ -161,6 +199,24 @@ func (c *Ytsaurus) SetUpdateStatusCondition(ctx context.Context, condition metav
 func (c *Ytsaurus) SetUpdatingComponents(canUpdate []ytv1.Component) {
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponents = canUpdate
 	c.ytsaurus.Status.UpdateStatus.UpdatingComponentsSummary = BuildComponentsSummary(canUpdate)
+}
+
+// ShouldRunGroupPreChecks uses the admitted group's policy even if the plan changes.
+func (c *Ytsaurus) ShouldRunGroupPreChecks(component ytv1.Component, fullName string) bool {
+	if progress := c.GetGroupProgress(component); progress != nil {
+		if progress.Strategy != nil {
+			if !ptr.Deref(progress.Strategy.RunPreChecks, true) {
+				return false
+			}
+			// Each partition drains a different pod. Passing a previous partition's
+			// precheck says nothing about the next pod that will be replaced.
+			if progress.Phase == ytv1.ComponentUpdatePhaseReplacing && progress.Strategy.RollingUpdate != nil {
+				return true
+			}
+		}
+		return !c.IsUpdateStatusConditionTrue(fullName + consts.ConditionReady)
+	}
+	return c.ShouldRunPreChecks(component.Type, fullName)
 }
 
 // ShouldRunPreChecks is status-based and can flip to false after successful execution.

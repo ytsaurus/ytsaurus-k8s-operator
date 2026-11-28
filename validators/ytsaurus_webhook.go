@@ -1069,11 +1069,36 @@ func (r *baseValidator) validateUpdatePlan(newYtsaurus *ytv1.Ytsaurus) Results {
 				results.Error(field.Invalid(entryPath.Child("class"), entry.Class, "Unknown class"))
 			}
 
+			if err := validateMasterUpdateSelector(newYtsaurus, entry.Component, entryPath); err != nil {
+				results.Error(err)
+			}
 			results.Append(validateUpdateModeForSelector(newYtsaurus, entry, entryPath.Child("updateMode")))
 		}
 	}
 
 	return results
+}
+
+func validateMasterUpdateSelector(cluster *ytv1.Ytsaurus, component ytv1.Component, path *field.Path) *field.Error {
+	if component.Type != consts.MasterType {
+		return nil
+	}
+	// Master-cell reconfiguration coordinates multiple cells in the same maintenance update.
+	if maintenance := cluster.Spec.ClusterMaintenance; maintenance != nil && maintenance.Shutdown == ytv1.ClusterShutdownExceptMasters {
+		return nil
+	}
+	if len(cluster.Spec.UpdatePlan) != 1 {
+		return field.Forbidden(path, "a master cell requires its own update plan with exactly one selector")
+	}
+	if component.Name == "" {
+		return nil // Primary master cell.
+	}
+	for _, secondary := range cluster.Spec.SecondaryMasters {
+		if fmt.Sprint(secondary.CellTag) == component.Name {
+			return nil
+		}
+	}
+	return field.Invalid(path.Child("component", "name"), component.Name, "use a configured secondary master cell tag, or omit the name to select the primary")
 }
 
 func validateUpdateModeForSelector(newYtsaurus *ytv1.Ytsaurus, selector ytv1.ComponentUpdateSelector, path *field.Path) Results {

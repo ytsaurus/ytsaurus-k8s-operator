@@ -28,7 +28,7 @@ type microservice interface {
 	resources.Syncable
 	podsManager
 
-	needSync() bool
+	needSync(updating bool) bool
 	needUpdate() ComponentStatus
 
 	getImage() string
@@ -41,6 +41,7 @@ type microservice interface {
 
 type microserviceImpl struct {
 	image         string
+	componentSpec any
 	labeller      *labeller.Labeller
 	instanceCount int32
 	ytsaurus      *apiproxy.Ytsaurus
@@ -61,6 +62,7 @@ func newMicroservice(
 	ytsaurus *apiproxy.Ytsaurus,
 	image string,
 	instanceCount int32,
+	componentSpec any,
 	generators map[string]ConfigGenerator,
 	deploymentName, serviceName string,
 	tolerations []corev1.Toleration,
@@ -81,6 +83,7 @@ func newMicroservice(
 	return &microserviceImpl{
 		labeller:      labeller,
 		image:         image,
+		componentSpec: componentSpec,
 		instanceCount: instanceCount,
 		ytsaurus:      ytsaurus,
 		service: resources.NewHTTPService(
@@ -116,6 +119,9 @@ func (m *microserviceImpl) Sync(ctx context.Context) error {
 	if err := m.setInstanceHash(); err != nil {
 		return err
 	}
+	if target := activeWorkloadTarget(m.ytsaurus, m.labeller); target != "" {
+		metav1.SetMetaDataAnnotation(&m.builtDeployment.ObjectMeta, consts.GroupUpdateTargetAnnotationName, target)
+	}
 
 	return resources.Sync(ctx, m.deployment, m.configs, m.service)
 }
@@ -144,9 +150,11 @@ func (m *microserviceImpl) listPods(ctx context.Context) ([]corev1.Pod, error) {
 	return m.deployment.ListPods(ctx)
 }
 
-func (m *microserviceImpl) needSync() bool {
+func (m *microserviceImpl) needSync(updating bool) bool {
 	configStatus, err := m.configs.needReload()
 	return !m.Exists() ||
+		(updating && (!m.podsImageCorrespondsToSpec() ||
+			needsWorkloadTargetSync(activeWorkloadTarget(m.ytsaurus, m.labeller), m.deployment.OldObject().Annotations))) ||
 		(m.ytsaurus.IsUpdating() && err == nil && configStatus.IsNeedUpdate()) ||
 		m.deployment.GetReplicas() != m.getInstanceCount()
 }
@@ -216,6 +224,16 @@ func (m *microserviceImpl) needUpdate() ComponentStatus {
 		return status
 	}
 	return ComponentStatusReady()
+}
+
+func (m *microserviceImpl) desiredWorkloadRevision() (string, error) {
+	configs, err := m.configs.desiredData(false)
+	if err != nil {
+		return "", err
+	}
+	common := m.ytsaurus.GetCommonSpec()
+	return resources.Hash(m.image, m.instanceCount, m.componentSpec, m.ytsaurus.GetCommonPodSpec(),
+		common.ImagePullSecrets, common.CARootBundle, common.CABundle, common.NativeTransport, configs)
 }
 
 func (m *microserviceImpl) getPodAnnotation(name string) string {

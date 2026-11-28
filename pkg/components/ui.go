@@ -51,6 +51,7 @@ func NewUI(cfgen *ytconfig.Generator, ytsaurus *apiproxy.Ytsaurus, master Compon
 		ytsaurus,
 		image,
 		instanceCount,
+		resource.Spec.UI,
 		map[string]ConfigGenerator{
 			UIClustersConfigFileName: {
 				Generator: cfgen.GetUIClustersConfig,
@@ -281,14 +282,14 @@ func (u *UI) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 
 	if u.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(u.ytsaurus, u) {
-			if u.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if u.getWorkloadUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
 					err = removePods(ctx, u.microservice, &u.component)
 				}
 				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
-			if u.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			if u.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 				return ComponentStatusReady(), err
 			}
 		} else {

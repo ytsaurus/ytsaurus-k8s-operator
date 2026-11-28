@@ -22,6 +22,7 @@ import (
 	ytv1 "github.com/ytsaurus/ytsaurus-k8s-operator/api/v1"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/apiproxy"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/consts"
+	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/labeller"
 	"github.com/ytsaurus/ytsaurus-k8s-operator/pkg/metrics"
 )
 
@@ -212,14 +213,14 @@ func handleUpdatingClusterState(
 	var err error
 
 	if IsUpdatingComponent(ytsaurus, cmp) {
-		if ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+		if ytsaurus.GetComponentUpdateState(cmp.GetComponent()) == ytv1.UpdateStateWaitingForPodsRemoval {
 			if !dry {
 				err = removePods(ctx, server, cmpBase)
 			}
 			return ptr.To(ComponentStatusUpdateStep("pods removal")), err
 		}
 
-		if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if ytsaurus.GetComponentUpdateState(cmp.GetComponent()) != ytv1.UpdateStateWaitingForPodsCreation {
 			return ptr.To(ComponentStatusReady()), err
 		}
 	} else {
@@ -239,10 +240,10 @@ func handleBulkUpdatingClusterState(
 ) (*ComponentStatus, error) {
 	var err error
 
-	switch ytsaurus.GetUpdateState() {
+	switch ytsaurus.GetComponentUpdateState(cmp.GetComponent()) {
 	case ytv1.UpdateStateWaitingForPodsRemoval:
 		// Check if this component is using the new update mode
-		if !doesComponentUseNewUpdateMode(ytsaurus, cmp.GetType(), cmp.GetFullName()) {
+		if groupUpdateStrategy(ytsaurus, cmp.GetComponent()) == nil {
 			if !dry {
 				err = removePods(ctx, server, cmpBase)
 			}
@@ -255,8 +256,10 @@ func handleBulkUpdatingClusterState(
 			Message: "bulk update mode started",
 		})
 
-		// Run pre-checks if needed
-		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+		// A restarted operator can observe the scale-down before its status write.
+		// Prechecks that count active YT instances can only run before that action.
+		removing := ytsaurus.IsUpdateStatusConditionTrue(cmp.GetLabeller().GetPodsRemovingStartedCondition()) || server.scaledToZero()
+		if !removing && ytsaurus.ShouldRunGroupPreChecks(cmp.GetComponent(), cmp.GetFullName()) {
 			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
 				return status, err
 			}
@@ -302,7 +305,7 @@ func handleOnDeleteUpdatingClusterState(
 	logger := log.FromContext(ctx)
 	var err error
 
-	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
+	if ytsaurus.GetComponentUpdateState(cmp.GetComponent()) != ytv1.UpdateStateWaitingForPodsRemoval {
 		// Not in the pod removal phase, let the component handle other update states
 		return nil, err
 	}
@@ -314,13 +317,17 @@ func handleOnDeleteUpdatingClusterState(
 		if !ytsaurus.IsUpdateStatusConditionTrue(onDeleteWaitingCondition) {
 			return ptr.To(ComponentStatusWaitingFor("OnDelete mode setup")), nil
 		}
+		if ytsaurus.IsUpdateStatusConditionTrue(cmp.GetLabeller().GetPodsUpdatedCondition()) &&
+			server.needUpdate().IsReady() && server.arePodsUpdatedToNewRevision(ctx) {
+			return nil, nil
+		}
 
 		// Pods not updated yet, wait for manual action
 		return ptr.To(ComponentStatusWaitingFor("manual pod update by user")), nil
 	}
 
 	// Run pre-checks if needed
-	if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+	if ytsaurus.ShouldRunGroupPreChecks(cmp.GetComponent(), cmp.GetFullName()) {
 		if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
 			return status, err
 		}
@@ -412,7 +419,7 @@ func handleRollingUpdatingClusterState(
 ) (*ComponentStatus, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Started Rolling update for component", "component", cmp.GetFullName())
-	if ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsRemoval {
+	if ytsaurus.GetComponentUpdateState(cmp.GetComponent()) != ytv1.UpdateStateWaitingForPodsRemoval {
 		// Not in the pod removal phase, let the component handle other update states.
 		logger.Info("Not in the pod removal phase, let the component handle other update states",
 			"component", cmp.GetFullName())
@@ -425,10 +432,6 @@ func handleRollingUpdatingClusterState(
 		return ptr.To(ComponentStatusBlocked("instanceCount - minReadyInstanceCount must be positive for rolling update on %s", cmp.GetFullName())), nil
 	}
 
-	if dry {
-		return ptr.To(ComponentStatusUpdateStep("rolling update")), nil
-	}
-
 	roll, err := server.getRollingUpdateStatus(ctx)
 	if err != nil || roll == nil {
 		return ptr.To(ComponentStatusUpdateStep("rolling update is not ready")), err
@@ -438,6 +441,9 @@ func handleRollingUpdatingClusterState(
 	// so this is the start of a new rolling cycle and we must initialize
 	// RollingUpdate strategy with a fresh partition/maxUnavailable.
 	if status := server.needUpdate(); status.IsNeedUpdate() {
+		if dry {
+			return ptr.To(ComponentStatusUpdateStep("rolling update setup")), nil
+		}
 		server.setUpdateStrategy(appsv1.RollingUpdateStatefulSetStrategyType, roll.totalCount, maxUnavailable)
 		if err := server.Sync(ctx); err != nil {
 			return ptr.To(ComponentStatusBlocked("failed to initialize rolling update for %s", cmp.GetFullName())), err
@@ -445,6 +451,14 @@ func handleRollingUpdatingClusterState(
 		return ptr.To(ComponentStatusUpdateStep("rolling started")), nil
 	}
 
+	progress := ComponentStatusUpdating("Rolling update: %v of %v pods", roll.updatedReplicas, roll.totalCount)
+	if dry {
+		// Keep the action pass runnable until it has recorded completion and run the component's hooks.
+		if roll.IsFinished() && ytsaurus.IsUpdateStatusConditionTrue(cmp.GetLabeller().GetPodsUpdatedCondition()) {
+			return nil, nil
+		}
+		return &progress, nil
+	}
 	if roll.IsFinished() {
 		setPodsUpdatedCondition(ctx, ytsaurus, cmp)
 		return nil, nil
@@ -453,7 +467,7 @@ func handleRollingUpdatingClusterState(
 	if wasted := roll.UnavailableOrInProgressReplicas(); wasted >= maxUnavailable {
 		setRollingBudgetExhaustedCondition(ctx, ytsaurus, cmp, maxUnavailable, wasted, roll.partition)
 	} else if roll.partition != 0 {
-		if ytsaurus.ShouldRunPreChecks(cmp.GetType(), cmp.GetFullName()) {
+		if ytsaurus.ShouldRunGroupPreChecks(cmp.GetComponent(), cmp.GetFullName()) {
 			if status, err := runPrechecks(ctx, ytsaurus, cmp); status != nil {
 				return status, err
 			}
@@ -465,7 +479,7 @@ func handleRollingUpdatingClusterState(
 		}
 	}
 
-	return ptr.To(ComponentStatusUpdating("Rolling update: %v of %v pods", roll.updatedReplicas, roll.totalCount)), nil
+	return &progress, nil
 }
 
 func setRollingBudgetExhaustedCondition(
@@ -579,25 +593,76 @@ func SetWithIgnoreExisting(path string, value string) string {
 	return RunIfNonexistent(path, fmt.Sprintf("/usr/bin/yt set %s %s", path, value))
 }
 
-func doesComponentUseNewUpdateMode(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) bool {
+// Only an admitted workload can submit a target. Storing the target on workload
+// metadata preserves it across operator restarts without changing pod revisions.
+func activeWorkloadTarget(proxy apiproxy.APIProxy, l *labeller.Labeller) string {
+	owner, ok := proxy.(*apiproxy.Ytsaurus)
+	if !ok || !owner.IsUpdating() {
+		return ""
+	}
+	state := owner.GetUpdateState()
+	if state != ytv1.UpdateStateWaitingForPodsRemoval && state != ytv1.UpdateStateWaitingForPodsCreation &&
+		!(state == ytv1.UpdateStateWaitingForMasterReady && l.ComponentType == consts.MasterType) {
+		return ""
+	}
+	id := ytv1.Component{Type: l.ComponentType, Name: l.GetInstanceGroup()}
+	p := owner.GetGroupProgress(id)
+	if p == nil {
+		return ""
+	}
+	switch p.Phase {
+	case ytv1.ComponentUpdatePhaseRemoving, ytv1.ComponentUpdatePhaseCreating, ytv1.ComponentUpdatePhaseReplacing:
+		return p.TargetRevision
+	default:
+		return ""
+	}
+}
+
+// Older in-flight workloads have no target annotation. Adopt their actual state
+// without restarting a replacement merely to backfill metadata.
+func needsWorkloadTargetSync(desired string, annotations map[string]string) bool {
+	applied := annotations[consts.GroupUpdateTargetAnnotationName]
+	return desired != "" && applied != "" && desired != applied
+}
+
+func groupUpdateStrategy(ytsaurus *apiproxy.Ytsaurus, component ytv1.Component) *ytv1.ComponentUpdateStrategy {
+	if progress := ytsaurus.GetGroupProgress(component); progress != nil {
+		return progress.Strategy
+	}
 	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
-		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) {
-			return selector.Strategy != nil
+		if selector.Component.Type == component.Type &&
+			(selector.Component.Name == "" || selector.Component.Name == component.Name) {
+			return selector.Strategy
 		}
 	}
-	return false
+	return nil
+}
+
+// WorkloadReplacementMode reports whether this component actually replaces its pods in place.
+// Some legacy handlers always scale down, even when an in-place strategy was requested.
+func WorkloadReplacementMode(c Component, strategy *ytv1.ComponentUpdateStrategy) bool {
+	return workloadUpdateMode(c.GetType(), strategy) != ytv1.ComponentUpdateModeTypeBulkUpdate
+}
+
+func workloadUpdateMode(componentType consts.ComponentType, strategy *ytv1.ComponentUpdateStrategy) ytv1.ComponentUpdateModeType {
+	if strategy != nil {
+		switch componentType {
+		case consts.MasterType, consts.TabletNodeType:
+			if strategy.Type() == ytv1.ComponentUpdateModeTypeOnDelete {
+				return ytv1.ComponentUpdateModeTypeOnDelete
+			}
+		case consts.ControllerAgentType, consts.CypressProxyType, consts.DataNodeType, consts.DiscoveryType,
+			consts.ExecNodeType, consts.HttpProxyType, consts.MasterCacheType, consts.RpcProxyType,
+			consts.SchedulerType, consts.TcpProxyType:
+			return strategy.Type()
+		}
+	}
+	return ytv1.ComponentUpdateModeTypeBulkUpdate
 }
 
 func getComponentUpdateStrategy(ytsaurus *apiproxy.Ytsaurus, componentType consts.ComponentType, componentName string) ytv1.ComponentUpdateModeType {
-	for _, selector := range ytsaurus.GetResource().Spec.UpdatePlan {
-		if selector.Component.Type == componentType &&
-			(selector.Component.Name == "" || selector.Component.Name == componentName) &&
-			selector.Strategy != nil {
-			return selector.Strategy.Type()
-		}
-	}
-	return ""
+	strategy := groupUpdateStrategy(ytsaurus, ytv1.Component{Type: componentType, Name: componentName})
+	return workloadUpdateMode(componentType, strategy)
 }
 
 func AddAffinity(statefulSet *appsv1.StatefulSet,

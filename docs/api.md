@@ -521,6 +521,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [ComponentUpdateProgress](#componentupdateprogress)
 - [ComponentUpdateSelector](#componentupdateselector)
 - [UpdateStatus](#updatestatus)
 
@@ -587,6 +588,7 @@ _Underlying type:_ _string_
 
 _Appears in:_
 - [Component](#component)
+- [ComponentUpdateProgress](#componentupdateprogress)
 
 | Field | Description |
 | --- | --- |
@@ -622,6 +624,48 @@ _Appears in:_
 
 
 
+#### ComponentUpdatePhase
+
+_Underlying type:_ _string_
+
+ComponentUpdatePhase tracks one instance group's workload within a cluster update.
+
+_Validation:_
+- Enum: [Pending Removing Creating Replacing WorkloadStarted]
+
+_Appears in:_
+- [ComponentUpdateProgress](#componentupdateprogress)
+
+| Field | Description |
+| --- | --- |
+| `Pending` |  |
+| `Removing` |  |
+| `Creating` |  |
+| `Replacing` |  |
+| `WorkloadStarted` |  |
+
+
+#### ComponentUpdateProgress
+
+
+
+
+
+
+
+_Appears in:_
+- [UpdateStatus](#updatestatus)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `type` _[ComponentType](#componenttype)_ |  |  |  |
+| `name` _string_ |  |  |  |
+| `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ | Strategy selected when this group entered the update. Omitted for legacy bulk updates. |  |  |
+| `targetRevision` _string_ | Revision of the workload targeted by this group update. |  |  |
+| `phase` _[ComponentUpdatePhase](#componentupdatephase)_ |  |  | Enum: [Pending Removing Creating Replacing WorkloadStarted] <br /> |
+| `reason` _string_ | Current reason the group is waiting for its next step. |  |  |
+
+
 #### ComponentUpdateSelector
 
 
@@ -636,7 +680,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `class` _[ComponentClass](#componentclass)_ | Selects components by class: Nothing, Everything, Stateless (except Master, DataNode, TabletNode). |  | Enum: [ Nothing Stateless Everything] <br /> |
-| `component` _[Component](#component)_ | Selects components by type and/or instance group name. |  |  |
+| `component` _[Component](#component)_ | Selects components by type and/or instance group name.<br />Outside ExceptMasters maintenance, an explicit Master selector must be the only entry.<br />Omit its name to select the primary cell or use a secondary cell's decimal cell tag. |  |  |
 | `concurrency` _integer_ | Limits count of instance groups updated concurrently. |  | Minimum: 0 <br /> |
 | `strategy` _[ComponentUpdateStrategy](#componentupdatestrategy)_ | Defines update strategy for selected instance groups. |  |  |
 
@@ -650,6 +694,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [ComponentUpdateProgress](#componentupdateprogress)
 - [ComponentUpdateSelector](#componentupdateselector)
 
 | Field | Description | Default | Validation |
@@ -3242,6 +3287,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `state` _[UpdateState](#updatestate)_ |  |  |  |
 | `updatingComponents` _[Component](#component) array_ | Subset of cluster components currently updating. |  |  |
+| `groupProgress` _[ComponentUpdateProgress](#componentupdateprogress) array_ | Workload progress for each admitted component type and instance group name. |  |  |
 | `updatingComponentsSummary` _string_ | Summary for kubectl column. |  |  |
 | `blockedComponentsSummary` _string_ | Summary for kubectl column. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ | Update progress. |  |  |

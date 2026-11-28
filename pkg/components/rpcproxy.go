@@ -133,7 +133,7 @@ func (rp *RpcProxy) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		if status, err := dispatchComponentUpdate(ctx, rp.ytsaurus, rp, &rp.component, rp.server, dry); status != nil {
 			return *status, err
 		}
-		if rp.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if rp.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			return ComponentStatusReady(), nil
 		}
 	}

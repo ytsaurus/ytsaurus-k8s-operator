@@ -7,20 +7,22 @@
    generation: 1
    labels:
      app.kubernetes.io/component: yt-discovery
-@@ -17,10 +17,10 @@
+@@ -17,10 +17,11 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""
 -  resourceVersion: "1"
+-- annotations:
 +  resourceVersion: "3"
- - annotations:
++- annotations:
++    ytsaurus.tech/group-update-target: a90bcf8c973358e1a818dccefb03a64afd91e90886970d88dd4d8b319daf0d93
      ytsaurus.tech/instance-hash: <censored>
 -    ytsaurus.tech/observed-generation: "1"
 +    ytsaurus.tech/observed-generation: "4"
    generation: 1
    labels:
      app.kubernetes.io/component: yt-discovery
-@@ -38,7 +38,7 @@
+@@ -38,7 +39,7 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""
@@ -29,7 +31,7 @@
  - annotations:
      ytsaurus.tech/instance-hash: <censored>
      ytsaurus.tech/observed-generation: "1"
-@@ -141,6 +141,10 @@
+@@ -141,6 +142,10 @@
      name: test-ytsaurus
      uid: ""
    resourceVersion: "2"
@@ -40,7 +42,7 @@
  - annotations:
      ytsaurus.tech/init-job-reason: InitJob
      ytsaurus.tech/observed-generation: "1"
-@@ -205,8 +209,10 @@
+@@ -205,8 +210,10 @@
      uid: ""
    resourceVersion: "1"
  - annotations:
@@ -53,7 +55,7 @@
    generation: 1
    labels:
      app.kubernetes.io/component: yt-client
-@@ -224,10 +230,11 @@
+@@ -224,10 +231,11 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""
@@ -67,7 +69,7 @@
    generation: 1
    labels:
      app.kubernetes.io/component: yt-discovery
-@@ -245,9 +252,9 @@
+@@ -245,9 +253,9 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""
@@ -80,7 +82,7 @@
    generation: 1
    labels:
      app.kubernetes.io/component: yt-discovery
-@@ -266,7 +273,7 @@
+@@ -266,7 +274,7 @@
      kind: Ytsaurus
      name: test-ytsaurus
      uid: ""

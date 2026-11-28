@@ -56,6 +56,21 @@ func (n *baseExecNode) NeedUpdate() ComponentStatus {
 	return ComponentStatusReady()
 }
 
+func (n *baseExecNode) desiredWorkloadRevision() (string, error) {
+	workload, err := n.server.desiredWorkloadRevision()
+	if err != nil {
+		return "", err
+	}
+	var configs map[string]string
+	if n.sidecarConfig != nil {
+		configs, err = n.sidecarConfig.desiredData(false)
+		if err != nil {
+			return "", err
+		}
+	}
+	return resources.Hash(workload, n.spec, configs)
+}
+
 func (n *baseExecNode) doBuildBase() error {
 	statefulSet := n.server.buildStatefulSet()
 	podSpec := &statefulSet.Spec.Template.Spec

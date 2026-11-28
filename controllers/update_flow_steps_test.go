@@ -242,37 +242,22 @@ var _ = Describe("BuildFlowTree", func() {
 	)
 })
 
-var _ = Describe("ShouldRemoveTabletCellsOnUpdate", func() {
-	type testCase struct {
-		updatePlan         []ytv1.ComponentUpdateSelector
-		updatingComponents []ytv1.Component
-		expected           bool
-	}
+var _ = Describe("HasNonOnDeleteGroup", func() {
+	onDelete := &ytv1.ComponentUpdateStrategy{OnDelete: &ytv1.ComponentOnDeleteUpdateMode{}}
+	hot := ytv1.ComponentUpdateProgress{Component: ytv1.Component{Type: consts.TabletNodeType, Name: "hot"}, Strategy: onDelete}
+	bulk := ytv1.ComponentUpdateProgress{Component: ytv1.Component{Type: consts.TabletNodeType, Name: "bulk"}, Strategy: &ytv1.ComponentUpdateStrategy{}}
+	legacy := ytv1.ComponentUpdateProgress{Component: ytv1.Component{Type: consts.TabletNodeType}}
+	master := ytv1.ComponentUpdateProgress{Component: ytv1.Component{Type: consts.MasterType}}
 
-	DescribeTable("should derive tablet cell removal mode from tablet node update strategy",
-		func(tc testCase) {
-			Expect(shouldRemoveTabletCellsOnUpdate(tc.updatePlan, tc.updatingComponents)).To(Equal(tc.expected))
+	DescribeTable("derives coordinated safety steps from the admitted groups of the requested type",
+		func(groups []ytv1.ComponentUpdateProgress, typ consts.ComponentType, expected bool) {
+			Expect(hasNonOnDeleteGroup(groups, typ)).To(Equal(expected))
 		},
-		Entry("defaults to removing tablet cells", testCase{
-			expected: false,
-		}),
-		Entry("keeps removing tablet cells for bulk tablet updates", testCase{
-			updatePlan: []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{Type: consts.TabletNodeType},
-			}},
-			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
-			expected:           true,
-		}),
-		Entry("skips removing tablet cells for onDelete tablet updates", testCase{
-			updatePlan: []ytv1.ComponentUpdateSelector{{
-				Component: ytv1.Component{Type: consts.TabletNodeType},
-				Strategy: &ytv1.ComponentUpdateStrategy{
-					OnDelete: &ytv1.ComponentOnDeleteUpdateMode{},
-				},
-			}},
-			updatingComponents: []ytv1.Component{{Type: consts.TabletNodeType}},
-			expected:           false,
-		}),
+		Entry("no admitted groups", []ytv1.ComponentUpdateProgress{}, consts.TabletNodeType, false),
+		Entry("omitted strategy uses bulk", []ytv1.ComponentUpdateProgress{legacy}, consts.TabletNodeType, true),
+		Entry("OnDelete tablets with a bulk master", []ytv1.ComponentUpdateProgress{hot, master}, consts.TabletNodeType, false),
+		Entry("mixed tablet strategies", []ytv1.ComponentUpdateProgress{hot, bulk}, consts.TabletNodeType, true),
+		Entry("bulk master with OnDelete tablets", []ytv1.ComponentUpdateProgress{hot, master}, consts.MasterType, true),
 	)
 })
 

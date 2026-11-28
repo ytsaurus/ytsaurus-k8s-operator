@@ -593,12 +593,9 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 	var err error
 
 	if m.ytsaurus.IsUpdating() {
-		if !IsUpdatingComponent(m.ytsaurus, m) {
-			return ComponentStatusReadyAfter("Not updating component"), nil
-		}
-
 		updateState := m.ytsaurus.GetUpdateState()
 
+		// The primary runs the cluster-wide jobs even when only a secondary cell replaces its pods.
 		if m.IsPrimary() {
 			switch updateState {
 			case ytv1.UpdateStateWaitingForSnapshots:
@@ -670,6 +667,10 @@ func (m *Master) Sync(ctx context.Context, dry bool) (ComponentStatus, error) {
 					m.owner.RemoveStatusCondition(consts.ConditionMasterCellsCompletion)
 				})
 			}
+		}
+
+		if !IsUpdatingComponent(m.ytsaurus, m) {
+			return ComponentStatusReadyAfter("Not updating component"), nil
 		}
 
 		switch updateState {

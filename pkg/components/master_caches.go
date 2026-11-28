@@ -68,7 +68,7 @@ func (mc *MasterCache) Sync(ctx context.Context, dry bool) (ComponentStatus, err
 		if status, err := dispatchComponentUpdate(ctx, mc.ytsaurus, mc, &mc.component, mc.server, dry); status != nil {
 			return *status, err
 		}
-		if mc.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if mc.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			return ComponentStatusReady(), nil
 		}
 	}

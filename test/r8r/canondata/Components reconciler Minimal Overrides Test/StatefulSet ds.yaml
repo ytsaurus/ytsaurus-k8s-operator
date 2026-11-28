@@ -1,5 +1,6 @@
 metadata:
   annotations:
+    ytsaurus.tech/group-update-target: a90bcf8c973358e1a818dccefb03a64afd91e90886970d88dd4d8b319daf0d93
     ytsaurus.tech/instance-hash: <censored>
     ytsaurus.tech/observed-generation: "4"
   generation: 1

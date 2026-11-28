@@ -44415,6 +44415,59 @@
                 }
               }
             },
+            "groupProgress": {
+              "description": "Workload progress for each admitted component type and instance group name.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "phase"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "phase": {
+                    "description": "ComponentUpdatePhase tracks one instance group's workload within a cluster...",
+                    "type": "string",
+                    "enum": [
+                      "Pending",
+                      "Removing",
+                      "Creating",
+                      "Replacing",
+                      "WorkloadStarted"
+                    ]
+                  },
+                  "reason": {
+                    "description": "Current reason the group is waiting for its next step.",
+                    "type": "string"
+                  },
+                  "strategy": {
+                    "description": "Strategy selected when this group entered the update.",
+                    "type": "object",
+                    "properties": {
+                      "onDelete": {
+                        "type": "object"
+                      },
+                      "rollingUpdate": {
+                        "description": "ComponentRollingUpdateMode configures the rolling update strategy.",
+                        "type": "object"
+                      },
+                      "runPreChecks": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "targetRevision": {
+                    "description": "Revision of the workload targeted by this group update.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
             "masterCellsMaintenance": {
               "description": "State of master cells maintenance.",
               "type": "array",

@@ -175,12 +175,14 @@ func (h *ConfigMapBuilder) GetConfigMapName() string {
 	return h.configMap.Name()
 }
 
-func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error) {
+func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator, recordEvents bool) ([]byte, error) {
 	name := h.GetConfigMapName()
 	serializedConfig, err := descriptor.Generator()
 	if err != nil {
-		h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot build configmap/%s %q: %s",
-			name, descriptor.FileName, err))
+		if recordEvents {
+			h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot build configmap/%s %q: %s",
+				name, descriptor.FileName, err))
+		}
 		return nil, fmt.Errorf("failed to generate configmap/%s %q: %w", name, descriptor.FileName, err)
 	}
 
@@ -204,13 +206,17 @@ func (h *ConfigMapBuilder) getConfig(descriptor ConfigGenerator) ([]byte, error)
 			if value, ok := h.overridesMap.Data[override.Name]; ok {
 				configWithOverrides, err := overrideYsonConfigs(serializedConfig, []byte(value), override.Format)
 				if err != nil {
-					h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot apply configmap/%s %q override %q: %s",
-						name, descriptor.FileName, override.Name, err))
+					if recordEvents {
+						h.apiProxy.RecordWarning("Failure", fmt.Sprintf("Cannot apply configmap/%s %q override %q: %s",
+							name, descriptor.FileName, override.Name, err))
+					}
 					return nil, fmt.Errorf("failed to apply configmap/%s %q override %q: %w",
 						name, descriptor.FileName, override.Name, err)
 				}
-				h.apiProxy.RecordNormal("Override", fmt.Sprintf("Applied configmap/%s %q override %q",
-					name, descriptor.FileName, override.Name))
+				if recordEvents {
+					h.apiProxy.RecordNormal("Override", fmt.Sprintf("Applied configmap/%s %q override %q",
+						name, descriptor.FileName, override.Name))
+				}
 				serializedConfig = configWithOverrides
 			}
 		}
@@ -280,7 +286,7 @@ func (h *ConfigMapBuilder) setAnnotation(ann, value string) {
 
 func (h *ConfigMapBuilder) needReload() (ComponentStatus, error) {
 	for _, descriptor := range h.generators {
-		newConfig, err := h.getConfig(descriptor)
+		newConfig, err := h.getConfig(descriptor, true)
 		if err != nil {
 			return ComponentStatusBlocked("Config %s generation error: %v", descriptor.FileName, err), err
 		}
@@ -309,6 +315,24 @@ func (h *ConfigMapBuilder) needReload() (ComponentStatus, error) {
 	return ComponentStatusReady(), nil
 }
 
+func (h *ConfigMapBuilder) desiredData(recordEvents bool) (map[string]string, error) {
+	data := make(map[string]string, len(h.generators))
+	for _, descriptor := range h.generators {
+		if _, exists := data[descriptor.FileName]; exists {
+			return nil, fmt.Errorf("duplicate config generator: %v", descriptor.FileName)
+		}
+		config, err := h.getConfig(descriptor, recordEvents)
+		if err != nil {
+			return nil, err
+		}
+		if config != nil {
+			data[descriptor.FileName] = string(config)
+		}
+	}
+
+	return data, nil
+}
+
 func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 	cm := h.configMap.Build()
 
@@ -316,18 +340,11 @@ func (h *ConfigMapBuilder) Build() (*corev1.ConfigMap, error) {
 		metav1.SetMetaDataAnnotation(&cm.ObjectMeta, consts.ConfigOverridesVersionAnnotationName, version)
 	}
 
-	for _, descriptor := range h.generators {
-		if _, exists := cm.Data[descriptor.FileName]; exists {
-			return nil, fmt.Errorf("duplicate config generator: %v", descriptor.FileName)
-		}
-		data, err := h.getConfig(descriptor)
-		if err != nil {
-			return nil, err
-		}
-		if data != nil {
-			cm.Data[descriptor.FileName] = string(data)
-		}
+	data, err := h.desiredData(true)
+	if err != nil {
+		return nil, err
 	}
+	cm.Data = data
 
 	currentHash, err := resources.Hash(cm.Data)
 	if err != nil {

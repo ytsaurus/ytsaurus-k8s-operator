@@ -70,7 +70,7 @@ func (d *Discovery) Sync(ctx context.Context, dry bool) (ComponentStatus, error)
 		if status, err := dispatchComponentUpdate(ctx, d.ytsaurus, d, &d.component, d.server, dry); status != nil {
 			return *status, err
 		}
-		if d.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+		if d.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 			return ComponentStatusReady(), nil
 		}
 	}

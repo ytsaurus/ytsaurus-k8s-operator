@@ -83,6 +83,7 @@ func NewStrawberryController(
 		ytsaurus,
 		image,
 		instanceCount,
+		resource.Spec.StrawberryController,
 		map[string]ConfigGenerator{
 			ControllerConfigFileName: {
 				Generator: cfgen.GetStrawberryControllerConfig,
@@ -267,14 +268,14 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 
 	if c.ytsaurus.GetClusterState() == ytv1.ClusterStateUpdating {
 		if IsUpdatingComponent(c.ytsaurus, c) {
-			if c.ytsaurus.GetUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
+			if c.getWorkloadUpdateState() == ytv1.UpdateStateWaitingForPodsRemoval {
 				if !dry {
 					err = removePods(ctx, c.microservice, &c.component)
 				}
 				return ComponentStatusUpdateStep("pods removal"), err
 			}
 
-			if c.ytsaurus.GetUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
+			if c.getWorkloadUpdateState() != ytv1.UpdateStateWaitingForPodsCreation {
 				return ComponentStatusReady(), err
 			}
 		} else {
@@ -286,12 +287,12 @@ func (c *StrawberryController) Sync(ctx context.Context, dry bool) (ComponentSta
 		return masterStatus.Blocker(), nil
 	}
 
-	if schStatus := c.scheduler.GetStatus(); !schStatus.IsRunning() {
+	if schStatus := servingDependencyStatus(c.ytsaurus, c.scheduler); !schStatus.IsRunning() {
 		return schStatus.Blocker(), err
 	}
 
 	for _, dataNode := range c.dataNodes {
-		if dndStatus := dataNode.GetStatus(); !dndStatus.IsRunning() {
+		if dndStatus := servingDependencyStatus(c.ytsaurus, dataNode); !dndStatus.IsRunning() {
 			return dndStatus.Blocker(), err
 		}
 	}
